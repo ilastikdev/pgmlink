@@ -118,7 +118,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 	SubGmType PertMod = SubGmType(model[0].space());
 	for(size_t factorId=0; factorId<nOF; ++factorId) {
 		
-		ViewFunctionType view(*model,factorId,1.0/nOF); // TODO: check the value of scale
+		ViewFunctionType view(*model,factorId,1.0);
 		const typename SubGmType::FunctionIdentifier funcId = PertMod.addFunction(view);
 		
 		PertMod.addFactor(funcId,model->operator[](factorId).variableIndicesBegin(),model->operator[](factorId).variableIndicesEnd());
@@ -135,20 +135,25 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		}
 	}
     
-	optimizer_ = new cplex_optimizer(PertMod, param, m_in_mbest_);
+	//m-best: if pertubation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
+	size_t numberOfSolutions = 1;
+	if (param_.distributionId==3){
+		numberOfSolutions = param_.distributionParam;
+	}
+
+	optimizer_ = new cplex_optimizer(PertMod, param, numberOfSolutions);
 	LOG(logINFO) << "add_constraints";
 	 if (with_constraints_) {
 	  add_constraints(*graph);
 	}
 	
-	LOG(logINFO) << "infer";
+	LOG(logINFO) << "infer MAP";
 	infer();
-	LOG(logINFO) << "conclude"<<m_in_mbest_;
+	LOG(logINFO) << "conclude MAP";
 	conclude(*graph);
-	isMAP_ = false;
-	
-	//m-best
-	for (size_t k=1;k<m_in_mbest_;++k){
+
+
+	for (size_t k=1;k<numberOfSolutions;++k){
 		LOG(logINFO) << "conclude "<<k+1<<"-best solution";
 		opengm::InferenceTermination status = optimizer_->arg(solution_,k);
 		if (status != opengm::NORMAL) {
@@ -158,7 +163,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 	}
 	
 	//deterministic & non-deterministic pertubation
-	for (size_t iterStep=1;iterStep<number_of_iterations_;++iterStep){
+	for (size_t iterStep=1;iterStep<param_.numberOfIterations;++iterStep){
 		
 		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare pertubation number " <<iterStep;
 		
@@ -182,14 +187,13 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 				marray::Marray<ValueType> offset(off.begin(),off.end(),0);
 				
 				//add offset on label that was assigned in the last solution
-				deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=diverse_lambda_;
-				
+				if (param_.distributionId==2) {
+					deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=param_.distributionParam;
+				}
 				if (defaultOffset==0){
 					for (int k=0;k<nOL;++k){
-						offset(k) = deterministic_offset[factorId](k);
-						offset(k) += generateRandomOffset();
+						offset(k) = generateRandomOffset(&deterministic_offset[factorId],  k);
 					}
-					std::cout<<std::endl;
 				} else {
 					offset = *defaultOffset;
 				}
@@ -202,11 +206,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &model->operator[](factorId);
 			if (factor->numberOfVariables()!=1){
 				//perturb only unaries. This is not a unary.
-				ViewFunctionType view(*model,factorId,1.0/nOF); // TODO: check again scale!
+				ViewFunctionType view(*model,factorId,1.0);
 				const typename SubGmType::FunctionIdentifier funcId = PertMod2.addFunction(view);
 				PertMod2.addFactor(funcId,factor->variableIndicesBegin(),factor->variableIndicesEnd());
 			} else {
-				ViewFunctionType view(*model,factorId,1.0/nOF,&(offset_vector[factorId]));
+				ViewFunctionType view(*model,factorId,1.0,&(offset_vector[factorId]));
 				const typename SubGmType::FunctionIdentifier funcId = PertMod2.addFunction(view);
 				PertMod2.addFactor(funcId,factor->variableIndicesBegin(),factor->variableIndicesEnd());
 			}
@@ -237,15 +241,17 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 }
 
 
-double ConservationTracking::generateRandomOffset() {
-	switch (distribution_) {
+double ConservationTracking::generateRandomOffset(marray::Marray<ValueType>* determOffset ,int k) {
+	switch (param_.distributionId) {
 		case 0: //normal distribution
 				//distribution parameter: sigma
 				return random_normal_();
 				
 		case 1: //Gumbel distribution
 				//distribution parameter: beta
-				return distribution_param_*log(-log(random_uniform_()));
+				return param_.distributionParam*log(-log(random_uniform_()));
+		case 2: //deterministic offset
+				return determOffset->operator()(k); //diverse_lambda
 		default: //
 				return 0;
 	}
@@ -342,9 +348,11 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
             tracklet_graph_.get(tracklet_intern_arc_ids());
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map =
             tracklet_graph_.get(traxel_arc_id());
-	
-	
-	if (isMAP_){
+
+	int iterStep = active_nodes_count[app_node_map_.begin()->first].size();
+	bool isMAP = (iterStep==0);
+
+	if (isMAP){
 		//initialize vectors for storing optimizer results
 		for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
 		active_arcs_count.set(a,std::vector<bool>());
@@ -545,7 +553,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
         }
     }
     // write division node map
-    if (with_divisions_ && isMAP_) {
+    if (with_divisions_ && isMAP) {
         for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
                 it != div_node_map_.end(); ++it) {
             if (solution_[it->second] >= 1) {

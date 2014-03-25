@@ -45,6 +45,25 @@ typedef opengm::LPCplex
 typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType; 
 typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;    
 
+class UncertaintyParameter{
+	public:
+	std::size_t numberOfIterations;
+	std::size_t distributionId;
+	double distributionParam;
+
+	UncertaintyParameter(){
+		numberOfIterations=1;
+		distributionId = 0;
+		distributionParam = 0;
+	}
+	UncertaintyParameter(std::size_t nOI,std::size_t dI,double dP){
+		numberOfIterations=nOI;
+		distributionId = dI;
+		distributionParam = dP;
+	}
+
+};
+
 class Traxel;
 
 class ConservationTracking : public Reasoner {
@@ -65,12 +84,7 @@ class ConservationTracking : public Reasoner {
                              bool with_disappearance = true,
                              double transition_parameter = 5,
                              bool with_constraints = true,
-                             std::size_t number_of_iterations = 1,
-                             std::size_t distribution = 0,
-                             double distribution_param = 1,
-                             double diverse_lambda = 0,
-                             std::size_t m_in_mbest = 1
-                             ) // TODO: add parameter for distribution, parameter of distribution and number of iterations 
+                             UncertaintyParameter param = UncertaintyParameter())
         : max_number_objects_(max_number_objects),
           detection_(detection),
           division_(division),
@@ -91,13 +105,14 @@ class ConservationTracking : public Reasoner {
           with_disappearance_(with_disappearance),
           transition_parameter_(transition_parameter),
           with_constraints_(with_constraints),
-		  number_of_iterations_(number_of_iterations),
+          param_(param),
+		  /*number_of_iterations_(number_of_iterations),
 		  distribution_(distribution),
 		  distribution_param_(distribution_param),
 		  diverse_lambda_(diverse_lambda),
-		  m_in_mbest_(m_in_mbest),  
+		  m_in_mbest_(m_in_mbest),  */
           isMAP_(true),
-          random_normal_(rng_,boost::normal_distribution<>(0, distribution_param_)),
+          random_normal_(rng_,boost::normal_distribution<>(0, param.distributionParam)),
 		  random_uniform_(rng_,boost::uniform_real<>(0,1))
 
      {};
@@ -135,7 +150,7 @@ class ConservationTracking : public Reasoner {
     // copy and assingment have to be implemented, yet
     
     ConservationTracking(const ConservationTracking&):
-		random_normal_(rng_,boost::normal_distribution<>(0, distribution_param_)),
+		random_normal_(rng_,boost::normal_distribution<>(0, param_.distributionParam)),
 		random_uniform_(rng_,boost::uniform_real<>(0, 1))
 		{};
     ConservationTracking& operator=(const ConservationTracking&) { return *this;};
@@ -149,7 +164,7 @@ class ConservationTracking : public Reasoner {
     void add_division_nodes(const HypothesesGraph& );
     void add_finite_factors( const HypothesesGraph& );
     void calculateUncertainty( HypothesesGraph&);
-    double generateRandomOffset();
+    double generateRandomOffset(marray::Marray<ValueType>* determOffset ,int k);
     
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
@@ -192,11 +207,7 @@ class ConservationTracking : public Reasoner {
 
     bool with_constraints_;
     
-    std::size_t number_of_iterations_;
-    std::size_t distribution_;
-    double distribution_param_;
-    double diverse_lambda_;
-    std::size_t m_in_mbest_; 
+    UncertaintyParameter param_;
     bool isMAP_;
     
     boost::mt19937 rng_;

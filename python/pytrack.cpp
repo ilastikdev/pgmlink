@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../include/pgmlink/tracking.h"
+#include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/field_of_view.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
@@ -31,13 +32,12 @@ vector<vector<Event> > pythonChaingraphTracking(ChaingraphTracking& tr, TraxelSt
 	return result;
 }
 
-vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
-                        size_t number_of_iterations=1) {
+vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates) {
 	vector<vector<vector<Event> > > result = std::vector<std::vector<std::vector<Event> > >(0);
 	// release the GIL
 	Py_BEGIN_ALLOW_THREADS
 	try {
-		result = tr(ts, coordinates, number_of_iterations);
+		result = tr(ts, coordinates);
 	} catch (std::exception& e) {
 		Py_BLOCK_THREADS
 		throw;
@@ -82,7 +82,9 @@ void export_track() {
     ;
 
     class_<ConsTracking>("ConsTracking",
-                         init<int,double,double,string,bool,double,double,double,bool,double,double,bool,double,double, bool, int, double, double, FieldOfView, bool, int, double, double, int, string>(
+    		init<int,double,double,string,bool,double,double,
+    		double,bool,double,double,bool,double,double, bool,
+    		int, double, double, FieldOfView, bool, UncertaintyParameter, string>(
 						args("max_number_objects", "max_neighbor_distance", "division_threshold",
 							"detection_rf_filename", "size_dependent_detection_prob", "forbidden_cost",
 							"ep_gap", "avg_obj_size",
@@ -90,8 +92,7 @@ void export_track() {
 							"division_weight", "transition_weight",
 							"with_divisions",
 							 "disappearance_cost", "appearance_cost", "with_merger_resolution", "number_of_dimensions",
-                             "transition_parameter", "border_width", "fov", "with_constraints","distribution",
-                             "distribution_param","diverse_lambda", "m_in_mbest", "event_vector_dump_filename")))
+                             "transition_parameter", "border_width", "fov", "with_constraints","uncertaintyParameter", "event_vector_dump_filename")))
 	  .def("__call__", &pythonConsTracking)
 	  .def("detections", &ConsTracking::detections)
 	;

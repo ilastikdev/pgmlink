@@ -154,10 +154,7 @@ namespace pgmlink {
 		  double border_width = 0,
 		  FieldOfView fov = FieldOfView(),
 		  bool with_constraints = true,
-		  std::size_t distribution=0,
-		  double distribution_param=1.,
-		  double diverse_lambda=0,
-          std::size_t m_in_mbest=1,
+		  UncertaintyParameter param = UncertaintyParameter(),
           const std::string& event_vector_dump_filename = "none"
   	      )
         : max_number_objects_(max_number_objects),
@@ -179,15 +176,11 @@ namespace pgmlink {
 		border_width_(border_width),
 		fov_(fov),
 		with_constraints_(with_constraints),
-		distribution_(distribution),
-		distribution_param_(distribution_param),
-		diverse_lambda_(diverse_lambda),
-        m_in_mbest_(m_in_mbest),
+    	uncertaintyParam_(param),
         event_vector_dump_filename_(event_vector_dump_filename){}
 		
         std::vector< std::vector< std::vector<Event> > > operator()(TraxelStore& ts,
-                                                TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
-                                                std::size_t number_of_iterations=1);
+                                                TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
 
       /**
        * Get state of detection variables after call to operator().
@@ -216,10 +209,7 @@ namespace pgmlink {
       double border_width_;
       FieldOfView fov_;
       bool with_constraints_;
-      std::size_t distribution_;
-      double distribution_param_;
-      double diverse_lambda_;
-      std::size_t m_in_mbest_;
+      UncertaintyParameter uncertaintyParam_;
       std::string event_vector_dump_filename_;
     };
 }

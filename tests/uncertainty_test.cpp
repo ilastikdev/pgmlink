@@ -22,7 +22,7 @@ using namespace pgmlink;
 using namespace std;
 using namespace boost;
 
-BOOST_AUTO_TEST_CASE( deterministicPerturbAndMAP ) {
+BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
   
 	std::cout << "Constructing HypothesesGraph" << std::endl;
 	std::cout << std::endl;
@@ -66,8 +66,7 @@ BOOST_AUTO_TEST_CASE( deterministicPerturbAndMAP ) {
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
 	add(ts,n32);
 
-	std::cout << "Initialize Conservation tracking" << std::endl;
-	std::cout << std::endl;
+	UncertaintyParameter uparam(10,1,1);//10 iterations, Gumbel distribution, sigma=1
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
@@ -91,11 +90,9 @@ BOOST_AUTO_TEST_CASE( deterministicPerturbAndMAP ) {
 				  0, //border_width for app/disapp costs
 	              fov, //field of view
 	              true, //with_constraints
-	              1, //distribution: Gumbel distribution
-	              1, //distribution_param: sigma
-	              0 // diverse_lambda: no diversity required
+	              uparam
 		  	      );
-	tracking(ts, TimestepIdCoordinateMapPtr(), 10);
+	tracking(ts, TimestepIdCoordinateMapPtr());
 }
 
 
@@ -146,6 +143,8 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
 
+	UncertaintyParameter uparam(2,2,10);//2 iterations, diverse, diverse_lambda=10
+
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
 				  1, // max_number_objects
@@ -168,12 +167,10 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 				  0, //border_width for app/disapp costs
 	              fov, //field of view
 	              true, //with_constraints
-	              0, //distribution
-	              1, //distribution_param
-	              10 // diverse_lambda
+	              uparam
 		  	      );
 	
-	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr(), 2);
+	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
 	int counter = 0;
 	int counter2 = 0;
 	BOOST_CHECK_EQUAL(events.size(),2);
@@ -236,7 +233,7 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
 	add(ts,n21);
 	
-	n22.Id = 22; n22.Timestep = 2; com[0] = 3; com[1] = 1; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0.2;detProb[1]=0.8;
+	n22.Id = 22; n22.Timestep = 2; com[0] = 3; com[1] = 1; com[2] = 3; divProb[0] = 0.8; detProb[0] = 0.2;detProb[1]=0.8;
 	n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["detProb"] = detProb;
 	add(ts,n22);
 	
@@ -247,11 +244,9 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.8;detProb[1]=0.2;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
 	add(ts,n32);
-
-	std::cout << "Initialize Conservation tracking" << std::endl;
-	std::cout << std::endl;
 		
-	int mbest = 3;
+	int mbest = 5;
+	UncertaintyParameter uparam(1,3,mbest);
 	
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
@@ -275,13 +270,10 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 				  0, //border_width for app/disapp costs
 	              fov, //field of view
 	              true, //with_constraints
-	              0, //distribution
-	              1, //distribution_param
-	              0, // diverse_lambda
-	              mbest //m_in_mbest
+	              uparam
 		  	      );
 	
-	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr(), 1);
+	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
 	int counter = 0;
 	int counter2 = 0;
 	BOOST_CHECK_EQUAL(events.size(),mbest);
