@@ -244,14 +244,14 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
 	add(ts,n31);
-	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
+	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.8;detProb[1]=0.2;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
 	add(ts,n32);
 
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
 		
-	int mbest = 2;
+	int mbest = 3;
 	
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
@@ -286,10 +286,10 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	int counter2 = 0;
 	BOOST_CHECK_EQUAL(events.size(),mbest);
 			
-	for(size_t timeStep=0;timeStep<events[0].size() && timeStep<events[1].size();++timeStep){
-		for(size_t factorIndex=0;factorIndex<events[0][timeStep].size()&&factorIndex<events[1][timeStep].size();++factorIndex){
+	for(size_t timeStep=0;timeStep<events[1].size() && timeStep<events[2].size();++timeStep){
+		for(size_t factorIndex=0;factorIndex<events[1][timeStep].size()&&factorIndex<events[2][timeStep].size();++factorIndex){
 		
-			if (events[0][timeStep][factorIndex].type == events[1][timeStep][factorIndex].type){
+			if (events[1][timeStep][factorIndex].type == events[2][timeStep][factorIndex].type){
 				counter++;
 			} else{
 			   counter2++;
