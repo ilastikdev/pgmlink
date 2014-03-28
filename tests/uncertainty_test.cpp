@@ -275,7 +275,6 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	
 	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
 	int counter = 0;
-	int counter2 = 0;
 	BOOST_CHECK_EQUAL(events.size(),mbest);
 			
 	for(size_t timeStep=0;timeStep<events[1].size() && timeStep<events[2].size();++timeStep){
@@ -283,15 +282,11 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 		
 			if (events[1][timeStep][factorIndex].type == events[2][timeStep][factorIndex].type){
 				counter++;
-			} else{
-			   counter2++;
 			}
 		}
 	}
 	
-	BOOST_CHECK_EQUAL(counter,3);
-	BOOST_CHECK_EQUAL(counter2,1);
-	
+	BOOST_CHECK_EQUAL(counter,4);
 }
 
 // EOF

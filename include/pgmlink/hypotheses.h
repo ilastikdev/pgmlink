@@ -112,7 +112,7 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   struct node_active_count {};
   template <typename Graph>
     struct property_map<node_active_count, Graph> {
-	typedef lemon::IterableValueMap< Graph, typename Graph::Node, std::vector<long unsigned int> > type;
+	typedef IterableEditableValueMap< Graph, typename Graph::Node, std::vector<long unsigned int> > type;
     //typedef lemon::IterableIntMap< Graph, typename Graph::Node> type;
     static const std::string name;
   };
@@ -123,7 +123,7 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   struct arc_active_count {};
   template <typename Graph>
     struct property_map<arc_active_count, Graph> {
-	typedef lemon::IterableValueMap< Graph, typename Graph::Arc, std::vector<bool> > type;
+	typedef IterableEditableValueMap< Graph, typename Graph::Arc, std::vector<bool> > type;
     //typedef lemon::IterableIntMap< Graph, typename Graph::Arc> type;
     static const std::string name;
   };
@@ -134,7 +134,7 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   struct division_active_count {};
   template <typename Graph>
     struct property_map<division_active_count, Graph> {
-    typedef lemon::IterableValueMap< Graph, typename Graph::Node, std::vector<bool> > type;
+    typedef IterableEditableValueMap< Graph, typename Graph::Node, std::vector<bool> > type;
     static const std::string name;
   };
   template <typename Graph>

@@ -54,43 +54,57 @@ ConservationTracking::~ConservationTracking() {
        }*/
 }
 
+
+
 double ConservationTracking::forbidden_cost() const {
     return forbidden_cost_;
 }
 
-void ConservationTracking::calculateUncertainty(HypothesesGraph& g){
+void ConservationTracking::printResults(HypothesesGraph& g){
 	//very verbose print of solution
 	property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
 		g.get(arc_active_count());
 	property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
 		g.get(node_active_count());
+	property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
+	        g.get(division_active_count());
 	
 	int c;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
 		c=0;
 		for( std::vector<bool>::const_iterator i = active_arcs_count[a].begin(); i != active_arcs_count[a].end(); ++i){
-			std::cout << *i << ' ';
+			LOG(logDEBUG4) << *i;
 			if (*i) {
 				c++;
 			}
 		}
-		std::cout<<"total = "<<c<<std::endl;
+		LOG(logDEBUG4) << "total= "<<c;
 	}
 	
-	
-    std::cout  << "show nodes "<<std::endl;;
 	for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
 		it != app_node_map_.end(); ++it) {
 		c=0;
 		for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin(); i != active_nodes_count[it->first].end(); ++i){
-			std::cout << *i << ' ';
+			LOG(logDEBUG4) << *i;
 			if (*i>0){
 				c++;
 			}
 		}
-		std::cout<<"total = "<<c<<std::endl;
+		LOG(logDEBUG4) << "total= "<<c<<std::endl;
 	}
-}
+	LOG(logDEBUG4) << "division nodes "<<c<<std::endl;
+		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
+			it != app_node_map_.end(); ++it) {
+			c=0;
+			for( std::vector<bool>::const_iterator i = active_divisions_count[it->first].begin(); i != active_divisions_count[it->first].end(); ++i){
+				LOG(logDEBUG4) << *i<<" ";
+				if (*i>0){
+					c++;
+				}
+			}
+		LOG(logDEBUG4) << "total= "<<c<<std::endl;
+		}
+	}
 
 void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marray::Marray<ValueType>* defaultOffset){
 
@@ -121,9 +135,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		ViewFunctionType view(*model,factorId,1.0);
 		const typename SubGmType::FunctionIdentifier funcId = PertMod.addFunction(view);
 		
-		PertMod.addFactor(funcId,model->operator[](factorId).variableIndicesBegin(),model->operator[](factorId).variableIndicesEnd());
+		PertMod.addFactor(funcId,(*model)[factorId].variableIndicesBegin(),(*model)[factorId].variableIndicesEnd());
 		
-		deterministic_offset.push_back(marray::Vector<ValueType>((model->operator[](factorId)).numberOfLabels(0),0));
+		deterministic_offset.push_back(marray::Vector<ValueType>((*model)[factorId].numberOfLabels(0),0));
 		
     }
     
@@ -135,7 +149,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		}
 	}
     
-	//m-best: if pertubation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
+	//m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
 	size_t numberOfSolutions = 1;
 	if (param_.distributionId==3){
 		numberOfSolutions = param_.distributionParam;
@@ -162,10 +176,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		conclude(*graph);
 	}
 	
-	//deterministic & non-deterministic pertubation
+	//deterministic & non-deterministic perturbation
 	for (size_t iterStep=1;iterStep<param_.numberOfIterations;++iterStep){
 		
-		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare pertubation number " <<iterStep;
+		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
 		
 		//initialize new model
 		SubGmType PertMod2 = SubGmType(model->space());
@@ -175,7 +189,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		//prepare offset for each factor
 		for(size_t factorId=0; factorId<nOF; ++factorId) {
 			
-			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &model->operator[](factorId);
+			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &(*model)[factorId];
 			
 			if (factor->numberOfVariables()!=1){
 				//only perturb unaries
@@ -203,7 +217,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		
 		//iterate over factors in order to add a perturbed view to the new model
 		for(size_t factorId=0; factorId<nOF; factorId++) {
-			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &model->operator[](factorId);
+			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &(*model)[factorId];
 			if (factor->numberOfVariables()!=1){
 				//perturb only unaries. This is not a unary.
 				ViewFunctionType view(*model,factorId,1.0);
@@ -237,7 +251,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		LOG(logINFO) << "conclude";
 		conclude(*graph);
 	}
-	calculateUncertainty(*graph);
+	printResults(*graph);
 }
 
 
@@ -251,7 +265,7 @@ double ConservationTracking::generateRandomOffset(marray::Marray<ValueType>* det
 				//distribution parameter: beta
 				return param_.distributionParam*log(-log(random_uniform_()));
 		case 2: //deterministic offset
-				return determOffset->operator()(k); //diverse_lambda
+				return (*determOffset)(k); //diverse_lambda
 		default: //
 				return 0;
 	}
@@ -277,25 +291,10 @@ void ConservationTracking::formulate(const HypothesesGraph& hypotheses) {
     if (with_divisions_) {
         add_division_nodes(*graph);
     }
-    /*pgm::OpengmModelDeprecated::ogmGraphicalModel* model = pgm_->Model();
-	*/
+
     LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
     add_finite_factors(*graph);
     LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
-    /*typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-            pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizer;
-    cplex_optimizer::Parameter param;
-    param.verbose_ = true;
-    param.integerConstraint_ = true;
-    param.epGap_ = ep_gap_;
-    LOG(logDEBUG) << "ConservationTracking::formulate ep_gap = " << param.epGap_;
-
-    optimizer_ = new cplex_optimizer(*model, param);
-
-    LOG(logDEBUG) << "ConservationTracking::formulate: add_constraints";
-    if (with_constraints_) {
-        add_constraints(*graph);
-    }*/
 
     LOG(logINFO) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
     LOG(logINFO) << "number_of_appearance_nodes_ = " << number_of_appearance_nodes_;
@@ -384,8 +383,6 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
 	}
 	
 	
-	int iterStep = active_nodes_count[app_node_map_.begin()->first].size();
-	
 	//initialize node counts by 0
 	for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
 		it != app_node_map_.end(); ++it) {
@@ -394,14 +391,10 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
             for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
                     tr_n_it != traxel_nodes.end(); ++tr_n_it) {
 				HypothesesGraph::Node n = *tr_n_it;
-				std::vector<long unsigned int> anc = active_nodes_count[n];		
-				anc.resize(iterStep+1);
-				active_nodes_count.set(n,anc);
+				active_nodes_count.get_value(n).push_back(0);
 			}
 		}else {
-			std::vector<long unsigned int> anc = active_nodes_count[it->first];		
-			anc.resize(iterStep+1);
-			active_nodes_count.set(it->first,anc);
+			active_nodes_count.get_value(it->first).push_back(0);
 		}
 	}
 
@@ -413,14 +406,10 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
             for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
                     tr_n_it != traxel_nodes.end(); ++tr_n_it) {
 				HypothesesGraph::Node n = *tr_n_it;
-				std::vector<bool> dac = active_divisions_count[n];
-				dac.resize(iterStep+1);
-				active_divisions_count.set(n,dac);
+				active_divisions_count.get_value(n).push_back(0);
 			}
 		} else {
-			std::vector<bool> dac = active_divisions_count[it->first];
-			dac.resize(iterStep+1);
-			active_divisions_count.set(it->first, dac);
+			active_divisions_count.get_value(it->first).push_back(0);
 		}
 	}
 	
@@ -428,10 +417,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
 	//initialize  arc counts by 0
 	for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
 		active_arcs.set(a, false);
-		
-		std::vector<bool> aac = active_arcs_count[a];
-		aac.resize(iterStep+1);
-		active_arcs_count.set(a,aac);
+		active_arcs_count.get_value(a).push_back(0);
 	}
 	
     // write state after inference into 'active'-property maps
@@ -446,10 +432,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                 HypothesesGraph::Node n = *tr_n_it;
                 
 				active_nodes.set(n, solution_[it->second]);
-				
-				std::vector<long unsigned int> anc = active_nodes_count[n];
-				anc[iterStep]=solution_[it->second];
-				active_nodes_count.set(n,anc);
+				active_nodes_count.get_value(n)[iterStep]=solution_[it->second];
             }
             // set state of tracklet internal arcs
             std::vector<int> arc_ids = tracklet_arc_id_map[it->first];
@@ -460,9 +443,8 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                 if (solution_[it->second] > 0) {
 					
 					active_arcs.set(a, true);
-                    std::vector<bool> aac = active_arcs_count[a];
-					aac[iterStep]=true;
-					active_arcs_count.set(a,aac);
+
+					active_arcs_count.get_value(a)[iterStep]=true;
                     
                     assert(active_nodes[g.source(a)] == solution_[it->second]
                             && "tracklet internal arcs must have the same flow as their connected nodes");
@@ -473,9 +455,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
         } else {
 			
 			active_nodes.set(it->first, solution_[it->second]);
-			std::vector<long unsigned int> anc = active_nodes_count[it->first];
-			anc[iterStep]=solution_[it->second];
-			active_nodes_count.set(it->first,anc);
+			active_nodes_count.get_value(it->first)[iterStep]=solution_[it->second];
         }
     }
 
@@ -494,9 +474,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                     if (active_nodes[n] == 0) {
 							
 						active_nodes.set(n, solution_[it->second]);
-						std::vector<long unsigned int> anc = active_nodes_count[n];
-						anc[iterStep]=solution_[it->second];
-						active_nodes_count.set(n,anc);
+						active_nodes_count.get_value(n)[iterStep]=solution_[it->second];
                     
                     } else {
                         assert(active_nodes[n] == solution_[it->second]);
@@ -510,9 +488,8 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                     if (solution_[it->second] > 0) {
 						
 						active_arcs.set(a, true);
-						std::vector<bool> aac = active_arcs_count[a];
-						aac[iterStep]=true;
-						active_arcs_count.set(a,aac);
+
+						active_arcs_count.get_value(a)[iterStep]=true;
                         
                         assert(active_nodes[g.source(a)] == solution_[it->second]
                                 && "tracklet internal arcs must have the same flow as their connected nodes");
@@ -524,9 +501,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
 				
 				if (active_nodes[it->first] == 0) {
 					active_nodes.set(it->first, solution_[it->second]);
-					std::vector<long unsigned int> anc = active_nodes_count[it->first];
-					anc[iterStep]=solution_[it->second];
-					active_nodes_count.set(it->first,anc);
+					active_nodes_count.get_value(it->first)[iterStep]=solution_[it->second];
 					
                 } else{
                     assert(active_nodes[it->first] == solution_[it->second]);
@@ -540,15 +515,11 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
         if (solution_[it->second] >= 1) {
             if (with_tracklets_) {
 				active_arcs.set(g.arcFromId((traxel_arc_id_map[it->first])), true);
-				std::vector<bool> aac = active_arcs_count[g.arcFromId((traxel_arc_id_map[it->first]))];
-				aac[iterStep]=true;
-				active_arcs_count.set(g.arcFromId((traxel_arc_id_map[it->first])),aac);
+
+				active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[it->first]))).push_back(true);
             } else {
 				active_arcs.set(it->first, true);
-				std::vector<bool> aac = active_arcs_count[it->first];
-				aac[iterStep]=true;
-				active_arcs_count.set(it->first,aac);
-		
+				active_arcs_count.get_value(it->first)[iterStep]=true;
             }
         }
     }
@@ -561,14 +532,10 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                     // set division property for the last node in the tracklet
 					HypothesesGraph::Node n = tracklet2traxel_node_map_[it->first].back();
                     division_nodes.set(n, true);
-					std::vector<bool> dac = active_divisions_count[n];
-					dac[iterStep]=true;
-					active_divisions_count.set(n, dac);
+                    active_divisions_count.get_value(n)[iterStep]=true;
                 } else {
                     division_nodes.set(it->first, true);
-					std::vector<bool> dac = active_divisions_count[it->first];
-					dac[iterStep]=true;
-					active_divisions_count.set(it->first, dac);
+                    active_divisions_count.get_value(it->first)[iterStep]=true;
                 }
             }
         }

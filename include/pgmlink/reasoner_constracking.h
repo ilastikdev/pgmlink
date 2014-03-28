@@ -54,6 +54,11 @@ class UncertaintyParameter{
 	UncertaintyParameter(){
 		numberOfIterations=1;
 		distributionId = 0;
+		//distributionId table:
+		//0: Gauss normal
+		//1: Gumbel Perturb&MAP
+		//2: diverse-m-best deterministic
+		//3: diverse-m-best cplex
 		distributionParam = 0;
 	}
 	UncertaintyParameter(std::size_t nOI,std::size_t dI,double dP){
@@ -63,6 +68,8 @@ class UncertaintyParameter{
 	}
 
 };
+
+
 
 class Traxel;
 
@@ -163,7 +170,7 @@ class ConservationTracking : public Reasoner {
     void add_transition_nodes( const HypothesesGraph& );
     void add_division_nodes(const HypothesesGraph& );
     void add_finite_factors( const HypothesesGraph& );
-    void calculateUncertainty( HypothesesGraph&);
+    void printResults( HypothesesGraph&);
     double generateRandomOffset(marray::Marray<ValueType>* determOffset ,int k);
     
     // helper
