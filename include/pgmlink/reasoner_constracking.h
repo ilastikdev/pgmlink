@@ -45,15 +45,19 @@ typedef opengm::LPCplex
 typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType; 
 typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;    
 
+enum DistrId {
+	GaussianPertubation,PerturbAndMAP,DiverseMbest,MbestCPLEX
+};
+
 class UncertaintyParameter{
 	public:
 	std::size_t numberOfIterations;
-	std::size_t distributionId;
+	DistrId distributionId;
 	double distributionParam;
 
 	UncertaintyParameter(){
 		numberOfIterations=1;
-		distributionId = 0;
+		DistrId distributionId=GaussianPertubation;
 		//distributionId table:
 		//0: Gauss normal
 		//1: Gumbel Perturb&MAP
@@ -61,16 +65,13 @@ class UncertaintyParameter{
 		//3: diverse-m-best cplex
 		distributionParam = 0;
 	}
-	UncertaintyParameter(std::size_t nOI,std::size_t dI,double dP){
+	UncertaintyParameter(std::size_t nOI,DistrId dI,double dP){
 		numberOfIterations=nOI;
 		distributionId = dI;
 		distributionParam = dP;
 	}
 
 };
-
-
-
 class Traxel;
 
 class ConservationTracking : public Reasoner {

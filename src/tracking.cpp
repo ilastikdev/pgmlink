@@ -381,7 +381,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 			);
 
 	size_t totalNumberOfSolutions = uncertaintyParam_.numberOfIterations;
-	if (uncertaintyParam_.distributionId==3){
+	if (uncertaintyParam_.distributionId==MbestCPLEX){
 		totalNumberOfSolutions = uncertaintyParam_.distributionParam;
 	}
 

@@ -55,7 +55,6 @@ ConservationTracking::~ConservationTracking() {
 }
 
 
-
 double ConservationTracking::forbidden_cost() const {
     return forbidden_cost_;
 }
@@ -126,7 +125,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 	pgm::OpengmModelDeprecated::ogmGraphicalModel* model = pgm_->Model();
 	size_t nOF = model->numberOfFactors();
 	
-	
+
 	std::vector<marray::Marray<ValueType> > deterministic_offset;
 	
 	SubGmType PertMod = SubGmType(model[0].space());
@@ -151,7 +150,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
     
 	//m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
 	size_t numberOfSolutions = 1;
-	if (param_.distributionId==3){
+	if (param_.distributionId==MbestCPLEX){
 		numberOfSolutions = param_.distributionParam;
 	}
 
@@ -193,6 +192,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 			
 			if (factor->numberOfVariables()!=1){
 				//only perturb unaries
+				//LOG(logINFO)<<"noV"<<factor->numberOfVariables();
 				offset_vector.push_back(marray::Marray<ValueType>());
 				
 			} else {
@@ -201,7 +201,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 				marray::Marray<ValueType> offset(off.begin(),off.end(),0);
 				
 				//add offset on label that was assigned in the last solution
-				if (param_.distributionId==2) {
+				if (param_.distributionId==DiverseMbest) {
 					deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=param_.distributionParam;
 				}
 				if (defaultOffset==0){
@@ -257,16 +257,16 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 
 double ConservationTracking::generateRandomOffset(marray::Marray<ValueType>* determOffset ,int k) {
 	switch (param_.distributionId) {
-		case 0: //normal distribution
+		case GaussianPertubation: //normal distribution
 				//distribution parameter: sigma
 				return random_normal_();
 				
-		case 1: //Gumbel distribution
+		case PerturbAndMAP: //Gumbel distribution
 				//distribution parameter: beta
 				return param_.distributionParam*log(-log(random_uniform_()));
-		case 2: //deterministic offset
+		case DiverseMbest: //deterministic offset
 				return (*determOffset)(k); //diverse_lambda
-		default: //
+		case MbestCPLEX: //
 				return 0;
 	}
 }
