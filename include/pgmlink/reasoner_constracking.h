@@ -53,7 +53,7 @@ class UncertaintyParameter{
 	public:
 	std::size_t numberOfIterations;
 	DistrId distributionId;
-	double distributionParam;
+	std::vector<double> distributionParam;
 
 	UncertaintyParameter(){
 		numberOfIterations=1;
@@ -63,13 +63,19 @@ class UncertaintyParameter{
 		//1: Gumbel Perturb&MAP
 		//2: diverse-m-best deterministic
 		//3: diverse-m-best cplex
-		distributionParam = 0;
+		distributionParam = std::vector<double>(1,0);
 	}
-	UncertaintyParameter(std::size_t nOI,DistrId dI,double dP){
+	UncertaintyParameter(std::size_t nOI,DistrId dI,std::vector<double> dP){
 		numberOfIterations=nOI;
 		distributionId = dI;
 		distributionParam = dP;
 	}
+	//constructor for single-parameter distributions
+	UncertaintyParameter(std::size_t nOI,DistrId dI,double dP){
+			numberOfIterations=nOI;
+			distributionId = dI;
+			distributionParam = std::vector<double>(1,dP);
+		}
 
 };
 class Traxel;
@@ -120,7 +126,7 @@ class ConservationTracking : public Reasoner {
 		  diverse_lambda_(diverse_lambda),
 		  m_in_mbest_(m_in_mbest),  */
           isMAP_(true),
-          random_normal_(rng_,boost::normal_distribution<>(0, param.distributionParam)),
+          random_normal_(rng_,boost::normal_distribution<>(0, 1)),
 		  random_uniform_(rng_,boost::uniform_real<>(0,1))
 
      {};
@@ -158,7 +164,7 @@ class ConservationTracking : public Reasoner {
     // copy and assingment have to be implemented, yet
     
     ConservationTracking(const ConservationTracking&):
-		random_normal_(rng_,boost::normal_distribution<>(0, param_.distributionParam)),
+		random_normal_(rng_,boost::normal_distribution<>(0, 1)),
 		random_uniform_(rng_,boost::uniform_real<>(0, 1))
 		{};
     ConservationTracking& operator=(const ConservationTracking&) { return *this;};
@@ -172,7 +178,7 @@ class ConservationTracking : public Reasoner {
     void add_division_nodes(const HypothesesGraph& );
     void add_finite_factors( const HypothesesGraph& );
     void printResults( HypothesesGraph&);
-    double generateRandomOffset(marray::Marray<ValueType>* determOffset ,int k);
+    double generateRandomOffset(size_t parameterIndex=0,marray::Marray<ValueType>* determOffset = 0,int k=0);
     
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);

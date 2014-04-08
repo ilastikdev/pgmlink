@@ -151,7 +151,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 	//m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
 	size_t numberOfSolutions = 1;
 	if (param_.distributionId==MbestCPLEX){
-		numberOfSolutions = param_.distributionParam;
+		numberOfSolutions = param_.numberOfIterations;
 	}
 
 	optimizer_ = new cplex_optimizer(PertMod, param, numberOfSolutions);
@@ -174,12 +174,14 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		}
 		conclude(*graph);
 	}
-	
+	size_t numberOfIterations = param_.numberOfIterations;
+	if (param_.distributionId==MbestCPLEX){
+		numberOfIterations = 1;
+	}
 	//deterministic & non-deterministic perturbation
-	for (size_t iterStep=1;iterStep<param_.numberOfIterations;++iterStep){
+	for (size_t iterStep=1;iterStep<numberOfIterations;++iterStep){
 		
 		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
-		
 		//initialize new model
 		SubGmType PertMod2 = SubGmType(model->space());
 		
@@ -189,25 +191,46 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		for(size_t factorId=0; factorId<nOF; ++factorId) {
 			
 			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &(*model)[factorId];
+
+			size_t nOV = factor->numberOfVariables();
+
+			vector<int> off;
+			for (size_t ind=0;ind<nOV;ind++){
+				off.push_back(factor->numberOfLabels(ind));
+			}
 			
-			if (factor->numberOfVariables()!=1){
-				//only perturb unaries
-				LOG(logINFO)<<"noV"<<factor->numberOfVariables();
-				LOG(logINFO)<<"noL"<<factor->numberOfLabels(0);
+			if (nOV>2){
+				//only perturb factors with one or two variables
+
 				offset_vector.push_back(marray::Marray<ValueType>());
-				
+			} else if (nOV==2){
+				//TODO: make sure this is really a dis/app-factor
+				marray::Marray<ValueType> offset(off.begin(),off.end(),0);
+				LOG(logINFO)<<(offset).size()<<" , "<<factor->size();
+				LOG(logINFO)<<(offset).dimension()<<" , "<<factor->numberOfVariables();
+				for(size_t disNum=0;disNum<factor->numberOfLabels(0);disNum++){
+					for(size_t appNum=0;appNum<factor->numberOfLabels(1);appNum++){
+						if(appNum>0 && disNum>0 && appNum!=disNum) continue;
+
+						int maxnum = max(disNum,appNum);
+						LOG(logINFO)<<param_.distributionParam[1];
+						LOG(logINFO)<<maxnum<<disNum<<appNum;
+						offset(disNum,appNum) = generateRandomOffset(maxnum+1);
+						LOG(logINFO)<<maxnum<<disNum<<appNum;
+					}
+				}
+				offset_vector.push_back(offset);
 			} else {
 				int nOL = factor->numberOfLabels(0);
-				vector<int> off(1,nOL);
 				marray::Marray<ValueType> offset(off.begin(),off.end(),0);
 				
 				//add offset on label that was assigned in the last solution
 				if (param_.distributionId==DiverseMbest) {
-					deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=param_.distributionParam;
+					deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=param_.distributionParam[0];
 				}
 				if (defaultOffset==0){
 					for (int k=0;k<nOL;++k){
-						offset(k) = generateRandomOffset(&deterministic_offset[factorId],  k);
+						offset(k) = generateRandomOffset(0,&deterministic_offset[factorId],  k);
 					}
 				} else {
 					offset = *defaultOffset;
@@ -221,7 +244,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &(*model)[factorId];
 			if (factor->numberOfVariables()!=1){
 				//perturb only unaries. This is not a unary.
-				ViewFunctionType view(*model,factorId,1.0);
+
+				ViewFunctionType view(*model,factorId,1.0,&offset_vector[factorId]);
 				const typename SubGmType::FunctionIdentifier funcId = PertMod2.addFunction(view);
 				PertMod2.addFactor(funcId,factor->variableIndicesBegin(),factor->variableIndicesEnd());
 			} else {
@@ -229,7 +253,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 				const typename SubGmType::FunctionIdentifier funcId = PertMod2.addFunction(view);
 				PertMod2.addFactor(funcId,factor->variableIndicesBegin(),factor->variableIndicesEnd());
 			}
-			
 		}
 		
 		LOG(logDEBUG4) << "information about perturbed model: " << PertMod2.numberOfFactors();
@@ -256,17 +279,19 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 }
 
 
-double ConservationTracking::generateRandomOffset(marray::Marray<ValueType>* determOffset ,int k) {
+double ConservationTracking::generateRandomOffset(size_t parameterIndex, marray::Marray<ValueType>* determOffset ,int k) {
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
 				//distribution parameter: sigma
-				return random_normal_();
+				return random_normal_()*param_.distributionParam[parameterIndex];
 				
 		case PerturbAndMAP: //Gumbel distribution
 				//distribution parameter: beta
-				return param_.distributionParam*log(-log(random_uniform_()));
+				return param_.distributionParam[parameterIndex]*log(-log(random_uniform_()));
 		case DiverseMbest: //deterministic offset
-				return (*determOffset)(k); //diverse_lambda
+				if (parameterIndex==0)
+					return (*determOffset)(k); //diverse_lambda
+				return param_.distributionParam[parameterIndex]*log(-log(random_uniform_()));
 		default: //
 				return 0;
 	}
