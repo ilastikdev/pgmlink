@@ -57,7 +57,7 @@ class UncertaintyParameter{
 
 	UncertaintyParameter(){
 		numberOfIterations=1;
-		DistrId distributionId=GaussianPertubation;
+		distributionId=GaussianPertubation;
 		//distributionId table:
 		//0: Gauss normal
 		//1: Gumbel Perturb&MAP

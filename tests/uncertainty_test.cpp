@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
 	add(ts,n32);
 
-	UncertaintyParameter uparam(10,1,1);//10 iterations, Gumbel distribution, sigma=1
+	UncertaintyParameter uparam(10,PerturbAndMAP,1);//10 iterations, Gumbel distribution, sigma=1
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
 
-	UncertaintyParameter uparam(2,2,10);//2 iterations, diverse, diverse_lambda=10
+	UncertaintyParameter uparam(2,DiverseMbest,10);//2 iterations, diverse, diverse_lambda=10
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	add(ts,n32);
 		
 	int mbest = 5;
-	UncertaintyParameter uparam(1,3,mbest);
+	UncertaintyParameter uparam(1,MbestCPLEX,mbest);
 	
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(

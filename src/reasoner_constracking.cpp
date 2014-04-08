@@ -192,7 +192,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 			
 			if (factor->numberOfVariables()!=1){
 				//only perturb unaries
-				//LOG(logINFO)<<"noV"<<factor->numberOfVariables();
+				LOG(logINFO)<<"noV"<<factor->numberOfVariables();
+				LOG(logINFO)<<"noL"<<factor->numberOfLabels(0);
 				offset_vector.push_back(marray::Marray<ValueType>());
 				
 			} else {
@@ -266,7 +267,7 @@ double ConservationTracking::generateRandomOffset(marray::Marray<ValueType>* det
 				return param_.distributionParam*log(-log(random_uniform_()));
 		case DiverseMbest: //deterministic offset
 				return (*determOffset)(k); //diverse_lambda
-		case MbestCPLEX: //
+		default: //
 				return 0;
 	}
 }
