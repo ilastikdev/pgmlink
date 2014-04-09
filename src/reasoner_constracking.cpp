@@ -105,7 +105,75 @@ void ConservationTracking::printResults(HypothesesGraph& g){
 		}
 	}
 
-void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marray::Marray<ValueType>* defaultOffset){
+const marray::Marray<ValueType> ConservationTracking::perturbFactor(const factorType* factor,size_t factorId, std::vector<marray::Marray<ValueType> >* detoffset){
+	size_t nOV = factor->numberOfVariables();
+
+	if (nOV>2){
+		//only perturb factors with one or two variables
+		return marray::Marray<ValueType>();}
+
+	vector<int> off;
+	for (size_t ind=0;ind<nOV;ind++){
+		off.push_back(factor->numberOfLabels(ind));
+	}
+
+	if (nOV==2){
+		//This is potentially a factor consisting of an appearance and a disappearance-variable.
+		//Check if this is the case, and if so perturb depending on the number of cells
+
+		marray::Marray<ValueType> offset(off.begin(),off.end(),0);
+		LOG(logDEBUG4)<<(offset).size()<<" , "<<factor->size();
+		LOG(logDEBUG4)<<(offset).dimension()<<" , "<<factor->numberOfVariables();
+
+		//Make sure this is really a dis/app-factor:
+		//Look for variable indices: are these app/dis-vars?
+		size_t indexVar1 = factor->variableIndex(0);
+		size_t indexVar2 = factor->variableIndex(1);
+
+		// which is the appearance node, which is the disappearance node?
+		int disIndex = -1, appIndex = -1;
+		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();it != app_node_map_.end(); ++it) {
+			size_t indexVar = it->second;
+			if (indexVar == indexVar1 || indexVar == indexVar2){
+				disIndex = indexVar;
+				break;}
+		}
+		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = dis_node_map_.begin();it != dis_node_map_.end(); ++it) {
+			size_t indexVar = it->second;
+			if (indexVar == indexVar1 || indexVar == indexVar2){
+				appIndex = indexVar;
+				break;}
+		}
+
+		if (disIndex==-1 || appIndex==-1){
+			//This isn't a dis/app-factor, as either a disappearance or an appearance node is missing
+			return marray::Marray<ValueType>();
+		}
+
+		LOG(logDEBUG4)<<"This is a d/a-node";
+		//This is a dis/app-node, perturb it with individual sigma
+		for(size_t disNum=0;disNum<factor->numberOfLabels(0);disNum++){
+			for(size_t appNum=0;appNum<factor->numberOfLabels(1);appNum++){
+				if(appNum>0 && disNum>0 && appNum!=disNum) continue;
+
+				int maxnum = max(disNum,appNum);
+				offset(disNum,appNum) = generateRandomOffset(maxnum+1);
+			}
+		}
+		return offset;
+	} else {
+		int nOL = factor->numberOfLabels(0);
+		marray::Marray<ValueType> offset(off.begin(),off.end(),0);
+
+		for (int k=0;k<nOL;++k){
+			offset(k) = generateRandomOffset(0,&(*detoffset)[factorId],  k);
+		}
+		return offset;
+	}
+
+}
+
+void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	HypothesesGraph *graph;
 	if (with_tracklets_) {
@@ -115,7 +183,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 	} else {
 	  graph = &hypotheses;
 	}
-	
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 	formulate(*graph);
 	cplex_optimizer::Parameter param;
@@ -185,67 +252,28 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, marra
 		//initialize new model
 		SubGmType PertMod2 = SubGmType(model->space());
 		
+		//store offsets to keep them in memory
 		std::vector<marray::Marray<ValueType> > offset_vector;
 		
 		//prepare offset for each factor
 		for(size_t factorId=0; factorId<nOF; ++factorId) {
-			
-			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &(*model)[factorId];
+			const factorType* factor = &(*model)[factorId];
 
-			size_t nOV = factor->numberOfVariables();
-
-			vector<int> off;
-			for (size_t ind=0;ind<nOV;ind++){
-				off.push_back(factor->numberOfLabels(ind));
+			//add offset on label that was assigned in the last solution
+			if (param_.distributionId==DiverseMbest) {
+				deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=param_.distributionParam[0];
 			}
-			
-			if (nOV>2){
-				//only perturb factors with one or two variables
-
-				offset_vector.push_back(marray::Marray<ValueType>());
-			} else if (nOV==2){
-				//TODO: make sure this is really a dis/app-factor
-				marray::Marray<ValueType> offset(off.begin(),off.end(),0);
-				LOG(logINFO)<<(offset).size()<<" , "<<factor->size();
-				LOG(logINFO)<<(offset).dimension()<<" , "<<factor->numberOfVariables();
-				for(size_t disNum=0;disNum<factor->numberOfLabels(0);disNum++){
-					for(size_t appNum=0;appNum<factor->numberOfLabels(1);appNum++){
-						if(appNum>0 && disNum>0 && appNum!=disNum) continue;
-
-						int maxnum = max(disNum,appNum);
-						LOG(logINFO)<<param_.distributionParam[1];
-						LOG(logINFO)<<maxnum<<disNum<<appNum;
-						offset(disNum,appNum) = generateRandomOffset(maxnum+1);
-						LOG(logINFO)<<maxnum<<disNum<<appNum;
-					}
-				}
-				offset_vector.push_back(offset);
-			} else {
-				int nOL = factor->numberOfLabels(0);
-				marray::Marray<ValueType> offset(off.begin(),off.end(),0);
-				
-				//add offset on label that was assigned in the last solution
-				if (param_.distributionId==DiverseMbest) {
-					deterministic_offset[factorId](solution_[factor->variableIndex(0)])+=param_.distributionParam[0];
-				}
-				if (defaultOffset==0){
-					for (int k=0;k<nOL;++k){
-						offset(k) = generateRandomOffset(0,&deterministic_offset[factorId],  k);
-					}
-				} else {
-					offset = *defaultOffset;
-				}
-				offset_vector.push_back(offset);
-			}
+			offset_vector.push_back(perturbFactor(factor,factorId,&deterministic_offset));
 		}
-		
+
 		//iterate over factors in order to add a perturbed view to the new model
 		for(size_t factorId=0; factorId<nOF; factorId++) {
-			const pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType* factor = &(*model)[factorId];
-			if (factor->numberOfVariables()!=1){
-				//perturb only unaries. This is not a unary.
+			const factorType* factor = &(*model)[factorId];
 
-				ViewFunctionType view(*model,factorId,1.0,&offset_vector[factorId]);
+			if (offset_vector[factorId].size()==0){
+				//this is neither a unary nor a dis/app-node
+				//TODO: The size-thing is hacky, solve this more elegantly
+				ViewFunctionType view(*model,factorId,1.0); // no offset
 				const typename SubGmType::FunctionIdentifier funcId = PertMod2.addFunction(view);
 				PertMod2.addFactor(funcId,factor->variableIndicesBegin(),factor->variableIndicesEnd());
 			} else {

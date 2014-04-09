@@ -42,6 +42,9 @@ typedef opengm::LPCplex
 			pgm::OpengmModelDeprecated::ogmAccumulator		>
     cplex_optimizer;
 
+
+typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType factorType;
+
 typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType; 
 typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;    
 
@@ -135,7 +138,7 @@ class ConservationTracking : public Reasoner {
     virtual void formulate( const HypothesesGraph& );
     virtual void infer();
     virtual void conclude( HypothesesGraph& );
-    virtual void perturbedInference( HypothesesGraph&, marray::Marray<ValueType>* defaultOffset = 0);
+    virtual void perturbedInference( HypothesesGraph&);
     
     double forbidden_cost() const;
     bool with_constraints() const;
@@ -179,7 +182,8 @@ class ConservationTracking : public Reasoner {
     void add_finite_factors( const HypothesesGraph& );
     void printResults( HypothesesGraph&);
     double generateRandomOffset(size_t parameterIndex=0,marray::Marray<ValueType>* determOffset = 0,int k=0);
-    
+    const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
+
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
 

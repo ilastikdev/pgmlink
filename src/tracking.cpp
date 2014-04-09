@@ -383,8 +383,8 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 	size_t totalNumberOfSolutions = uncertaintyParam_.numberOfIterations;
 
 	if (totalNumberOfSolutions>1) {
-		
-    
+
+
 		cout << "-> perturbed Inference" << endl;
 		pgm.perturbedInference(*graph);
 		cout << "-> finished perturbed Inference" << endl;
@@ -405,7 +405,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
     
     std::vector < std::vector< std::vector<Event> > > all_ev(totalNumberOfSolutions);
     for (size_t i=0;i<totalNumberOfSolutions;++i){
-		all_ev[i] = *events(*graph,i); // TODO iterate over iterationSteps, add parameter for backward compatibility
+		all_ev[i] = *events(*graph,i);
 	}
 
 	std::vector< std::vector<Event> >* ev = &all_ev[0];
