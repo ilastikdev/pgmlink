@@ -127,19 +127,19 @@ const marray::Marray<ValueType> ConservationTracking::perturbFactor(const factor
 
 		//Make sure this is really a dis/app-factor:
 		//Look for variable indices: are these app/dis-vars?
-		size_t indexVar1 = factor->variableIndex(0);
-		size_t indexVar2 = factor->variableIndex(1);
+		int indexVar1 = factor->variableIndex(0);
+		int indexVar2 = factor->variableIndex(1);
 
 		// which is the appearance node, which is the disappearance node?
 		int disIndex = -1, appIndex = -1;
 		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();it != app_node_map_.end(); ++it) {
-			size_t indexVar = it->second;
+			int indexVar = it->second;
 			if (indexVar == indexVar1 || indexVar == indexVar2){
 				disIndex = indexVar;
 				break;}
 		}
 		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = dis_node_map_.begin();it != dis_node_map_.end(); ++it) {
-			size_t indexVar = it->second;
+			int indexVar = it->second;
 			if (indexVar == indexVar1 || indexVar == indexVar2){
 				appIndex = indexVar;
 				break;}

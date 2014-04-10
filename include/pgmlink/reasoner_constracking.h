@@ -10,6 +10,7 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/reasoner.h"
 #include "pgmlink/feature.h"
+#include "pgmlink/uncertaintyParameter.h"
 #include "opengm/opengm.hxx"
 #include "opengm/graphicalmodel/graphicalmodel.hxx"
 #include "opengm/functions/modelviewfunction.hxx"
@@ -48,39 +49,7 @@ typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType factorType;
 typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType; 
 typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;    
 
-enum DistrId {
-	GaussianPertubation,PerturbAndMAP,DiverseMbest,MbestCPLEX
-};
 
-class UncertaintyParameter{
-	public:
-	std::size_t numberOfIterations;
-	DistrId distributionId;
-	std::vector<double> distributionParam;
-
-	UncertaintyParameter(){
-		numberOfIterations=1;
-		distributionId=GaussianPertubation;
-		//distributionId table:
-		//0: Gauss normal
-		//1: Gumbel Perturb&MAP
-		//2: diverse-m-best deterministic
-		//3: diverse-m-best cplex
-		distributionParam = std::vector<double>(1,0);
-	}
-	UncertaintyParameter(std::size_t nOI,DistrId dI,std::vector<double> dP){
-		numberOfIterations=nOI;
-		distributionId = dI;
-		distributionParam = dP;
-	}
-	//constructor for single-parameter distributions
-	UncertaintyParameter(std::size_t nOI,DistrId dI,double dP){
-			numberOfIterations=nOI;
-			distributionId = dI;
-			distributionParam = std::vector<double>(1,dP);
-		}
-
-};
 class Traxel;
 
 class ConservationTracking : public Reasoner {

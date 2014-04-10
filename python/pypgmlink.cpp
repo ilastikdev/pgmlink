@@ -9,6 +9,7 @@
 
 //forward declarations
 void export_field_of_view();
+void export_uncertaintyParameter();
 void export_hypotheses();
 void export_track();
 void export_traxels();
@@ -19,6 +20,7 @@ BOOST_PYTHON_MODULE( pgmlink )
 {
 	vigra::import_vigranumpy();
     export_field_of_view();
+    export_uncertaintyParameter();
     export_hypotheses();
     export_track();
     export_traxels();
