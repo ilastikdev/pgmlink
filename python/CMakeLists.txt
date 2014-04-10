@@ -29,6 +29,7 @@ include_directories( SYSTEM ${Boost_INCLUDE_DIRS} ${PYTHON_INCLUDE_DIRS} ${PYTHO
 # pypgmlink
 set(PYPGMLINK_SRCS
   pyfield_of_view.cpp
+  pyUncertaintyParameter.cpp
   pyhypotheses.cpp
   pypgmlink.cpp
   pytrack.cpp
