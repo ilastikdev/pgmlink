@@ -15,4 +15,9 @@ void export_uncertaintyParameter() {
       .def(init<int,DistrId,std::vector<double> >(
 	   args("nOI","dI","dP")))
     ;
+    class_< std::vector<double> >("VectorOfDoubles")
+              .def(init<>())
+              .def("append",&std::vector<double>::push_back)
+              ;
+
 }

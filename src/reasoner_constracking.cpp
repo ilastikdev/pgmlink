@@ -194,22 +194,22 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	param.epGap_ = ep_gap_;
 	pgm::OpengmModelDeprecated::ogmGraphicalModel* model = pgm_->Model();
 	size_t nOF = model->numberOfFactors();
-	
+
 
 	std::vector<marray::Marray<ValueType> > deterministic_offset;
-	
+
 	SubGmType PertMod = SubGmType(model[0].space());
 	for(size_t factorId=0; factorId<nOF; ++factorId) {
-		
+
 		ViewFunctionType view(*model,factorId,1.0);
 		const typename SubGmType::FunctionIdentifier funcId = PertMod.addFunction(view);
-		
+
 		PertMod.addFactor(funcId,(*model)[factorId].variableIndicesBegin(),(*model)[factorId].variableIndicesEnd());
-		
+
 		deterministic_offset.push_back(marray::Vector<ValueType>((*model)[factorId].numberOfLabels(0),0));
-		
+
     }
-    
+
 	LOG(logDEBUG4) << "ConservationTracking::perturbedInference: information about original model: number of factors" << PertMod.numberOfFactors();
 	for (size_t j=0;j<PertMod.numberOfFactors();j++){
 		LOG(logDEBUG4) << "number of Variables " << PertMod[j].numberOfVariables();
@@ -250,14 +250,14 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	}
 	//deterministic & non-deterministic perturbation
 	for (size_t iterStep=1;iterStep<numberOfIterations;++iterStep){
-		
+
 		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
 		//initialize new model
 		SubGmType PertMod2 = SubGmType(model->space());
-		
+
 		//store offsets to keep them in memory
 		std::vector<marray::Marray<ValueType> > offset_vector;
-		
+
 		//prepare offset for each factor
 		for(size_t factorId=0; factorId<nOF; ++factorId) {
 			const factorType* factor = &(*model)[factorId];
@@ -285,7 +285,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 				PertMod2.addFactor(funcId,factor->variableIndicesBegin(),factor->variableIndicesEnd());
 			}
 		}
-		
+
 		LOG(logDEBUG4) << "information about perturbed model: " << PertMod2.numberOfFactors();
 		for (size_t j=0;j<PertMod2.numberOfFactors();j++){
 			LOG(logDEBUG4) << "number of Variables " << PertMod2[j].numberOfVariables();
@@ -293,16 +293,16 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 				LOG(logDEBUG4) << "potential at variable k " << PertMod2[j](k);
 			}
 		}
-		
+
 		LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
 		optimizer_ = new cplex_optimizer(PertMod2, param);
-		
+
 		if (with_constraints_) {
 		       add_constraints(*graph);
 		}
 		LOG(logINFO) << "infer ";
 		infer();
-		
+
 		LOG(logINFO) << "conclude";
 		conclude(hypotheses);
 	}
@@ -456,7 +456,6 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
 		}
 	}*/
 	for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-			active_nodes.set(n,0);
 			active_nodes_count.get_value(n).push_back(0);
 			active_divisions_count.get_value(n).push_back(0);
 			}
@@ -587,8 +586,13 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
     }
     // write division node map
     if (with_divisions_) {
+    	for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
+    	                it != div_node_map_.end(); ++it) {
+    	            division_nodes.set(it->first, false);
+    	        }
         for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
                 it != div_node_map_.end(); ++it) {
+
             if (solution_[it->second] >= 1) {
                 if (with_tracklets_) {
                     // set division property for the last node in the tracklet
