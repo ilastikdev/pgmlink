@@ -258,7 +258,24 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   template <typename Graph>
   const std::string property_map<arc_resolution_candidate, Graph>::name = "arc_resolution_candidate";
 
-
+  // node ground truth label
+  struct node_ground_truth_label {};
+  template <typename Graph>
+  struct property_map< node_ground_truth_label, Graph> {
+    typedef lemon::IterableBoolMap<Graph, typename Graph::Node> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<node_ground_truth_label, Graph>::name = "";
+  // arc ground truth label
+  struct arc_ground_truth_label {};
+  template <typename Graph>
+  struct property_map<arc_ground_truth_label, Graph> {
+    typedef lemon::IterableBoolMap<Graph, typename Graph::Arc> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<arc_ground_truth_label, Graph>::name = "";
 
   class HypothesesGraph 
   : public PropertyGraph<lemon::ListDigraph> 
