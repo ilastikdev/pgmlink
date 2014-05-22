@@ -186,6 +186,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	} else {
 	  graph = &hypotheses;
 	}
+	LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: "<<param_.numberOfIterations;
+	LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id "<<param_.distributionId;
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 	formulate(*graph);
 	cplex_optimizer::Parameter param;
@@ -194,8 +196,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	param.epGap_ = ep_gap_;
 	pgm::OpengmModelDeprecated::ogmGraphicalModel* model = pgm_->Model();
 	size_t nOF = model->numberOfFactors();
+	LOG(logDEBUG) <<"ConservationTracking::perturbedInference: uncertainty parameter print";
 
-
+	param_.print();
 	std::vector<marray::Marray<ValueType> > deterministic_offset;
 
 	SubGmType PertMod = SubGmType(model[0].space());
@@ -315,7 +318,6 @@ double ConservationTracking::generateRandomOffset(size_t parameterIndex, marray:
 		case GaussianPertubation: //normal distribution
 				//distribution parameter: sigma
 				return random_normal_()*param_.distributionParam[parameterIndex];
-				
 		case PerturbAndMAP: //Gumbel distribution
 				//distribution parameter: beta
 				return param_.distributionParam[parameterIndex]*log(-log(random_uniform_()));

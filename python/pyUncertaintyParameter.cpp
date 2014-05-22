@@ -11,13 +11,16 @@ using namespace pgmlink;
 using namespace boost::python;
 
 void export_uncertaintyParameter() {
-    class_< UncertaintyParameter >("UncertaintyParameter")
-      .def(init<int,DistrId,std::vector<double> >(
-	   args("nOI","dI","dP")))
-    ;
-    class_< std::vector<double> >("VectorOfDoubles")
-              .def(init<>())
-              .def("append",&std::vector<double>::push_back)
-              ;
+	enum_<DistrId>("DistrId")
+	    	.value("GaussianPertubation", GaussianPertubation)
+	    	.value("PerturbAndMAP", PerturbAndMAP)
+	    	.value("DiverseMbest", DiverseMbest)
+	    	.value("MbestCPLEX", MbestCPLEX)
+	        ;
+
+	class_< UncertaintyParameter >("UncertaintyParameter")
+	    .def(init<int,DistrId,std::vector<double> >(
+	    args("nOI","dI","dP")))
+	    ;
 
 }

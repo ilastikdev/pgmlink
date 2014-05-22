@@ -107,12 +107,7 @@ void export_track() {
 	.value("Void", Event::Void)
     ;
 
-    enum_<DistrId>("DistrId")
-    	.value("GaussianPertubation", GaussianPertubation)
-    	.value("PerturbAndMAP", PerturbAndMAP)
-    	.value("DiverseMbest", DiverseMbest)
-    	.value("MbestCPLEX", MbestCPLEX)
-        ;
+
 
     class_<vector<unsigned int> >("IdVector")
 	.def(vector_indexing_suite<vector<unsigned int> >())

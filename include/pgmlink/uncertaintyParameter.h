@@ -6,8 +6,9 @@
 
 #ifndef UNCERTAINTYPARAMETER_H
 #define UNCERTAINTYPARAMETER_H
-
+#include <iostream>
 #include "pgmlink/pgmlink_export.h"
+using namespace std;
 
 namespace pgmlink {
 	enum PGMLINK_EXPORT DistrId {
@@ -41,7 +42,14 @@ namespace pgmlink {
 			distributionId = dI;
 			distributionParam = std::vector<double>(1,dP);
 		}
-
+		void print(){
+			cout<<"number of iterations "<<numberOfIterations;
+			cout<<"distribution Id "<<distributionId;
+			cout<<"distribution Parameters ";
+			for(std::vector<double>::iterator it = distributionParam.begin(); it != distributionParam.end(); ++it) {
+				cout << *it << ", ";
+			}
+		}
 	};
 
 } /* namespace pgmlink */
