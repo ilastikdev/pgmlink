@@ -201,7 +201,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	param_.print();
 	std::vector<marray::Marray<ValueType> > deterministic_offset;
 
-	SubGmType PertMod = SubGmType(model[0].space());
+	SubGmType PertMod = SubGmType(model->space());
 	for(size_t factorId=0; factorId<nOF; ++factorId) {
 
 		ViewFunctionType view(*model,factorId,1.0);
@@ -686,6 +686,17 @@ double get_transition_prob(double distance, size_t state, double alpha) {
 }
 
 void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
+	// refactor this:
+
+	// we could use this method to calculate the label-specific offset, also.
+	// in order to do so, we would have to write a functor that assigns
+	// either the energy or the offset to a table
+	// this table is than treated either as an explicit factor table
+	// or as an offset marray.
+	//
+	// Note that this makes it necessary to ensure that factors are added nowhere else in the code
+	//
+	// Also, this implies that there is some functor choosing either energy or offset
     LOG(logDEBUG) << "ConservationTracking::add_finite_factors: entered";
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map =
@@ -719,11 +730,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
                 cost.push_back(0.);
             } else {
                 if (with_tracklets_) {
+                	//functor app
                     cost.push_back(appearance_cost_(tracklet_map[n].front()));
-                    LOG(logDEBUG4) << "App-costs 1: " << appearance_cost_(tracklet_map[n].front()) << ", " << tracklet_map[n].front();
                 } else {
+                	//functor app
                     cost.push_back(appearance_cost_(traxel_map[n]));
-                    LOG(logDEBUG4) << "App-costs 2: " << appearance_cost_(traxel_map[n]) << ", " << traxel_map[n];
                 }
             }
             ++num_vars;
@@ -735,14 +746,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
             if (node_end_time < g.latest_timestep()) { // "<" holds if there are only tracklets in the last frame
                
                 if (with_tracklets_) {
-					disappearance_cost_(tracklet_map[n].back());
-                    LOG(logDEBUG4) << "fail!";
+                	//functor dis
                     c += disappearance_cost_(tracklet_map[n].back());
-                    LOG(logDEBUG4) << "Disapp-costs 1: " << disappearance_cost_(tracklet_map[n].back()) << ", " << tracklet_map[n].back();
                 } else {
-					LOG(logDEBUG4) << traxel_map[n];
+                	//functor dis
                     c += disappearance_cost_(traxel_map[n]);
-                    LOG(logDEBUG4) << "Disapp-costs 2: " << disappearance_cost_(traxel_map[n]) << ", " << traxel_map[n];
                 }
             }
             cost.push_back(c);
@@ -755,6 +763,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
         pgm::OpengmExplicitFactor<double> table(vi.begin(), vi.end(), forbidden_cost_, (max_number_objects_ + 1));
         for (size_t state = 0; state <= max_number_objects_; ++state) {
             double energy = 0;
+            //functor det
             if (with_tracklets_) {
                 // add all detection factors of the internal nodes
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin();
@@ -798,6 +807,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
         }
 
         LOG(logDEBUG3) << "ConservationTracking::add_finite_factors: adding table to pgm";
+        //functor add detection table
         table.add_to(*(pgm_->Model()));
     }
 
@@ -813,6 +823,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
         // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
         pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, (max_number_objects_ + 1));
         for (size_t state = 0; state <= max_number_objects_; ++state) {
+        	//functor transition
             double energy = transition_(get_transition_prob(arc_distances[a], state, transition_parameter_));
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state
                     << "] = " << energy;
@@ -838,6 +849,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
             pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, 2);
             for (size_t state = 0; state <= 1; ++state) {
                 double energy = 0;
+                //functor division
                 if (with_tracklets_) {
                     energy = division_(tracklet_map[n].back(), state);
                 } else {
@@ -896,7 +908,6 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
               if (has_div_node) {
                     // TODO
               }
-              
 				  table.add_to(*(pgm_->Model()));
 			  }
 

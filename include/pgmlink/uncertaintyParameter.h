@@ -23,13 +23,24 @@ namespace pgmlink {
 
 		UncertaintyParameter(){
 			numberOfIterations=1;
+
 			distributionId=GaussianPertubation;
 			//distributionId table:
 			//0: Gauss normal
 			//1: Gumbel Perturb&MAP
 			//2: diverse-m-best deterministic
 			//3: diverse-m-best cplex
+
 			distributionParam = std::vector<double>(1,0);
+			//various distribution parameters:
+			//for distributions depending on a parameter
+			//distributionParam holds a parameter value for
+			// perturbing each of the following independently
+			// - appearance
+			// - detection
+			// - disappearance
+			// - division
+			// - misdetection
 		}
 		UncertaintyParameter(std::size_t nOI,DistrId dI,std::vector<double> dP){
 			numberOfIterations=nOI;
@@ -43,12 +54,13 @@ namespace pgmlink {
 			distributionParam = std::vector<double>(1,dP);
 		}
 		void print(){
-			cout<<"number of iterations "<<numberOfIterations;
-			cout<<"distribution Id "<<distributionId;
-			cout<<"distribution Parameters ";
+			cout<<"number of iterations "<<numberOfIterations<<endl;
+			cout<<"distribution Id "<<distributionId<<endl;
+			cout<<"distribution Parameters "<<endl;
 			for(std::vector<double>::iterator it = distributionParam.begin(); it != distributionParam.end(); ++it) {
 				cout << *it << ", ";
 			}
+			cout<<endl;
 		}
 	};
 
