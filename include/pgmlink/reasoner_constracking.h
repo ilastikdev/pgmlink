@@ -30,13 +30,13 @@ typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
 
 
-typedef opengm::GraphicalModel
+/*typedef opengm::GraphicalModel
 		<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
 		<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > >::type, 
 		opengm::DiscreteSpace<IndexType,LabelType> > 
-		SubGmType;
+		SubGmType;*/
 		
-//typedef pgm::OpengmModelDeprecated::ogmGraphicalModel SubGmType;
+typedef pgm::OpengmModelDeprecated::ogmGraphicalModel SubGmType;
 
 typedef opengm::LPCplex
 	<	SubGmType,
@@ -48,6 +48,8 @@ typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType factorType;
 
 typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType; 
 typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;    
+
+enum EnergyType {Appearance=0, Disappearance=1, Detection=2, Transition=3, Division=4 };
 
 
 class Traxel;
@@ -92,16 +94,10 @@ class ConservationTracking : public Reasoner {
           transition_parameter_(transition_parameter),
           with_constraints_(with_constraints),
           param_(param),
-		  /*number_of_iterations_(number_of_iterations),
-		  distribution_(distribution),
-		  distribution_param_(distribution_param),
-		  diverse_lambda_(diverse_lambda),
-		  m_in_mbest_(m_in_mbest),  */
           isMAP_(true),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
-		  random_uniform_(rng_,boost::uniform_real<>(0,1))
-
-     {};
+          random_uniform_(rng_,boost::uniform_real<>(0,1))
+    {};
     ~ConservationTracking();
 
     virtual void formulate( const HypothesesGraph& );
@@ -148,9 +144,10 @@ class ConservationTracking : public Reasoner {
     void add_disappearance_nodes( const HypothesesGraph& );
     void add_transition_nodes( const HypothesesGraph& );
     void add_division_nodes(const HypothesesGraph& );
-    void add_finite_factors( const HypothesesGraph& );
+    void add_finite_factors( const HypothesesGraph&, SubGmType& model, bool perturb= false );
+    double getEnergyByEvent(EnergyType event, HypothesesGraph::NodeIt n,bool perturb=false,size_t state=0);
     void printResults( HypothesesGraph&);
-    double generateRandomOffset(size_t parameterIndex=0,marray::Marray<ValueType>* determOffset = 0,int k=0);
+    double generateRandomOffset(EnergyType parameterIndex);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
 
     // helper
@@ -179,7 +176,6 @@ class ConservationTracking : public Reasoner {
     double ep_gap_;
 
     bool with_tracklets_, with_divisions_;
-
     boost::function<double (const Traxel&)> disappearance_cost_;
     boost::function<double (const Traxel&)> appearance_cost_;
 
@@ -200,7 +196,7 @@ class ConservationTracking : public Reasoner {
     boost::mt19937 rng_;
     normalRNGType random_normal_;
     uniformRNGType random_uniform_;
-    
+
 	HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
 };
