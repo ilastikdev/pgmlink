@@ -294,7 +294,13 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     // use this instead of calling the parent graph directly
     PGMLINK_EXPORT HypothesesGraph::Node add_node(node_timestep_map::Value timestep);
     // call this function to add a multi-temporal node (e.g. for tracklets)
+
     PGMLINK_EXPORT HypothesesGraph::Node add_node(std::vector<node_timestep_map::Value> timesteps);
+    // add node with associated traxel
+    PGMLINK_EXPORT void add_traxel(node_timestep_map::Value timestep,Traxel ts);
+
+    // assign ground truth to a node
+    PGMLINK_EXPORT void add_node_label(HypothesesGraph::Node,bool label);
 
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;

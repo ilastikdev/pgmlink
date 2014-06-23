@@ -42,7 +42,14 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
     return node;
 }
 
-const std::set<HypothesesGraph::node_timestep_map::Value>& HypothesesGraph::timesteps() const {
+
+void HypothesesGraph::add_traxel(node_timestep_map::Value timestep,Traxel ts){
+  HypothesesGraph::Node node = add_node(timestep);
+  get(node_traxel()).set(node,ts);
+}
+
+
+  const std::set<HypothesesGraph::node_timestep_map::Value>& HypothesesGraph::timesteps() const {
     return timesteps_;
 }
 

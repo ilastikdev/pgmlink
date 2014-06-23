@@ -29,6 +29,7 @@ node_traxel_m& getNodeTraxelMap(HypothesesGraph* g) {
   return g->get(node_traxel());
 }
 
+
 struct HypothesesGraph_pickle_suite : pickle_suite {
   static std::string getstate( const HypothesesGraph& g ) {
     std::stringstream ss;
@@ -149,6 +150,12 @@ void export_hypotheses() {
     .def("baseNode", baseNode2)
     .def("runningNode", runningNode2)
     .def("oppositeNode", &HypothesesGraph::oppositeNode)
+
+
+    .def("addTraxel", &HypothesesGraph::add_traxel)
+
+    .def("addNodeLabel", &HypothesesGraph::add_node_label)
+    .def("addArcLabel", &HypothesesGraph::add_arc_label)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,
