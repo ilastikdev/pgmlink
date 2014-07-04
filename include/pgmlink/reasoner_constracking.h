@@ -30,13 +30,13 @@ typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
 
 
-/*typedef opengm::GraphicalModel
+typedef opengm::GraphicalModel
 		<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-		<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > >::type, 
+		<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType> >::type,
 		opengm::DiscreteSpace<IndexType,LabelType> > 
-		SubGmType;*/
+		SubGmType;
 		
-typedef pgm::OpengmModelDeprecated::ogmGraphicalModel SubGmType;
+/*typedef pgm::OpengmModelDeprecated::ogmGraphicalModel SubGmType;*/
 
 typedef opengm::LPCplex
 	<	SubGmType,

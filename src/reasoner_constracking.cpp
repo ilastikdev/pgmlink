@@ -57,7 +57,7 @@ void ConservationTracking::printResults(HypothesesGraph& g){
 	property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
 	        g.get(division_active_count());
 	
-	int c;
+	int c=0;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
 		c=0;
 		for( std::vector<bool>::const_iterator i = active_arcs_count[a].begin(); i != active_arcs_count[a].end(); ++i){
@@ -167,7 +167,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	reset();
 	pgm_ = boost::shared_ptr < pgm::OpengmModelDeprecated > (new pgm::OpengmModelDeprecated());
 
-	HypothesesGraph const *graph;
+	HypothesesGraph *graph;
 	if (with_tracklets_) {
 	  LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
 	  tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
@@ -179,23 +179,37 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id "<<param_.distributionId;
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 	formulate(*graph);
+
+
 	cplex_optimizer::Parameter param;
 	param.verbose_ = true;
 	param.integerConstraint_ = true;
 	param.epGap_ = ep_gap_;
 	pgm::OpengmModelDeprecated::ogmGraphicalModel* model = pgm_->Model();
-	//size_t nOF = model->numberOfFactors();
+
+	LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
+
+	SubGmType MAPmodel = SubGmType(model->space());
+	add_finite_factors(*graph,MAPmodel,false);
+
+	LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
+
+	LOG(logINFO) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
+	LOG(logINFO) << "number_of_appearance_nodes_ = " << number_of_appearance_nodes_;
+	LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
+	LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
+
+
+	size_t nOF = MAPmodel.numberOfFactors();
 	LOG(logDEBUG) <<"ConservationTracking::perturbedInference: uncertainty parameter print";
 
 	param_.print();
 
-	SubGmType PertMod = *model;
-
-	LOG(logDEBUG4) << "ConservationTracking::perturbedInference: information about original model: number of factors" << PertMod.numberOfFactors();
-	for (size_t j=0;j<PertMod.numberOfFactors();j++){
-		LOG(logDEBUG4) << "number of Variables " << PertMod[j].numberOfVariables();
-		for (size_t k=0;k<PertMod[j].numberOfVariables();k++){
-			LOG(logDEBUG4) << "potential at variable "<<k<<" is " << PertMod[j](k);
+	LOG(logDEBUG4) << "ConservationTracking::perturbedInference: information about original model: number of factors" << nOF;
+	for (size_t j=0;j<MAPmodel.numberOfFactors();j++){
+		LOG(logDEBUG4) << "number of Variables " << MAPmodel[j].numberOfVariables();
+		for (size_t k=0;k<MAPmodel[j].numberOfVariables();k++){
+			LOG(logDEBUG4) << "potential at variable "<<k<<" is " << MAPmodel[j](k);
 		}
 	}
     
@@ -205,7 +219,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		numberOfSolutions = param_.numberOfIterations;
 	}
 
-	optimizer_ = new cplex_optimizer(PertMod, param, numberOfSolutions);
+	optimizer_ = new cplex_optimizer(MAPmodel, param, numberOfSolutions);
 	LOG(logINFO) << "add_constraints";
 	 if (with_constraints_) {
 	  add_constraints(*graph);
@@ -214,8 +228,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	LOG(logINFO) << "infer MAP";
 	infer();
 	LOG(logINFO) << "conclude MAP";
-	conclude(hypotheses);
-
+	conclude(*graph);
 
 	for (size_t k=1;k<numberOfSolutions;++k){
 		LOG(logINFO) << "conclude "<<k+1<<"-best solution";
@@ -223,7 +236,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		if (status != opengm::NORMAL) {
 			throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
 		}
-		conclude(hypotheses);
+		conclude(*graph);
 	}
 	size_t numberOfIterations = param_.numberOfIterations;
 	if (param_.distributionId==MbestCPLEX){
@@ -234,23 +247,23 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
 		//initialize new model
-		SubGmType PertMod2 = SubGmType(model->space());
+		SubGmType PertModel = SubGmType(model->space());
 
 		//store offsets to keep them in memory
 		std::vector<marray::Marray<ValueType> > offset_vector;
 
-		add_finite_factors(*graph, PertMod2, true /*perturb*/);
+		add_finite_factors(*graph, PertModel, true /*perturb*/);
 
-		LOG(logDEBUG4) << "information about perturbed model: " << PertMod2.numberOfFactors();
-		for (size_t j=0;j<PertMod2.numberOfFactors();j++){
-			LOG(logDEBUG4) << "number of Variables " << PertMod2[j].numberOfVariables();
-			for (size_t k=0;k<PertMod2[j].numberOfVariables();++k){
-				LOG(logDEBUG4) << "potential at variable k " << PertMod2[j](k);
+		LOG(logDEBUG4) << "information about perturbed model: " << PertModel.numberOfFactors();
+		for (size_t j=0;j<PertModel.numberOfFactors();j++){
+			LOG(logDEBUG4) << "number of Variables " << PertModel[j].numberOfVariables();
+			for (size_t k=0;k<PertModel[j].numberOfVariables();++k){
+				LOG(logDEBUG4) << "potential at variable k " << PertModel[j](k);
 			}
 		}
 
 		LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
-		optimizer_ = new cplex_optimizer(PertMod2, param);
+		optimizer_ = new cplex_optimizer(PertModel, param);
 
 		if (with_constraints_) {
 		       add_constraints(*graph);
@@ -259,7 +272,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		infer();
 
 		LOG(logINFO) << "conclude";
-		conclude(hypotheses);
+		conclude(*graph);
 	}
 	//printResults(*graph);
 }
@@ -295,15 +308,6 @@ void ConservationTracking::formulate(const HypothesesGraph& hypotheses) {
     if (with_divisions_) {
         add_division_nodes(hypotheses);
     }
-
-    LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
-    add_finite_factors(hypotheses,*pgm_->Model());
-    LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
-
-    LOG(logINFO) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
-    LOG(logINFO) << "number_of_appearance_nodes_ = " << number_of_appearance_nodes_;
-    LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
-    LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
 
 }
 
@@ -712,11 +716,17 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
             }
             ++num_vars;
         }
-        
+		LOG(logDEBUG) << "pre-init";
+
         // convert vector to array
         vector<size_t> coords(num_vars, 0); // number of variables
         // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
-        pgm::OpengmExplicitFactor<double> table(vi.begin(), vi.end(), forbidden_cost_, (max_number_objects_ + 1));
+        //pgm::OpengmExplicitFactor<double> table(vi.begin(), vi.end(), forbidden_cost_, (max_number_objects_ + 1));
+
+        vector<size_t> shape(num_vars,(max_number_objects_+1));
+        marray::Marray<double> energies(shape.begin(),shape.end(),forbidden_cost_);
+
+		LOG(logDEBUG) << "post-init";
         for (size_t state = 0; state <= max_number_objects_; ++state) {
 
         	if (with_tracklets_) {
@@ -751,7 +761,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
                 // if only one of the variables is > 0, then it is an appearance in this time frame
                 // or a disappearance in the next timeframe. Hence, add the cost of appearance/disappearance
                 // to the detection cost
-                table.set_value(coords, energy + state * cost[var_idx]);
+                energies(coords.begin()) = energy + state * cost[var_idx];
                 coords[var_idx] = 0;
                 LOG(logDEBUG4) << "ConservationTracking::add_finite_factors: var_idx "
                         << var_idx << " = " << energy;
@@ -761,7 +771,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
                 coords[0] = state;
                 coords[1] = state;
                 // only pay detection energy if both variables are on
-                table.set_value(coords, energy);
+                //table.set_value(coords, energy);
+                energies(coords.begin())=energy;
                 coords[0] = 0;
                 coords[1] = 0;
 
@@ -772,7 +783,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
 
         LOG(logDEBUG3) << "ConservationTracking::add_finite_factors: adding table to pgm";
         //functor add detection table
-        table.add_to(model);
+
+        SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+        model.addFactor(funcId,vi.begin(),vi.end());
+        //table.add_to(model);
     }
 
     ////
@@ -785,7 +799,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
         size_t vi[] = { arc_map_[a] };
         vector<size_t> coords(1, 0); // number of variables
         // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
-        pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, (max_number_objects_ + 1));
+       // pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, (max_number_objects_ + 1));
+
+        vector<size_t> shape(1,(max_number_objects_+1));
+        marray::Marray<double> energies(shape.begin(),shape.end(),forbidden_cost_);
+
         for (size_t state = 0; state <= max_number_objects_; ++state) {
         	//functor transition
             double energy = transition_(get_transition_prob(arc_distances_[a], state, transition_parameter_));
@@ -795,10 +813,13 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state
                     << "] = " << energy;
             coords[0] = state;
-            table.set_value(coords, energy);
+            //table.set_value(coords, energy);
+            energies(coords.begin())=energy;
             coords[0] = 0;
         }
-        table.add_to(model);
+        SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+        model.addFactor(funcId,vi,vi+1);
+        //table.add_to(model);
     }
 
     ////
@@ -813,7 +834,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
             size_t vi[] = { div_node_map_[n] };
             vector<size_t> coords(1, 0); // number of variables
             // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
-            pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, 2);
+            //pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, 2);
+            vector<size_t> shape(1,2);
+            marray::Marray<double> energies(shape.begin(),shape.end(),forbidden_cost_);
+
             for (size_t state = 0; state <= 1; ++state) {
             	double energy;
             	if (with_tracklets_) {
@@ -827,10 +851,13 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
                 LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: division[" << state
                         << "] = " << energy;
                 coords[0] = state;
-                table.set_value(coords, energy);
+                //table.set_value(coords, energy);
+                energies(coords.begin())=energy;
                 coords[0] = 0;
             }
-            table.add_to(model);
+            //table.add_to(model);
+            SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+            model.addFactor(funcId,vi,vi+1);
         }
     }
 
@@ -867,7 +894,9 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
 				  //size_t table_dim = count + 1 + int(has_div_node); 		// n * transition var + detection var (+ division var)
 				  std::vector<size_t> coords;
 				  // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_vars
-				  pgm::OpengmExplicitFactor<double> table( vi.begin(), vi.end(), 0, states_vars);
+				  //pgm::OpengmExplicitFactor<double> table( vi.begin(), vi.end(), 0, states_vars);
+
+				  marray::Marray<double> energies(states_vars.begin(),states_vars.end(),0);
 
 				  //assert(table_dim - trans_idx == count);
 
@@ -877,7 +906,9 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
               if (has_div_node) {
                     // TODO
               }
-				  table.add_to(model);
+				  //table.add_to(model);
+				  SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+				  model.addFactor(funcId,vi.begin(),vi.end());
 			  }
 
 
@@ -903,7 +934,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
 				  //size_t table_dim = count + 1; 		// n * transition var + detection var
 				  std::vector<size_t> coords;
 				  // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_vars
-				  pgm::OpengmExplicitFactor<double> table( vi.begin(), vi.end(), 0, states_vars);
+				  //pgm::OpengmExplicitFactor<double> table( vi.begin(), vi.end(), 0, states_vars);
+				  marray::Marray<double> energies(states_vars.begin(),states_vars.end(),0);
 
 				  //assert(table_dim - trans_idx == count);
 
@@ -911,11 +943,15 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
 				  //// TODO: set the forbidden configurations to infinity or the allowed to zero
 				  /////
 
-				  table.add_to(model);
+				  //table.add_to(model);
+				  SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+				  model.addFactor(funcId,vi.begin(),vi.end());
 			  }
     	}
 
     }
+    LOG(logDEBUG) << "ConservationTracking::add_finite_factors: leave";
+
 }
 
 size_t ConservationTracking::cplex_id(size_t opengm_id, size_t state) {
