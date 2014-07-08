@@ -30,6 +30,8 @@ using namespace boost;
 
 BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger ) {
 
+	std::cout << "first test" << std::endl;
+
 	std::cout << "Constructing HypothesesGraph" << std::endl;
 	std::cout << std::endl;
 
@@ -884,6 +886,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
 	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
+			std::cout<<e.type;;
 			if (e.type == Event::Move) {
 				++moves;
 				BOOST_CHECK( (e.traxel_ids[0] == 1 && e.traxel_ids[1] == 10) ||
@@ -1642,6 +1645,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
 
 BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
 
+	std::cout << "last test" << std::endl;
 	std::cout << "Constructing HypothesesGraph" << std::endl;
 	std::cout << std::endl;
 

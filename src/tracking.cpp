@@ -388,16 +388,17 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		cout << "-> perturbed Inference" << endl;
 		pgm.perturbedInference(*graph);
 		cout << "-> finished perturbed Inference" << endl;
+		prune_inactive(*graph);
 		}
 	else {
-	pgm.perturbedInference(*graph);
+		pgm.perturbedInference(*graph);
 
 
-	cout << "-> storing state of detection vars" << endl;
-	last_detections_ = state_of_nodes(*graph);
+		cout << "-> storing state of detection vars" << endl;
+		last_detections_ = state_of_nodes(*graph);
 
-	cout << "-> pruning inactive hypotheses" << endl;
-	prune_inactive(*graph);
+		cout << "-> pruning inactive hypotheses" << endl;
+		prune_inactive(*graph);
 
 	}
 	
@@ -408,7 +409,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		all_ev[i] = *events(*graph,i);
 	}
 
-	std::vector< std::vector<Event> >* ev = &all_ev[0];
+	std::vector< std::vector<Event> >* ev = &(all_ev[0]);
 
     if (max_number_objects_ > 1 && with_merger_resolution_ && all_true(ev->begin(), ev->end(), has_data<Event>)) {
       cout << "-> resolving mergers" << endl;
@@ -422,7 +423,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
         extractor = new FeatureExtractorMCOMsFromMCOMs;
       }
       FeatureHandlerFromTraxels handler(*extractor, distance);
-      
+
       m.resolve_mergers(handler);
 
       HypothesesGraph g_res;

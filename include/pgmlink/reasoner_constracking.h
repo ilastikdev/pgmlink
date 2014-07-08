@@ -30,18 +30,20 @@ typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
 
 
+typedef pgm::OpengmModelDeprecated::ogmGraphicalModel MAPGmType;
+
 typedef opengm::GraphicalModel
 		<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
 		<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType> >::type,
 		opengm::DiscreteSpace<IndexType,LabelType> > 
-		SubGmType;
+		PertGmType;
 		
-/*typedef pgm::OpengmModelDeprecated::ogmGraphicalModel SubGmType;*/
 
 typedef opengm::LPCplex
-	<	SubGmType,
+	<	PertGmType,
 			pgm::OpengmModelDeprecated::ogmAccumulator		>
     cplex_optimizer;
+
 
 
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType factorType;
@@ -144,7 +146,7 @@ class ConservationTracking : public Reasoner {
     void add_disappearance_nodes( const HypothesesGraph& );
     void add_transition_nodes( const HypothesesGraph& );
     void add_division_nodes(const HypothesesGraph& );
-    void add_finite_factors( const HypothesesGraph&, SubGmType& model, bool perturb= false );
+    template <typename ModelType> void add_finite_factors( const HypothesesGraph&, ModelType& model, bool perturb= false );
     double getEnergyByEvent(EnergyType event, HypothesesGraph::NodeIt n,bool perturb=false,size_t state=0);
     void printResults( HypothesesGraph&);
     double generateRandomOffset(EnergyType parameterIndex);

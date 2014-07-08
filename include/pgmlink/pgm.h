@@ -40,7 +40,7 @@ namespace pgmlink {
     class OpengmModelDeprecated {
     public:
       typedef double Energy;
-      typedef opengm::GraphicalModel<Energy, opengm::Adder> ogmGraphicalModel;
+      typedef opengm::GraphicalModel<Energy, opengm::Adder, typename opengm::meta::TypeListGenerator <marray::Marray<Energy> >::type> ogmGraphicalModel;
       typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
       typedef opengm::Minimizer ogmAccumulator;
       typedef opengm::Inference<ogmGraphicalModel, ogmAccumulator> ogmInference;

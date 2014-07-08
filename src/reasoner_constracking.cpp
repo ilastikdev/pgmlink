@@ -168,10 +168,12 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	pgm_ = boost::shared_ptr < pgm::OpengmModelDeprecated > (new pgm::OpengmModelDeprecated());
 
 	HypothesesGraph *graph;
+
+	// for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
 	if (with_tracklets_) {
 	  LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
 	  tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
-	  graph = &tracklet_graph_; 
+	  graph = &tracklet_graph_;
 	} else {
 	  graph = &hypotheses;
 	}
@@ -180,17 +182,18 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 	formulate(*graph);
 
-
 	cplex_optimizer::Parameter param;
 	param.verbose_ = true;
 	param.integerConstraint_ = true;
 	param.epGap_ = ep_gap_;
-	pgm::OpengmModelDeprecated::ogmGraphicalModel* model = pgm_->Model();
+	MAPGmType* model = pgm_->Model();
 
 	LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
 
-	SubGmType MAPmodel = SubGmType(model->space());
-	add_finite_factors(*graph,MAPmodel,false);
+	add_finite_factors(*graph,*model,false);
+
+	PertGmType MAPmodel = PertGmType(model->space());
+	add_finite_factors(*graph, MAPmodel, false /*perturb*/);
 
 	LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
 
@@ -228,7 +231,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	LOG(logINFO) << "infer MAP";
 	infer();
 	LOG(logINFO) << "conclude MAP";
-	conclude(*graph);
+	conclude(hypotheses);
 
 	for (size_t k=1;k<numberOfSolutions;++k){
 		LOG(logINFO) << "conclude "<<k+1<<"-best solution";
@@ -236,7 +239,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		if (status != opengm::NORMAL) {
 			throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
 		}
-		conclude(*graph);
+		conclude(hypotheses);
 	}
 	size_t numberOfIterations = param_.numberOfIterations;
 	if (param_.distributionId==MbestCPLEX){
@@ -247,7 +250,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 		LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
 		//initialize new model
-		SubGmType PertModel = SubGmType(model->space());
+		PertGmType PertModel = PertGmType(MAPmodel.space());
 
 		//store offsets to keep them in memory
 		std::vector<marray::Marray<ValueType> > offset_vector;
@@ -272,7 +275,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		infer();
 
 		LOG(logINFO) << "conclude";
-		conclude(*graph);
+		conclude(hypotheses);
 	}
 	//printResults(*graph);
 }
@@ -506,7 +509,6 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                     if (solution_[it->second] > 0) {
 
 						active_arcs.set(a, true);
-
 						active_arcs_count.get_value(a)[iterStep]=true;
 
                         assert(active_nodes[g.source(a)] == solution_[it->second]
@@ -533,8 +535,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
         if (solution_[it->second] >= 1) {
             if (with_tracklets_) {
 				active_arcs.set(g.arcFromId((traxel_arc_id_map[it->first])), true);
-
-				active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[it->first]))).push_back(true);
+				active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[it->first])))[iterStep]=true;
             } else {
 				active_arcs.set(it->first, true);
 				active_arcs_count.get_value(it->first)[iterStep]=true;
@@ -640,7 +641,8 @@ double get_transition_prob(double distance, size_t state, double alpha) {
 }
 }
 
-void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmType& model, bool perturb /*=false*/) {
+template <typename ModelType>
+void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType& model, bool perturb /*=false*/) {
 	// refactor this:
 
 	// we could use this method to calculate the label-specific offset, also.
@@ -784,7 +786,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
         LOG(logDEBUG3) << "ConservationTracking::add_finite_factors: adding table to pgm";
         //functor add detection table
 
-        SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+        typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
         model.addFactor(funcId,vi.begin(),vi.end());
         //table.add_to(model);
     }
@@ -817,7 +819,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
             energies(coords.begin())=energy;
             coords[0] = 0;
         }
-        SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+        typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
         model.addFactor(funcId,vi,vi+1);
         //table.add_to(model);
     }
@@ -856,7 +858,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
                 coords[0] = 0;
             }
             //table.add_to(model);
-            SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+            typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
             model.addFactor(funcId,vi,vi+1);
         }
     }
@@ -907,7 +909,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
                     // TODO
               }
 				  //table.add_to(model);
-				  SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+				  typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
 				  model.addFactor(funcId,vi.begin(),vi.end());
 			  }
 
@@ -944,7 +946,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, SubGmTyp
 				  /////
 
 				  //table.add_to(model);
-				  SubGmType::FunctionIdentifier funcId = model.addFunction(energies);
+				  typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
 				  model.addFactor(funcId,vi.begin(),vi.end());
 			  }
     	}
