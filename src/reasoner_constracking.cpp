@@ -94,74 +94,6 @@ void ConservationTracking::printResults(HypothesesGraph& g){
 		}
 	}
 
-/*const marray::Marray<ValueType> ConservationTracking::perturbFactor(const factorType* factor,size_t factorId, std::vector<marray::Marray<ValueType> >* detoffset){
-	size_t nOV = factor->numberOfVariables();
-
-	if (nOV>2){
-		//only perturb factors with one or two variables
-		return marray::Marray<ValueType>();}
-
-	vector<int> off;
-	for (size_t ind=0;ind<nOV;ind++){
-		off.push_back(factor->numberOfLabels(ind));
-	}
-
-	if (nOV==2){
-		//This is potentially a factor consisting of an appearance and a disappearance-variable.
-		//Check if this is the case, and if so perturb depending on the number of cells
-
-		marray::Marray<ValueType> offset(off.begin(),off.end(),0);
-		LOG(logDEBUG4)<<(offset).size()<<" , "<<factor->size();
-		LOG(logDEBUG4)<<(offset).dimension()<<" , "<<factor->numberOfVariables();
-
-		//Make sure this is really a dis/app-factor:
-		//Look for variable indices: are these app/dis-vars?
-		int indexVar1 = factor->variableIndex(0);
-		int indexVar2 = factor->variableIndex(1);
-
-		// which is the appearance node, which is the disappearance node?
-		int disIndex = -1, appIndex = -1;
-		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();it != app_node_map_.end(); ++it) {
-			int indexVar = it->second;
-			if (indexVar == indexVar1 || indexVar == indexVar2){
-				disIndex = indexVar;
-				break;}
-		}
-		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = dis_node_map_.begin();it != dis_node_map_.end(); ++it) {
-			int indexVar = it->second;
-			if (indexVar == indexVar1 || indexVar == indexVar2){
-				appIndex = indexVar;
-				break;}
-		}
-
-		if (disIndex==-1 || appIndex==-1){
-			//This isn't a dis/app-factor, as either a disappearance or an appearance node is missing
-			return marray::Marray<ValueType>();
-		}
-
-		LOG(logDEBUG4)<<"This is a d/a-node";
-		//This is a dis/app-node, perturb it with individual sigma
-		for(size_t disNum=0;disNum<factor->numberOfLabels(0);disNum++){
-			for(size_t appNum=0;appNum<factor->numberOfLabels(1);appNum++){
-				if(appNum>0 && disNum>0 && appNum!=disNum) continue;
-
-				int maxnum = max(disNum,appNum);
-				offset(disNum,appNum) = generateRandomOffset(maxnum+1);
-			}
-		}
-		return offset;
-	} else {
-		int nOL = factor->numberOfLabels(0);
-		marray::Marray<ValueType> offset(off.begin(),off.end(),0);
-
-		for (int k=0;k<nOL;++k){
-			offset(k) = generateRandomOffset(0,&(*detoffset)[factorId],  k);
-		}
-		return offset;
-	}
-
-}*/
-
 void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	reset();
@@ -171,29 +103,25 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	// for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
 	if (with_tracklets_) {
-	  LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
-	  tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
-	  graph = &tracklet_graph_;
+		LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
+		tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
+		graph = &tracklet_graph_;
 	} else {
-	  graph = &hypotheses;
+		graph = &hypotheses;
 	}
 	LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: "<<param_.numberOfIterations;
 	LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id "<<param_.distributionId;
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 	formulate(*graph);
 
-	cplex_optimizer::Parameter param;
-	param.verbose_ = true;
-	param.integerConstraint_ = true;
-	param.epGap_ = ep_gap_;
 	MAPGmType* model = pgm_->Model();
 
 	LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
 
-	add_finite_factors(*graph,*model,false);
+	add_finite_factors(*graph,model,false);
 
 	PertGmType MAPmodel = PertGmType(model->space());
-	add_finite_factors(*graph, MAPmodel, false /*perturb*/);
+	add_finite_factors(*graph, &MAPmodel, false /*perturb*/);
 
 	LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
 
@@ -202,20 +130,14 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
 	LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
 
-
-	size_t nOF = MAPmodel.numberOfFactors();
 	LOG(logDEBUG) <<"ConservationTracking::perturbedInference: uncertainty parameter print";
 
+	cplex_optimizer::Parameter param;
+	param.verbose_ = true;
+	param.integerConstraint_ = true;
+	param.epGap_ = ep_gap_;
 	param_.print();
 
-	LOG(logDEBUG4) << "ConservationTracking::perturbedInference: information about original model: number of factors" << nOF;
-	for (size_t j=0;j<MAPmodel.numberOfFactors();j++){
-		LOG(logDEBUG4) << "number of Variables " << MAPmodel[j].numberOfVariables();
-		for (size_t k=0;k<MAPmodel[j].numberOfVariables();k++){
-			LOG(logDEBUG4) << "potential at variable "<<k<<" is " << MAPmodel[j](k);
-		}
-	}
-    
 	//m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
 	size_t numberOfSolutions = 1;
 	if (param_.distributionId==MbestCPLEX){
@@ -224,10 +146,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	optimizer_ = new cplex_optimizer(MAPmodel, param, numberOfSolutions);
 	LOG(logINFO) << "add_constraints";
-	 if (with_constraints_) {
-	  add_constraints(*graph);
+	if (with_constraints_) {
+		add_constraints(*graph);
 	}
-	
+
 	LOG(logINFO) << "infer MAP";
 	infer();
 	LOG(logINFO) << "conclude MAP";
@@ -255,21 +177,13 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		//store offsets to keep them in memory
 		std::vector<marray::Marray<ValueType> > offset_vector;
 
-		add_finite_factors(*graph, PertModel, true /*perturb*/);
-
-		LOG(logDEBUG4) << "information about perturbed model: " << PertModel.numberOfFactors();
-		for (size_t j=0;j<PertModel.numberOfFactors();j++){
-			LOG(logDEBUG4) << "number of Variables " << PertModel[j].numberOfVariables();
-			for (size_t k=0;k<PertModel[j].numberOfVariables();++k){
-				LOG(logDEBUG4) << "potential at variable k " << PertModel[j](k);
-			}
-		}
+		add_finite_factors(*graph, &PertModel, true /*perturb*/);
 
 		LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
 		optimizer_ = new cplex_optimizer(PertModel, param);
 
 		if (with_constraints_) {
-		       add_constraints(*graph);
+			add_constraints(*graph);
 		}
 		LOG(logINFO) << "infer ";
 		infer();
@@ -277,9 +191,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		LOG(logINFO) << "conclude";
 		conclude(hypotheses);
 	}
-	//printResults(*graph);
 }
-
 
 double ConservationTracking::generateRandomOffset(EnergyType energyIndex) {
 
@@ -371,72 +283,16 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
 			active_nodes_count.set(n,std::vector<long unsigned int>());
 			active_divisions_count.set(n, std::vector<bool>());
 		}
-		/*for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
-		it != app_node_map_.end(); ++it) {
-			if (with_tracklets_) {
-				std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it->first];
-
-				for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-						tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-
-					active_nodes_count.set(*tr_n_it,std::vector<long unsigned int>());
-				}
-			} else {
-				active_nodes_count.set(it->first,std::vector<long unsigned int>());
-			}
-		}
-		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
-		it != div_node_map_.end(); ++it) {
-			if (with_tracklets_) {
-
-				std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it->first];
-
-				for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-						tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-					active_divisions_count.set(*tr_n_it, std::vector<bool>());
-				}
-			} else {
-				active_divisions_count.set(it->first, std::vector<bool>());
-			}
-		}*/
 	}
 
 	//initialize node counts by 0
-	/*for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
-		it != app_node_map_.end(); ++it) {
-		if (with_tracklets_) {
-			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it->first];
-            for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-                    tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-				HypothesesGraph::Node n = *tr_n_it;
-				active_nodes_count.get_value(n).push_back(0);
-			}
-		}else {
-			active_nodes_count.get_value(it->first).push_back(0);
-		}
-	}*/
 	for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
 			active_nodes_count.get_value(n).push_back(0);
 			active_divisions_count.get_value(n).push_back(0);
 			}
-	/*
-	//initialize division active by "false"
-	for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
-		it != div_node_map_.end(); ++it) {
-		if(with_tracklets_) {
-			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it->first];
-            for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-                    tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-				HypothesesGraph::Node n = *tr_n_it;
-				active_divisions_count.get_value(n).push_back(0);
-			}
-		} else {
-			active_divisions_count.get_value(it->first).push_back(0);
-		}
-	}*/
 
 
-	//initialize  arc counts by 0
+	//initialize arc counts by 0
 	for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
 		active_arcs.set(a, false);
 		active_arcs_count.get_value(a).push_back(0);
@@ -465,7 +321,6 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                 if (solution_[it->second] > 0) {
 
 					active_arcs.set(a, true);
-
 					active_arcs_count.get_value(a)[iterStep]=true;
 
                     assert(active_nodes[g.source(a)] == solution_[it->second]
@@ -642,7 +497,7 @@ double get_transition_prob(double distance, size_t state, double alpha) {
 }
 
 template <typename ModelType>
-void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType& model, bool perturb /*=false*/) {
+void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType* model, bool perturb /*=false*/) {
 	// refactor this:
 
 	// we could use this method to calculate the label-specific offset, also.
@@ -718,7 +573,6 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             }
             ++num_vars;
         }
-		LOG(logDEBUG) << "pre-init";
 
         // convert vector to array
         vector<size_t> coords(num_vars, 0); // number of variables
@@ -728,10 +582,9 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         vector<size_t> shape(num_vars,(max_number_objects_+1));
         marray::Marray<double> energies(shape.begin(),shape.end(),forbidden_cost_);
 
-		LOG(logDEBUG) << "post-init";
         for (size_t state = 0; state <= max_number_objects_; ++state) {
-
         	if (with_tracklets_) {
+        		energy=0;
         		// add all detection factors of the internal nodes
         		for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
         				trax_it != tracklet_map_[n].end(); ++trax_it) {
@@ -786,8 +639,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         LOG(logDEBUG3) << "ConservationTracking::add_finite_factors: adding table to pgm";
         //functor add detection table
 
-        typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
-        model.addFactor(funcId,vi.begin(),vi.end());
+        typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
+        model->addFactor(funcId,vi.begin(),vi.end());
         //table.add_to(model);
     }
 
@@ -819,8 +672,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             energies(coords.begin())=energy;
             coords[0] = 0;
         }
-        typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
-        model.addFactor(funcId,vi,vi+1);
+        typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
+        model->addFactor(funcId,vi,vi+1);
         //table.add_to(model);
     }
 
@@ -858,8 +711,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 coords[0] = 0;
             }
             //table.add_to(model);
-            typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
-            model.addFactor(funcId,vi,vi+1);
+            typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
+            model->addFactor(funcId,vi,vi+1);
         }
     }
 
@@ -909,8 +762,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                     // TODO
               }
 				  //table.add_to(model);
-				  typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
-				  model.addFactor(funcId,vi.begin(),vi.end());
+				  typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
+				  model->addFactor(funcId,vi.begin(),vi.end());
 			  }
 
 
@@ -946,8 +799,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
 				  /////
 
 				  //table.add_to(model);
-				  typename ModelType::FunctionIdentifier funcId = model.addFunction(energies);
-				  model.addFactor(funcId,vi.begin(),vi.end());
+				  typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
+				  model->addFactor(funcId,vi.begin(),vi.end());
 			  }
     	}
 
