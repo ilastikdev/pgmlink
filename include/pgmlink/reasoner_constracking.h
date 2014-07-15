@@ -146,7 +146,7 @@ class ConservationTracking : public Reasoner {
     void add_disappearance_nodes( const HypothesesGraph& );
     void add_transition_nodes( const HypothesesGraph& );
     void add_division_nodes(const HypothesesGraph& );
-    template <typename ModelType> void add_finite_factors( const HypothesesGraph&, ModelType* model, bool perturb= false );
+    template <typename ModelType> void add_finite_factors( const HypothesesGraph&, ModelType* model, bool perturb= false, vector<vector<size_t> >* detoff=NULL );
     double getEnergyByEvent(EnergyType event, HypothesesGraph::NodeIt n,bool perturb=false,size_t state=0);
     void printResults( HypothesesGraph&);
     double generateRandomOffset(EnergyType parameterIndex);

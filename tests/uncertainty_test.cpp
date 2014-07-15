@@ -66,10 +66,12 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
 	add(ts,n32);
 
-	vector<double> sigmas(3);
+	vector<double> sigmas(5);
 	sigmas[0]=1;
 	sigmas[1]=0;
 	sigmas[2]=0;
+	sigmas[3]=0;
+	sigmas[4]=0;
 
 	UncertaintyParameter uparam(10,PerturbAndMAP,sigmas);//10 iterations, Gumbel distribution, sigma=1
 
@@ -148,10 +150,13 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
 
-	vector<double> sigmas(3);
-		sigmas[0]=10;
+	vector<double> sigmas(5);
+		sigmas[0]=0;
 		sigmas[1]=0;
-		sigmas[2]=0;
+		sigmas[2]=10;
+		sigmas[3]=10;
+		sigmas[4]=10;
+
 	UncertaintyParameter uparam(2,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
@@ -184,7 +189,7 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	int counter2 = 0;
 	BOOST_CHECK_EQUAL(events.size(),2);
 			
-	for(size_t timeStep=0;timeStep<events[0].size() && timeStep<events[1].size();++timeStep){
+	for(size_t timeStep=0;timeStep<events[0].size();++timeStep){
 		for(size_t factorIndex=0;factorIndex<events[0][timeStep].size()&&factorIndex<events[1][timeStep].size();++factorIndex){
 		
 			if (events[0][timeStep][factorIndex].type == events[1][timeStep][factorIndex].type){

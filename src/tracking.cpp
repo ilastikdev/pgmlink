@@ -393,7 +393,6 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 	else {
 		pgm.perturbedInference(*graph);
 
-
 		cout << "-> storing state of detection vars" << endl;
 		last_detections_ = state_of_nodes(*graph);
 
