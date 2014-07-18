@@ -245,10 +245,9 @@ namespace pgmlink {
 		    e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 			
 			for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-				if (!active_arcs->operator[](a)[iterationStep]) {
-					continue;
+				if (active_arcs->operator[](a)[iterationStep]){
+					e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 				}
-				e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 			}
 		    (*ret)[t-g.earliest_timestep()].push_back(e);
 		    LOG(logDEBUG3) << e;
@@ -262,28 +261,25 @@ namespace pgmlink {
 					e.type = Event::Division;
 					e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 					for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-						if (!active_arcs->operator[](a)[iterationStep]) {
-							continue;
+						if (active_arcs->operator[](a)[iterationStep]){
+							e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 						}
-						
-						e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 					}
 					
 					(*ret)[t-g.earliest_timestep()].push_back(e);
 					LOG(logDEBUG3) << e;
 		    	} else {
 					
-					for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-						if (!active_arcs->operator[](a)[iterationStep]) {
-							continue;
-						}
-						
-						e.type = Event::Move;
-						e.traxel_ids.clear();
-						e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-						e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
-						(*ret)[t-g.earliest_timestep()].push_back(e);
-						LOG(logDEBUG3) << e;
+		    		for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
+		    			if (active_arcs->operator[](a)[iterationStep]) {
+
+		    				e.type = Event::Move;
+		    				e.traxel_ids.clear();
+		    				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+		    				e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+		    				(*ret)[t-g.earliest_timestep()].push_back(e);
+		    				LOG(logDEBUG3) << e;
+		    			}
 					}
 		    	}
 		    } else { // for backward compatibility
@@ -293,10 +289,9 @@ namespace pgmlink {
 				e.type = Event::Division;
 				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 				for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-					if (!active_arcs->operator[](a)[iterationStep]) {
-						continue;
+					if (active_arcs->operator[](a)[iterationStep]){
+						e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 					}
-					e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 				}
 				(*ret)[t-g.earliest_timestep()].push_back(e);
 				LOG(logDEBUG3) << e;
