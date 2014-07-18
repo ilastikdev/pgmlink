@@ -84,7 +84,7 @@ void export_track() {
     class_<ConsTracking>("ConsTracking",
     		init<int,double,double,string,bool,double,double,
     		double,bool,double,double,bool,double,double, bool,
-    		int, double, double, FieldOfView, bool, UncertaintyParameter, string>(
+    		int, double, double, FieldOfView, bool, UncertaintyParameter, double, string>(
 						args("max_number_objects", "max_neighbor_distance", "division_threshold",
 							"detection_rf_filename", "size_dependent_detection_prob", "forbidden_cost",
 							"ep_gap", "avg_obj_size",
@@ -92,7 +92,7 @@ void export_track() {
 							"division_weight", "transition_weight",
 							"with_divisions",
 							 "disappearance_cost", "appearance_cost", "with_merger_resolution", "number_of_dimensions",
-                             "transition_parameter", "border_width", "fov", "with_constraints","uncertaintyParameter", "event_vector_dump_filename")))
+                             "transition_parameter", "border_width", "fov", "with_constraints","uncertaintyParameter", "cplex_timeout","event_vector_dump_filename")))
 	  .def("__call__", &pythonConsTracking)
 	  .def("detections", &ConsTracking::detections)
 	;
@@ -109,8 +109,8 @@ void export_track() {
 
 
 
-    class_<vector<unsigned int> >("IdVector")
-	.def(vector_indexing_suite<vector<unsigned int> >())
+    class_<vector<vigra::UInt64> >("IdVector")
+    .def(vector_indexing_suite<vector<vigra::UInt64> >())
     ;
     class_<Event>("Event")
 	.def_readonly("type", &Event::type)

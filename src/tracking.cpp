@@ -305,7 +305,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		}
 		prob_vector.insert(prob_vector.begin(), 1-sum);
 
-		detection = bind<double>(NegLnConstant(detection_weight,prob_vector), _2);
+		detection = boost::bind<double>(NegLnConstant(detection_weight,prob_vector), _2);
 	}
 
 	LOG(logDEBUG1) << "division_weight_ = " << division_weight_;
@@ -378,7 +378,8 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 			true, // with_disappearance
 			transition_parameter_,
 			with_constraints_,
-			uncertaintyParam_
+			uncertaintyParam_,
+           	        cplex_timeout_
 			);
 
 	size_t totalNumberOfSolutions = uncertaintyParam_.numberOfIterations;
@@ -412,7 +413,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
     prune_inactive(*graph);
 	std::vector< std::vector<Event> >* ev = &(all_ev[0]);
 
-    if (max_number_objects_ > 1 && with_merger_resolution_ && all_true(ev->begin(), ev->end(), has_data<Event>)) {
+    if (max_number_objects_ > 1 && with_merger_resolution_ && all_true(ev->begin()+1, ev->end(), has_data<Event>)) {
       cout << "-> resolving mergers" << endl;
       MergerResolver m(graph);
       FeatureExtractorBase* extractor;

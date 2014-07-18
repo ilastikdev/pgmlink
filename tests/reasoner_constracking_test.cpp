@@ -102,8 +102,8 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger ) {
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
 	size_t count_moves = 0;
-	size_t t = 1;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    size_t t = 1;
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {        
 		// events:
 		// t = 1: 2x move
 		// t = 2: 1x move, 1x merger
@@ -114,8 +114,9 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger ) {
 			BOOST_CHECK_EQUAL(it_t->size(),3);
 		}
 
-		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
+        for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {            
 			Event e = *it;
+            cout << t << ": " << e << endl;
 			BOOST_CHECK_NE(e.type, Event::Disappearance);
 			BOOST_CHECK_NE(e.type, Event::Appearance);
 			BOOST_CHECK_NE(e.type, Event::Division);
@@ -198,7 +199,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Division ) {
 	size_t count_moves = 0;
 	size_t count_divisions = 0;
 	size_t t = 1;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		// events:
 		// t = 1: 1x move
 		// t = 2: 1x division
@@ -275,9 +276,9 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove ) {
 	std::cout << std::endl;
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
-	BOOST_CHECK_EQUAL(events.size(),1);
+    BOOST_CHECK_EQUAL(events.size(),2);
 	size_t count_moves = 0;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			if (e.type == Event::Move) {
@@ -362,7 +363,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger_Volume ) {
 
 	size_t count_moves = 0;
 	size_t t = 1;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		// events:
 		// t = 1: 1x move
 		// t = 2: 1x move
@@ -452,8 +453,8 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Disappearance ) {
 
 	size_t num_events = 0;
 	size_t t = 1;
-	BOOST_CHECK_EQUAL(events.size(),1); // 1 timesteps
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    BOOST_CHECK_EQUAL(events.size(),2); // 2 timesteps
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			++num_events;
@@ -544,7 +545,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceAndDisappearance )
 
 	size_t t = 1;
 	size_t num_events = 0;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			++num_events;
@@ -667,33 +668,40 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Appearance ) {
 	std::cout << std::endl;
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
-	size_t t = 0;
+    size_t t = 0;
 	size_t num_events = 0;
 	size_t moves = 0;
 	size_t apps = 0;
 	size_t mergers = 0;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
+            cout << e << endl;
 			++num_events;
 			BOOST_CHECK_NE(e.type, Event::Disappearance);
 			BOOST_CHECK_NE(e.type, Event::Division);
 			if (e.type == Event::Move) {
-				++moves;
+                ++moves;
 			} else if (e.type == Event::Appearance) {
 				++apps;
 				BOOST_CHECK(e.traxel_ids[0] == 10 || e.traxel_ids[0] == 12);
 			} else if (e.type == Event::Merger) {
 				++mergers;
-				BOOST_CHECK(e.traxel_ids[0] == 7 || e.traxel_ids[0] == 8);
+                if (t == 0) {
+                    BOOST_CHECK(e.traxel_ids[0] == 7);
+                } else if (t==1){
+                    BOOST_CHECK(e.traxel_ids[0] == 8);
+                } else if (t==2) {
+                    BOOST_CHECK(e.traxel_ids[0] == 9);
+                }
 			}
 		}
-		++t;
+        ++t;
 	}
-	BOOST_CHECK_EQUAL(num_events, 10);
+    BOOST_CHECK_EQUAL(num_events, 12);
 	BOOST_CHECK_EQUAL(moves,7);
 	BOOST_CHECK_EQUAL(apps,2);
-	BOOST_CHECK_EQUAL(mergers,1); // the merger in the last time frame will be detected but not stored in the events vector
+    BOOST_CHECK_EQUAL(mergers,3);
 }
 
 BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
@@ -768,7 +776,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
 
 	size_t t = 1;
 	size_t num_events = 0;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			++num_events;
@@ -883,7 +891,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
 
 	size_t moves = 0;
 	size_t t = 1;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			std::cout<<e.type;;
@@ -1039,7 +1047,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
 	size_t apps = 0;
 	size_t disapps = 0;
 	size_t num_events = 0;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			if (e.type == Event::Appearance) {
@@ -1212,7 +1220,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels ) 
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
 
-	size_t t = 0;
+    size_t t = 1;
 	BOOST_CHECK_EQUAL(events[t].size(), 3);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;
@@ -1227,7 +1235,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels ) 
 				BOOST_CHECK(false);
 			}
 	}
-	t=1;
+    t=2;
 	BOOST_CHECK_EQUAL(events[t].size(), 3);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;
@@ -1357,7 +1365,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
 
-	size_t t = 0;
+    size_t t = 1;
 	BOOST_CHECK_EQUAL(events[t].size(), 3);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;
@@ -1372,7 +1380,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
 				BOOST_CHECK(false);
 			}
 	}
-	t=1;
+    t=2;
 	BOOST_CHECK_EQUAL(events[t].size(), 3);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;
@@ -1486,7 +1494,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
 	size_t mergers = 0;
 	size_t multis = 0;
 	size_t num_events = 0;
-	for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin(); it_t != events.end(); ++it_t) {
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
 		for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
 			Event e = *it;
 			if (e.type == Event::Appearance) {
@@ -1513,7 +1521,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
 	BOOST_CHECK_EQUAL(apps, 0);
 	BOOST_CHECK_EQUAL(disapps, 0);
 	BOOST_CHECK_EQUAL(moves, 3);
-	BOOST_CHECK_EQUAL(mergers, 1);
+    BOOST_CHECK_EQUAL(mergers, 2);
 	BOOST_CHECK_EQUAL(multis, 0);
 }
 
@@ -1615,28 +1623,33 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
 	std::cout << std::endl;
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
-	size_t t = 0;
-	BOOST_CHECK_EQUAL(events[t].size(), 3);
+    size_t t = 1;
+    BOOST_CHECK_EQUAL(events[t].size(), 5);
+    size_t num_mergers = 0;
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
-			Event e = *it;
-			if (e.type == Event::Move && e.traxel_ids[0] == 11) {
-				BOOST_CHECK_EQUAL(e.traxel_ids[1], 21);
-			} else if (e.type == Event::Move && e.traxel_ids[0] == 13) {
-				BOOST_CHECK_EQUAL(e.traxel_ids[1], 22);
-			} else if (e.type == Event::Division && e.traxel_ids[0] == 12) {
-                                set<unsigned> division_set(e.traxel_ids.begin()+1, e.traxel_ids.end());
-                                set<unsigned> comparison_set;
-                                comparison_set.insert(21);
-                                comparison_set.insert(22);
-                                BOOST_CHECK_EQUAL_COLLECTIONS(division_set.begin(),
-                                                             division_set.end(),
-                                                             comparison_set.begin(),
-                                                             comparison_set.end());
-			} else {
-				cout << "unexpected event: " << e;
-				BOOST_CHECK(false);
-			}
-	}
+        Event e = *it;
+        if (e.type == Event::Move && e.traxel_ids[0] == 11) {
+            BOOST_CHECK_EQUAL(e.traxel_ids[1], 21);
+        } else if (e.type == Event::Move && e.traxel_ids[0] == 13) {
+            BOOST_CHECK_EQUAL(e.traxel_ids[1], 22);
+        } else if (e.type == Event::Division && e.traxel_ids[0] == 12) {
+            set<unsigned> division_set(e.traxel_ids.begin()+1, e.traxel_ids.end());
+            set<unsigned> comparison_set;
+            comparison_set.insert(21);
+            comparison_set.insert(22);
+            BOOST_CHECK_EQUAL_COLLECTIONS(division_set.begin(),
+                                         division_set.end(),
+                                         comparison_set.begin(),
+                                         comparison_set.end());
+        } else if (e.type == Event::Merger) {
+            ++num_mergers;
+            BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
+        } else  {
+            cout << "unexpected event: " << e;
+            BOOST_CHECK(false);
+        }
+    }
+    BOOST_CHECK_EQUAL(num_mergers, 2);
 
 }
 
@@ -1751,7 +1764,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
 	std::vector< std::vector<Event> > events = tracking(ts)[0];
 
 
-	size_t t = 0;
+    size_t t = 1;
 	BOOST_CHECK_EQUAL(events[t].size(), 2);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;
@@ -1764,7 +1777,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
 				BOOST_CHECK(false);
 			}
 	}
-	t=1;
+    t=2;
 	BOOST_CHECK_EQUAL(events[t].size(), 2);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;
@@ -1777,7 +1790,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
 				BOOST_CHECK(false);
 			}
 	}
-	t=2;
+    t=3;
 	BOOST_CHECK_EQUAL(events[t].size(), 2);
 	for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
 			Event e = *it;

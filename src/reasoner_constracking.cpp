@@ -2,6 +2,8 @@
 #include <vector>
 #include <cassert>
 #include <stdexcept>
+#include <string.h>
+#include <memory.h>
 #include <opengm/inference/lpcplex.hxx>
 #include <opengm/datastructures/marray/marray.hxx>
 //#include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
@@ -139,6 +141,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	param.verbose_ = true;
 	param.integerConstraint_ = true;
 	param.epGap_ = ep_gap_;
+    param.timeLimit_ = cplex_timeout_;
 	param_.print();
 
 	//m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.

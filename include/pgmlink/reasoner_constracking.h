@@ -64,7 +64,7 @@ class ConservationTracking : public Reasoner {
                              boost::function<double (const Traxel&, const size_t)> division,
                              boost::function<double (const double)> transition,
                              double forbidden_cost = 0,
-                             double ep_gap = 0.01,
+                             double ep_gap = 0.01,                             
                              bool with_tracklets = false,
                              bool with_divisions = true,
                              boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
@@ -74,7 +74,8 @@ class ConservationTracking : public Reasoner {
                              bool with_disappearance = true,
                              double transition_parameter = 5,
                              bool with_constraints = true,
-                             UncertaintyParameter param = UncertaintyParameter())
+                             UncertaintyParameter param = UncertaintyParameter(),
+                             double cplex_timeout = 1e75)
         : max_number_objects_(max_number_objects),
           detection_(detection),
           division_(division),
@@ -96,6 +97,7 @@ class ConservationTracking : public Reasoner {
           transition_parameter_(transition_parameter),
           with_constraints_(with_constraints),
           param_(param),
+          cplex_timeout_(cplex_timeout),
           isMAP_(true),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
           random_uniform_(rng_,boost::uniform_real<>(0,1))
@@ -175,7 +177,7 @@ class ConservationTracking : public Reasoner {
     std::map<HypothesesGraph::Node, size_t> dis_node_map_;
     std::map<HypothesesGraph::Arc, size_t> arc_map_;
 
-    double ep_gap_;
+    double ep_gap_;    
 
     bool with_tracklets_, with_divisions_;
     boost::function<double (const Traxel&)> disappearance_cost_;
@@ -191,6 +193,8 @@ class ConservationTracking : public Reasoner {
     double transition_parameter_;
 
     bool with_constraints_;
+
+    double cplex_timeout_;
     
     UncertaintyParameter param_;
     bool isMAP_;
