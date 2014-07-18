@@ -388,7 +388,6 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		cout << "-> perturbed Inference" << endl;
 		pgm.perturbedInference(*graph);
 		cout << "-> finished perturbed Inference" << endl;
-		prune_inactive(*graph);
 		}
 	else {
 		pgm.perturbedInference(*graph);
@@ -397,12 +396,13 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		last_detections_ = state_of_nodes(*graph);
 
 		cout << "-> pruning inactive hypotheses" << endl;
-		prune_inactive(*graph);
 
 	}
+	//TODO: conceptual problem here:
+	//revise prune_inactive//events
 	
     cout << "-> constructing unresolved events" << endl;
-    
+
     std::vector < std::vector< std::vector<Event> > > all_ev(totalNumberOfSolutions);
     for (size_t i=0;i<totalNumberOfSolutions;++i){
 		all_ev[i] = *events(*graph,i);

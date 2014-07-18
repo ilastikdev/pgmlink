@@ -57,83 +57,83 @@ namespace pgmlink {
   
     
   HypothesesGraph& prune_inactive(HypothesesGraph& g) {
-      LOG(logDEBUG) << "prune_inactive(): entered";
-      property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = g.get(arc_active());
+	  LOG(logDEBUG) << "prune_inactive(): entered";
+	  property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = g.get(arc_active());
 
-      property_map<node_active, HypothesesGraph::base_graph>::type* active_nodes = 0;
+	  property_map<node_active, HypothesesGraph::base_graph>::type* active_nodes = 0;
 	  property_map<node_active2, HypothesesGraph::base_graph>::type* active2_nodes = 0;
 	  bool active2_used = false;
 	  if (g.getProperties().count("node_active") > 0) {
-		active_nodes = &g.get(node_active());
+		  active_nodes = &g.get(node_active());
 	  } else {
-        assert(g.getProperties().count("node_active2") > 0);
-		active2_nodes = &g.get(node_active2());
-		active2_used = true;
+		  assert(g.getProperties().count("node_active2") > 0);
+		  active2_nodes = &g.get(node_active2());
+		  active2_used = true;
 	  }
-    
-      // prune inactive arcs
-      LOG(logDEBUG) << "prune_inactive: prune inactive arcs";
-      typedef property_map<arc_active, HypothesesGraph::base_graph>::type::FalseIt inactive_arc_it;
 
-      // we first collect and then erase (iterator will be invalid after erase; therefore a two-step
-      // procedure)
+	  // prune inactive arcs
+	  LOG(logDEBUG) << "prune_inactive: prune inactive arcs";
+	  typedef property_map<arc_active, HypothesesGraph::base_graph>::type::FalseIt inactive_arc_it;
 
-      // collect inactive arcs
-      vector<HypothesesGraph::Arc> arcs_to_prune;
+	  // we first collect and then erase (iterator will be invalid after erase; therefore a two-step
+	  // procedure)
 
-      for(inactive_arc_it it(active_arcs); it!=lemon::INVALID; ++it) {
-	arcs_to_prune.push_back(it);
-	assert(g.valid(it));
-        LOG(logDEBUG1) << "prune_inactive: arc to be pruned: " << g.id(it);
-      }
+	  // collect inactive arcs
+	  vector<HypothesesGraph::Arc> arcs_to_prune;
 
-      std::sort(arcs_to_prune.begin(), arcs_to_prune.end());
-      std::reverse(arcs_to_prune.begin(), arcs_to_prune.end());
+	  for(inactive_arc_it it(active_arcs); it!=lemon::INVALID; ++it) {
+		  arcs_to_prune.push_back(it);
+		  assert(g.valid(it));
+		  LOG(logDEBUG1) << "prune_inactive: arc to be pruned: " << g.id(it);
+	  }
 
-      // prune inactive arcs
-      for(vector<HypothesesGraph::Arc>::const_iterator it = arcs_to_prune.begin(); it!= arcs_to_prune.end(); ++it) {
-        if (g.valid(*it)) {
-          LOG(logDEBUG1) << "prune_inactive: pruned arc: " << g.id(*it);
-          g.erase(*it);
-        }
-	assert(!g.valid(*it));
-      }
+	  std::sort(arcs_to_prune.begin(), arcs_to_prune.end());
+	  std::reverse(arcs_to_prune.begin(), arcs_to_prune.end());
 
-      // prune inactive nodes 
-      LOG(logDEBUG) << "prune_inactive: prune inactive nodes";
-      // collect inactive nodes
-      vector<HypothesesGraph::Node> nodes_to_prune;
+	  // prune inactive arcs
+	  for(vector<HypothesesGraph::Arc>::const_iterator it = arcs_to_prune.begin(); it!= arcs_to_prune.end(); ++it) {
+		  if (g.valid(*it)) {
+			  LOG(logDEBUG1) << "prune_inactive: pruned arc: " << g.id(*it);
+			  g.erase(*it);
+		  }
+		  assert(!g.valid(*it));
+	  }
 
-      if (active2_used) {
-  		for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
-  			if (!(*active2_nodes)[it]) {
-  				nodes_to_prune.push_back(it);
-				assert(g.valid(it));
-  			}
-  		}
-      } else {
-    	typedef property_map<node_active, HypothesesGraph::base_graph>::type::FalseIt inactive_node_it;
-		for (inactive_node_it it(*active_nodes); it != lemon::INVALID; ++it) {
-			nodes_to_prune.push_back(it);
-			assert(g.valid(it));
-		}
-      }
+	  // prune inactive nodes
+	  LOG(logDEBUG) << "prune_inactive: prune inactive nodes";
+	  // collect inactive nodes
+	  vector<HypothesesGraph::Node> nodes_to_prune;
 
-      property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-      // prune inactive nodes
-      for(vector<HypothesesGraph::Node>::const_iterator it = nodes_to_prune.begin(); it!= nodes_to_prune.end(); ++it) {
-	LOG(logDEBUG3) << "prune_inactive: prune node: " << g.id(*it) << ", Traxel = " << traxel_map[*it];
-	for(HypothesesGraph::OutArcIt arcit(g,*it); arcit != lemon::INVALID; ++arcit) {
-		assert(active_arcs[arcit] == false && "arc may not be active");
-	}
-	for(HypothesesGraph::InArcIt arcit(g,*it); arcit != lemon::INVALID; ++arcit) {
-			assert(active_arcs[arcit] == false && "arc may not be active");
-		}
-	g.erase(*it);
-	assert(!g.valid(*it));
-      } 
-     LOG (logDEBUG) << "prune_inactive(): done";
-      return g;
+	  if (active2_used) {
+		  for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
+			  if (!(*active2_nodes)[it]) {
+				  nodes_to_prune.push_back(it);
+				  assert(g.valid(it));
+			  }
+		  }
+	  } else {
+		  typedef property_map<node_active, HypothesesGraph::base_graph>::type::FalseIt inactive_node_it;
+		  for (inactive_node_it it(*active_nodes); it != lemon::INVALID; ++it) {
+			  nodes_to_prune.push_back(it);
+			  assert(g.valid(it));
+		  }
+	  }
+
+	  property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+	  // prune inactive nodes
+	  for(vector<HypothesesGraph::Node>::const_iterator it = nodes_to_prune.begin(); it!= nodes_to_prune.end(); ++it) {
+		  LOG(logDEBUG3) << "prune_inactive: prune node: " << g.id(*it) << ", Traxel = " << traxel_map[*it];
+		  for(HypothesesGraph::OutArcIt arcit(g,*it); arcit != lemon::INVALID; ++arcit) {
+			  assert(active_arcs[arcit] == false && "arc may not be active");
+		  }
+		  for(HypothesesGraph::InArcIt arcit(g,*it); arcit != lemon::INVALID; ++arcit) {
+			  assert(active_arcs[arcit] == false && "arc may not be active");
+		  }
+		  g.erase(*it);
+		  assert(!g.valid(*it));
+	  }
+	  LOG (logDEBUG) << "prune_inactive(): done";
+	  return g;
   }
 
   boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGraph& g, int iterationStep) {
@@ -143,17 +143,18 @@ namespace pgmlink {
     node_timestep_map_t& node_timestep_map = g.get(node_timestep());
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
     node_traxel_map_t& node_traxel_map = g.get(node_traxel());
-    property_map<division_active, HypothesesGraph::base_graph>::type* division_node_map;
+    property_map<division_active_count, HypothesesGraph::base_graph>::type& division_node_map = g.get(division_active_count());
     
     bool with_division_detection = false;
+
     if (g.getProperties().count("division_active") > 0) {
-    	division_node_map = &g.get(division_active());
-    	with_division_detection = true;
-    }
-    property_map<node_active2, HypothesesGraph::base_graph>::type* node_number_of_objects;
+         with_division_detection = true;
+        }
+
+    property_map<node_active_count, HypothesesGraph::base_graph>::type* node_number_of_objects;
+	node_number_of_objects = &g.get(node_active_count());
     bool with_mergers = false;
     if (g.getProperties().count("node_active2") > 0) {
-    	node_number_of_objects = &g.get(node_active2());
     	with_mergers = true;
     	LOG(logDEBUG1) << "events(): with_mergers = true";
     }
@@ -205,47 +206,13 @@ namespace pgmlink {
 	    }
 
 
-	    /* if (with_resolved && ((*resolved_map)[node_at]).size() > 0) {
-	      // property_map<merger_resolved_to, HypothesesGraph::base_graph>::type::ItemIt resolved_it;
-	      // resolved_it = std::find(resolved_it
-	      LOG(logINFO) << "events(): entered resolved_to event creation...";
-	      Event e;
-	      e.type = Event::ResolvedTo;
-	      e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-	      std::vector<unsigned int> ids = (*resolved_map)[node_at];
-	      for (std::vector<unsigned int>::iterator it = ids.begin(); it != ids.end(); ++it) {
-		e.traxel_ids.push_back(*it);
-	      }
-	      (*ret)[t-g.earliest_timestep()].push_back(e);
-	      LOG(logDEBUG3) << e;
-              } */
+	    LOG(logDEBUG3) << "Number of detected objects: " << node_number_of_objects->get_value(node_at)[iterationStep];
 
-	    LOG(logDEBUG3) << "Number of detected objects: " << (*node_number_of_objects)[node_at];
-
-//	    if(with_mergers && (*node_number_of_objects)[node_at] > 1) {
-//	    	prev_mergers.clear();
-//			Event e;
-//			e.type = Event::Merger;
-//			e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-//			e.traxel_ids.push_back((*node_number_of_objects)[node_at]);
-//			prev_mergers.push_back(e);
-//			LOG(logDEBUG3) << e;
-//		}
-
-//	    if(t == g.earliest_timestep() && with_mergers && (*node_number_of_objects)[node_at] > 1 ) {
-//			Event e;
-//			e.type = Event::Merger;
-//			e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-//			e.traxel_ids.push_back((*node_number_of_objects)[node_at]);
-//			mergers_t0.push_back(e);
-//			LOG(logDEBUG3) << e;
-//		}
-
-	    if(with_mergers && (*node_number_of_objects)[node_at] > 1 && t > g.earliest_timestep()) {
+	    if(with_mergers && node_number_of_objects->get_value(node_at)[iterationStep] > 1 && t > g.earliest_timestep()) {
 			Event e;
 			e.type = Event::Merger;
 			e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-			e.traxel_ids.push_back((*node_number_of_objects)[node_at]);
+			e.traxel_ids.push_back(node_number_of_objects->get_value(node_at)[iterationStep]);
 			(*ret)[t-g.earliest_timestep()-1].push_back(e);
 			LOG(logDEBUG3) << e;
 	    }
@@ -291,7 +258,7 @@ namespace pgmlink {
 		default: {
 			Event e;
 		    if (with_division_detection) {
-		    	if (count == 2 && (*division_node_map)[node_at]) {
+		    	if (count == 2 && (division_node_map).get_value(node_at)[iterationStep]) {
 					e.type = Event::Division;
 					e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 					for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
@@ -325,7 +292,6 @@ namespace pgmlink {
 		    	}
 				e.type = Event::Division;
 				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-				HypothesesGraph::base_graph::OutArcIt a(g, node_at);
 				for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
 					if (!active_arcs->operator[](a)[iterationStep]) {
 						continue;
@@ -371,9 +337,10 @@ namespace pgmlink {
 			continue;
 		}
 	    int count = 0;
-	    for(HypothesesGraph::base_graph::InArcIt a(g, node_at); a!=lemon::INVALID; ++a) ++count;
-    	    LOG(logDEBUG3) << "events(): counted incoming arcs in next timestep: " << count;
-	   
+	    for(HypothesesGraph::base_graph::InArcIt a(g, node_at); a!=lemon::INVALID; ++a) {
+	    	if (active_arcs->operator[](a)[iterationStep]) ++count;
+	    }
+	    LOG(logDEBUG3) << "events(): counted incoming arcs in next timestep: " << count;
 	    // no incoming arcs => appearance
 	    if(count == 0) {
 		    Event e;

@@ -185,29 +185,13 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 		  	      );
 	
 	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
-	int counter = 0;
-	int counter2 = 0;
+
+	//two iterations: two event vectors
 	BOOST_CHECK_EQUAL(events.size(),2);
-			
-	for(size_t timeStep=0;timeStep<events[0].size();++timeStep){
-		for(size_t factorIndex=0;factorIndex<events[0][timeStep].size()&&factorIndex<events[1][timeStep].size();++factorIndex){
-		
-			if (events[0][timeStep][factorIndex].type == events[1][timeStep][factorIndex].type){
-				counter++;
-			} else{
-			   counter2++;
-			}
-		}
-	}
 	
-	//there are exactly two different outcomes with similar energy, 
-	//namely divison or move of the variable in the 2. timeStep. So we
-	//should expect two different solutions if we do deterministic 
-	//relaxed diversed-m-best
-	
-	BOOST_CHECK_EQUAL(counter,1);
-	BOOST_CHECK_EQUAL(counter2,1);
-	
+	BOOST_CHECK_EQUAL(events[0][1][0].type,Event::Division);
+	BOOST_CHECK_EQUAL(events[1][1][0].type,Event::Move);
+
 }
 
 BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
