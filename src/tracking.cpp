@@ -329,6 +329,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 	g.add(arc_distance()).add(tracklet_intern_dist()).add(node_tracklet()).add(tracklet_intern_arc_ids()).add(traxel_arc_id());
 	property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances = g.get(arc_distance());
 	property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+
 	bool with_optical_correction = false;
 	Traxel some_traxel = (*traxel_map.beginValue());
 	if (some_traxel.features.find("com_corrected") != some_traxel.features.end()) {
@@ -408,6 +409,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		all_ev[i] = *events(*graph,i);
 	}
 
+    prune_inactive(*graph);
 	std::vector< std::vector<Event> >* ev = &(all_ev[0]);
 
     if (max_number_objects_ > 1 && with_merger_resolution_ && all_true(ev->begin(), ev->end(), has_data<Event>)) {

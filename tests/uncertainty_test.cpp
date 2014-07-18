@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 		sigmas[3]=10;
 		sigmas[4]=10;
 
-	UncertaintyParameter uparam(2,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
+	UncertaintyParameter uparam(3,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
@@ -187,10 +187,11 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
 
 	//two iterations: two event vectors
-	BOOST_CHECK_EQUAL(events.size(),2);
+	BOOST_CHECK_EQUAL(events.size(),3);
 	
 	BOOST_CHECK_EQUAL(events[0][1][0].type,Event::Division);
 	BOOST_CHECK_EQUAL(events[1][1][0].type,Event::Move);
+	BOOST_CHECK_EQUAL(events[2][1][0].type,Event::Move);
 
 }
 

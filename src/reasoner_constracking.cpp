@@ -73,12 +73,12 @@ void ConservationTracking::printResults(HypothesesGraph& g){
 		it != app_node_map_.end(); ++it) {
 		c=0;
 		for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin(); i != active_nodes_count[it->first].end(); ++i){
-			LOG(logDEBUG4) << *i;
+			LOG(logINFO) << *i;
 			if (*i>0){
 				c++;
 			}
 		}
-		LOG(logDEBUG4) << "total= "<<c<<std::endl;
+		LOG(logINFO) << "total= "<<c<<std::endl;
 	}
 	LOG(logDEBUG4) << "division nodes "<<c<<std::endl;
 		for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
@@ -109,6 +109,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	} else {
 		graph = &hypotheses;
 	}
+
+	graph->add(relative_uncertainty()).add(node_active_count());
+
 	LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: "<<param_.numberOfIterations;
 	LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id "<<param_.distributionId;
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
@@ -167,10 +170,18 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	if (param_.distributionId==MbestCPLEX){
 		numberOfIterations = 1;
 	}
+	size_t nOF = PertModel.numberOfFactors();
+
+	//store offset by factor index
+	//technic assumption: the number & order of factors remains the same for the perturbed models
+	//performance assumption: the number of pertubations is rather low, so iterating over
+	//a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
+
+	vector<vector<vector<size_t> > >deterministic_offset(nOF);
+
 	//deterministic & non-deterministic perturbation
 	for (size_t iterStep=1;iterStep<numberOfIterations;++iterStep){
-		size_t nOF = PertModel.numberOfFactors();
-		vector<vector<size_t> >deterministic_offset;
+		nOF = PertModel.numberOfFactors();
 		if (param_.distributionId==DiverseMbest){
 
 			for(size_t factorId=0; factorId<nOF; ++factorId) {
@@ -179,7 +190,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 				for (PertGmType::FactorType::VariablesIteratorType ind=factor.variableIndicesBegin();ind!=factor.variableIndicesEnd();++ind){
 					varIndices.push_back(solution_[*ind]);
 				}
-				deterministic_offset.push_back(varIndices);
+				deterministic_offset[factorId].push_back(varIndices);
 			}
 		}
 
@@ -200,6 +211,22 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 		LOG(logINFO) << "conclude";
 		conclude(hypotheses);
+	}
+
+	graph->add(relative_uncertainty());
+
+	property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes = graph->get(node_active_count());
+	property_map<relative_uncertainty, HypothesesGraph::base_graph>::type& rel_uncertainty = graph->get(relative_uncertainty());
+	for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n) {
+		double count=0;
+		vector<size_t>* active_list = &active_nodes.get_value(n);
+		for (vector<size_t>::iterator is_active = active_list->begin();is_active!=active_list->end();is_active++){
+			if (*is_active!=0){
+				++count;
+			}
+		}
+
+		rel_uncertainty.set(n,count/param_.numberOfIterations);
 	}
 }
 
@@ -281,7 +308,6 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
 
 	int iterStep = active_nodes_count[app_node_map_.begin()->first].size();
 	bool isMAP = (iterStep==0);
-	LOG(logDEBUG)<<iterStep;
 
 	if (isMAP){
 		//initialize vectors for storing optimizer results
@@ -506,7 +532,7 @@ double get_transition_prob(double distance, size_t state, double alpha) {
 }
 
 template <typename ModelType>
-void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType* model, bool perturb /*=false*/, vector<vector<size_t> >* detoff /*= NULL*/) {
+void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType* model, bool perturb /*=false*/, vector< vector<vector<size_t> > >* detoff /*= NULL*/) {
 	// refactor this:
 
 	// we could use this method to calculate the label-specific offset, also.
@@ -651,7 +677,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         LOG(logDEBUG3) << "ConservationTracking::add_finite_factors: adding table to pgm";
         //functor add detection table
         if (perturb && param_.distributionId==DiverseMbest){
-        	energies(detoff->operator[](factorIndex).begin())+=param_.distributionParam[Detection];
+        	vector<vector<size_t> >* indexlist = &detoff->operator[](factorIndex);
+        	for (vector<vector<size_t> >::iterator index=indexlist->begin();index !=indexlist->end();index++){
+        		energies(index->begin())+=param_.distributionParam[Detection];
+        	}
         	factorIndex++;
         }
         typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
@@ -689,8 +718,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             coords[0] = 0;
         }
         if (perturb && param_.distributionId==DiverseMbest){
-        	energies(detoff->operator[](factorIndex).begin())+=param_.distributionParam[Transition];
-            factorIndex++;
+        	vector<vector<size_t> >* indexlist = &detoff->operator[](factorIndex);
+        	for (vector<vector<size_t> >::iterator index=indexlist->begin();index !=indexlist->end();index++){
+        		energies(index->begin())+=param_.distributionParam[Transition];
+        	}
+        	factorIndex++;
         }
         typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
         model->addFactor(funcId,vi,vi+1);
@@ -732,8 +764,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             }
             //table.add_to(model);
             if (perturb && param_.distributionId==DiverseMbest){
-            	energies(detoff->operator[](factorIndex).begin())+=param_.distributionParam[Division];
-                factorIndex++;
+            	vector<vector<size_t> >* indexlist = &detoff->operator[](factorIndex);
+            	for (vector<vector<size_t> >::iterator index=indexlist->begin();index !=indexlist->end();index++){
+            		energies(index->begin())+=param_.distributionParam[Division];
+            	}
+            	factorIndex++;
             }
             typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
             model->addFactor(funcId,vi,vi+1);

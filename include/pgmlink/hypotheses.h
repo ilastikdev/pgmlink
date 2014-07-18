@@ -140,6 +140,16 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   template <typename Graph>
     const std::string property_map<division_active_count,Graph>::name = "division_active_count";
 
+  // relative_uncertainty
+    struct relative_uncertainty {};
+    template <typename Graph>
+      struct property_map<relative_uncertainty, Graph> {
+      typedef IterableEditableValueMap< Graph, typename Graph::Node, double > type;
+      static const std::string name;
+    };
+    template <typename Graph>
+      const std::string property_map<relative_uncertainty,Graph>::name = "relative_uncertainty";
+
 	
   // node_active
   struct node_active {};
