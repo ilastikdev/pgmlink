@@ -87,8 +87,8 @@ protected:
 // IncomingConstraintFunction
 //------------------------------------------------------------------------
 /// This class assumes that the labels it gets to compute the function value
-/// are ordered such that the disappearance node (V) comes first, followed by n
-/// transition nodes (T_1 .. T_n).
+/// are ordered such that the n transition nodes (T_1 .. T_n) come first,
+/// followed by the disappearance node (V).
 /// It must then hold that sum(T_1 .. T_n) = V
 template<class T, class I, class L>
 class IncomingConstraintFunction: public ConstraintFunction<T,I,L>
@@ -105,12 +105,13 @@ protected:
     {
         assert(configuration.size() > 1);
 
-        typename std::vector<L>::const_iterator it = configuration.begin();
-        L num_disappearing_objects = *it++;
+        L num_disappearing_objects = configuration.back();
 
-        // sum incoming transitions
+        // sum incoming transitions until one before the end
         L sum = 0;
-        for(; it != configuration.end(); ++it)
+        auto end_range = configuration.end();
+        end_range--;
+        for(auto it = configuration.begin(); it != end_range; ++it)
         {
             sum += *it;
         }
@@ -143,7 +144,7 @@ protected:
     {
         assert(configuration.size() > 1);
 
-        typename std::vector<L>::const_iterator it = configuration.begin();
+        auto it = configuration.begin();
         L num_appearing_objects = *it++;
         L division = *it++;
 
@@ -154,7 +155,7 @@ protected:
             sum += *it;
         }
 
-        if(sum == num_appearing_objects + division)
+        if(sum == num_appearing_objects + division && (division != 1 || num_appearing_objects == 1))
             return 0.0;
         else
             return this->forbidden_energy_;
@@ -179,7 +180,7 @@ protected:
     {
         assert(configuration.size() == 2);
 
-        typename std::vector<L>::const_iterator it = configuration.begin();
+        auto it = configuration.begin();
         L num_disappearing_objects = *it++;
         L num_appearing_objects = *it;
 
