@@ -24,6 +24,8 @@ template<class T, class I, class L>
 class ConstraintFunction: public opengm::FunctionBase<ConstraintFunction<T, I, L>, T, I, L>
 {
 public:
+//    ConstraintFunction(){}
+
     typedef T ValueType;
     typedef L LabelType;
     typedef I IndexType;
@@ -39,10 +41,11 @@ public:
     /// operator is called to evaluate a certain labeling
     /// only compute the result when needed!
     template<class LABEL_ITERATOR>
-    T operator()(LABEL_ITERATOR labels_begin, LABEL_ITERATOR labels_end)
+    T operator()(LABEL_ITERATOR labels) const
     {
-        std::vector<L> configuration(labels_begin, labels_end);
-        assert(configuration.size() == this->dimension());
+        std::vector<L> configuration;
+        for(size_t i = 0; i < this->dimension(); i++)
+            configuration.push_back(labels[i]);
 
         return get_energy_of_configuration(configuration);
     }
@@ -74,7 +77,7 @@ public:
     }
 
 protected:
-    virtual T get_energy_of_configuration(const std::vector<L>&)
+    virtual T get_energy_of_configuration(const std::vector<L>&) const
     {
         throw std::logic_error("You have to use derived classes of ConstraintFunction!");
     }
@@ -94,6 +97,10 @@ template<class T, class I, class L>
 class IncomingConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
+//    IncomingConstraintFunction():
+//        ConstraintFunction<T,I,L>()
+//    {}
+
     template<class SHAPE_ITERATOR>
     IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
@@ -101,7 +108,7 @@ public:
     {}
 
 protected:
-    virtual T get_energy_of_configuration(const std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
         assert(configuration.size() > 1);
 
@@ -134,13 +141,17 @@ template<class T, class I, class L>
 class OutgoingConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
+//    OutgoingConstraintFunction():
+//        ConstraintFunction<T,I,L>()
+//    {}
+
     template<class SHAPE_ITERATOR>
     OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
         ConstraintFunction<T,I,L>(shape_begin, shape_end)
     {}
 protected:
-    virtual T get_energy_of_configuration(const std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
         assert(configuration.size() > 1);
 
@@ -170,13 +181,17 @@ template<class T, class I, class L>
 class DetectionConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
+//    DetectionConstraintFunction():
+//        ConstraintFunction<T,I,L>()
+//    {}
+
     template<class SHAPE_ITERATOR>
     DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
         ConstraintFunction<T,I,L>(shape_begin, shape_end)
     {}
 protected:
-    virtual T get_energy_of_configuration(const std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
         assert(configuration.size() == 2);
 

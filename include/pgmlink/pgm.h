@@ -22,6 +22,7 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/graph.h"
 #include "pgmlink/util.h"
+#include "pgmlink/constraint_function.hxx"
 
 namespace pgmlink {
   namespace pgm {
@@ -40,7 +41,12 @@ namespace pgmlink {
     class OpengmModelDeprecated {
     public:
       typedef double Energy;
-      typedef opengm::GraphicalModel<Energy, opengm::Adder> ogmGraphicalModel;
+      typedef IncomingConstraintFunction<Energy, size_t, size_t> InConsFunc;
+      typedef OutgoingConstraintFunction<Energy, size_t, size_t> OutConsFunc;
+      typedef DetectionConstraintFunction<Energy, size_t, size_t> DetConsFunc;
+
+      typedef OPENGM_TYPELIST_4(ExplicitFunction, InConsFunc, OutConsFunc, DetConsFunc) ogmFunctionsTypelist;
+      typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
       typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
       typedef opengm::Minimizer ogmAccumulator;
       typedef opengm::Inference<ogmGraphicalModel, ogmAccumulator> ogmInference;

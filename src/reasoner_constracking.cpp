@@ -84,10 +84,10 @@ void ConservationTracking::formulate(const HypothesesGraph& hypotheses) {
 }
 
 void ConservationTracking::infer() {
-	if (!with_constraints_) {
-		opengm::hdf5::save(optimizer_->graphicalModel(), "./conservationTracking.h5", "conservationTracking");
-		throw std::runtime_error("GraphicalModel::infer(): inference with soft constraints is not implemented yet. The conservation tracking factor graph has been saved to file");
-	}
+//	if (!with_constraints_) {
+//		opengm::hdf5::save(optimizer_->graphicalModel(), "./conservationTracking.h5", "conservationTracking");
+//		throw std::runtime_error("GraphicalModel::infer(): inference with soft constraints is not implemented yet. The conservation tracking factor graph has been saved to file");
+//	}
     opengm::InferenceTermination status = optimizer_->infer();
     if (status != opengm::NORMAL) {
         throw std::runtime_error("GraphicalModel::infer(): optimizer terminated abnormally");

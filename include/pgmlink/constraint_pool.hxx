@@ -29,7 +29,7 @@ public:
 
 public:
     template<class CONSTRAINT_TYPE>
-    void add_constraint(CONSTRAINT_TYPE& constraint);
+    void add_constraint(const CONSTRAINT_TYPE& constraint);
 
     /// This method either adds all the factors to the graphical model
     /// or - given INF is opengm::LpCplex and "not force_hardconstraint" - adds hard constraints
@@ -38,7 +38,16 @@ public:
     void add_constraints_to_problem(GM& model,
                                     INF& optimizer);
 
-    void set_big_m(ValueType big_m);
+    void set_big_m(ValueType big_m)
+    {
+        big_m_ = big_m;
+    }
+
+    size_t get_num_constraints()
+    {
+        return incoming_constraints_.size() + outgoing_constraints_.size() + detection_constraints_.size();
+    }
+
 public:
     // types to store constraint instanciations
     struct IncomingConstraint
@@ -108,25 +117,25 @@ protected:
 //------------------------------------------------------------------------
 
 template<class CONSTRAINT_TYPE>
-void ConstraintPool::add_constraint(CONSTRAINT_TYPE& constraint)
+void ConstraintPool::add_constraint(const CONSTRAINT_TYPE&)
 {
     throw std::logic_error("only template specializations of this method should be called");
 }
 
 template<>
-void ConstraintPool::add_constraint(ConstraintPool::IncomingConstraint& constraint)
+void ConstraintPool::add_constraint(const ConstraintPool::IncomingConstraint& constraint)
 {
     incoming_constraints_.push_back(constraint);
 }
 
 template<>
-void ConstraintPool::add_constraint(ConstraintPool::OutgoingConstraint& constraint)
+void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& constraint)
 {
     outgoing_constraints_.push_back(constraint);
 }
 
 template<>
-void ConstraintPool::add_constraint(ConstraintPool::DetectionConstraint& constraint)
+void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& constraint)
 {
     detection_constraints_.push_back(constraint);
 }
@@ -143,8 +152,8 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
-    std::map< std::vector<IndexType>, FUNCTION_TYPE > constraint_functions_;
-    for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = detection_constraints_.begin(); it != detection_constraints_.end(); ++it)
+    std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
+    for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
     {
         const CONSTRAINT_TYPE& constraint = *it;
         std::vector<IndexType> indices;
@@ -153,17 +162,18 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
         std::vector<IndexType> shape;
         for(std::vector<IndexType>::iterator idx = indices.begin(); idx != indices.end(); ++idx)
         {
-            shape.push_back(model.numberOfLabels(idx));
+            shape.push_back(model.numberOfLabels(*idx));
         }
 
         // see if the function is already present in our map and model
-        if(constraint_functions_.find(shape) == constraint_functions_.end())
+        if(constraint_functions.find(shape) == constraint_functions.end())
         {
-            constraint_functions_[shape] = FUNCTION_TYPE(shape.begin(), shape.end());
+            constraint_functions[shape] = new FUNCTION_TYPE(shape.begin(), shape.end());
+            constraint_functions[shape]->set_forbidden_energy(big_m_);
         }
 
         // create factor
-        OpengmFactor< FUNCTION_TYPE > factor(constraint_functions_[shape], indices.begin(), indices.end());
+        OpengmFactor< FUNCTION_TYPE > factor(*constraint_functions[shape], indices.begin(), indices.end());
         factor.add_to(model);
     }
 }
@@ -178,7 +188,7 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 template<>
 void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint)
 {
-    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.begin());
+    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
     indices.push_back(constraint.disappearance_node);
 }
 
@@ -187,7 +197,7 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 {
     indices.push_back(constraint.appearance_node);
     indices.push_back(constraint.division_node);
-    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.begin());
+    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
 }
 
 template<>
