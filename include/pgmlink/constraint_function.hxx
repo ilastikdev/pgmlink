@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/functions/function_properties_base.hxx>
-
+#include <vector>
 
 namespace pgmlink {
 namespace pgm {
@@ -20,26 +20,29 @@ namespace pgm {
 /// and DetectionConstraintFunction
 ///
 /// \ingroup functions
-template<class T, class I=size_t, class L=size_t>
-class ConstraintFunction:
-        public FunctionBase<ExplicitFunction<T, I, L>, T, I, L>
+template<class T, class I, class L>
+class ConstraintFunction: public opengm::FunctionBase<ConstraintFunction<T, I, L>, T, I, L>
 {
 public:
     typedef T ValueType;
     typedef L LabelType;
     typedef I IndexType;
-    typedef typename opengm::FunctionBase<ConstraintFunction<T>, T, I, L> FunctionBaseType;
+    typedef typename opengm::FunctionBase<ConstraintFunction<T,I,L>, T, I, L> FunctionBaseType;
+
+    template<class SHAPE_ITERATOR>
+    ConstraintFunction(SHAPE_ITERATOR shape_begin,
+                       SHAPE_ITERATOR shape_end):
+        FunctionBaseType(),
+        shape_(shape_begin, shape_end)
+    {}
 
     /// operator is called to evaluate a certain labeling
     /// only compute the result when needed!
     template<class LABEL_ITERATOR>
-    T operator()(LABEL_ITERATOR labels_begin, LABEL_ITERATOR labes_end)
+    T operator()(LABEL_ITERATOR labels_begin, LABEL_ITERATOR labels_end)
     {
-        std::vector<L> configuration;
-        for(size_t i = 0; i < this->dimension(); ++i)
-        {
-            configuration.push_back(it[i]);
-        }
+        std::vector<L> configuration(labels_begin, labels_end);
+        assert(configuration.size() == this->dimension());
 
         return get_energy_of_configuration(configuration);
     }
@@ -65,94 +68,133 @@ public:
     }
 
 
+    void set_forbidden_energy(T forbidden_energy)
+    {
+        forbidden_energy_ = forbidden_energy;
+    }
+
 protected:
-    virtual T get_energy_of_configuration(std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>&)
     {
         throw std::logic_error("You have to use derived classes of ConstraintFunction!");
     }
 
-    std::vector<typename I> shape_;
+    std::vector<I> shape_;
+    T forbidden_energy_;
 };
 
-template<class T, class I=size_t, class L=size_t>
-class IncomingConstraintFunction:ConstraintFunction<T,I,L>
+//------------------------------------------------------------------------
+// IncomingConstraintFunction
+//------------------------------------------------------------------------
+/// This class assumes that the labels it gets to compute the function value
+/// are ordered such that the disappearance node (V) comes first, followed by n
+/// transition nodes (T_1 .. T_n).
+/// It must then hold that sum(T_1 .. T_n) = V
+template<class T, class I, class L>
+class IncomingConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
-    // TODO: add constructor!
+    template<class SHAPE_ITERATOR>
+    IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
+                               SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+    {}
+
 protected:
-    virtual T get_energy_of_configuration(std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration)
     {
-        throw std::logic_error("Not yet implemented!");
+        assert(configuration.size() > 1);
+
+        typename std::vector<L>::const_iterator it = configuration.begin();
+        L num_disappearing_objects = *it++;
+
+        // sum incoming transitions
+        L sum = 0;
+        for(; it != configuration.end(); ++it)
+        {
+            sum += *it;
+        }
+
+        if(sum == num_disappearing_objects)
+            return 0.0;
+        else
+            return this->forbidden_energy_;
     }
 };
 
-template<class T, class I=size_t, class L=size_t>
-class OutgoingConstraintFunction:ConstraintFunction<T,I,L>
+//------------------------------------------------------------------------
+// OutgoingConstraintFunction
+//------------------------------------------------------------------------
+/// The outgoing constraint expects first the label of the appearance node (A),
+/// then the label of the division node (D), and finally n transition nodes
+/// (T_1 .. T_n).
+/// It must hold that sum(T_1 .. T_n) = A + D
+template<class T, class I, class L>
+class OutgoingConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
-    // TODO: add constructor!
+    template<class SHAPE_ITERATOR>
+    OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
+                               SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+    {}
 protected:
-    virtual T get_energy_of_configuration(std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration)
     {
-        throw std::logic_error("Not yet implemented!");
+        assert(configuration.size() > 1);
+
+        typename std::vector<L>::const_iterator it = configuration.begin();
+        L num_appearing_objects = *it++;
+        L division = *it++;
+
+        // sum outgoing transitions
+        L sum = 0;
+        for(; it != configuration.end(); ++it)
+        {
+            sum += *it;
+        }
+
+        if(sum == num_appearing_objects + division)
+            return 0.0;
+        else
+            return this->forbidden_energy_;
     }
 };
 
-template<class T, class I=size_t, class L=size_t>
-class DetectionConstraintFunction:ConstraintFunction<T,I,L>
+//------------------------------------------------------------------------
+// DetectionConstraintFunction
+//------------------------------------------------------------------------
+/// expects a configuration of size 2, containing an appearance and a disappearance node
+template<class T, class I, class L>
+class DetectionConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
-    // TODO: add constructor!
+    template<class SHAPE_ITERATOR>
+    DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
+                               SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+    {}
 protected:
-    virtual T get_energy_of_configuration(std::vector<L>& configuration)
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration)
     {
-        throw std::exception("Not yet implemented!");
+        assert(configuration.size() == 2);
+
+        typename std::vector<L>::const_iterator it = configuration.begin();
+        L num_disappearing_objects = *it++;
+        L num_appearing_objects = *it;
+
+        if(num_appearing_objects == num_disappearing_objects || num_appearing_objects == 0 || num_disappearing_objects == 0)
+            return 0.0;
+        else
+            return this->forbidden_energy_;
     }
-};
-
-//------------------------------------------------------------------------
-// ConstraintFactor
-//------------------------------------------------------------------------
-/// The constraint factor is the instantiation of a constraint function in the GM, linked
-/// to some nodes.
-template <class OGM_FUNCTION>
-class ConstraintFactor : public OpengmFactor<OGM_FUNCTION>
-{
-    // define interface such that it can be read as factor or constraint?
-    // or is this just the factor instanciation?
-};
-
-
-//------------------------------------------------------------------------
-// ConstraintPool
-//------------------------------------------------------------------------
-/// Of the incoming and outgoing constraint type, we will have instatiations of different order.
-/// The constraint pool contains a map indexed by the "constraint-function-signatures",
-/// pointing to the function object. When adding functions to the model we look up
-/// whether it is already present in here and just get the function identifier to create a factor.
-template<class T, class I, class L> // valueType, Indextype, Labeltype
-class ConstraintPool
-{
-public:
-    void add_incoming_constraint(std::vector<I> transition_nodes, I disappearance_node);
-    void add_outgoing_constraint(I appearance_node, I division_node, std::vector<I> transition_nodes);
-    void add_detection_constraint(I appearance_node, I disappearance_node);
-
-    /// This method either adds all the factors to the graphical model
-    /// or - given INF is opengm::LpCplex and "not force_hardconstraint" - adds hard constraints
-    /// to the CPLEX optimizer.
-    template<class GM, class INF>
-    void add_constraints_to_problem(GM& model, INF& optimizer);
-
-    void set_big_m(T big_m);
-private:
-    // maps with functions with different signatures
-    T big_m_;
 };
 
 } // namespace pgm
 } // namespace pgmlink
 
+/*
+ Probably not needed
 //------------------------------------------------------------------------
 // Serialization
 //------------------------------------------------------------------------
@@ -229,5 +271,5 @@ void FunctionSerialization<ConstraintFunction<T, I, L> >::deserialize
 }
 
 } // namespace opengm
-
+*/
 #endif // CONSTRAINT_FUNCTION_HXX
