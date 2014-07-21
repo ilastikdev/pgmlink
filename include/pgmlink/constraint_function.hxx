@@ -38,6 +38,8 @@ public:
         shape_(shape_begin, shape_end)
     {}
 
+    ConstraintFunction(){}
+
     /// operator is called to evaluate a certain labeling
     /// only compute the result when needed!
     template<class LABEL_ITERATOR>
@@ -103,6 +105,7 @@ public:
         ConstraintFunction<T,I,L>(shape_begin, shape_end)
     {}
 
+    IncomingConstraintFunction(){}
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -143,6 +146,8 @@ public:
         ConstraintFunction<T,I,L>(shape_begin, shape_end),
         with_divisions_(true)
     {}
+
+    OutgoingConstraintFunction(){}
 
     void set_with_divisions(bool enable)
     {
@@ -194,6 +199,8 @@ public:
         ConstraintFunction<T,I,L>(shape_begin, shape_end)
     {}
 
+    OutgoingNoDivConstraintFunction(){}
+
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -232,6 +239,8 @@ public:
         with_disappearance_(true),
         with_misdetections_(true)
     {}
+
+    DetectionConstraintFunction(){}
 
     void set_with_misdetections(bool enable)
     {

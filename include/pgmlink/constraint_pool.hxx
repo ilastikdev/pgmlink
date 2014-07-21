@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include <opengm/inference/lpcplex.hxx>
+#include <boost/serialization/serialization.hpp>
 
 #include "pgm.h"
 #include "constraint_function.hxx"
@@ -62,8 +63,9 @@ public:
 
 public:
     // types to store constraint instanciations
-    struct IncomingConstraint
+    class IncomingConstraint
     {
+    public:
         IncomingConstraint(const std::vector<IndexType>& transition_nodes,
                            IndexType disappearance_node):
             transition_nodes(transition_nodes),
@@ -72,10 +74,18 @@ public:
 
         std::vector<IndexType> transition_nodes;
         IndexType disappearance_node;
+
+    private:
+        // boost serialization interface
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int);
+        IncomingConstraint(){}
     };
 
-    struct OutgoingConstraint
+    class OutgoingConstraint
     {
+    public:
         OutgoingConstraint(IndexType appearance_node,
                            int division_node,
                            const std::vector<IndexType>& transition_nodes):
@@ -87,10 +97,18 @@ public:
         IndexType appearance_node;
         int division_node;
         std::vector<IndexType> transition_nodes;
+
+    private:
+        // boost serialization interface
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int);
+        OutgoingConstraint() {}
     };
 
-    struct DetectionConstraint
+    class DetectionConstraint
     {
+    public:
         DetectionConstraint(IndexType disappearance_node,
                             IndexType appearance_node):
             disappearance_node(disappearance_node),
@@ -99,13 +117,16 @@ public:
 
         IndexType disappearance_node;
         IndexType appearance_node;
+
+    private:
+        // boost serialization interface
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int);
+        DetectionConstraint() {}
     };
 
 protected:
-    void instanciate_incoming_constraints();
-    void instanciate_outgoing_constraints();
-    void instanciate_detection_constraints();
-
     template<class CONSTRAINT_TYPE>
     void constraint_indices(std::vector<IndexType>& indices, const CONSTRAINT_TYPE& constraint);
 
@@ -116,18 +137,24 @@ protected:
     void configure_function(FUNCTION_TYPE* func);
 
 protected:
-    ValueType big_m_;
     std::vector<IncomingConstraint> incoming_constraints_;
     std::vector<OutgoingConstraint> outgoing_constraints_;
     std::vector<OutgoingConstraint> outgoing_no_div_constraints_;
     std::vector<DetectionConstraint> detection_constraints_;
 
+    ValueType big_m_;
     bool with_divisions_;
     bool with_misdetections_;
     bool with_appearance_;
     bool with_disappearance_;
 
     bool force_softconstraint_;
+
+private:
+    // boost serialization interface
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int);
 };
 
 
@@ -635,6 +662,50 @@ void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, I
     func->set_with_appearance(with_appearance_);
     func->set_with_disappearance(with_disappearance_);
     func->set_with_misdetections(with_misdetections_);
+}
+
+//------------------------------------------------------------------------
+// Serialization
+//------------------------------------------------------------------------
+template<class Archive>
+void ConstraintPool::serialize(Archive & ar, const unsigned int)
+{
+    // config first
+    ar & big_m_;
+    ar & with_divisions_;
+    ar & with_misdetections_;
+    ar & with_appearance_;
+    ar & with_disappearance_;
+    ar & force_softconstraint_;
+
+    // constraint arrays
+    ar & incoming_constraints_;
+    ar & outgoing_constraints_;
+    ar & outgoing_no_div_constraints_;
+    ar & detection_constraints_;
+}
+
+template<class Archive>
+void ConstraintPool::IncomingConstraint::serialize(Archive & ar, const unsigned int)
+{
+    ar & transition_nodes;
+    ar & disappearance_node;
+}
+
+template<class Archive>
+void ConstraintPool::OutgoingConstraint::serialize(Archive & ar, const unsigned int)
+{
+    ar & appearance_node;
+    ar & division_node;
+    ar & transition_nodes;
+}
+
+
+template<class Archive>
+void ConstraintPool::DetectionConstraint::serialize(Archive & ar, const unsigned int)
+{
+    ar & appearance_node;
+    ar & disappearance_node;
 }
 
 } // namespace pgm
