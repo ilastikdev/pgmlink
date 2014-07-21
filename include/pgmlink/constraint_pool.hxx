@@ -89,7 +89,7 @@ public:
         {}
 
         IndexType appearance_node;
-        IndexType division_node;
+        int division_node;
         std::vector<IndexType> transition_nodes;
     };
 
@@ -111,7 +111,7 @@ protected:
     void instanciate_detection_constraints();
 
     template<class CONSTRAINT_TYPE>
-    bool constraint_indices(std::vector<IndexType>& indices, const CONSTRAINT_TYPE& constraint);
+    void constraint_indices(std::vector<IndexType>& indices, const CONSTRAINT_TYPE& constraint);
 
     template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
     void add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints);
@@ -123,6 +123,7 @@ protected:
     ValueType big_m_;
     std::vector<IncomingConstraint> incoming_constraints_;
     std::vector<OutgoingConstraint> outgoing_constraints_;
+    std::vector<OutgoingConstraint> outgoing_no_div_constraints_;
     std::vector<DetectionConstraint> detection_constraints_;
 
     bool with_divisions_;
@@ -153,7 +154,12 @@ void ConstraintPool::add_constraint(const ConstraintPool::IncomingConstraint& co
 template<>
 void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& constraint)
 {
-    outgoing_constraints_.push_back(constraint);
+    // here we separate the outgoing constraints with division node from those without,
+    // such that the template specializations work
+    if(constraint.division_node >= 0)
+        outgoing_constraints_.push_back(constraint);
+    else
+        outgoing_no_div_constraints_.push_back(constraint);
 }
 
 template<>
@@ -170,6 +176,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 
     add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
+    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType,IndexType,LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
 }
 
@@ -181,10 +188,7 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
     {
         const CONSTRAINT_TYPE& constraint = *it;
         std::vector<IndexType> indices;
-
-        // packing the constraint indices checks for invalid indices, only instanciate good ones!
-        if(!constraint_indices(indices, constraint))
-            continue;
+        constraint_indices(indices, constraint);
 
         std::vector<IndexType> shape;
         for(std::vector<IndexType>::iterator idx = indices.begin(); idx != indices.end(); ++idx)
@@ -356,8 +360,6 @@ ConstraintPool::OutgoingConstraint>
         if (div_cplex_id != -1)
         {
             // couple detection and division: D_i = 1 => App_i = 1
-            assert(app_node_map_.count(n) > 0
-                    && "this node should be contained in app_node_map_ since it may divide");
             cplex_idxs.clear();
             coeffs.clear();
 
@@ -421,6 +423,25 @@ ConstraintPool::OutgoingConstraint>
             LOG(logDEBUG3) << constraint_name.str();
         }
     }
+}
+
+template<>
+void ConstraintPool::add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
+opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+ConstraintPool::OutgoingConstraint>
+(
+        OpengmModelDeprecated::ogmGraphicalModel& model,
+        opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>& optimizer,
+        const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+)
+{
+    // for the CPLEX specialization we do the same for with and without divisions
+    add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
+                                    opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+                                    OutgoingConstraintFunction<ValueType,IndexType,LabelType>,
+                                    OutgoingConstraint>
+            (model, optimizer, constraints);
 }
 
 //------------------------------------------------------------------------
@@ -556,35 +577,35 @@ ConstraintPool::DetectionConstraint>
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
-bool ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
+void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
 {
     throw std::logic_error("only template specializations of this method should be called");
 }
 
 template<>
-bool ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint)
+void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint)
 {
     indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
     indices.push_back(constraint.disappearance_node);
-    return true;
 }
 
 template<>
-bool ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const OutgoingConstraint& constraint)
+void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const OutgoingConstraint& constraint)
 {
     indices.push_back(constraint.appearance_node);
-    indices.push_back(constraint.division_node);
-    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
 
-    return constraint.division_node >= 0;
+    // if division node id < 0, don't add it and use OutgoingNoDivConstraintFunction
+    if(constraint.division_node >= 0)
+        indices.push_back(constraint.division_node);
+
+    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
 }
 
 template<>
-bool ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const DetectionConstraint& constraint)
+void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const DetectionConstraint& constraint)
 {
     indices.push_back(constraint.disappearance_node);
     indices.push_back(constraint.appearance_node);
-    return true;
 }
 
 //------------------------------------------------------------------------
@@ -595,7 +616,13 @@ void ConstraintPool::configure_function(FUNCTION_TYPE* func)
 }
 
 template<>
-void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>* func)
+void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*)
+{
+    // no flags needed
+}
+
+template<>
+void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*)
 {
     // no flags needed
 }

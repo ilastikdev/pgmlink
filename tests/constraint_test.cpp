@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_Test)
 {
     OpengmModelDeprecated::ogmGraphicalModel model;
     model.addVariable(3); // A
-    model.addVariable(1); // D
+    model.addVariable(2); // D
     model.addVariable(3); // T
     model.addVariable(3); // T
 
@@ -208,8 +208,37 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_Test)
 
 BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_No_Division_Node_Test)
 {
-    // TODO create me!
+    OpengmModelDeprecated::ogmGraphicalModel model;
+    model.addVariable(3); // A
+    model.addVariable(3); // T
+    model.addVariable(3); // T
 
+    std::vector<size_t> labeling = {1,1,1};
+    BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
+
+    ConstraintPool cp(200.0);
+    std::vector<size_t> indices = {1,2};
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(0, -1, indices.begin(), indices.end()));
+
+    opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
+    cp.add_constraints_to_problem(model, inf);
+
+    // test wrong labelings
+    labeling = {2, 1, 2};
+    BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 200.0);
+
+    labeling = {0, 1, 0};
+    BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 200.0);
+
+    labeling = {1, 2, 1};
+    BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 200.0);
+
+    // test good labelings
+    labeling = {1, 1, 0};
+    BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0);
+
+    labeling = {2, 1, 1};
+    BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0);
 }
 
 BOOST_AUTO_TEST_CASE(ConstraintPool_Detection_Factor_Test)

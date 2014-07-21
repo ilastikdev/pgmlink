@@ -43,9 +43,10 @@ namespace pgmlink {
       typedef double Energy;
       typedef IncomingConstraintFunction<Energy, size_t, size_t> InConsFunc;
       typedef OutgoingConstraintFunction<Energy, size_t, size_t> OutConsFunc;
+      typedef OutgoingNoDivConstraintFunction<Energy, size_t, size_t> OutNoDivConsFunc;
       typedef DetectionConstraintFunction<Energy, size_t, size_t> DetConsFunc;
 
-      typedef OPENGM_TYPELIST_4(ExplicitFunction, InConsFunc, OutConsFunc, DetConsFunc) ogmFunctionsTypelist;
+      typedef OPENGM_TYPELIST_5(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc) ogmFunctionsTypelist;
       typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
       typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
       typedef opengm::Minimizer ogmAccumulator;

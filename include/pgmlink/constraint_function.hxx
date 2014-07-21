@@ -178,6 +178,45 @@ protected:
 };
 
 //------------------------------------------------------------------------
+// OutgoingNoDivConstraintFunction
+//------------------------------------------------------------------------
+/// The outgoing constraint expects first the label of the appearance node (A),
+/// NO division node (D), and finally n transition nodes
+/// (T_1 .. T_n).
+/// It must hold that sum(T_1 .. T_n) = A
+template<class T, class I, class L>
+class OutgoingNoDivConstraintFunction: public ConstraintFunction<T,I,L>
+{
+public:
+    template<class SHAPE_ITERATOR>
+    OutgoingNoDivConstraintFunction(SHAPE_ITERATOR shape_begin,
+                               SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+    {}
+
+protected:
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
+    {
+        assert(configuration.size() > 1);
+
+        auto it = configuration.begin();
+        L num_appearing_objects = *it++;
+
+        // sum outgoing transitions
+        L sum = 0;
+        for(; it != configuration.end(); ++it)
+        {
+            sum += *it;
+        }
+
+        if(sum == num_appearing_objects)
+            return 0.0;
+        else
+            return this->forbidden_energy_;
+    }
+};
+
+//------------------------------------------------------------------------
 // DetectionConstraintFunction
 //------------------------------------------------------------------------
 /// expects a configuration of size 2, containing an appearance and a disappearance node
