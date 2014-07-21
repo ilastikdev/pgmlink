@@ -11,6 +11,7 @@
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/traxels.h"
+#include "pgmlink/constraint_pool.hxx"
 
 using namespace std;
 
@@ -460,90 +461,6 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g) {
             table.add_to(*(pgm_->Model()));
         }
     }
-
-
-    if (!with_constraints_) {
-    	for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-			LOG(logDEBUG) << "ConservationTracking::add_finite_factors: add soft-constraints for outgoing";
-
-			// collect and count outgoing arcs
-			  std::vector<HypothesesGraph::Arc> arcs;
-			  std::vector<size_t> vi;
-			  std::vector<size_t> states_vars;
-			  states_vars.push_back(max_number_objects_+1);
-			  vi.push_back(app_node_map_[n]); // first detection node, remaining will be transition nodes
-			  bool has_div_node = false;
-			  if (with_divisions_ && div_node_map_.count(n) != 0) {
-				  vi.push_back(div_node_map_[n]);
-				  has_div_node = true;
-				  states_vars.push_back(2);
-			  }
-
-			  int count = 0;
-			  //int trans_idx = vi.size();
-			  for(HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a) {
-				  arcs.push_back(a);
-				  vi.push_back(arc_map_[a]);
-				  states_vars.push_back(max_number_objects_+1);
-				  ++count;
-			  }
-
-			  // construct factor
-			  // build value table
-			  if (count != 0) {
-				  //size_t table_dim = count + 1 + int(has_div_node); 		// n * transition var + detection var (+ division var)
-				  std::vector<size_t> coords;
-				  // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_vars
-				  pgm::OpengmExplicitFactor<double> table( vi.begin(), vi.end(), 0, states_vars);
-
-				  //assert(table_dim - trans_idx == count);
-
-				  ////
-				  //// TODO: set the forbidden configurations to infinity or the allowed to zero
-				  ////
-              if (has_div_node) {
-                    // TODO
-              }
-              
-				  table.add_to(*(pgm_->Model()));
-			  }
-
-
-
-			  LOG(logDEBUG) << "ConservationTracking::add_finite_factors: add soft-constraints for incomfing";
-			  // collect and count incoming arcs
-			  arcs.clear();
-			  vi.clear();
-			  states_vars.clear();
-			  states_vars.push_back(max_number_objects_+1);
-			  vi.push_back(dis_node_map_[n]); // first detection node, remaining will be transition nodes
-
-			  count = 0;
-			  for(HypothesesGraph::InArcIt a(g, n); a != lemon::INVALID; ++a) {
-				  arcs.push_back(a);
-				  vi.push_back(arc_map_[a]);
-				  states_vars.push_back(max_number_objects_+1);
-				  ++count;
-			  }
-			  if (count != 0) {
-				  // construct factor
-				  // build value table
-				  //size_t table_dim = count + 1; 		// n * transition var + detection var
-				  std::vector<size_t> coords;
-				  // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_vars
-				  pgm::OpengmExplicitFactor<double> table( vi.begin(), vi.end(), 0, states_vars);
-
-				  //assert(table_dim - trans_idx == count);
-
-				  ////
-				  //// TODO: set the forbidden configurations to infinity or the allowed to zero
-				  /////
-
-				  table.add_to(*(pgm_->Model()));
-			  }
-    	}
-
-    }
 }
 
 size_t ConservationTracking::cplex_id(size_t opengm_id, size_t state) {
@@ -551,313 +468,56 @@ size_t ConservationTracking::cplex_id(size_t opengm_id, size_t state) {
 }
 
 void ConservationTracking::add_constraints(const HypothesesGraph& g) {
-    size_t counter = 0;
     LOG(logDEBUG) << "ConservationTracking::add_constraints: entered";
-    //typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-    //        pgm::OpengmModelDeprecated::ogmAccumulator> cplex;
 
-    property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = g.get(
-            node_tracklet());
+    pgm::ConstraintPool constraint_pool(forbidden_cost_, with_divisions_, with_appearance_, with_disappearance_, with_misdetections_allowed_);
 
-    std::stringstream constraint_name;
-
-    LOG(logDEBUG) << "ConservationTracking::add_constraints: transitions";
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-        std::stringstream traxel_names_ss;
-        for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin();
-                trax_it != tracklet_map[n].end(); ++trax_it) {
-            traxel_names_ss << trax_it->Id << "." << trax_it->Timestep << " ";
-        }
-        std::string traxel_names = traxel_names_ss.str();
-
-        vector<size_t> cplex_idxs, cplex_idxs2;
-        vector<int> coeffs, coeffs2;
-
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
         ////
         //// outgoing transitions
         ////
-        size_t num_outarcs = 0;
-        // couple detection and transitions: Y_ij <= App_i
-        for (HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a) {
-            assert(app_node_map_.count(n) > 0
-                    && "this node should be contained in app_node_map_ since it has outgoing arcs");
-            for (size_t nu = 0; nu < max_number_objects_; ++nu) {
-                for (size_t mu = nu + 1; mu <= max_number_objects_; ++mu) {
-                    cplex_idxs.clear();
-                    coeffs.clear();
-                    coeffs.push_back(1);
-                    cplex_idxs2.push_back(cplex_id(app_node_map_[n], nu));
-                    coeffs.push_back(1);
-                    cplex_idxs.push_back(cplex_id(arc_map_[a], mu));
-                    // 0 <= App_i[nu] + Y_ij[mu] <= 1  forall mu>nu
-                    constraint_name.str(std::string()); // clear the name
-                    constraint_name << "outgoing: 0 <= App_i[" << nu << "] + Y_ij[" << mu << "] <= 1; ";
-                    constraint_name << "g.id(n) = " << g.id(n) << ", g.id(a) = " << g.id(a) << ", Traxel " << traxel_names;
-                    constraint_name << ", cid = " << ++counter;
-                    optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
-                            0, 1, constraint_name.str().c_str());
-                    LOG(logDEBUG3) << constraint_name.str();
-                }
-            }
-            ++num_outarcs;
-        }
-
-        int div_cplex_id = -1;
-        if (with_divisions_ && div_node_map_.count(n) > 0) {
-            LOG(logDEBUG3) << "div_node_map_[n] = " << div_node_map_[n];
-            LOG(logDEBUG3) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
-            LOG(logDEBUG3) << "number_of_division_nodes_ = " << number_of_division_nodes_;
-            div_cplex_id = cplex_id(div_node_map_[n], 1);
-        }
-        if (num_outarcs > 0) {
-            // couple transitions: sum(Y_ij) = D_i + App_i
-            cplex_idxs.clear();
-            coeffs.clear();
+        {
+            std::vector<size_t> transition_nodes;
             for (HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a) {
-                for (size_t nu = 1; nu <= max_number_objects_; ++nu) {
-                    coeffs.push_back(nu);
-                    cplex_idxs.push_back(cplex_id(arc_map_[a], nu));
-                }
-            }
-            if (div_cplex_id != -1) {
-                cplex_idxs.push_back(div_cplex_id);
-                coeffs.push_back(-1);
-            }
-            for (size_t nu = 1; nu <= max_number_objects_; ++nu) {
-                coeffs.push_back(-nu);
-                cplex_idxs.push_back(cplex_id(app_node_map_[n], nu));
+                transition_nodes.push_back(arc_map_[a]);
             }
 
-            // 0 <= sum_nu [ sum_j( nu * Y_ij[nu] ) ] - [ sum_nu nu * X_i[nu] + D_i[1] + sum_nu nu * App_i[nu] ]<= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple transitions: ";
-            constraint_name << " sum(Y_ij) = D_i + App_i added for Traxel " << traxel_names << ", "
-                    << "n = " << app_node_map_[n];
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
+            int division_node = -1;
+            if(div_node_map_.count(n) > 0)
+            {
+                division_node = div_node_map_[n];
+            }
+            size_t appearance_node = app_node_map_[n];
 
+            constraint_pool.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node, division_node, transition_nodes));
         }
 
-        if (div_cplex_id != -1) {
-            // couple detection and division: D_i = 1 => App_i = 1
-            assert(app_node_map_.count(n) > 0
-                    && "this node should be contained in app_node_map_ since it may divide");
-            cplex_idxs.clear();
-            coeffs.clear();
-
-            cplex_idxs.push_back(div_cplex_id);
-            coeffs.push_back(1);
-
-            cplex_idxs.push_back(cplex_id(app_node_map_[n], 1));
-            coeffs.push_back(-1);
-
-            // -1 <= D_i[1] - App_i[1] <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple division and detection: ";
-            constraint_name << " D_i=1 => App_i =1 added for Traxel " << traxel_names << ", " << "n = "
-                    << app_node_map_[n] << ", d = " << div_node_map_[n];
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1, 0,
-                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-
-            // couple divsion and transition: D_1 = 1 => sum_k(Y_ik) = 2
-            cplex_idxs2.clear();
-            coeffs2.clear(); // -m <= 2 * D_i[1] - sum_j ( Y_ij[1] ) <= 0
-            cplex_idxs2.push_back(div_cplex_id);
-            coeffs2.push_back(2);
-
-            for (HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a) {
-                for (size_t nu = 2; nu <= max_number_objects_; ++nu) {
-                    // D_i[1] = 1 => Y_ij[nu] = 0 forall nu > 1
-                    cplex_idxs.clear();
-                    coeffs.clear();
-                    cplex_idxs.push_back(div_cplex_id);
-                    coeffs.push_back(1);
-                    cplex_idxs.push_back(cplex_id(arc_map_[a], nu));
-                    coeffs.push_back(1);
-
-                    // 0 <= D_i[1] + Y_ij[nu] <= 1 forall nu>1
-                    constraint_name.str(std::string()); // clear the name
-                    constraint_name << "couple division and transition: ";
-                    constraint_name << " D_i=1 => Y_i[nu]=0 added for Traxel " << traxel_names << ", "
-                            << "d = " << div_node_map_[n] << ", y = " << arc_map_[a] << ", nu = "
-                            << nu;
-                    constraint_name << ", cid = " << ++counter;
-
-                    optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
-                            0, 1, constraint_name.str().c_str());
-                    LOG(logDEBUG3) << constraint_name.str();
-
-                }
-
-                cplex_idxs2.push_back(cplex_id(arc_map_[a], 1));
-                coeffs2.push_back(-1);
-            }
-
-            // -m <= 2 * D_i[1] - sum_j (Y_ij[1]) <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple division and transitions: ";
-            constraint_name  << " D_i = 1 => sum_k(Y_ik) = 2 added for Traxel " << traxel_names << ", "
-                    << "d = " << div_node_map_[n];
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs2.begin(), cplex_idxs2.end(), coeffs2.begin(),
-                    -int(max_number_objects_), 0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
 
         ////
         //// incoming transitions
         ////
-        // couple transitions: sum_k(Y_kj) = Dis_j
-        cplex_idxs.clear();
-        coeffs.clear();
-
-        size_t num_inarcs = 0;
-        for (HypothesesGraph::InArcIt a(g, n); a != lemon::INVALID; ++a) {
-            for (size_t nu = 1; nu <= max_number_objects_; ++nu) {
-                cplex_idxs.push_back(cplex_id(arc_map_[a], nu));
-                coeffs.push_back(nu);
+        {
+            std::vector<size_t> transition_nodes;
+            for (HypothesesGraph::InArcIt a(g, n); a != lemon::INVALID; ++a) {
+                transition_nodes.push_back(arc_map_[a]);
             }
-            ++num_inarcs;
-        }
+            size_t disappearance_node = dis_node_map_[n];
 
-        if (num_inarcs > 0) {
-            assert(dis_node_map_.count(n) > 0
-                    && "this node should be contained in dis_node_map_ since it has incoming arcs");
-            for (size_t nu = 1; nu <= max_number_objects_; ++nu) {
-                cplex_idxs.push_back(cplex_id(dis_node_map_[n], nu));
-                coeffs.push_back(-nu);
-            }
-
-            // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "incoming transitions: ";
-            constraint_name << " sum_k(Y_kj) = Dis_j added for Traxel " << traxel_names << ", " << "n = "
-                    << dis_node_map_[n];
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
+            constraint_pool.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes, disappearance_node));
         }
 
         ////
         //// disappearance/appearance coupling
         ////
-        if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0) {
-            for (size_t nu = 1; nu <= max_number_objects_; ++nu) {
-                cplex_idxs.clear();
-                coeffs.clear();
-
-                cplex_idxs.push_back(cplex_id(app_node_map_[n], nu));
-                coeffs.push_back(1);
-
-                cplex_idxs.push_back(cplex_id(dis_node_map_[n], nu));
-                coeffs.push_back(-1);
-
-                cplex_idxs.push_back(cplex_id(dis_node_map_[n], 0));
-                coeffs.push_back(-1);
-
-                // A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1
-                // -1 <= App_i[nu] - ( Dis_i[nu] + Dis_i[0] ) <= 0 forall nu > 0
-                constraint_name.str(std::string()); // clear the name
-                constraint_name << "disappearance/appearance coupling: ";
-                constraint_name << " A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1 added for Traxel "
-                        << traxel_names << ", " << "n = " << app_node_map_[n];
-                constraint_name << ", cid = " << ++counter;
-                optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
-                        0, constraint_name.str().c_str());
-                LOG(logDEBUG3) << constraint_name.str();
-            }
-
-            for (size_t nu = 1; nu <= max_number_objects_; ++nu) {
-                cplex_idxs.clear();
-                coeffs.clear();
-
-                cplex_idxs.push_back(cplex_id(dis_node_map_[n], nu));
-                coeffs.push_back(1);
-
-                cplex_idxs.push_back(cplex_id(app_node_map_[n], nu));
-                coeffs.push_back(-1);
-
-                cplex_idxs.push_back(cplex_id(app_node_map_[n], 0));
-                coeffs.push_back(-1);
-
-                // V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1
-                // -1 <= Dis_i[nu] - ( App_i[nu] + App_i[0] ) <= 0 forall nu > 0
-                constraint_name.str(std::string()); // clear the name
-                constraint_name << "disappearance/appearance coupling: ";
-                constraint_name << " V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1 added for Traxel "
-                        << traxel_names << ", " << "n = " << app_node_map_[n];
-                constraint_name << ", cid = " << ++counter;
-                optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
-                        0, constraint_name.str().c_str());
-                LOG(logDEBUG3) << constraint_name.str();
-            }
-        }
-
-        if (!with_misdetections_allowed_) {
-            cplex_idxs.clear();
-            coeffs.clear();
-            if (dis_node_map_.count(n) > 0) {
-                cplex_idxs.push_back(cplex_id(dis_node_map_[n], 0));
-                coeffs.push_back(1);
-            }
-            if (app_node_map_.count(n) > 0) {
-                cplex_idxs.push_back(cplex_id(app_node_map_[n], 0));
-                coeffs.push_back(1);
-            }
-
-            // V_i[0] = 0 => 1 <= A_i[0]
-            // A_i[0] = 0 => 1 <= V_i[0]
-            // V_i <= m, A_i <= m
-            // 0 <= Dis_i[0] + App_i[0] <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " A_i[0] + V_i[0] = 0 added for Traxel " << traxel_names;
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
-
-        if (!with_disappearance_ && (dis_node_map_.count(n) > 0)) {
-            cplex_idxs.clear();
-            coeffs.clear();
-            cplex_idxs.push_back(cplex_id(dis_node_map_[n], 0));
-            coeffs.push_back(1);
-            // V_i[0] = 0
-            // 1 <= V_i <= m
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " V_i[0] = 0 added for Traxel " << traxel_names << ", " << "n = "
-                    << dis_node_map_[n];
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
-                    0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
-
-        if (!with_appearance_ && (app_node_map_.count(n) > 0)) {
-            cplex_idxs.clear();
-            coeffs.clear();
-            cplex_idxs.push_back(cplex_id(app_node_map_[n], 0));
-            coeffs.push_back(1);
-            // A_i[0] = 0
-            // 1 <= A_i <= m
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " A_i[0] = 0 added for Traxel " << traxel_names << ", " << "n = "
-                    << app_node_map_[n];
-            constraint_name << ", cid = " << ++counter;
-            optimizer_->addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
-                    0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
+        if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
+        {
+            constraint_pool.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n], (size_t)app_node_map_[n]));
         }
     }
 
+    constraint_pool.force_softconstraint(!with_constraints_);
+    constraint_pool.add_constraints_to_problem(*pgm_->Model(), *optimizer_);
 }
 
 } /* namespace pgmlink */

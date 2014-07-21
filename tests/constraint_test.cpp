@@ -121,14 +121,14 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Size_Test)
     std::vector<size_t> dummy_vars = {1,2,3};
 
     ConstraintPool cp;
-    cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars.begin(), dummy_vars.end(), 4));
-    cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars.begin(), dummy_vars.end(), 4));
-    cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars.begin(), dummy_vars.end(), 4));
+    cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars, 4));
+    cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars, 4));
+    cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars, 4));
 
     BOOST_CHECK_EQUAL(cp.get_num_constraints(), 3);
 
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(1,2, dummy_vars.begin(), dummy_vars.end()));
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(1,2, dummy_vars.begin(), dummy_vars.end()));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(1,2, dummy_vars));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(1,2, dummy_vars));
 
     BOOST_CHECK_EQUAL(cp.get_num_constraints(), 5);
 
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Incoming_Factor_Test)
 
     ConstraintPool cp(200.0);
     std::vector<size_t> indices = {0,1};
-    cp.add_constraint(ConstraintPool::IncomingConstraint(indices.begin(), indices.end(), 2));
+    cp.add_constraint(ConstraintPool::IncomingConstraint(indices, 2));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
     cp.add_constraints_to_problem(model, inf);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_Test)
 
     ConstraintPool cp(200.0);
     std::vector<size_t> indices = {2,3};
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(0, 1, indices.begin(), indices.end()));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(0, 1, indices));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
     cp.add_constraints_to_problem(model, inf);
@@ -218,7 +218,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_No_Division_Node_Test)
 
     ConstraintPool cp(200.0);
     std::vector<size_t> indices = {1,2};
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(0, -1, indices.begin(), indices.end()));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(0, -1, indices));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
     cp.add_constraints_to_problem(model, inf);

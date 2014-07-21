@@ -64,11 +64,9 @@ public:
     // types to store constraint instanciations
     struct IncomingConstraint
     {
-        template<class TRANS_VAR_ITERATOR>
-        IncomingConstraint(TRANS_VAR_ITERATOR transition_nodes_begin,
-                           TRANS_VAR_ITERATOR transition_nodes_end,
+        IncomingConstraint(const std::vector<IndexType>& transition_nodes,
                            IndexType disappearance_node):
-            transition_nodes(transition_nodes_begin, transition_nodes_end),
+            transition_nodes(transition_nodes),
             disappearance_node(disappearance_node)
         {}
 
@@ -78,14 +76,12 @@ public:
 
     struct OutgoingConstraint
     {
-        template<class TRANS_VAR_ITERATOR>
         OutgoingConstraint(IndexType appearance_node,
                            int division_node,
-                           TRANS_VAR_ITERATOR transition_nodes_begin,
-                           TRANS_VAR_ITERATOR transition_nodes_end):
+                           const std::vector<IndexType>& transition_nodes):
             appearance_node(appearance_node),
             division_node(division_node),
-            transition_nodes(transition_nodes_begin, transition_nodes_end)
+            transition_nodes(transition_nodes)
         {}
 
         IndexType appearance_node;
@@ -239,7 +235,7 @@ ConstraintPool::IncomingConstraint>
 
         for (auto incoming_it = constraint.transition_nodes.begin(); incoming_it != constraint.transition_nodes.end(); ++incoming_it)
         {
-            for (size_t state = 1; state <= model.numberOfLabels(*incoming_it); ++state)
+            for (size_t state = 1; state < model.numberOfLabels(*incoming_it); ++state)
             {
                 cplex_idxs.push_back(optimizer.lpNodeVi(*incoming_it, state));
                 coeffs.push_back(state);
@@ -249,7 +245,7 @@ ConstraintPool::IncomingConstraint>
 
         constraint_name << ") = disappearance-node " << constraint.disappearance_node;
 
-        for (size_t state = 1; state <= model.numberOfLabels(constraint.disappearance_node); ++state)
+        for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
         {
             cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
             coeffs.push_back(-state);
@@ -328,7 +324,7 @@ ConstraintPool::OutgoingConstraint>
 
             for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
             {
-                for (size_t state = 1; state <= model.numberOfLabels(*outgoing_it); ++state)
+                for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
                 {
                     coeffs.push_back(state);
                     cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
@@ -341,7 +337,7 @@ ConstraintPool::OutgoingConstraint>
                 coeffs.push_back(-1);
             }
 
-            for (size_t state = 1; state <= model.numberOfLabels(constraint.appearance_node); ++state)
+            for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
             {
                 coeffs.push_back(-state);
                 cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
@@ -386,7 +382,7 @@ ConstraintPool::OutgoingConstraint>
 
             for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
             {
-                for (size_t state = 2; state <= model.numberOfLabels(*outgoing_it); ++state)
+                for (size_t state = 2; state < model.numberOfLabels(*outgoing_it); ++state)
                 {
                     // D_i[1] = 1 => Y_ij[nu] = 0 forall nu > 1
                     cplex_idxs.clear();
@@ -419,7 +415,7 @@ ConstraintPool::OutgoingConstraint>
             constraint_name  << " D_i = 1 => sum_k(Y_ik) = 2 added for "
                     << "d = " << constraint.division_node;
             optimizer.addConstraint(cplex_idxs2.begin(), cplex_idxs2.end(), coeffs2.begin(),
-                    -int(model.numberOfLabels(constraint.appearance_node)), 0, constraint_name.str().c_str());
+                    -int(model.numberOfLabels(constraint.appearance_node)-1), 0, constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
     }
@@ -466,7 +462,7 @@ ConstraintPool::DetectionConstraint>
         std::vector<int> coeffs;
         std::stringstream constraint_name;
 
-        for (size_t state = 1; state <= model.numberOfLabels(constraint.appearance_node); ++state)
+        for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
         {
             cplex_idxs.clear();
             coeffs.clear();
@@ -492,7 +488,7 @@ ConstraintPool::DetectionConstraint>
             LOG(logDEBUG3) << constraint_name.str();
         }
 
-        for (size_t state = 1; state <= model.numberOfLabels(constraint.disappearance_node); ++state)
+        for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
         {
             cplex_idxs.clear();
             coeffs.clear();
