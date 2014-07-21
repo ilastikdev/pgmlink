@@ -275,8 +275,6 @@ protected:
 } // namespace pgm
 } // namespace pgmlink
 
-/*
- Probably not needed
 //------------------------------------------------------------------------
 // Serialization
 //------------------------------------------------------------------------
@@ -291,35 +289,71 @@ protected:
 namespace opengm
 {
 
-using pgmlink::ConstraintFunction;
+using pgmlink::pgm::IncomingConstraintFunction;
+using pgmlink::pgm::OutgoingConstraintFunction;
+using pgmlink::pgm::OutgoingNoDivConstraintFunction;
+using pgmlink::pgm::DetectionConstraintFunction;
 
-/// Serialization for the constraint function
+//------------------------------------------------------------------------
+/// \cond HIDDEN_SYMBOLS
+/// FunctionRegistration
 template<class T, class I, class L>
-class FunctionSerialization< ConstraintFunction<T, I, L> >
-{
-    static size_t indexSequenceSize(const ConstraintFunction<T, I, L> &);
-    static size_t valueSequenceSize(const ConstraintFunction<T, I, L> &);
-
-    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
-    static void serialize(const ConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
-
-    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
-    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, ConstraintFunction<T, I, L>  &);
+struct FunctionRegistration< IncomingConstraintFunction<T, I, L> >{
+   enum ID {
+      Id=opengm::FUNCTION_TYPE_ID_OFFSET
+   };
 };
 
 template<class T, class I, class L>
-inline size_t FunctionSerialization<ConstraintFunction<T, I, L> >::indexSequenceSize
+struct FunctionRegistration< OutgoingConstraintFunction<T, I, L> >{
+   enum ID {
+      Id=opengm::FUNCTION_TYPE_ID_OFFSET
+   };
+};
+
+template<class T, class I, class L>
+struct FunctionRegistration< OutgoingNoDivConstraintFunction<T, I, L> >{
+   enum ID {
+      Id=opengm::FUNCTION_TYPE_ID_OFFSET
+   };
+};
+
+template<class T, class I, class L>
+struct FunctionRegistration< DetectionConstraintFunction<T, I, L> >{
+   enum ID {
+      Id=opengm::FUNCTION_TYPE_ID_OFFSET
+   };
+};
+
+//------------------------------------------------------------------------
+/// Serialization for the incoming constraint function
+template<class T, class I, class L>
+class FunctionSerialization< IncomingConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const IncomingConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const IncomingConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const IncomingConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, IncomingConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<IncomingConstraintFunction<T, I, L> >::indexSequenceSize
 (
-   const ConstraintFunction<T, I, L> & src
+   const IncomingConstraintFunction<T, I, L> & src
 )
 {
    return src.dimension() +1;
 }
 
 template<class T, class I, class L>
-inline size_t FunctionSerialization<ConstraintFunction<T, I, L> >::valueSequenceSize
+inline size_t FunctionSerialization<IncomingConstraintFunction<T, I, L> >::valueSequenceSize
 (
-   const ConstraintFunction<T, I, L> & src
+   const IncomingConstraintFunction<T, I, L> & src
 )
 {
    return src.size();
@@ -327,9 +361,9 @@ inline size_t FunctionSerialization<ConstraintFunction<T, I, L> >::valueSequence
 
 template<class T, class I, class L>
 template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
-void FunctionSerialization< ConstraintFunction<T, I, L> >::serialize
+void FunctionSerialization< IncomingConstraintFunction<T, I, L> >::serialize
 (
-   const ConstraintFunction<T, I, L> & src,
+   const IncomingConstraintFunction<T, I, L> & src,
    INDEX_OUTPUT_ITERATOR indexOutIterator,
    VALUE_OUTPUT_ITERATOR valueOutIterator
 )
@@ -341,11 +375,194 @@ void FunctionSerialization< ConstraintFunction<T, I, L> >::serialize
 
 template<class T, class I, class L>
 template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
-void FunctionSerialization<ConstraintFunction<T, I, L> >::deserialize
+void FunctionSerialization<IncomingConstraintFunction<T, I, L> >::deserialize
 (
    INDEX_INPUT_ITERATOR indexOutIterator,
    VALUE_INPUT_ITERATOR valueOutIterator,
-   ConstraintFunction<T, I, L> & dst
+   IncomingConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+//------------------------------------------------------------------------
+/// Serialization for the outgoing constraint function
+template<class T, class I, class L>
+class FunctionSerialization< OutgoingConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const OutgoingConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const OutgoingConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const OutgoingConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, OutgoingConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::indexSequenceSize
+(
+   const OutgoingConstraintFunction<T, I, L> & src
+)
+{
+   return src.dimension() +1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::valueSequenceSize
+(
+   const OutgoingConstraintFunction<T, I, L> & src
+)
+{
+   return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< OutgoingConstraintFunction<T, I, L> >::serialize
+(
+   const OutgoingConstraintFunction<T, I, L> & src,
+   INDEX_OUTPUT_ITERATOR indexOutIterator,
+   VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::deserialize
+(
+   INDEX_INPUT_ITERATOR indexOutIterator,
+   VALUE_INPUT_ITERATOR valueOutIterator,
+   OutgoingConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+//------------------------------------------------------------------------
+/// Serialization for the outgoing no division constraint function
+template<class T, class I, class L>
+class FunctionSerialization< OutgoingNoDivConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const OutgoingNoDivConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const OutgoingNoDivConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const OutgoingNoDivConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, OutgoingNoDivConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::indexSequenceSize
+(
+   const OutgoingNoDivConstraintFunction<T, I, L> & src
+)
+{
+   return src.dimension() +1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::valueSequenceSize
+(
+   const OutgoingNoDivConstraintFunction<T, I, L> & src
+)
+{
+   return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< OutgoingNoDivConstraintFunction<T, I, L> >::serialize
+(
+   const OutgoingNoDivConstraintFunction<T, I, L> & src,
+   INDEX_OUTPUT_ITERATOR indexOutIterator,
+   VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::deserialize
+(
+   INDEX_INPUT_ITERATOR indexOutIterator,
+   VALUE_INPUT_ITERATOR valueOutIterator,
+   OutgoingNoDivConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+//------------------------------------------------------------------------
+/// Serialization for the detection constraint function
+template<class T, class I, class L>
+class FunctionSerialization< DetectionConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const DetectionConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const DetectionConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const DetectionConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, DetectionConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<DetectionConstraintFunction<T, I, L> >::indexSequenceSize
+(
+   const DetectionConstraintFunction<T, I, L> & src
+)
+{
+   return src.dimension() +1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<DetectionConstraintFunction<T, I, L> >::valueSequenceSize
+(
+   const DetectionConstraintFunction<T, I, L> & src
+)
+{
+   return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< DetectionConstraintFunction<T, I, L> >::serialize
+(
+   const DetectionConstraintFunction<T, I, L> & src,
+   INDEX_OUTPUT_ITERATOR indexOutIterator,
+   VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<DetectionConstraintFunction<T, I, L> >::deserialize
+(
+   INDEX_INPUT_ITERATOR indexOutIterator,
+   VALUE_INPUT_ITERATOR valueOutIterator,
+   DetectionConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me
@@ -353,5 +570,5 @@ void FunctionSerialization<ConstraintFunction<T, I, L> >::deserialize
 }
 
 } // namespace opengm
-*/
+
 #endif // CONSTRAINT_FUNCTION_HXX
