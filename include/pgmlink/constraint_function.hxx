@@ -97,10 +97,6 @@ template<class T, class I, class L>
 class IncomingConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
-//    IncomingConstraintFunction():
-//        ConstraintFunction<T,I,L>()
-//    {}
-
     template<class SHAPE_ITERATOR>
     IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
@@ -141,15 +137,18 @@ template<class T, class I, class L>
 class OutgoingConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
-//    OutgoingConstraintFunction():
-//        ConstraintFunction<T,I,L>()
-//    {}
-
     template<class SHAPE_ITERATOR>
     OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+        ConstraintFunction<T,I,L>(shape_begin, shape_end),
+        with_divisions_(true)
     {}
+
+    void set_with_divisions(bool enable)
+    {
+        with_divisions_ = enable;
+    }
+
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -166,11 +165,16 @@ protected:
             sum += *it;
         }
 
-        if(sum == num_appearing_objects + division && (division != 1 || num_appearing_objects == 1))
+        if((sum == num_appearing_objects + division) &&
+                (division != 1 || num_appearing_objects == 1) &&
+                (division == 0 || with_divisions_))
             return 0.0;
         else
             return this->forbidden_energy_;
     }
+
+protected:
+    bool with_divisions_;
 };
 
 //------------------------------------------------------------------------
@@ -181,15 +185,30 @@ template<class T, class I, class L>
 class DetectionConstraintFunction: public ConstraintFunction<T,I,L>
 {
 public:
-//    DetectionConstraintFunction():
-//        ConstraintFunction<T,I,L>()
-//    {}
-
     template<class SHAPE_ITERATOR>
     DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+        ConstraintFunction<T,I,L>(shape_begin, shape_end),
+        with_appearance_(true),
+        with_disappearance_(true),
+        with_misdetections_(true)
     {}
+
+    void set_with_misdetections(bool enable)
+    {
+        with_misdetections_ = enable;
+    }
+
+    void set_with_appearance(bool enable)
+    {
+        with_appearance_ = enable;
+    }
+
+    void set_with_disappearance(bool enable)
+    {
+        with_disappearance_ = enable;
+    }
+
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -199,11 +218,19 @@ protected:
         L num_disappearing_objects = *it++;
         L num_appearing_objects = *it;
 
-        if(num_appearing_objects == num_disappearing_objects || num_appearing_objects == 0 || num_disappearing_objects == 0)
+        if((num_appearing_objects == num_disappearing_objects ||
+                (num_appearing_objects == 0 && with_disappearance_) ||
+                (num_disappearing_objects == 0 && with_appearance_)) &&
+                (num_appearing_objects > 0 || num_disappearing_objects > 0 || with_misdetections_))
             return 0.0;
         else
             return this->forbidden_energy_;
     }
+
+protected:
+    bool with_misdetections_;
+    bool with_appearance_;
+    bool with_disappearance_;
 };
 
 } // namespace pgm

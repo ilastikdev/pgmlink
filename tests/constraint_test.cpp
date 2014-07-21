@@ -58,6 +58,12 @@ BOOST_AUTO_TEST_CASE(OutgoingFunctionTest)
 
     labeling = {2,1,1,2}; // division not allowed when A > 1!
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
+
+    // test parameter effect
+    constraint_func.set_with_divisions(false);
+
+    labeling = {1,1,1,1};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 }
 
 BOOST_AUTO_TEST_CASE(DetectionFunctionTest)
@@ -81,6 +87,33 @@ BOOST_AUTO_TEST_CASE(DetectionFunctionTest)
 
     labeling = {2,1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
+
+    labeling = {0,0};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
+
+    // test the parameter effect
+    constraint_func.set_with_appearance(false);
+    labeling = {0,2};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
+
+    labeling = {1,0};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
+
+    constraint_func.set_with_appearance(true);
+    constraint_func.set_with_disappearance(false);
+    labeling = {0,2};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
+
+    labeling = {1,0};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
+
+    constraint_func.set_with_disappearance(true);
+    constraint_func.set_with_misdetections(false);
+    labeling = {0,0};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
+
+    labeling = {1,0};
+    BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 }
 
 BOOST_AUTO_TEST_CASE(ConstraintPool_Size_Test)
@@ -116,8 +149,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Incoming_Factor_Test)
     std::vector<size_t> labeling = {1,1,1};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
-    ConstraintPool cp;
-    cp.set_big_m(200.0);
+    ConstraintPool cp(200.0);
     std::vector<size_t> indices = {0,1};
     cp.add_constraint(ConstraintPool::IncomingConstraint(indices.begin(), indices.end(), 2));
 
@@ -149,8 +181,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_Test)
     std::vector<size_t> labeling = {1,1,1,1};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
-    ConstraintPool cp;
-    cp.set_big_m(200.0);
+    ConstraintPool cp(200.0);
     std::vector<size_t> indices = {2,3};
     cp.add_constraint(ConstraintPool::OutgoingConstraint(0, 1, indices.begin(), indices.end()));
 
@@ -175,6 +206,12 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_Test)
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0);
 }
 
+BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_No_Division_Node_Test)
+{
+    // TODO create me!
+
+}
+
 BOOST_AUTO_TEST_CASE(ConstraintPool_Detection_Factor_Test)
 {
     OpengmModelDeprecated::ogmGraphicalModel model;
@@ -184,8 +221,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Detection_Factor_Test)
     std::vector<size_t> labeling = {1,2};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
-    ConstraintPool cp;
-    cp.set_big_m(200.0);
+    ConstraintPool cp(200.0);
     cp.add_constraint(ConstraintPool::DetectionConstraint(0, 1));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
