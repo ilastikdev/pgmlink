@@ -7,6 +7,8 @@
 #include <opengm/datastructures/marray/marray.hxx>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_constracking.h"
@@ -517,6 +519,24 @@ void ConservationTracking::add_constraints(const HypothesesGraph& g) {
     }
 
     constraint_pool.force_softconstraint(!with_constraints_);
+
+    // For testing purposes:
+    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y%m%d-%H%M%S");
+    std::stringstream filename_model;
+    filename_model.imbue(std::locale(std::cout.getloc(), facet));
+    filename_model << "./constracking_model-" << boost::posix_time::second_clock::local_time() << ".h5";
+
+    opengm::hdf5::save(*pgm_->Model(), filename_model.str(), "model");
+    
+    std::stringstream filename_constraints;
+    filename_constraints.imbue(std::locale(std::cout.getloc(), facet));
+    filename_constraints << "./constracking_constraints-" << boost::posix_time::second_clock::local_time() << ".cp";
+
+    std::ofstream out_stream(filename_constraints.str().c_str());
+    boost::archive::text_oarchive oa(out_stream);
+    oa & constraint_pool;
+    out_stream.close();
+
     constraint_pool.add_constraints_to_problem(*pgm_->Model(), *optimizer_);
 }
 

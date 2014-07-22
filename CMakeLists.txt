@@ -192,6 +192,9 @@ else(DOXYGEN_FOUND)
   MESSAGE(WARNING "Doxygen not found. Won't add 'doc' build target.")
 endif(DOXYGEN_FOUND)
 
+# tools
+add_subdirectory(tools/)
+
 # Tests
 if(WITH_TESTS)
   enable_testing()

@@ -61,6 +61,11 @@ public:
         force_softconstraint_ = enable;
     }
 
+    void set_big_m(ValueType m)
+    {
+        big_m_ = m;
+    }
+
 public:
     // types to store constraint instanciations
     class IncomingConstraint
