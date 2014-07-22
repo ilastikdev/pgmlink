@@ -188,10 +188,12 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 
 	//two iterations: two event vectors
 	BOOST_CHECK_EQUAL(events.size(),3);
-	
-	BOOST_CHECK_EQUAL(events[0][1][0].type,Event::Division);
-	BOOST_CHECK_EQUAL(events[1][1][0].type,Event::Move);
+
+	BOOST_CHECK_EQUAL(events[0][2][0].type,Event::Division);
+	BOOST_CHECK_EQUAL(events[1][2][0].type,Event::Move);
 	BOOST_CHECK_EQUAL(events[2][1][0].type,Event::Move);
+	BOOST_CHECK_EQUAL(events[2][1][1].type,Event::Disappearance);
+	BOOST_CHECK_EQUAL(events[2][2][0].type,Event::Move);
 
 }
 

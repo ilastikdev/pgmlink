@@ -193,7 +193,7 @@ namespace pgmlink {
     	uncertaintyParam_(param),
         cplex_timeout_(cplex_timeout),
         event_vector_dump_filename_(event_vector_dump_filename)
-		
+      	{}
         PGMLINK_EXPORT std::vector< std::vector< std::vector<Event> > > operator()(TraxelStore& ts,
                                                 TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
 

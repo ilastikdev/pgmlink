@@ -194,9 +194,9 @@ class ConservationTracking : public Reasoner {
 
     bool with_constraints_;
 
-    double cplex_timeout_;
     
     UncertaintyParameter param_;
+    double cplex_timeout_;
     bool isMAP_;
     
     boost::mt19937 rng_;

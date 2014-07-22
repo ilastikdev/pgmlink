@@ -410,7 +410,6 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		all_ev[i] = *events(*graph,i);
 	}
 
-    prune_inactive(*graph);
 	std::vector< std::vector<Event> >* ev = &(all_ev[0]);
 
     if (max_number_objects_ > 1 && with_merger_resolution_ && all_true(ev->begin()+1, ev->end(), has_data<Event>)) {
@@ -439,6 +438,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
       all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
     }
 
+    prune_inactive(*graph);
     if(event_vector_dump_filename_ != "none")
     {
         // store the traxel store and the resulting event vector
