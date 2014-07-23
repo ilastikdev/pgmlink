@@ -318,9 +318,9 @@ ConstraintPool::OutgoingConstraint>
         // couple detection and transitions: Y_ij <= App_i
         for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
         {
-            for(size_t t_state = 0; t_state < model.numberOfLabels(*outgoing_it); t_state++)
+            for(size_t t_state = 0; t_state < model.numberOfLabels(*outgoing_it) - 1; t_state++)
             {
-                for(size_t a_state = 0; a_state < model.numberOfLabels(constraint.appearance_node); a_state++)
+                for(size_t a_state = t_state + 1; a_state < model.numberOfLabels(constraint.appearance_node); a_state++)
                 {
                     cplex_idxs.clear();
                     coeffs.clear();
