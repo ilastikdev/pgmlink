@@ -48,8 +48,12 @@ public:
     /// or - given INF is opengm::LpCplex and "not force_softconstraint" - adds hard constraints
     /// to the CPLEX optimizer.
     template<class GM, class INF>
-    void add_constraints_to_problem(GM& model,
-                                    INF& optimizer);
+    void add_constraints_to_problem(GM& model, INF& optimizer);
+
+    /// Allow to add this set of constraints to a different model with the given index mapping (key is index of variable in original model)
+    /// Only those constraints or functions are instanciated where all participating indices do have a mapping
+    template<class GM, class INF>
+    void add_constraints_to_problem(GM& model, INF& optimizer, std::map<size_t, size_t>& index_mapping);
 
     size_t get_num_constraints()
     {
@@ -141,6 +145,8 @@ protected:
     template<class FUNCTION_TYPE>
     void configure_function(FUNCTION_TYPE* func);
 
+    template<class CONSTRAINT_TYPE>
+    bool check_all_constraint_vars_in_mapping(std::map<size_t, size_t>& index_mapping, const CONSTRAINT_TYPE& constraint);
 protected:
     std::vector<IncomingConstraint> incoming_constraints_;
     std::vector<OutgoingConstraint> outgoing_constraints_;
@@ -201,6 +207,73 @@ template<class GM, class INF>
 void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 {
     // TODO: handle force_softconstraint_
+
+    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
+    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
+    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
+    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType,IndexType,LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
+}
+
+template<class GM, class INF>
+void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<size_t, size_t>& index_mapping)
+{
+    std::vector<IncomingConstraint> remapped_incoming_constraints;
+    std::vector<OutgoingConstraint> remapped_outgoing_constraints;
+    std::vector<OutgoingConstraint> remapped_outgoing_no_div_constraints;
+    std::vector<DetectionConstraint> remapped_detection_constraints;
+
+    for(auto constraint : incoming_constraints_)
+    {
+        if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+            continue;
+
+        size_t disappearance_node = index_mapping[constraint.disappearance_node];
+        std::vector<size_t> transition_nodes;
+        for(auto t : constraint.transition_nodes)
+        {
+            transition_nodes.push_back(index_mapping[t]);
+        }
+        remapped_incoming_constraints.push_back(IncomingConstraint(transition_nodes, disappearance_node));
+    }
+
+    for(auto constraint : outgoing_constraints_)
+    {
+        if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+            continue;
+
+        size_t appearance_node = index_mapping[constraint.appearance_node];
+        size_t division_node = index_mapping[constraint.division_node];
+        std::vector<size_t> transition_nodes;
+        for(auto t : constraint.transition_nodes)
+        {
+            transition_nodes.push_back(index_mapping[t]);
+        }
+        remapped_outgoing_constraints.push_back(OutgoingConstraint(appearance_node, division_node, transition_nodes));
+    }
+
+    for(auto constraint : outgoing_no_div_constraints_)
+    {
+        if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+            continue;
+
+        size_t appearance_node = index_mapping[constraint.appearance_node];
+        std::vector<size_t> transition_nodes;
+        for(auto t : constraint.transition_nodes)
+        {
+            transition_nodes.push_back(index_mapping[t]);
+        }
+        remapped_outgoing_no_div_constraints.push_back(OutgoingConstraint(appearance_node, -1, transition_nodes));
+    }
+
+    for(auto constraint : detection_constraints_)
+    {
+        if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+            continue;
+
+        size_t appearance_node = index_mapping[constraint.appearance_node];
+        size_t disappearance_node = index_mapping[constraint.disappearance_node];
+        remapped_detection_constraints.push_back(DetectionConstraint(disappearance_node, appearance_node));
+    }
 
     add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
@@ -634,6 +707,24 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 {
     indices.push_back(constraint.disappearance_node);
     indices.push_back(constraint.appearance_node);
+}
+
+//------------------------------------------------------------------------
+template<class CONSTRAINT_TYPE>
+bool ConstraintPool::check_all_constraint_vars_in_mapping(std::map<size_t, size_t>& index_mapping, const CONSTRAINT_TYPE& constraint)
+{
+    std::vector<size_t> indices;
+    constraint_indices(indices, constraint);
+
+    for(size_t i = 0; i < indices.size(); i++)
+    {
+        if(index_mapping.find(indices[i]) == index_mapping.end())
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 //------------------------------------------------------------------------

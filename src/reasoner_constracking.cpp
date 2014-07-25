@@ -246,6 +246,10 @@ void ConservationTracking::add_appearance_nodes(const HypothesesGraph& g) {
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
         pgm_->Model()->addVariable(max_number_objects_ + 1);
         app_node_map_[n] = pgm_->Model()->numberOfVariables() - 1;
+
+        HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
+        nodes_per_timestep_[timestep_map[n]].push_back(pgm_->Model()->numberOfVariables() - 1);
+
         assert(pgm_->Model()->numberOfLabels(app_node_map_[n]) == max_number_objects_ + 1);
         ++count;
     }
@@ -257,6 +261,10 @@ void ConservationTracking::add_disappearance_nodes(const HypothesesGraph& g) {
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
         pgm_->Model()->addVariable(max_number_objects_ + 1);
         dis_node_map_[n] = pgm_->Model()->numberOfVariables() - 1;
+
+        HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
+        nodes_per_timestep_[timestep_map[n]].push_back(pgm_->Model()->numberOfVariables() - 1);
+
         assert(pgm_->Model()->numberOfLabels(dis_node_map_[n]) == max_number_objects_ + 1);
         ++count;
     }
@@ -268,6 +276,16 @@ void ConservationTracking::add_transition_nodes(const HypothesesGraph& g) {
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
         pgm_->Model()->addVariable(max_number_objects_ + 1);
         arc_map_[a] = pgm_->Model()->numberOfVariables() - 1;
+
+        // store these nodes by the timestep of the base-appearance node,
+        // as well as in the timestep of the disappearance node they enter
+        HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
+        HypothesesGraph::OutArcIt out_arc(g, a);
+        HypothesesGraph::Node n = g.source(out_arc);
+        nodes_per_timestep_[timestep_map[n]].push_back(pgm_->Model()->numberOfVariables() - 1);
+        n = g.target(out_arc);
+        nodes_per_timestep_[timestep_map[n]].push_back(pgm_->Model()->numberOfVariables() - 1);
+
         assert(pgm_->Model()->numberOfLabels(arc_map_[a]) == max_number_objects_ + 1);
         ++count;
     }
@@ -284,6 +302,10 @@ void ConservationTracking::add_division_nodes(const HypothesesGraph& g) {
         if (number_of_outarcs > 1) {
             pgm_->Model()->addVariable(2);
             div_node_map_[n] = pgm_->Model()->numberOfVariables() - 1;
+
+            HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
+            nodes_per_timestep_[timestep_map[n]].push_back(pgm_->Model()->numberOfVariables() - 1);
+
             assert(pgm_->Model()->numberOfLabels(div_node_map_[n]) == 2);
             ++count;
         }
@@ -535,6 +557,7 @@ void ConservationTracking::add_constraints(const HypothesesGraph& g) {
     std::ofstream out_stream(filename_constraints.str().c_str());
     boost::archive::text_oarchive oa(out_stream);
     oa & constraint_pool;
+    oa & nodes_per_timestep_;
     out_stream.close();
 
     constraint_pool.add_constraints_to_problem(*pgm_->Model(), *optimizer_);
