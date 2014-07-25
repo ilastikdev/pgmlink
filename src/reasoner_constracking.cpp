@@ -348,6 +348,7 @@ void ConservationTracking::conclude( HypothesesGraph& g) {
                 HypothesesGraph::Node n = *tr_n_it;
 				active_nodes.set(n, solution_[it->second]);
 				active_nodes_count.get_value(n)[iterStep]=solution_[it->second];
+				//TODO: active_nodes_vector
             }
 
             // set state of tracklet internal arcs

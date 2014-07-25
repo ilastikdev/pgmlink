@@ -589,7 +589,6 @@ BOOST_AUTO_TEST_CASE( SingleTimestepTraxel_HypothesesGraph_eventVector ) {
     active_nodes.set(n43, 1);
     active_nodes.set(n44, 1);
 
-
     std::cout << "Adding traxels to the nodes of the traxel graph" << std::endl;
     // add traxels to the graph nodes
 

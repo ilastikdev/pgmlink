@@ -167,7 +167,7 @@ namespace pgmlink {
                     double border_width = 0,
                     FieldOfView fov = FieldOfView(),
                     bool with_constraints = true,
-		    UncertaintyParameter param = UncertaintyParameter(),
+                    UncertaintyParameter param = UncertaintyParameter(),
                     double cplex_timeout = 1e+75,
                     const std::string& event_vector_dump_filename = "none"
                    )
