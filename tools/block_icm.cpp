@@ -76,13 +76,14 @@ int main(int argc, char** argv)
         }
 
         // copy all contained factors
-        for(size_t factor_id = 0; factor_id < model_->numberOfFactors(); ++factor_id)
+        for(size_t factor_id = 0; factor_id < model.numberOfFactors(); ++factor_id)
         {
             std::vector<size_t> remapped_factor_indices = map_factor_indices(index_mapping, model, factor_id);
             if(model[factor_id].numberOfVariables() == 0 || remapped_factor_indices.size() > 0)
             {
-                pgmlink::pgm::OpengmModelDeprecated::FunctionIdentifier id=submodel.addFunction( model[factor_id].function() );
-                submodel.addFactor(id, remapped_factor_indices.begin(), remapped_factor_indices.end());
+                pgmlink::pgm::OpengmModelDeprecated::ogmGraphicalModel::IndependentFactorType independent_factor(model[factor_id]);
+                pgmlink::pgm::OpengmModelDeprecated::FunctionIdentifier sub_id = submodel.addFunction(independent_factor.function());
+                submodel.addFactor(sub_id, remapped_factor_indices.begin(), remapped_factor_indices.end());
             }
         }
 
