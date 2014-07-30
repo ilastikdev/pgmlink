@@ -275,10 +275,10 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
         remapped_detection_constraints.push_back(DetectionConstraint(disappearance_node, appearance_node));
     }
 
-    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
-    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
-    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
-    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType,IndexType,LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
+    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, remapped_incoming_constraints);
+    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_constraints);
+    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
+    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType,IndexType,LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
@@ -290,6 +290,8 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
         const CONSTRAINT_TYPE& constraint = *it;
         std::vector<IndexType> indices;
         constraint_indices(indices, constraint);
+        if(indices.size() < 2)
+            continue;
 
         std::vector<IndexType> shape;
         for(std::vector<IndexType>::iterator idx = indices.begin(); idx != indices.end(); ++idx)
