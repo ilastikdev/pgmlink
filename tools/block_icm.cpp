@@ -30,7 +30,7 @@ std::vector<size_t> map_factor_indices(std::map<size_t, size_t>& index_mapping, 
 }
 
 template<class CONTAINER>
-std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, const GraphicalModel& model, pgmlink::pgm::ConstraintPool& cp, const Solution& solution)
+std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, const GraphicalModel& model, pgmlink::pgm::ConstraintPool& cp, const Solution& solution, const std::string& inference_type)
 {
     IndexMapping index_mapping;
     GraphicalModel submodel;
@@ -72,35 +72,66 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
         }
     }
 
-    // create inference type and add constraints
-    CPLEX::Parameter param;
-    param.verbose_ = false;
-    param.integerConstraint_ = true;
-    param.epGap_ = 0.0;
-    CPLEX inf(submodel, param);
-    cp.add_constraints_to_problem(submodel, inf, index_mapping);
-
-    // set a starting point for the optimizer, based on prior solutions to these variables
-    std::vector<size_t> starting_point(nodes.size(),0);
-    for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
-    {
-        starting_point[index_mapping[*node_it]] = solution[*node_it];
-    }
-    inf.setStartingPoint(starting_point.begin());
-
-    // infer
-    opengm::InferenceTermination status = inf.infer();
-
-    if (status != opengm::NORMAL) {
-        throw std::runtime_error("CPLEX optimizer terminated abnormally");
-    }
-
-    // extract and print solution
     Solution subsolution;
-    status = inf.arg(subsolution);
 
-    if (status != opengm::NORMAL) {
-        throw std::runtime_error("Could not extract solution from CPLEX");
+    if(inference_type == "CPLEX")
+    {
+        // create inference type and add constraints
+        CPLEX::Parameter param;
+        param.verbose_ = false;
+        param.integerConstraint_ = true;
+        param.epGap_ = 0.0;
+        CPLEX inf(submodel, param);
+        cp.add_constraints_to_problem(submodel, inf, index_mapping);
+
+        // set a starting point for the optimizer, based on prior solutions to these variables
+        std::vector<size_t> starting_point(nodes.size(),0);
+        for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
+        {
+            starting_point[index_mapping[*node_it]] = solution[*node_it];
+        }
+        inf.setStartingPoint(starting_point.begin());
+
+        // infer
+        opengm::InferenceTermination status = inf.infer();
+
+        if (status != opengm::NORMAL) {
+            throw std::runtime_error("CPLEX optimizer terminated abnormally");
+        }
+
+        // extract and print solution
+        status = inf.arg(subsolution);
+
+        if (status != opengm::NORMAL) {
+            throw std::runtime_error("Could not extract solution from CPLEX");
+        }
+    }
+    else if(inference_type == "ICM")
+    {
+        opengm::ICM<GraphicalModel, pgmlink::pgm::OpengmModelDeprecated::ogmAccumulator> inf(submodel);
+        cp.add_constraints_to_problem(submodel, inf, index_mapping);
+
+        // set a starting point for the optimizer, based on prior solutions to these variables
+        std::vector<size_t> starting_point(nodes.size(),0);
+        for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
+        {
+            starting_point[index_mapping[*node_it]] = solution[*node_it];
+        }
+        inf.setStartingPoint(starting_point.begin());
+
+        // infer
+        opengm::InferenceTermination status = inf.infer();
+
+        if (status != opengm::NORMAL) {
+            throw std::runtime_error("CPLEX optimizer terminated abnormally");
+        }
+
+        // extract and print solution
+        status = inf.arg(subsolution);
+
+        if (status != opengm::NORMAL) {
+            throw std::runtime_error("Could not extract solution from CPLEX");
+        }
     }
 
     return std::make_pair(subsolution, index_mapping);
@@ -109,16 +140,21 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
 int main(int argc, char** argv)
 {
     USETICTOC
-    if(argc != 4)
+    if(argc != 6 && argc != 5)
     {
         std::cout << "Perform something similar to block-ICM on stored conservation tracking models with constraints. 2014 (c) Carsten Haubold" << std::endl;
-        std::cout << "\nUSAGE: " << argv[0] << " model.h5 constraints.cp YES|NO (for hierarchical)" << std::endl;
+        std::cout << "\nUSAGE: " << argv[0] << " model.h5 constraints.cp YES|NO (for hierarchical) CPLEX|ICM big-m" << std::endl;
         return 0;
     }
 
     std::string filename_model(argv[1]);
     std::string filename_constraints(argv[2]);
     bool use_hierarchical = std::string(argv[3]) == "YES";
+    std::string inference_type(argv[4]);
+
+    double big_m = 10000000.0;
+    if(argc == 6)
+        big_m = atof(argv[5]);
 
     // load model and constraints from disk
     GraphicalModel model;
@@ -134,6 +170,7 @@ int main(int argc, char** argv)
         ia & nodes_per_timestep;
     }
     constraint_pool_input.close();
+    cp.set_big_m(big_m);
 
     // dump statistics
     std::cout << "Loaded Model from " << filename_model << std::endl;
@@ -167,7 +204,7 @@ int main(int argc, char** argv)
             nodes.insert(nodes.end(), nodes_per_timestep[t].begin(), nodes_per_timestep[t].end());
         }
 
-        std::pair<Solution, IndexMapping> inf_result = inference_on_submodel(nodes, model, cp, solution);
+        std::pair<Solution, IndexMapping> inf_result = inference_on_submodel(nodes, model, cp, solution, inference_type);
         Solution subsolution = inf_result.first;
         IndexMapping index_mapping = inf_result.second;
 
@@ -223,7 +260,6 @@ int main(int argc, char** argv)
     std::cout << "\nNumber of elements in solution: " << solution.size() << std::endl;
 
     opengm::ICM<GraphicalModel, pgmlink::pgm::OpengmModelDeprecated::ogmAccumulator> inf(model);
-    cp.set_big_m(10000000.0);
     cp.add_constraints_to_problem(model, inf);
     std::cout << "Solution after optimizing " << nodes_per_timestep.size() << " timesteps has energy: " << model.evaluate(solution) << std::endl;
     std::cout << "Done after " << TOCS << std::endl;
