@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <stack>
 
 #include "pgmlink/pgm.h"
 #include "pgmlink/constraint_pool.hxx"
@@ -73,7 +74,7 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
 
     // create inference type and add constraints
     CPLEX::Parameter param;
-    param.verbose_ = true;
+    param.verbose_ = false;
     param.integerConstraint_ = true;
     param.epGap_ = 0.0;
     CPLEX inf(submodel, param);
@@ -108,15 +109,16 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
 int main(int argc, char** argv)
 {
     USETICTOC
-    if(argc != 3)
+    if(argc != 4)
     {
         std::cout << "Perform something similar to block-ICM on stored conservation tracking models with constraints. 2014 (c) Carsten Haubold" << std::endl;
-        std::cout << "\nUSAGE: " << argv[0] << " model.h5 constraints.cp" << std::endl;
+        std::cout << "\nUSAGE: " << argv[0] << " model.h5 constraints.cp YES|NO (for hierarchical)" << std::endl;
         return 0;
     }
 
     std::string filename_model(argv[1]);
     std::string filename_constraints(argv[2]);
+    bool use_hierarchical = std::string(argv[3]) == "YES";
 
     // load model and constraints from disk
     GraphicalModel model;
@@ -143,12 +145,28 @@ int main(int argc, char** argv)
 
     Solution solution(model.numberOfVariables(), 0);
     Solution differences(model.numberOfVariables(), 2);
+    std::vector<int> prior_label_from_block(model.numberOfVariables(), -1);
+    std::set< std::set<size_t> > blocks_to_compute;
+    std::vector< std::set<size_t> > blocks_done;
 
     TIC
     // iterate over time steps, create submodel (view?) just for pairwise time frames, CPLEX inference on submodels only
     for(auto timestep_it = nodes_per_timestep.begin(); timestep_it != nodes_per_timestep.end(); ++timestep_it)
     {
-        std::vector<size_t>& nodes = timestep_it->second;
+        blocks_to_compute.insert({timestep_it->first});
+    }
+
+    while(!blocks_to_compute.empty())
+    {
+        std::set<size_t> timesteps = *(blocks_to_compute.begin());
+        std::vector<size_t> nodes;
+        std::stringstream timesteps_desc;
+        for(size_t t : timesteps)
+        {
+            timesteps_desc << t << " ";
+            nodes.insert(nodes.end(), nodes_per_timestep[t].begin(), nodes_per_timestep[t].end());
+        }
+
         std::pair<Solution, IndexMapping> inf_result = inference_on_submodel(nodes, model, cp, solution);
         Solution subsolution = inf_result.first;
         IndexMapping index_mapping = inf_result.second;
@@ -156,8 +174,18 @@ int main(int argc, char** argv)
         // check for disagreements with prior solution:
         for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
         {
-            if(solution[*node_it] != subsolution[index_mapping[*node_it]])
+            if(solution[*node_it] != subsolution[index_mapping[*node_it]] && differences[*node_it] != 2)
+            {
                 differences[*node_it] = 1;
+
+                if(use_hierarchical)
+                {
+                    std::set<size_t> new_timesteps;
+                    new_timesteps.insert(prior_label_from_block[*node_it]);
+                    new_timesteps.insert(timesteps.begin(), timesteps.end());
+                    blocks_to_compute.insert(new_timesteps);
+                }
+            }
             else
                 differences[*node_it] = 0;
         }
@@ -166,10 +194,14 @@ int main(int argc, char** argv)
         for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
         {
             solution[*node_it] = subsolution[index_mapping[*node_it]];
+            prior_label_from_block[*node_it] = blocks_done.size();
         }
 
+        blocks_done.push_back(*blocks_to_compute.begin());
+        blocks_to_compute.erase(blocks_to_compute.begin());
+
         // evaluate model with current solution
-        std::cout << "\n\n++++++++++++++++++++\nSolution after optimizing timestep " << timestep_it->first << " has energy: " << model.evaluate(solution) << "\n\n" << std::endl;
+        std::cout << "\n\n++++++++++++++++++++\nSolution after optimizing timesteps " << timesteps_desc.str() << " has energy: " << model.evaluate(solution) << "\n\n" << std::endl;
     }
 
     std::cout << "\n===============================\nFound Solution:" << std::endl;
@@ -191,7 +223,7 @@ int main(int argc, char** argv)
     std::cout << "\nNumber of elements in solution: " << solution.size() << std::endl;
 
     opengm::ICM<GraphicalModel, pgmlink::pgm::OpengmModelDeprecated::ogmAccumulator> inf(model);
-    cp.set_big_m(1000000.0);
+    cp.set_big_m(10000000.0);
     cp.add_constraints_to_problem(model, inf);
     std::cout << "Solution after optimizing " << nodes_per_timestep.size() << " timesteps has energy: " << model.evaluate(solution) << std::endl;
     std::cout << "Done after " << TOCS << std::endl;
