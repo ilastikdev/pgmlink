@@ -584,6 +584,7 @@ BOOST_AUTO_TEST_CASE( SingleTimestepTraxel_HypothesesGraph_eventVector ) {
     active_nodes.set(n41, 3);
     active_nodes.set(n12, 1);
     active_nodes.set(n23, 1);
+    active_nodes.set(n24, 1);
     active_nodes.set(n42, 4);
     active_nodes.set(n33, 2);
     active_nodes.set(n43, 1);
