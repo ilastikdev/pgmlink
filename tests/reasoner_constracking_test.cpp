@@ -72,32 +72,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger ) {
 	std::cout << std::endl;
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-	              20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-	              false, // detection_by_volume
-	              0, // forbidden_cost
-	              0.0, // ep_gap
-	              double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-	              fov
+	ConsTracking tracking = ConsTracking(2, // max_number_objects
+					     false, // detection_by_volume
+					     double(1.1), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
 		  	      );
 
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t count_moves = 0;
     size_t t = 1;
@@ -169,30 +169,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Division ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  false, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     2, // max_number_objects
+					     false, // detection_by_volume
+					     double(1.1), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t count_moves = 0;
 	size_t count_divisions = 0;
@@ -249,30 +251,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  false, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
+					     2, // max_number_objects
+					     false, // detection_by_volume
+					     double(1.1), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
 				  );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
     BOOST_CHECK_EQUAL(events.size(),2);
 	size_t count_moves = 0;
@@ -334,30 +337,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger_Volume ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  true, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(99), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     2, // max_number_objects
+					     true, // detection_by_volume
+					     double(99), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+);
 
 	size_t count_moves = 0;
 	size_t t = 1;
@@ -424,30 +428,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Disappearance ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  true, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     2, // max_number_objects
+					     true, // detection_by_volume
+					     double(1), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t num_events = 0;
 	size_t t = 1;
@@ -516,30 +521,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceAndDisappearance )
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  true, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1.), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     2, // max_number_object
+					     true, // detection_by_volume
+					     double(1.), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t t = 1;
 	size_t num_events = 0;
@@ -641,30 +647,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Appearance ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  2, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  true, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  10., // disappearance_cost,
-				  10., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     2, // max_number_objects
+					     true, // detection_by_volume
+					     double(1), // avg_obj_size
+					     2, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    10., // disappearance_cost,
+							    10., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
     size_t t = 0;
 	size_t num_events = 0;
@@ -747,30 +754,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  1, // max_number_objects
-				  100, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  true, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     1, // max_number_objects
+					     true, // detection_by_volume
+					     double(1), // avg_obj_size
+					     100, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t t = 1;
 	size_t num_events = 0;
@@ -862,30 +870,31 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-				  2, // max_number_objects
-				  20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-				  true, // detection_by_volume
-				  0, // forbidden_cost
-				  0.0, // ep_gap
-				  double(1.1), // avg_obj_size
-				  true, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  1500., // disappearance_cost,
-				  1500., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-				  fov
-				  );
+					     2, // max_number_objects
+					     true, // detection_by_volume
+					     double(1.1), // avg_obj_size
+					     20, // max_neighbor_distance
+					     true, //with_divisions
+					     0.3, // division_threshold
+					     "none", // random_forest_filename
+					     fov
+					     );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    true, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    false, //with_merger_resolution
+							    3, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t moves = 0;
 	size_t t = 1;
@@ -1014,31 +1023,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
 
     FieldOfView fov(0, 0, 0, 0, 4, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-	ConsTracking tracking = ConsTracking(
-			  2, // max_number_objects
-		      99999, // max_neighbor_distance
-			  0.1, // division_threshold
-			  "none", // random_forest_filename
-	  	      false, // detection_by_volume
-	  	      0, // forbidden_cost
-	  	      0.05, // ep_gap
-	  	      double(1.1), // avg_obj_size
-			  true, // with_tracklets
-			  10.0, //division_weight
-			  10.0, //transition_weight
-			  true, //with_divisions
-			  500., // disappearance_cost,
-			  500., // appearance_cost
-			  true, //with_merger_resolution
-			  2, //n_dim
-			  5, //transition_parameter
-			  0, //border_width for app/disapp costs
-              fov
-	  	      );
+    ConsTracking tracking = ConsTracking(
+					 2, // max_number_objects
+					 false, // detection_by_volume
+					 double(1.1), // avg_obj_size
+					 99999, // max_neighbor_distance
+					 true, //with_divisions
+					 0.1, // division_threshold
+					 "none", // random_forest_filename
+					 fov
+					 );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.05, // ep_gap
+							    true, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    500., // disappearance_cost,
+							    500., // appearance_cost
+							    true, //with_merger_resolution
+							    2, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t t = 1;
 	size_t apps = 0;
@@ -1190,31 +1200,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels ) 
 
     FieldOfView fov(0, 0, 0, 0, 3, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-	ConsTracking tracking = ConsTracking(
-			  1, // max_number_objects
-		      301, // max_neighbor_distance
-			  0.5, // division_threshold
-			  "none", // random_forest_filename
-	  	      false, // detection_by_volume
-	  	      0, // forbidden_cost
-	  	      0.05, // ep_gap
-	  	      double(1.1), // avg_obj_size
-			  false, // with_tracklets
-			  10.0, //division_weight
-			  10.0, //transition_weight
-			  false, //with_divisions
-			  10., // disappearance_cost,
-			  10., // appearance_cost
-			  false, //with_merger_resolution
-			  2, //n_dim
-			  5, //transition_parameter
-			  0, //border_width for app/disapp costs
-              fov
-	  	      );
+    ConsTracking tracking = ConsTracking(
+					 1, // max_number_objects
+					 false, // detection_by_volume
+					 double(1.1), // avg_obj_size
+					 301, // max_neighbor_distance
+					 false, //with_divisions
+					 0.5, // division_threshold
+					 "none", // random_forest_filename
+					 fov
+					 );
 
-	std::cout << "Run Conservation tracking" << std::endl;
+    std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.05, // ep_gap
+							    false, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    10., // disappearance_cost,
+							    10., // appearance_cost
+							    false, //with_merger_resolution
+							    2, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 
     size_t t = 1;
@@ -1335,31 +1346,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
 
     FieldOfView fov(0, 0, 0, 0, 3, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-	ConsTracking tracking = ConsTracking(
-			  1, // max_number_objects
-		      301, // max_neighbor_distance
-			  0.5, // division_threshold
-			  "none", // random_forest_filename
-	  	      false, // detection_by_volume
-	  	      0, // forbidden_cost
-	  	      0.05, // ep_gap
-	  	      double(1.1), // avg_obj_size
-			  true, // with_tracklets
-			  10.0, //division_weight
-			  10.0, //transition_weight
-			  false, //with_divisions
-			  10., // disappearance_cost,
-			  10., // appearance_cost
-			  false, //with_merger_resolution
-			  2, //n_dim
-			  5, //transition_parameter
-			  0, //border_width for app/disapp costs
-              fov
-	  	      );
+    ConsTracking tracking = ConsTracking(
+					 1, // max_number_objects
+					 false, // detection_by_volume
+					 double(1.1), // avg_obj_size
+					 301, // max_neighbor_distance
+					 false, //with_divisions
+					 0.5, // division_threshold
+					 "none", // random_forest_filename
+					 fov
+					 );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.05, // ep_gap
+							    true, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    10., // disappearance_cost,
+							    10., // appearance_cost
+							    false, //with_merger_resolution
+							    2, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 
     size_t t = 1;
@@ -1458,31 +1470,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
 
     FieldOfView fov(0, 0, 0, 0, 4, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-	ConsTracking tracking = ConsTracking(
-			  2, // max_number_objects
-              99999, // max_neighbor_distance
-			  0.1, // division_threshold
-			  "none", // random_forest_filename
-              false, // detection_by_volume
-              0, // forbidden_cost
-              0.0, // ep_gap
-              double(1.1), // avg_obj_size
-			  true, // with_tracklets
-			  10.0, //division_weight
-			  10.0, //transition_weight
-			  true, //with_divisions
-			  1500., // disappearance_cost,
-			  1500., // appearance_cost
-			  true, //with_merger_resolution
-			  2, //n_dim
-			  5, //transition_parameter
-			  0, //border_width for app/disapp costs
-              fov
-	  	      );
+    ConsTracking tracking = ConsTracking(
+					 2, // max_number_objects
+					 false, // detection_by_volume
+					 double(1.1), // avg_obj_size
+					 99999, // max_neighbor_distance
+					 true, //with_divisions
+					 0.1, // division_threshold
+					 "none", // random_forest_filename
+					 fov
+					 );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    true, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    true, //with_merger_resolution
+							    2, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 	size_t t = 1;
 	size_t apps = 0;
@@ -1594,31 +1607,33 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
 
     FieldOfView fov(0, 0, 0, 0, 4, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-	ConsTracking tracking = ConsTracking(
-			  2, // max_number_objects
-              99999, // max_neighbor_distance
-			  0.1, // division_threshold
-			  "none", // random_forest_filename
-              false, // detection_by_volume
-              0, // forbidden_cost
-              0.0, // ep_gap
-              double(1.1), // avg_obj_size
-			  true, // with_tracklets
-			  10.0, //division_weight
-			  10.0, //transition_weight
-			  true, //with_divisions
-			  1500., // disappearance_cost,
-			  1500., // appearance_cost
-			  true, //with_merger_resolution
-			  2, //n_dim
-			  5, //transition_parameter
-			  0, //border_width for app/disapp costs
-              fov
-	  	      );
+    ConsTracking tracking = ConsTracking(
+					 2, // max_number_objects
+					 false, // detection_by_volume
+					 double(1.1), // avg_obj_size
+					 99999, // max_neighbor_distance
+					 true, //with_divisions
+					 0.1, // division_threshold
+					 "none", // random_forest_filename
+					 fov,
+					 "none"
+					 );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.0, // ep_gap
+							    true, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    1500., // disappearance_cost,
+							    1500., // appearance_cost
+							    true, //with_merger_resolution
+							    2, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
     size_t t = 1;
     BOOST_CHECK_EQUAL(events[t].size(), 5);
@@ -1733,31 +1748,32 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
 
     FieldOfView fov(0, 0, 0, 0, 3, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-	ConsTracking tracking = ConsTracking(
-			  1, // max_number_objects
-		      301, // max_neighbor_distance
-			  0.5, // division_threshold
-			  "none", // random_forest_filename
-	  	      false, // detection_by_volume
-	  	      0, // forbidden_cost
-	  	      0.05, // ep_gap
-	  	      double(1.1), // avg_obj_size
-			  true, // with_tracklets
-			  10.0, //division_weight
-			  10.0, //transition_weight
-			  false, //with_divisions
-			  10., // disappearance_cost,
-			  10., // appearance_cost
-			  false, //with_merger_resolution
-			  2, //n_dim
-			  5, //transition_parameter
-			  0, //border_width for app/disapp costs
-              fov
-	  	      );
+    ConsTracking tracking = ConsTracking(
+					 1, // max_number_objects
+					 false, // detection_by_volume
+					 double(1.1), // avg_obj_size
+					 301, // max_neighbor_distance
+					 false, //with_divisions
+					 0.5, // division_threshold
+					 "none", // random_forest_filename
+					 fov
+					 );
 
 	std::cout << "Run Conservation tracking" << std::endl;
 	std::cout << std::endl;
-	std::vector< std::vector<Event> > events = tracking(ts);
+	std::vector< std::vector<Event> > events = tracking(ts,
+							    0, // forbidden_cost
+							    0.05, // ep_gap
+							    true, // with_tracklets
+							    10.0, //division_weight
+							    10.0, //transition_weight
+							    10., // disappearance_cost,
+							    10., // appearance_cost
+							    false, //with_merger_resolution
+							    2, //n_dim
+							    5, //transition_parameter
+							    0 //border_width for app/disapp costs
+							    );
 
 
     size_t t = 1;
