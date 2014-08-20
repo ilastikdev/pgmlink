@@ -240,7 +240,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
     return track(forbidden_cost,ep_gap,with_tracklets,division_weight,transition_weight,disappearance_cost,appearance_cost,with_merger_resolution,n_dim,transition_parameter,border_width,with_constraints,cplex_timeout,coordinates);
 }
 
-shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts) {
+  boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts) {
 
   
   LOG(logDEBUG3) << "enering build_hypo_graph"<< endl;;
