@@ -42,12 +42,24 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
     return node;
 }
 
-
-void HypothesesGraph::add_traxel(node_timestep_map::Value timestep,Traxel ts){
-  HypothesesGraph::Node node = add_node(timestep);
-  get(node_traxel()).set(node,ts);
+void HypothesesGraph::add_node_label(HypothesesGraph::Node node,bool label) {
+  add(node_label());
+  property_map< node_label, HypothesesGraph::base_graph>::type& gt_label = get(node_label());
+  gt_label.set(node,label);
 }
 
+void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc,bool label) {
+  add(arc_label());
+  property_map< arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
+  gt_label.set(arc,label);
+}
+
+HypothesesGraph::Node HypothesesGraph::add_traxel(Traxel ts){
+  LOG(logDEBUG4) << "add traxel(id="<<ts.Id<<") at t="<< ts.Timestep;
+  HypothesesGraph::Node node = add_node(ts.Timestep);
+  get(node_traxel()).set(node,ts);
+  return node;
+}
 
   const std::set<HypothesesGraph::node_timestep_map::Value>& HypothesesGraph::timesteps() const {
     return timesteps_;

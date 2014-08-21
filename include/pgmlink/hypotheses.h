@@ -259,23 +259,23 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   const std::string property_map<arc_resolution_candidate, Graph>::name = "arc_resolution_candidate";
 
   // node ground truth label
-  struct node_ground_truth_label {};
+  struct node_label {};
   template <typename Graph>
-  struct property_map< node_ground_truth_label, Graph> {
+  struct property_map< node_label, Graph> {
     typedef lemon::IterableBoolMap<Graph, typename Graph::Node> type;
     static const std::string name;
   };
   template <typename Graph>
-  const std::string property_map<node_ground_truth_label, Graph>::name = "";
+  const std::string property_map<node_label, Graph>::name = "";
   // arc ground truth label
-  struct arc_ground_truth_label {};
+  struct arc_label {};
   template <typename Graph>
-  struct property_map<arc_ground_truth_label, Graph> {
+  struct property_map<arc_label, Graph> {
     typedef lemon::IterableBoolMap<Graph, typename Graph::Arc> type;
     static const std::string name;
   };
   template <typename Graph>
-  const std::string property_map<arc_ground_truth_label, Graph>::name = "";
+  const std::string property_map<arc_label, Graph>::name = "";
 
   class HypothesesGraph 
   : public PropertyGraph<lemon::ListDigraph> 
@@ -297,10 +297,13 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
 
     PGMLINK_EXPORT HypothesesGraph::Node add_node(std::vector<node_timestep_map::Value> timesteps);
     // add node with associated traxel
-    PGMLINK_EXPORT void add_traxel(node_timestep_map::Value timestep,Traxel ts);
+    PGMLINK_EXPORT HypothesesGraph::Node add_traxel(Traxel ts);
 
     // assign ground truth to a node
     PGMLINK_EXPORT void add_node_label(HypothesesGraph::Node,bool label);
+
+    // assign ground truth to a node
+    PGMLINK_EXPORT void add_arc_label(HypothesesGraph::Arc,bool label);
 
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;
