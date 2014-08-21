@@ -50,7 +50,7 @@ void HypothesesGraph::add_node_label(HypothesesGraph::Node node,bool label) {
 
 void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc,bool label) {
   add(arc_label());
-  property_map< arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
+  property_map<  arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
   gt_label.set(arc,label);
 }
 

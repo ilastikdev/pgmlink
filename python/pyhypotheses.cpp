@@ -80,15 +80,50 @@ struct IterableValueMap_ValueIterator {
   typename map_type::ValueIt end_;
 };
 
+template <typename GRAPH_ELEMENT_ITERATOR ,typename GRAPH_ELEMENT >
+struct GraphIterator {
+  typedef GRAPH_ELEMENT_ITERATOR iter_type;
+  typedef GRAPH_ELEMENT elem_type;
+  iter_type it_;
 
+  GraphIterator( const HypothesesGraph& g ) {
+    it_ = iter_type(g);
+  }
+  elem_type next() {
+    if( it_ == lemon::INVALID) {
+      PyErr_SetString(PyExc_StopIteration, "No more data.");
+      boost::python::throw_error_already_set();
+    }
+    const elem_type result = it_;
+    ++it_;
+    return result;
+  }
+
+  // static GraphIterator<iter_type,elem_type>values ( const elem_type& n ) {
+  // return GraphIterator<iter_type,map_type>( n );
+  // }
+
+  static void
+  wrap( const char* python_name) {
+    class_<GraphIterator<iter_type,elem_type> >( python_name,init<const HypothesesGraph&>(args("hypotheses_graph")))
+      .def("next", &GraphIterator::next)
+      .def("__iter__", &pass_through)
+      ;
+  }
+};
 
 void export_hypotheses() {
   class_<HypothesesGraph::Arc>("Arc");
-  class_<HypothesesGraph::ArcIt>("ArcIt");
   class_<HypothesesGraph::Node>("Node");
-  class_<HypothesesGraph::NodeIt>("NodeIt");
   class_<HypothesesGraph::InArcIt>("InArcIt");
   class_<HypothesesGraph::OutArcIt>("OutArcIt");
+  class_<node_label>("nodeLabel");
+  class_<arc_label>("arcLabel");
+
+  GraphIterator<HypothesesGraph::NodeIt ,HypothesesGraph::Node>::wrap("NodeIt" );
+  GraphIterator<HypothesesGraph::ArcIt , HypothesesGraph::Arc >::wrap("ArcIt" );
+  //GraphIterator<HypothesesGraph::OutArcIt,HypothesesGraph::Arc >::wrap("OutArcIt");
+  //GraphIterator<HypothesesGraph::InArcIt ,HypothesesGraph::Arc >::wrap("InArcIt" );
 
 
   IterableValueMap_ValueIterator<node_traxel_m>::wrap("NodeTraxelMap_ValueIt");
@@ -155,7 +190,7 @@ void export_hypotheses() {
     .def("addTraxel", &HypothesesGraph::add_traxel)
 
     .def("addNodeLabel", &HypothesesGraph::add_node_label)
-    .def("addArcLabel", &HypothesesGraph::add_arc_label)
+    .def("addArcLabel" , &HypothesesGraph::add_arc_label )
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,
