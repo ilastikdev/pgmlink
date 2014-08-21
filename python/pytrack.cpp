@@ -110,6 +110,7 @@ void export_track() {
           .def("buildGraph", &ConsTracking::build_hypo_graph)
           .def("track", &ConsTracking::track)
 	  .def("detections", &ConsTracking::detections)
+	  .def("writeFunkeyFiles", &ConsTracking::write_funkey_files)
 	;
 
     enum_<Event::EventType>("EventType")

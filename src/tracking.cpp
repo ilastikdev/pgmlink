@@ -534,4 +534,60 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 }
 
 
+  void ConsTracking::write_funkey_files(){
+    int number_of_weights = 5;
+    bool with_constraints;
+    //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
+    for(int i=0;i<number_of_weights;i++){
+      std::vector<double> param(number_of_weights,0. );
+      param[i] = 1.;
+      with_constraints = (i==0); // create constraints once      
+
+      ConservationTracking pgm(
+			max_number_objects_,
+			ConstantFeature(param[0]),//detection,
+			ConstantFeature(param[1]),//division,
+			ConstantFeature(param[2]),//transition,
+			0,//forbidden_cost,
+			0,//ep_gap,
+			true,//with_tracklets,
+			true,//with_divisions_,
+			ConstantFeature(param[3]),//disappearance,
+			ConstantFeature(param[4]),//appearance,
+			true, // with_misdetections_allowed
+			true, // with_appearance
+			true, // with_disappearance
+			5,//transition_parameter,
+		        with_constraints,
+			0
+			); 
+
+
+      // constraints.txt 
+      if(with_constraints)
+	write_constraints();
+ 
+      // labels.txt        
+      write_ground_truth();
+  
+      // features.txt    
+      write_features();
+      
+	
+    }
+
+  }
+
+  void ConsTracking::write_constraints(){
+
+  }
+
+  void ConsTracking::write_ground_truth(){
+
+  }
+  
+  void ConsTracking::write_features(){
+
+  }
+
 } // namespace tracking

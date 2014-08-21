@@ -217,6 +217,8 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
 
+      PGMLINK_EXPORT void write_funkey_files();
+
     private:
       int max_number_objects_;
       double max_dist_;
@@ -236,7 +238,12 @@ namespace pgmlink {
       shared_ptr<HypothesesGraph> hypotheses_graph_;
       boost::shared_ptr<ConservationTracking> pgm_;
 
-    };
+      void write_constraints();
+      void write_ground_truth();  
+      void write_features();
+
+  };
+
 }
 
 #endif /* TRACKING_H */
