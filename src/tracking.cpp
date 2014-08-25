@@ -399,7 +399,6 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 	boost::function<double(const Traxel&, const size_t)> detection, division;
 	boost::function<double(const double)> transition;
 
-
 	if (use_classifier_prior_) {
 		LOG(logINFO) << "Using classifier prior";
 		detection = NegLnDetection(detection_weight);
@@ -533,12 +532,16 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 }
 
 
-  void ConsTracking::write_funkey_files(){
+  void ConsTracking::write_funkey_files(TraxelStore ts){
     int number_of_weights = 5;
     int ndim = 3;
     bool with_constraints;
 
     //delete old txt files and create new ones
+
+    std::ofstream feature_file;
+    feature_file.open ("features.txt");
+    feature_file.close();
 
 
 
@@ -548,42 +551,18 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
       param[i] = 1;
       with_constraints = true;//(i==0); // create constraints once      
 
-      /*
-      ConservationTracking pgm(
-			max_number_objects_,
-			ConstantFeature(param[0]),//detection,
-			ConstantFeature(param[1]),//division,
-			ConstantFeature(param[2]),//transition,
-			0,//forbidden_cost,
-			0,//ep_gap,
-			true,//with_tracklets,
-			true,//with_divisions_,
-			ConstantFeature(param[3]),//disappearance,
-			ConstantFeature(param[4]),//appearance,
-			true, // with_misdetections_allowed
-			true, // with_appearance
-			true, // with_disappearance
-			5,//transition_parameter,
-		        with_constraints,
-			0
-			); 
+      //delete constraint file (in loop so we keep only the last one)
+      std::ofstream constraints_file;
+      constraints_file.open ("constraints.txt");
+      constraints_file.close();
 
-      pgm.formulate(*hypotheses_graph_);
-    */
-      std::ofstream feature_file;
-      feature_file.open ("features.txt",std::ios::app);
-      feature_file << std::endl << std::endl;  
-      feature_file << "parameters: " ;	
-      for(int i=0;i<number_of_weights;i++){
-	feature_file << param[i] << "\t" ;	
-      }
-      feature_file << std::endl;  
-      feature_file.close();
+
+      build_hypo_graph(ts);
 
       track(0,//forbidden_cost,
 	    0,
 	    true,
-	    param[0],
+	    param[0],//detection
 	    param[1],//division,
 	    param[2],//transition,
 	    param[3],//disappearance,
@@ -593,7 +572,7 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 	    5,//transition_parameter,
 	    10,//border_width,
 	    with_constraints);  
-      
+
     }
   }
 } // namespace tracking

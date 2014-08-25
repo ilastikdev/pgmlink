@@ -218,7 +218,7 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
 
-      PGMLINK_EXPORT void write_funkey_files();
+      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts);
 
     private:
       int max_number_objects_;

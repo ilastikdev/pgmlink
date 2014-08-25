@@ -400,7 +400,7 @@ ConstraintPool::OutgoingConstraint>
                     cplex_idxs.clear();
                     coeffs.clear();
                     coeffs.push_back(1);
-                    cplex_idxs2.push_back(optimizer.lpNodeVi(constraint.appearance_node, a_state));
+                    cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, a_state));
                     coeffs.push_back(1);
                     cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, t_state));
                     constraint_name.str(std::string()); // clear the name
