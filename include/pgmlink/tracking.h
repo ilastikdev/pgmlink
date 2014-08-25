@@ -198,6 +198,7 @@ namespace pgmlink {
       PGMLINK_EXPORT std::vector<std::vector<Event> > track(double forbidden_cost = 0,
 							    double ep_gap=0.01,
 							    bool with_tracklets=true,
+							    double detection_weight = 10., 
 							    double division_weight=10.0,
 							    double transition_weight=10.0,
 							    double disappearance_cost = 0,

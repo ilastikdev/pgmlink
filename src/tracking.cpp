@@ -237,7 +237,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 						  double cplex_timeout,
 						  TimestepIdCoordinateMapPtr coordinates) {
     build_hypo_graph(ts);
-    return track(forbidden_cost,ep_gap,with_tracklets,division_weight,transition_weight,disappearance_cost,appearance_cost,with_merger_resolution,n_dim,transition_parameter,border_width,with_constraints,cplex_timeout,coordinates);
+    return track(forbidden_cost,ep_gap,with_tracklets,10./*detection*/,division_weight,transition_weight,disappearance_cost,appearance_cost,with_merger_resolution,n_dim,transition_parameter,border_width,with_constraints,cplex_timeout,coordinates);
 }
 
   boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts) {
@@ -363,6 +363,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
   std::vector<std::vector<Event> >ConsTracking::track(double forbidden_cost,
 						      double ep_gap,
 						      bool with_tracklets,
+						      double detection_weight,
 						      double division_weight,
 						      double transition_weight,
 						      double disappearance_cost,
@@ -394,8 +395,6 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
     LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
     
     
-
-	double detection_weight = 10;
 	Traxels empty;
 	boost::function<double(const Traxel&, const size_t)> detection, division;
 	boost::function<double(const double)> transition;
@@ -459,8 +458,8 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 			true, // with_appearance
 			true, // with_disappearance
 			transition_parameter,
-            with_constraints,
-            cplex_timeout
+			with_constraints,
+			cplex_timeout
 			);
 
 	cout << "-> formulate ConservationTracking model" << endl;
@@ -536,13 +535,20 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 
   void ConsTracking::write_funkey_files(){
     int number_of_weights = 5;
+    int ndim = 3;
     bool with_constraints;
+
+    //delete old txt files and create new ones
+
+
+
     //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
     for(int i=0;i<number_of_weights;i++){
       std::vector<double> param(number_of_weights,0. );
-      param[i] = 1.;
-      with_constraints = (i==0); // create constraints once      
+      param[i] = 1;
+      with_constraints = true;//(i==0); // create constraints once      
 
+      /*
       ConservationTracking pgm(
 			max_number_objects_,
 			ConstantFeature(param[0]),//detection,
@@ -562,32 +568,32 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 			0
 			); 
 
+      pgm.formulate(*hypotheses_graph_);
+    */
+      std::ofstream feature_file;
+      feature_file.open ("features.txt",std::ios::app);
+      feature_file << std::endl << std::endl;  
+      feature_file << "parameters: " ;	
+      for(int i=0;i<number_of_weights;i++){
+	feature_file << param[i] << "\t" ;	
+      }
+      feature_file << std::endl;  
+      feature_file.close();
 
-      // constraints.txt 
-      if(with_constraints)
-	write_constraints();
- 
-      // labels.txt        
-      write_ground_truth();
-  
-      // features.txt    
-      write_features();
+      track(0,//forbidden_cost,
+	    0,
+	    true,
+	    param[0],
+	    param[1],//division,
+	    param[2],//transition,
+	    param[3],//disappearance,
+	    param[4],//appearance,
+	    false,//with_merger_resolution,
+	    ndim,
+	    5,//transition_parameter,
+	    10,//border_width,
+	    with_constraints);  
       
-	
     }
-
   }
-
-  void ConsTracking::write_constraints(){
-
-  }
-
-  void ConsTracking::write_ground_truth(){
-
-  }
-  
-  void ConsTracking::write_features(){
-
-  }
-
 } // namespace tracking
