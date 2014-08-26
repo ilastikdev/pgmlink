@@ -461,6 +461,10 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 			cplex_timeout
 			);
 
+	pgm.features_file_      = features_file_;   
+	pgm.constraints_file_   = constraints_file_;
+	pgm.ground_truth_file_  = ground_truth_file_;
+
 	cout << "-> formulate ConservationTracking model" << endl;
 	pgm.formulate(*hypotheses_graph_);
 
@@ -478,7 +482,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 
 	cout << "-> constructing unresolved events" << endl;
 	boost::shared_ptr<std::vector< std::vector<Event> > > ev = events(*hypotheses_graph_);
-
+	
 
 	if (max_number_objects_ > 1 && with_merger_resolution && all_true(ev->begin()+1, ev->end(), has_data<Event>)) {
 	  cout << "-> resolving mergers" << endl;
@@ -532,47 +536,51 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 }
 
 
-  void ConsTracking::write_funkey_files(TraxelStore ts){
+  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth){
     int number_of_weights = 5;
     int ndim = 3;
-    bool with_constraints;
 
-    //delete old txt files and create new ones
+    features_file_      = writeFeatures;   
+    ground_truth_file_  = writeGroundTruth;
 
-    std::ofstream feature_file;
-    feature_file.open ("features.txt");
-    feature_file.close();
+    if(not writeFeatures.empty()){
+      std::ofstream feature_file;
+      feature_file.open (writeFeatures);
+      feature_file.close();
+      
+      //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
+      for(int i=0;i<number_of_weights;i++){
+	std::vector<double> param(number_of_weights,0. );
+	param[i] = 1;
+
+	if(not  writeConstraints.empty() and i==0){
+	  constraints_file_   = writeConstraints;
+	  //create constraint file 
+	  std::ofstream constraints_file;
+	  constraints_file.open (writeConstraints);
+	  constraints_file.close();
+	}
+	else{
+	  constraints_file_ = "";
+	}
 
 
+	build_hypo_graph(ts);
+	track(0,//forbidden_cost,
+	      0,
+	      true,
+	      param[0],//detection
+	      param[1],//division,
+	      param[2],//transition,
+	      param[3],//disappearance,
+	      param[4],//appearance,
+	      false,//with_merger_resolution,
+	      ndim,
+	      5,//transition_parameter,
+	      10,//border_width,
+	      true);//with constraints  
 
-    //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
-    for(int i=0;i<number_of_weights;i++){
-      std::vector<double> param(number_of_weights,0. );
-      param[i] = 1;
-      with_constraints = true;//(i==0); // create constraints once      
-
-      //delete constraint file (in loop so we keep only the last one)
-      std::ofstream constraints_file;
-      constraints_file.open ("constraints.txt");
-      constraints_file.close();
-
-
-      build_hypo_graph(ts);
-
-      track(0,//forbidden_cost,
-	    0,
-	    true,
-	    param[0],//detection
-	    param[1],//division,
-	    param[2],//transition,
-	    param[3],//disappearance,
-	    param[4],//appearance,
-	    false,//with_merger_resolution,
-	    ndim,
-	    5,//transition_parameter,
-	    10,//border_width,
-	    with_constraints);  
-
+      }
     }
   }
 } // namespace tracking

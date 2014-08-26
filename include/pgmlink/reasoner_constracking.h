@@ -85,6 +85,10 @@ class ConservationTracking : public Reasoner {
      */
     const std::map<HypothesesGraph::Arc, size_t>& get_arc_map() const;
     
+    //cplex export file names
+    std::string features_file_;
+    std::string constraints_file_;
+    std::string ground_truth_file_;
 
     private:
     // copy and assingment have to be implemented, yet
@@ -103,7 +107,8 @@ class ConservationTracking : public Reasoner {
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
 
-
+    
+    
     unsigned int max_number_objects_;
 
     // energy functions

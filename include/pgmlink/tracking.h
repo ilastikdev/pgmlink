@@ -210,7 +210,7 @@ namespace pgmlink {
 							    bool with_constraints = true,
 							    double cplex_timeout = 1e+75,
 							    TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
-
+						           
 
 
       /**
@@ -218,7 +218,7 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
 
-      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts);
+      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "");
 
     private:
       int max_number_objects_;
@@ -238,11 +238,17 @@ namespace pgmlink {
 
       shared_ptr<HypothesesGraph> hypotheses_graph_;
       boost::shared_ptr<ConservationTracking> pgm_;
+							    
+      std::string features_file_;
+      std::string constraints_file_; 
+      std::string ground_truth_file_;
+							    
 
       void write_constraints();
       void write_ground_truth();  
       void write_features();
-
+							    
+							    
   };
 
 }
