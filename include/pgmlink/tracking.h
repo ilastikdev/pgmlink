@@ -218,7 +218,9 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
 
-      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "");
+      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
+
+      PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string sbrmr_binary,std::string features,std::string constraints,std::string groundTruth);
 
     private:
       int max_number_objects_;
@@ -243,14 +245,7 @@ namespace pgmlink {
       std::string constraints_file_; 
       std::string ground_truth_file_;
 							    
-
-      void write_constraints();
-      void write_ground_truth();  
-      void write_features();
-							    
-							    
   };
-
 }
 
 #endif /* TRACKING_H */

@@ -19,10 +19,47 @@
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/merger_resolving.h"
 
+#include <stdio.h>
 
 using namespace std;
 using boost::shared_ptr;
 using boost::shared_array;
+
+//Quick and dity utilities
+  
+// from http://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c
+std::string exec(const char* cmd) {
+FILE* pipe = popen(cmd, "r");
+if (!pipe) return "ERROR";
+char buffer[128];
+std::string result = "";
+while(!feof(pipe)) {
+if(fgets(buffer, 128, pipe) != NULL)
+  result += buffer;
+}
+pclose(pipe);
+return result;
+}
+
+void transpose_file(std::string filename){
+//from http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
+  std::string awk_program = "awk '{\n for (i=1; i<=NF; i++)  {\n a[NR,i] = $i \n} \n}\n NF>p { p = NF } \nEND {\n for(j=1; j<=p; j++) {\n str=a[1,j]\n for(i=2; i<=NR; i++){\n str=str\" \"a[i,j];\n }\n print str\n }\n }' ";
+  system( (awk_program + filename + "> tmp.txt").c_str() ) ;
+  system( (std::string("rm ")+ filename).c_str() ) ;
+  system( (std::string("cp tmp.txt ")+ filename).c_str() ) ;
+  system( "rm tmp.txt") ;
+}
+
+ #include <sstream>
+//from  http://stackoverflow.com/questions/392981/how-can-i-convert-string-to-double-in-c
+ double string_to_double( const std::string& s )
+ {
+   std::istringstream i(s);
+   double x;
+   if (!(i >> x))
+     return 0;
+   return x;
+ } 
 
 namespace pgmlink {
 ////
@@ -536,14 +573,14 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 }
 
 
-  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth){
+  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
     int number_of_weights = 5;
     int ndim = 3;
 
-    features_file_      = writeFeatures;   
-    ground_truth_file_  = writeGroundTruth;
+   if(not writeFeatures.empty()){
 
-    if(not writeFeatures.empty()){
+      features_file_      = writeFeatures;   
+
       std::ofstream feature_file;
       feature_file.open (writeFeatures);
       feature_file.close();
@@ -581,6 +618,58 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 	      true);//with constraints  
 
       }
+      transpose_file(writeFeatures);
+    }
+    else{
+      features_file_      = "";
+    }
+
+    if(not writeGroundTruth.empty()){
+
+      ground_truth_file_  = writeGroundTruth;
+
+      std::ofstream labels_file;
+      labels_file.open (writeGroundTruth);
+      labels_file.close();      
+
+      build_hypo_graph(ts);
+      track(0,//forbidden_cost,
+	    0,
+	    true,
+	    weights[0],//detection
+	    weights[1],//division,
+	    weights[2],//transition,
+	    weights[3],//disappearance,
+	    weights[4],//appearance,
+	    false,//with_merger_resolution,
+	    ndim,
+	    5,//transition_parameter,
+	    10,//border_width,
+	    true);//with constraints  
+	      
+    }
+    else{
+      ground_truth_file_  = "";
     }
   }
+
+  vector<double> ConsTracking::learn_from_funkey_files(std::string sbrmr_binary,std::string features,std::string constraints,std::string groundTruth){
+    
+    vector<double> out;
+    std::string shell_output =  exec((sbrmr_binary).c_str());
+    LOG(logINFO) << "calling funkey";
+    LOG(logDEBUG1) << shell_output<< endl;
+    int start = shell_output.find("optimial w is [")+15;
+    int end = shell_output.find("]",start);
+    std::string numlist = shell_output.substr(start,end-start);
+
+
+    for(int i = 0; i != std::string::npos ;i= numlist.find(",",i)){
+      if(i>0) i+=2;
+      out.push_back(string_to_double(numlist.substr(i,numlist.find(",",i)-i).c_str()));
+    }
+    return out;
+  }
 } // namespace tracking
+
+
