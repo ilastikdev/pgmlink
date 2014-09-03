@@ -257,7 +257,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 		LOG(logDEBUG2) << "events(): for every node: destiny";
 		for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
 			assert(node_traxel_map[node_at].Timestep == t);
-			LOG(logINFO) <<t<< " "<< node_traxel_map[node_at].Id;
+			LOG(logDEBUG4) <<t<< " "<< node_traxel_map[node_at].Id;
 
 			if(!get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep)){
 				continue;
