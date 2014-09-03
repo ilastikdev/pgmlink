@@ -277,6 +277,9 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 					variance = tr.features["divUnc"][0];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
+				case Transition:
+					//perturb traxel's RegionCenter in order to get new transition probabilities here
+					//TODO
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}
