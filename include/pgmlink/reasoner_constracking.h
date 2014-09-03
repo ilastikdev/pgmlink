@@ -151,7 +151,8 @@ class ConservationTracking : public Reasoner {
     template <typename ModelType> void add_finite_factors( const HypothesesGraph&, ModelType* model, bool perturb= false, vector<vector<vector<size_t> > >* detoff=NULL );
     double getEnergyByEvent(EnergyType event, HypothesesGraph::NodeIt n,bool perturb=false,size_t state=0);
     void printResults( HypothesesGraph&);
-    double generateRandomOffset(EnergyType parameterIndex);
+    double sample_with_classifier_variance(double mean, double variance);
+    double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
 
     // helper

@@ -16,6 +16,7 @@ void export_uncertaintyParameter() {
 	    	.value("PerturbAndMAP", PerturbAndMAP)
 	    	.value("DiverseMbest", DiverseMbest)
 	    	.value("MbestCPLEX", MbestCPLEX)
+	    	.value("ClassifierUncertainty",ClassifierUncertainty)
 	        ;
 
 	class_< UncertaintyParameter >("UncertaintyParameter")

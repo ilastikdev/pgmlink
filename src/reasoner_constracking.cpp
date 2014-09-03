@@ -21,6 +21,9 @@
 #include "opengm/functions/modelviewfunction.hxx"
 #include "opengm/functions/view.hxx"
 
+//for computing inverse_sigmoid
+#include <boost/math/distributions/normal.hpp>
+
 
 using namespace std;
 
@@ -232,13 +235,55 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		rel_uncertainty.set(n,count/param_.numberOfIterations);
 	}
 }
+boost::math::normal standard_gaussian_distribution(0.0, 1.0);
+double sigmoid(double x){
+	return cdf(standard_gaussian_distribution, x);
+}
 
-double ConservationTracking::generateRandomOffset(EnergyType energyIndex) {
+double inverse_sigmoid(double x){
+	return quantile(standard_gaussian_distribution, x);
+}
+
+double ConservationTracking::sample_with_classifier_variance(double mean, double variance){
+	//Map probability through inverse sigmoid to recover the classifier prediction.
+	//Then use the corresponding variance stored in the traxel to sample from
+	//a gaussian distribution. Map the result back through the sigmoid to obtain
+	//perturbed probability, from which we finally compute the offset.
+	double variance_factor = sqrt(1+variance);
+	//apply inverse_sigmoid
+	double mean_recovered = inverse_sigmoid(mean)*variance_factor;
+	double new_sample = random_normal_()*variance+mean_recovered;
+	double new_probability =  sigmoid(new_sample/variance_factor);
+	return new_probability;
+}
+
+double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr) {
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
 			//distribution parameter: sigma
 			return random_normal_()*param_.distributionParam[energyIndex];
+		case ClassifierUncertainty:
+			double mean,variance,perturbed_mean,div_weight,det_weight;
+			div_weight=division_weight_;
+			det_weight=10;//TODO: get det/div weight
+			//uncertainty index is always zero
+			switch (energyIndex) {
+				case Detection:
+					//mean = tr.features["detProb"][state];
+					mean = exp(energy/-div_weight); // convert energy to probability
+					variance = tr.features["detUnc"][0];
+					perturbed_mean = sample_with_classifier_variance(mean,variance);
+					return -det_weight*log(perturbed_mean)- energy;
+				case Division:
+					//mean = tr.features["divProb"][state];
+					mean = exp(energy/-div_weight); // convert energy to probability
+					variance = tr.features["divUnc"][0];
+					perturbed_mean = sample_with_classifier_variance(mean,variance);
+					return -div_weight*log(perturbed_mean)- energy;
+				default:
+					return random_normal_()*param_.distributionParam[energyIndex];
+			}
 		case PerturbAndMAP: //Gumbel distribution
 			//distribution parameter: beta
 			return param_.distributionParam[energyIndex]*log(-log(random_uniform_()));
@@ -579,7 +624,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         }
 
 
-        double energy;
+        double energy,e;
         if (app_node_map_.count(n) > 0) {
             vi.push_back(app_node_map_[n]);
             if (node_begin_time <= g.earliest_timestep()) {  // "<" holds if there are only tracklets in the first frame
@@ -608,7 +653,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             		energy = disappearance_cost_(traxel_map_[n]);
             	}
             	if (perturb){
-            		energy+= generateRandomOffset(Disappearance);
+            		generateRandomOffset(Disappearance);
             	}
             	cost.push_back(energy);
             } else {
@@ -630,9 +675,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		// add all detection factors of the internal nodes
         		for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
         				trax_it != tracklet_map_[n].end(); ++trax_it) {
-        			energy += detection_(*trax_it, state);
+        			e = detection_(*trax_it, state);
+        			energy += e;
         			if (perturb){
-        				energy+= generateRandomOffset(Detection);
+        				energy+= generateRandomOffset(Detection, e, *trax_it);
         			}
         		}
         		// add all transition factors of the internal arcs
@@ -645,10 +691,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         			}
         		}
         	} else {
-        		energy = detection_(traxel_map_[n], state);
-        		if (perturb){
-        			energy+= generateRandomOffset(Detection);
-        		}
+        		e = detection_(traxel_map_[n], state);
+        		energy=e;
+    			if (perturb){
+    				energy+= generateRandomOffset(Detection, e, traxel_map_[n]);
+    			}
         	}
 
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: detection[" << state
@@ -751,13 +798,15 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
 
             for (size_t state = 0; state <= 1; ++state) {
             	double energy;
+            	Traxel tr;
             	if (with_tracklets_) {
-            		energy = division_(tracklet_map_[n].back(), state);
+            		tr = tracklet_map_[n].back();
             	} else {
-            		energy = division_(traxel_map_[n], state);
+            		tr = traxel_map_[n];
             	}
+        		energy = division_(tr, state);
             	if (perturb){
-            		energy+= generateRandomOffset(Division);
+            		energy+= generateRandomOffset(Division, energy,  tr);
             	}
                 LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: division[" << state
                         << "] = " << energy;

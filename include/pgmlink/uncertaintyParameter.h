@@ -12,7 +12,7 @@ using namespace std;
 
 namespace pgmlink {
 	enum PGMLINK_EXPORT DistrId {
-		GaussianPertubation,PerturbAndMAP,DiverseMbest,MbestCPLEX
+		GaussianPertubation,PerturbAndMAP,DiverseMbest,MbestCPLEX,ClassifierUncertainty
 	};
 
 	class PGMLINK_EXPORT UncertaintyParameter{
