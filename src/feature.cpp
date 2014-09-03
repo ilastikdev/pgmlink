@@ -107,7 +107,9 @@ double NegLnDetection::operator ()(const Traxel& tr, size_t state) const {
     if(arg < 0.0000000001) arg = 0.0000000001;
 	return w_*-1*log(arg);
 }
-
+double NegLnDetection::getw(){
+	return w_;
+}
 
 ////
 //// class NegLnDivision
@@ -120,7 +122,9 @@ double NegLnDivision::operator ()(const Traxel& tr, size_t state) const {
     if(arg <0.0000000001) arg = 0.0000000001;
 	return w_*-1*log(arg);
 }
-
+double NegLnDivision::getw(){
+	return w_;
+}
 
 ////
 //// class NegLnTransition

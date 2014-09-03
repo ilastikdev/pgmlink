@@ -379,8 +379,10 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 			transition_parameter_,
 			with_constraints_,
 			uncertaintyParam_,
-           	        cplex_timeout_
-			);
+			cplex_timeout_,
+			division_weight_,
+			detection_weight
+	);
 
 	size_t totalNumberOfSolutions = uncertaintyParam_.numberOfIterations;
 

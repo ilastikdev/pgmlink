@@ -91,6 +91,7 @@ public:
     {}
     
     PGMLINK_EXPORT double operator()( const Traxel&, const size_t state ) const;
+    PGMLINK_EXPORT double getw();
 private:
     double w_;
 };
@@ -116,6 +117,7 @@ class NegLnDivision
     {}
     
     PGMLINK_EXPORT double operator()( const Traxel&, const size_t state ) const;
+    PGMLINK_EXPORT double getw();
 private:
     double w_;
 };

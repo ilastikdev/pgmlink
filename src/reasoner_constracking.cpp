@@ -261,26 +261,22 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
-			//distribution parameter: sigma
 			return random_normal_()*param_.distributionParam[energyIndex];
-		case ClassifierUncertainty:
-			double mean,variance,perturbed_mean,div_weight,det_weight;
-			div_weight=division_weight_;
-			det_weight=10;//TODO: get det/div weight
-			//uncertainty index is always zero
+		case ClassifierUncertainty://sample from Gaussian Distribution where variance comes from Classifier
+			double mean,variance,perturbed_mean;
 			switch (energyIndex) {
 				case Detection:
 					//mean = tr.features["detProb"][state];
-					mean = exp(energy/-div_weight); // convert energy to probability
+					mean = exp(energy/-detection_weight_); // convert energy to probability
 					variance = tr.features["detUnc"][0];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
-					return -det_weight*log(perturbed_mean)- energy;
+					return -detection_weight_*log(perturbed_mean)- energy;
 				case Division:
 					//mean = tr.features["divProb"][state];
-					mean = exp(energy/-div_weight); // convert energy to probability
+					mean = exp(energy/-division_weight_); // convert energy to probability
 					variance = tr.features["divUnc"][0];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
-					return -div_weight*log(perturbed_mean)- energy;
+					return -division_weight_*log(perturbed_mean)- energy;
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}

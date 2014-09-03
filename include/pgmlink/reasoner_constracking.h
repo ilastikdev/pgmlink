@@ -75,7 +75,9 @@ class ConservationTracking : public Reasoner {
                              double transition_parameter = 5,
                              bool with_constraints = true,
                              UncertaintyParameter param = UncertaintyParameter(),
-                             double cplex_timeout = 1e75)
+                             double cplex_timeout = 1e75,
+                             double division_weight = 10,
+                             double detection_weight = 10)
         : max_number_objects_(max_number_objects),
           detection_(detection),
           division_(division),
@@ -99,6 +101,8 @@ class ConservationTracking : public Reasoner {
           param_(param),
           cplex_timeout_(cplex_timeout),
           isMAP_(true),
+          division_weight_(division_weight),
+          detection_weight_(detection_weight),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
           random_uniform_(rng_,boost::uniform_real<>(0,1))
     {};
@@ -200,6 +204,9 @@ class ConservationTracking : public Reasoner {
     double cplex_timeout_;
     bool isMAP_;
     
+    double division_weight_; // these cannot be read from the division/detection variable since
+    double detection_weight_;// those were converted to boost::function objects in tracking
+
     boost::mt19937 rng_;
     normalRNGType random_normal_;
     uniformRNGType random_uniform_;
