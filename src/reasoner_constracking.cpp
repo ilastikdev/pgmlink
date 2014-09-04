@@ -179,7 +179,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	size_t nOF = PertModel.numberOfFactors();
 
 	//store offset by factor index
-	//technic assumption: the number & order of factors remains the same for the perturbed models
+	//technical assumption: the number & order of factors remains the same for the perturbed models
 	//performance assumption: the number of pertubations is rather low, so iterating over
 	//a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
 
@@ -187,6 +187,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	//deterministic & non-deterministic perturbation
 	for (size_t iterStep=1;iterStep<numberOfIterations;++iterStep){
+
 		nOF = PertModel.numberOfFactors();
 		if (param_.distributionId==DiverseMbest){
 
@@ -603,6 +604,34 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_intern_dist_map_ =
             g.get(tracklet_intern_dist());
 
+    bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
+    //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
+
+	map<Traxel,vector<double> > offset;
+    if (perturb_transitions_locally){
+    	Traxel tr;
+    	double sigma = 1; //TODO: estimate sigma from data / ground truth
+    	for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
+
+    		if (with_tracklets_) {
+    			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it];
+    			for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
+    					tr_n_it != traxel_nodes.end(); ++tr_n_it) {
+    				HypothesesGraph::Node n = *tr_n_it;
+    				tr = traxel_map_[n];
+    				for (size_t dim=0;dim<tr.features["com"].size();dim++){
+    					offset[tr].push_back(random_normal_()*sigma);
+    				}
+    			}
+    		} else {
+    			tr = traxel_map_[it];
+    			for (size_t dim=0;dim<tr.features["com"].size();dim++){
+    				offset[tr].push_back(random_normal_()*sigma);
+    			}
+    		}
+    	}
+    }
+
     ////
     //// add detection factors
     ////
@@ -739,30 +768,49 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         model->addFactor(funcId,vi.begin(),vi.end());
         //table.add_to(model);
     }
+
+
+
     ////
     //// add transition factors
     ////
     LOG(logDEBUG) << "ConservationTracking::add_finite_factors: add transition factors";
     property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances_ = g.get(
-            arc_distance());
+    		arc_distance());
+
+    double distance;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
         size_t vi[] = { arc_map_[a] };
         vector<size_t> coords(1, 0); // number of variables
         // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
-       // pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, (max_number_objects_ + 1));
+        // pgm::OpengmExplicitFactor<double> table(vi, vi + 1, forbidden_cost_, (max_number_objects_ + 1));
 
         vector<size_t> shape(1,(max_number_objects_+1));
         marray::Marray<double> energies(shape.begin(),shape.end(),forbidden_cost_);
 
         for (size_t state = 0; state <= max_number_objects_; ++state) {
-        	//functor transition
-            double energy = transition_(get_transition_prob(arc_distances_[a], state, transition_parameter_));
-            if (perturb){
-            	energy+= generateRandomOffset(Transition);
-            }
-            LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state
-                    << "] = " << energy;
-            coords[0] = state;
+
+        	distance = arc_distances_[a];
+			if (perturb_transitions_locally){
+				Traxel tr1 = traxel_map_[g.source(a)];
+				Traxel tr2 = traxel_map_[g.target(a)];
+				feature_array com1 = tr1.features["com"];
+				feature_array com2 = tr2.features["com"];
+				distance = 0;//calculate Euclidean distance of perturbed RegionCenters
+				for (size_t i=0;i<com1.size();i++){
+					distance+=pow((com1[i]+offset[tr1][i])-(com2[i]+offset[tr2][i]),2);
+				}
+				distance = sqrt(distance);
+			}
+
+        	double energy = transition_(get_transition_prob(distance, state, transition_parameter_));
+        	if (perturb){
+        		energy+= generateRandomOffset(Transition);
+        	}
+
+        	LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state
+        			<< "] = " << energy;
+        	coords[0] = state;
             //table.set_value(coords, energy);
             energies(coords.begin())=energy;
             coords[0] = 0;
