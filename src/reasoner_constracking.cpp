@@ -279,8 +279,7 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
-					//perturb traxel's RegionCenter in order to get new transition probabilities here
-					//TODO
+					return random_normal_()*param_.distributionParam[Transition];
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}
@@ -600,9 +599,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     LOG(logDEBUG) << "ConservationTracking::add_finite_factors: entered";
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
-            g.get(node_tracklet());
+    		g.get(node_tracklet());
     property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_intern_dist_map_ =
-            g.get(tracklet_intern_dist());
+    		g.get(tracklet_intern_dist());
+
 
     bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
     //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
@@ -610,7 +610,6 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
 	map<Traxel,vector<double> > offset;
     if (perturb_transitions_locally){
     	Traxel tr;
-    	double sigma = 1; //TODO: estimate sigma from data / ground truth
     	for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
 
     		if (with_tracklets_) {
@@ -620,13 +619,13 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     				HypothesesGraph::Node n = *tr_n_it;
     				tr = traxel_map_[n];
     				for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    					offset[tr].push_back(random_normal_()*sigma);
+    					offset[tr].push_back(generateRandomOffset(Transition));
     				}
     			}
     		} else {
     			tr = traxel_map_[it];
     			for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    				offset[tr].push_back(random_normal_()*sigma);
+    				offset[tr].push_back(generateRandomOffset(Transition));
     			}
     		}
     	}
@@ -714,9 +713,6 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         				tracklet_intern_dist_map_[n].begin();
         				intern_dist_it != tracklet_intern_dist_map_[n].end(); ++intern_dist_it) {
         			energy += transition_(get_transition_prob(*intern_dist_it, state, transition_parameter_));
-        			if (perturb){
-        				energy+= generateRandomOffset(Transition);
-        			}
         		}
         	} else {
         		e = detection_(traxel_map_[n], state);
@@ -791,17 +787,17 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         for (size_t state = 0; state <= max_number_objects_; ++state) {
 
         	distance = arc_distances_[a];
-			if (perturb_transitions_locally){
-				Traxel tr1 = traxel_map_[g.source(a)];
-				Traxel tr2 = traxel_map_[g.target(a)];
-				feature_array com1 = tr1.features["com"];
-				feature_array com2 = tr2.features["com"];
-				distance = 0;//calculate Euclidean distance of perturbed RegionCenters
-				for (size_t i=0;i<com1.size();i++){
-					distance+=pow((com1[i]+offset[tr1][i])-(com2[i]+offset[tr2][i]),2);
-				}
-				distance = sqrt(distance);
-			}
+        	if (perturb_transitions_locally){
+        		Traxel tr1 = traxel_map_[g.source(a)];
+        		Traxel tr2 = traxel_map_[g.target(a)];
+        		feature_array com1 = tr1.features["com"];
+        		feature_array com2 = tr2.features["com"];
+        		distance = 0;//calculate Euclidean distance of perturbed RegionCenters
+        		for (size_t i=0;i<com1.size();i++){
+        			distance+=pow((com1[i]+offset[tr1][i])-(com2[i]+offset[tr2][i]),2);
+        		}
+        		distance = sqrt(distance);
+        	}
 
         	double energy = transition_(get_transition_prob(distance, state, transition_parameter_));
         	if (perturb){
@@ -811,9 +807,9 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         	LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state
         			<< "] = " << energy;
         	coords[0] = state;
-            //table.set_value(coords, energy);
-            energies(coords.begin())=energy;
-            coords[0] = 0;
+        	//table.set_value(coords, energy);
+        	energies(coords.begin())=energy;
+        	coords[0] = 0;
         }
         if (perturb && param_.distributionId==DiverseMbest){
         	vector<vector<size_t> >* indexlist = &detoff->operator[](factorIndex);

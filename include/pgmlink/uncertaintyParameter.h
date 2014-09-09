@@ -35,12 +35,12 @@ namespace pgmlink {
 			//various distribution parameters:
 			//for distributions depending on a parameter
 			//distributionParam holds a parameter value for
-			// perturbing each of the following independently
+			//perturbing each of the following independently
 			// - appearance
-			// - detection
 			// - disappearance
+			// - detection
+			// - transition
 			// - division
-			// - misdetection
 		}
 		UncertaintyParameter(std::size_t nOI,DistrId dI,std::vector<double> dP){
 			numberOfIterations=nOI;
@@ -52,6 +52,7 @@ namespace pgmlink {
 			numberOfIterations=nOI;
 			distributionId = dI;
 			distributionParam = std::vector<double>(1,dP);
+
 		}
 		void print(){
 			cout<<"number of iterations "<<numberOfIterations<<endl;
