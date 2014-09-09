@@ -218,6 +218,10 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
 
+      PGMLINK_EXPORT void write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset = true);
+
+      PGMLINK_EXPORT void write_funkey_features(TraxelStore ts,std::vector<std::vector<double>> parameterlist);
+
       PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
 
       PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string sbrmr_binary,std::string features,std::string constraints,std::string groundTruth);

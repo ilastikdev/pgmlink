@@ -572,92 +572,108 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 	}
 }
 
+  void ConsTracking::write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset){
+    if(reset){
+      constraints_file_.clear();
+      features_file_.clear();
+      ground_truth_file_.clear();
+    }
 
-  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
-    int number_of_weights = 5;
-    int ndim = 3;
+    if(not  writeConstraints.empty()){
+      constraints_file_   = writeConstraints;
+      std::ofstream constraints_file;
+      constraints_file.open (writeConstraints);
+      constraints_file.close();
+    }
 
    if(not writeFeatures.empty()){
-
       features_file_      = writeFeatures;   
-
       std::ofstream feature_file;
       feature_file.open (writeFeatures);
       feature_file.close();
-      
-      //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
-      for(int i=0;i<number_of_weights;i++){
-	std::vector<double> param(number_of_weights,0. );
-	param[i] = 1;
-
-	if(not  writeConstraints.empty() and i==0){
-	  constraints_file_   = writeConstraints;
-	  //create constraint file 
-	  std::ofstream constraints_file;
-	  constraints_file.open (writeConstraints);
-	  constraints_file.close();
-	}
-	else{
-	  constraints_file_ = "";
-	}
-
-
-	build_hypo_graph(ts);
-	track(0,//forbidden_cost,
-	      0,
-	      true,
-	      param[0],//detection
-	      param[1],//division,
-	      param[2],//transition,
-	      param[3],//disappearance,
-	      param[4],//appearance,
-	      false,//with_merger_resolution,
-	      ndim,
-	      5,//transition_parameter,
-	      10,//border_width,
-	      true);//with constraints  
-
-      }
-      transpose_file(writeFeatures);
-    }
-    else{
-      features_file_      = "";
     }
 
     if(not writeGroundTruth.empty()){
-
       ground_truth_file_  = writeGroundTruth;
-
       std::ofstream labels_file;
       labels_file.open (writeGroundTruth);
       labels_file.close();      
+    }
+  }
+
+  void ConsTracking::write_funkey_features(TraxelStore ts,vector<vector<double>> parameterlist){
+    for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it) {
+        
+      int ndim = 3;
+      std::string tmp_feat_file;
+
+      if(not ground_truth_file_.empty()){	
+	tmp_feat_file = features_file_;	
+	features_file_.clear();
+      }
 
       build_hypo_graph(ts);
       track(0,//forbidden_cost,
 	    0,
 	    true,
-	    weights[0],//detection
-	    weights[1],//division,
-	    weights[2],//transition,
-	    weights[3],//disappearance,
-	    weights[4],//appearance,
+	    (*it)[0],//detection
+	    (*it)[1],//division,
+	    (*it)[2],//transition,
+	    (*it)[3],//disappearance,
+	    (*it)[4],//appearance,
 	    false,//with_merger_resolution,
 	    ndim,
 	    5,//transition_parameter,
 	    10,//border_width,
 	    true);//with constraints  
-	      
+      
+	// write constraint and ground truth files only once
+      if(not constraints_file_.empty())
+	constraints_file_.clear();
+      if(not ground_truth_file_.empty())
+	features_file_ = tmp_feat_file;
+	ground_truth_file_.clear();
     }
-    else{
-      ground_truth_file_  = "";
+  }
+
+  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
+    int number_of_weights = 5;
+
+    
+    write_funkey_set_output_files(writeFeatures,writeConstraints,writeGroundTruth);    
+
+    std::vector<std::vector<double>> list;
+
+    if(not  writeConstraints.empty() and writeFeatures.empty() and writeGroundTruth.empty()){
+      list = std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1. ));
     }
+    else if(not writeGroundTruth.empty()){
+      list = std::vector<std::vector<double>>(1,weights);
+    }
+   if(not writeFeatures.empty()){
+     //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
+      for(int i=0;i<number_of_weights;i++){
+	std::vector<double> param(number_of_weights,0.);
+	param[i] = 1;
+	list.push_back(param);
+      }
+    }
+
+   write_funkey_features(ts,list);
+
+   if(not writeFeatures.empty()){
+     transpose_file(writeFeatures);
+   }
+
+
   }
 
   vector<double> ConsTracking::learn_from_funkey_files(std::string sbrmr_binary,std::string features,std::string constraints,std::string groundTruth){
     
     vector<double> out;
-    std::string shell_output =  exec((sbrmr_binary).c_str());
-    LOG(logINFO) << "calling funkey";
+    std::string command = sbrmr_binary + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth;
+    LOG(logINFO) << "calling funkey with "<< command;
+    std::string shell_output =  exec(command.c_str());
     LOG(logDEBUG1) << shell_output<< endl;
     int start = shell_output.find("optimial w is [")+15;
     int end = shell_output.find("]",start);
