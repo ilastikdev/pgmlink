@@ -4,6 +4,10 @@
 @brief tracking API
  */
 
+#ifndef FUNKEY_BINARY_FILE
+#define FUNKEY_BINARY_FILE @FUNKEY_BINARY_FILE@
+#endif // FUNKEY_BINARY_FILE
+
 #ifndef TRACKING_H
 #define TRACKING_H
 
@@ -224,7 +228,7 @@ namespace pgmlink {
 
       PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
 
-      PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string sbrmr_binary,std::string features,std::string constraints,std::string groundTruth);
+      PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth);
 
     private:
       int max_number_objects_;

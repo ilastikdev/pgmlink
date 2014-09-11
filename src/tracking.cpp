@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
@@ -29,20 +30,20 @@ using boost::shared_array;
   
 // from http://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c
 std::string exec(const char* cmd) {
-FILE* pipe = popen(cmd, "r");
-if (!pipe) return "ERROR";
-char buffer[128];
-std::string result = "";
-while(!feof(pipe)) {
-if(fgets(buffer, 128, pipe) != NULL)
-  result += buffer;
-}
-pclose(pipe);
-return result;
+  FILE* pipe = popen(cmd, "r");
+  if (!pipe) return "ERROR";
+  char buffer[128];
+  std::string result = "";
+  while(!feof(pipe)) {
+    if(fgets(buffer, 128, pipe) != NULL)
+      result += buffer;
+  }
+  pclose(pipe);
+  return result;
 }
 
-void transpose_file(std::string filename){
-//from http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
+void transpose_matrix_in_file(std::string filename){
+  //from http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
   std::string awk_program = "awk '{\n for (i=1; i<=NF; i++)  {\n a[NR,i] = $i \n} \n}\n NF>p { p = NF } \nEND {\n for(j=1; j<=p; j++) {\n str=a[1,j]\n for(i=2; i<=NR; i++){\n str=str\" \"a[i,j];\n }\n print str\n }\n }' ";
   system( (awk_program + filename + "> tmp.txt").c_str() ) ;
   system( (std::string("rm ")+ filename).c_str() ) ;
@@ -50,12 +51,11 @@ void transpose_file(std::string filename){
   system( "rm tmp.txt") ;
 }
 
- #include <sstream>
 //from  http://stackoverflow.com/questions/392981/how-can-i-convert-string-to-double-in-c
- double string_to_double( const std::string& s )
- {
-   std::istringstream i(s);
-   double x;
+double string_to_double( const std::string& s )
+{
+  std::istringstream i(s);
+  double x;
    if (!(i >> x))
      return 0;
    return x;
@@ -419,6 +419,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
     LOG(logDEBUG1) <<"ep_gap\t"<<      ep_gap; 
     LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_; 
     LOG(logDEBUG1) <<"with_tracklets\t"<<      with_tracklets; 
+    LOG(logDEBUG1) <<"detection_weight\t"<<      detection_weight; 
     LOG(logDEBUG1) <<"division_weight\t"<<      division_weight; 
     LOG(logDEBUG1) <<"transition_weight\t"<<      transition_weight; 
     LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_; 
@@ -607,15 +608,15 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
       int ndim = 3;
       std::string tmp_feat_file;
 
-      if(not ground_truth_file_.empty()){	
-	tmp_feat_file = features_file_;	
+      if(not ground_truth_file_.empty()){
+	tmp_feat_file = features_file_;
 	features_file_.clear();
       }
 
       build_hypo_graph(ts);
       track(0,//forbidden_cost,
 	    0,
-	    true,
+	    false,
 	    (*it)[0],//detection
 	    (*it)[1],//division,
 	    (*it)[2],//transition,
@@ -624,22 +625,22 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 	    false,//with_merger_resolution,
 	    ndim,
 	    5,//transition_parameter,
-	    10,//border_width,
+	    0,//border_width,
 	    true);//with constraints  
       
 	// write constraint and ground truth files only once
       if(not constraints_file_.empty())
-	constraints_file_.clear();
-      if(not ground_truth_file_.empty())
-	features_file_ = tmp_feat_file;
-	ground_truth_file_.clear();
-    }
-  }
+		constraints_file_.clear();
+      if(not ground_truth_file_.empty()){
+		features_file_ = tmp_feat_file;
+		ground_truth_file_.clear();
+		}
+  	}
+}
 
   void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
     int number_of_weights = 5;
 
-    
     write_funkey_set_output_files(writeFeatures,writeConstraints,writeGroundTruth);    
 
     std::vector<std::vector<double>> list;
@@ -662,16 +663,14 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
    write_funkey_features(ts,list);
 
    if(not writeFeatures.empty()){
-     transpose_file(writeFeatures);
+     transpose_matrix_in_file(writeFeatures);
    }
-
-
   }
 
-  vector<double> ConsTracking::learn_from_funkey_files(std::string sbrmr_binary,std::string features,std::string constraints,std::string groundTruth){
+  vector<double> ConsTracking::learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth){
     
     vector<double> out;
-    std::string command = sbrmr_binary + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth;
+    std::string command = std::string(FUNKEY_BINARY_FILE) + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth;
     LOG(logINFO) << "calling funkey with "<< command;
     std::string shell_output =  exec(command.c_str());
     LOG(logDEBUG1) << shell_output<< endl;

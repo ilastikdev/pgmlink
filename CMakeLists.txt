@@ -201,6 +201,13 @@ if(WITH_TESTS)
   add_subdirectory(tests/)
 endif()
 
+# StructSVM
+SET(WITH_FUNKEY true CACHE BOOL "Build with Funkey StructSVM support")
+if(WITH_FUNKEY)
+  #SET(Funkey_Binary_File CACHE FILEPATH "path to funkey binary file")
+  add_definitions(-DFUNKEY_BINARY_FILE=\"${Funkey_Binary_File}\")
+endif()
+
 # Python
 SET(WITH_PYTHON true CACHE BOOL "Build with python wrapper.")
 if(WITH_PYTHON)

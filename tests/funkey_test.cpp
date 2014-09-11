@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE reasoner_constracking_test
+#define BOOST_TEST_MODULE funkey_test
 
 #include <vector>
 #include <iostream>
@@ -67,27 +67,26 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learning ) {
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
 
-	std::string sbrmr_binary = "/home/wolf/Machine_Learning/sbmrm/build/binaries/sbmrm";
-
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
-					     3, // max_number_objects
+					     2, // max_number_objects
 					     false, // detection_by_volume
 					     double(1.1), // avg_obj_size
 					     20, // max_neighbor_distance
 					     true, //with_divisions
 					     0.3, // division_threshold
-					     "none" // random_forest_filename
+					     "none", // random_forest_filename
+					     fov
 					     );
 
 	std::cout << "Write Funkey Files" << std::endl;
 	std::cout << std::endl;
 
-	tracking.write_funkey_files(ts,"features_o.txt","constraints_o.txt");
-	//tracking.write_funkey_files(ts,"","","labels_1.txt",vector<double>(5,1.));
+
 	tracking.write_funkey_files(ts,"features.txt","constraints.txt","labels_1.txt",vector<double>(5,1.));
+	tracking.write_funkey_files(ts,"","","labels_11.txt",vector<double>(5,1.));
 	
-	vector<double> weights = tracking.learn_from_funkey_files(sbrmr_binary,"features.txt","constraints.txt","labels_1.txt");
+	vector<double> weights = tracking.learn_from_funkey_files("features.txt","constraints.txt","labels_1.txt");
 	
 	for (int i=0; i<weights.size();i++){
 	  cout << weights[i] << endl;
@@ -146,8 +145,6 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_ZeroEnergy ) {
 
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
-
-	std::string sbrmr_binary = "/home/wolf/Machine_Learning/sbmrm/build/binaries/sbmrm";
 
 	FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 	ConsTracking tracking = ConsTracking(
