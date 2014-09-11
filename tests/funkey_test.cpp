@@ -84,7 +84,6 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learning ) {
 
 
 	tracking.write_funkey_files(ts,"features.txt","constraints.txt","labels_1.txt",vector<double>(5,1.));
-	tracking.write_funkey_files(ts,"","","labels_11.txt",vector<double>(5,1.));
 	
 	vector<double> weights = tracking.learn_from_funkey_files("features.txt","constraints.txt","labels_1.txt");
 	
