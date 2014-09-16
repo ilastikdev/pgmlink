@@ -42,13 +42,13 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
     return node;
 }
 
-void HypothesesGraph::add_node_label(HypothesesGraph::Node node,bool label) {
+void HypothesesGraph::add_node_label(HypothesesGraph::Node node,label_type label) {
   add(node_label());
   property_map< node_label, HypothesesGraph::base_graph>::type& gt_label = get(node_label());
   gt_label.set(node,label);
 }
 
-void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc,bool label) {
+void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc,label_type label) {
   add(arc_label());
   property_map<  arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
   gt_label.set(arc,label);

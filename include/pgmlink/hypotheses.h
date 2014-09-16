@@ -258,11 +258,19 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   template <typename Graph>
   const std::string property_map<arc_resolution_candidate, Graph>::name = "arc_resolution_candidate";
 
+    enum label_type {
+        negative_label,
+        detection_label,
+        transition_label,
+        disappearance_label,
+        appearance_label,
+        division_label};
+
   // node ground truth label
   struct node_label {};
   template <typename Graph>
   struct property_map< node_label, Graph> {
-    typedef lemon::IterableBoolMap<Graph, typename Graph::Node> type;
+    typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
     static const std::string name;
   };
   template <typename Graph>
@@ -272,7 +280,7 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   struct arc_label {};
   template <typename Graph>
   struct property_map< arc_label, Graph> {
-    typedef lemon::IterableBoolMap<Graph, typename Graph::Arc> type;
+    typedef lemon::IterableValueMap<Graph, typename Graph::Arc,label_type> type;
     static const std::string name;
   };
   template <typename Graph>
@@ -301,10 +309,10 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     PGMLINK_EXPORT HypothesesGraph::Node add_traxel(Traxel ts);
 
     // assign ground truth to a node
-    PGMLINK_EXPORT void add_node_label(HypothesesGraph::Node,bool label);
+    PGMLINK_EXPORT void add_node_label(HypothesesGraph::Node,label_type label);
 
     // assign ground truth to a node
-    PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  ,bool label);
+    PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  ,label_type label);
 
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;
