@@ -11,6 +11,13 @@ def mk_traxel(x,y,z,id):
     t.set_feature_value("com", 0, x)
     t.set_feature_value("com", 1, y)
     t.set_feature_value("com", 2, z)
+    
+    t.add_feature_array("divProb",2)
+    t.set_feature_value("divProb",0, 0.1)
+    t.set_feature_value("divProb",1, 0.9)
+    
+    t.add_feature_array("count",1)
+    t.set_feature_value("count",0, 1)
     return t
 
 class Test_Traxels( ut.TestCase ):
@@ -80,8 +87,55 @@ class Test_CrossCorrelation( ut.TestCase ):
         print 'bla'
         pgmlink.patchedCrossCorrelation(int(3),int(0),int(0),True)
         print 'success'
+class TestTransitionClassifier(ut.TestCase):
+    def runTest( self ):
+        ts = pgmlink.TraxelStore()
+        t1 = mk_traxel(1,2,3,33)
+        t2 = mk_traxel(5,6,7,44)
+        ts = pgmlink.TraxelStore()
+        ts.add(t1)
+        ts.add(t2)
         
+        distr = pgmlink.DistrId.GaussianPertubation
         
+        up = pgmlink.UncertaintyParameter(1,distr,pgmlink.VectorOfDouble())
+        fov = pgmlink.FieldOfView(0,
+                                  0,
+                                  0,
+                                  0,
+                                  2,
+                                  2,
+                                  2,
+                                  2,)
+         
+        tracker = pgmlink.ConsTracking(1,
+                                1,
+                                1,
+                                "none",  # detection_rf_filename
+                                1,   # size_dependent_detection_prob
+                                0,       # forbidden_cost
+                                1., # ep_gap
+                                1., # median_object_size
+                                False, #withTracklets,
+                                1.,
+                                1.,
+                                True,
+                                1., # disappearance cost
+                                1., # appearance cost
+                                False,
+                                4,
+                                1.,
+                                1.,
+                                fov,
+                                True, #with_constraints
+                                up,
+                                1.,
+                                "none" # dump traxelstore
+                                )
+        cm = pgmlink.TimestepIdCoordinateMap()
+        cm.initialize()
+        classifier = pgmlink.TransitionClassifier(None,["con"])
+        tracker(ts,cm.get(),classifier)
         
 if __name__=="__main__":
     ut.main()

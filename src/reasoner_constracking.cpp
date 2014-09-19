@@ -10,6 +10,9 @@
 //#include <random>
 //#include <cstdlib>
 
+
+#include <boost/python.hpp>
+
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_constracking.h"
@@ -47,7 +50,6 @@ ConservationTracking::~ConservationTracking() {
           optimizer_ = NULL;
        }*/
 }
-
 
 double ConservationTracking::forbidden_cost() const {
     return forbidden_cost_;
@@ -305,7 +307,6 @@ void ConservationTracking::formulate(const HypothesesGraph& hypotheses) {
     if (with_divisions_) {
         add_division_nodes(hypotheses);
     }
-
 }
 
 void ConservationTracking::infer() {
@@ -579,6 +580,43 @@ double get_transition_prob(double distance, size_t state, double alpha) {
 }
 }
 
+boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
+	boost::python::dict dictionary;
+	for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter) {
+			dictionary[iter->first] = iter->second;
+		}
+	return dictionary;
+}
+
+
+double ConservationTracking::get_classifier_transition_probability(Traxel tr1, Traxel tr2, size_t state) {
+    double prob,variance;
+
+    //read the FeatureMaps from Traxels and convert them to Python Dictionaries
+
+    FeatureMap::iterator iter;
+    std::cout<<"been here";
+	PyEval_InitThreads();
+	PyGILState_STATE gilstate = PyGILState_Ensure();
+	boost::python::dict dictionary1 = convertFeatureMapToPyDict(tr1.features);
+	boost::python::dict dictionary2 = convertFeatureMapToPyDict(tr2.features);
+
+	boost::python::object mMainModule = boost::python::import("pgmlink");
+	boost::python::object ClassifierModule = boost::python::import("pgmlink.TransitionClassifier");
+
+	boost::python::object pValue = TransitionClassifier_.attr("getDistance")(tr1,tr2);
+	//boost::python::object pValue = TransitionClassifier_.attr("test")();
+
+	prob = boost::python::extract<double>(pValue.attr("__getitem__")(0));
+	variance = boost::python::extract<double>(pValue.attr("__getitem__")(1));
+	PyGILState_Release(gilstate);
+
+	if (state == 0) {
+	        return 1 - prob;
+	    }
+    return prob;
+}
+
 template <typename ModelType>
 void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType* model, bool perturb /*=false*/, vector< vector<vector<size_t> > >* detoff /*= NULL*/) {
 	// refactor this:
@@ -600,8 +638,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
     		g.get(node_tracklet());
-    property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_intern_dist_map_ =
-    		g.get(tracklet_intern_dist());
+    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_intern_arc_id_map_ =
+        		g.get(tracklet_intern_arc_ids());
 
 
     bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
@@ -709,10 +747,13 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         			}
         		}
         		// add all transition factors of the internal arcs
-        		for (std::vector<double>::const_iterator intern_dist_it =
-        				tracklet_intern_dist_map_[n].begin();
-        				intern_dist_it != tracklet_intern_dist_map_[n].end(); ++intern_dist_it) {
-        			energy += transition_(get_transition_prob(*intern_dist_it, state, transition_parameter_));
+        		for (std::vector<int>::const_iterator intern_arc_id_it =
+        				tracklet_intern_arc_id_map_[n].begin();
+        				intern_arc_id_it != tracklet_intern_arc_id_map_[n].end(); ++intern_arc_id_it) {
+        			HypothesesGraph::Arc arc = g.arcFromId(*intern_arc_id_it);
+        			Traxel tr1 = traxel_map_[g.source(arc)];
+        			Traxel tr2 = traxel_map_[g.target(arc)];
+        			energy += transition_( get_classifier_transition_probability(tr1, tr2, state));
         		}
         	} else {
         		e = detection_(traxel_map_[n], state);
@@ -787,19 +828,22 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         for (size_t state = 0; state <= max_number_objects_; ++state) {
 
         	distance = arc_distances_[a];
+        	Traxel tr1 = traxel_map_[g.source(a)];
+			Traxel tr2 = traxel_map_[g.target(a)];
         	if (perturb_transitions_locally){
-        		Traxel tr1 = traxel_map_[g.source(a)];
-        		Traxel tr2 = traxel_map_[g.target(a)];
+
         		feature_array com1 = tr1.features["com"];
         		feature_array com2 = tr2.features["com"];
+        		std::cout<<distance<<std::endl;
         		distance = 0;//calculate Euclidean distance of perturbed RegionCenters
         		for (size_t i=0;i<com1.size();i++){
         			distance+=pow((com1[i]+offset[tr1][i])-(com2[i]+offset[tr2][i]),2);
         		}
         		distance = sqrt(distance);
+        		std::cout<<distance<<std::endl<<std::endl;
         	}
 
-        	double energy = transition_(get_transition_prob(distance, state, transition_parameter_));
+        	double energy = transition_(get_classifier_transition_probability(tr1,tr2,state));
         	if (perturb){
         		energy+= generateRandomOffset(Transition);
         	}

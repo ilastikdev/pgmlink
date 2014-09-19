@@ -11,7 +11,6 @@
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python.hpp>
-#include <Python.h>
 
 
 using namespace std;
@@ -32,12 +31,12 @@ vector<vector<Event> > pythonChaingraphTracking(ChaingraphTracking& tr, TraxelSt
 	return result;
 }
 
-vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates) {
+vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates, object TransitionClassifier) {
 	vector<vector<vector<Event> > > result = std::vector<std::vector<std::vector<Event> > >(0);
 	// release the GIL
 	Py_BEGIN_ALLOW_THREADS
 	try {
-		result = tr(ts, coordinates);
+		result = tr(ts, coordinates, TransitionClassifier);
 	} catch (std::exception& e) {
 		Py_BLOCK_THREADS
 		throw;

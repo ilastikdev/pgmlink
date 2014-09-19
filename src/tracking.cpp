@@ -5,6 +5,7 @@
 #include <iostream>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/python.hpp>
 #include <boost/shared_array.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -18,7 +19,6 @@
 #include "pgmlink/tracking.h"
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/merger_resolving.h"
-
 
 using namespace std;
 using boost::shared_ptr;
@@ -218,7 +218,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 ////
 //// class ConsTracking
 ////
-vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, TimestepIdCoordinateMapPtr coordinates) {
+vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, TimestepIdCoordinateMapPtr coordinates, boost::python::object TransitionClassifier) {
 	cout << "-> building energy functions " << endl;
 
 	double detection_weight = 10;
@@ -381,7 +381,8 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 			uncertaintyParam_,
 			cplex_timeout_,
 			division_weight_,
-			detection_weight
+			detection_weight,
+			TransitionClassifier
 	);
 
 	size_t totalNumberOfSolutions = uncertaintyParam_.numberOfIterations;

@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/python.hpp>
 
 #include "pgmlink/event.h"
 #include "pgmlink/pgmlink_export.h"
@@ -195,7 +196,8 @@ namespace pgmlink {
         event_vector_dump_filename_(event_vector_dump_filename)
       	{}
         PGMLINK_EXPORT std::vector< std::vector< std::vector<Event> > > operator()(TraxelStore& ts,
-                                                TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
+                                                TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
+                                                boost::python::object TransitionClassifier = boost::python::object()/*None Type object*/);
 
       /**
        * Get state of detection variables after call to operator().

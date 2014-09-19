@@ -6,6 +6,8 @@
 #include <opengm/inference/inference.hxx>
 #include <opengm/inference/lpcplex.hxx>
 
+#include "boost/python.hpp"
+
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/reasoner.h"
@@ -21,6 +23,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <boost/random/uniform_real.hpp>
+
 
 namespace pgmlink {	
 
@@ -77,7 +80,9 @@ class ConservationTracking : public Reasoner {
                              UncertaintyParameter param = UncertaintyParameter(),
                              double cplex_timeout = 1e75,
                              double division_weight = 10,
-                             double detection_weight = 10)
+                             double detection_weight = 10,
+                             boost::python::object TransitionClassifier = boost::python::object()
+                             )
         : max_number_objects_(max_number_objects),
           detection_(detection),
           division_(division),
@@ -104,8 +109,11 @@ class ConservationTracking : public Reasoner {
           division_weight_(division_weight),
           detection_weight_(detection_weight),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
-          random_uniform_(rng_,boost::uniform_real<>(0,1))
-    {};
+          random_uniform_(rng_,boost::uniform_real<>(0,1)),
+          TransitionClassifier_(TransitionClassifier)
+    {
+
+    };
     ~ConservationTracking();
 
     virtual void formulate( const HypothesesGraph& );
@@ -157,6 +165,7 @@ class ConservationTracking : public Reasoner {
     void printResults( HypothesesGraph&);
     double sample_with_classifier_variance(double mean, double variance);
     double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0);
+    double get_classifier_transition_probability(Traxel tr1, Traxel tr2, size_t state);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
 
     // helper
@@ -210,6 +219,8 @@ class ConservationTracking : public Reasoner {
     boost::mt19937 rng_;
     normalRNGType random_normal_;
     uniformRNGType random_uniform_;
+
+    boost::python::object TransitionClassifier_;
 
 	HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
