@@ -362,6 +362,9 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 												fov_);
 
 	cout << "-> init ConservationTracking reasoner" << endl;
+
+	PyEval_InitThreads();
+	PyGILState_STATE gilstate = PyGILState_Ensure();
 	ConservationTracking pgm(
 			max_number_objects_,
 			detection,
@@ -403,6 +406,8 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		cout << "-> pruning inactive hypotheses" << endl;
 
 	}
+	PyGILState_Release(gilstate);
+
 	//TODO: conceptual problem here:
 	//revise prune_inactive//events
 	

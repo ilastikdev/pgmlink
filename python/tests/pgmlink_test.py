@@ -3,6 +3,7 @@ sys.path.append("../.")
 
 import unittest as ut
 import pgmlink
+from ilastik.applets.tracking.conservation.transitionClassifierTraining import trainTransition
 
 def mk_traxel(x,y,z,id):
     t = pgmlink.Traxel()
@@ -134,7 +135,10 @@ class TestTransitionClassifier(ut.TestCase):
                                 )
         cm = pgmlink.TimestepIdCoordinateMap()
         cm.initialize()
-        classifier = pgmlink.TransitionClassifier(None,["con"])
+        
+        features = ["RegionCenter"]
+        gpc = trainTransition("/home/bheuer/Documents/ilastik_files/some_tracking_result",features,100)
+        classifier = pgmlink.TransitionClassifier(gpc,["con"])
         tracker(ts,cm.get(),classifier)
         
 if __name__=="__main__":
