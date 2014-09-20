@@ -260,7 +260,7 @@ double ConservationTracking::sample_with_classifier_variance(double mean, double
 	return new_probability;
 }
 
-double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr) {
+double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, Traxel tr2) {
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
@@ -281,7 +281,10 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
-					return random_normal_()*param_.distributionParam[Transition];
+					mean = exp(energy/-transition_parameter_);
+					variance = get_classifier_transition_variance(tr,tr2);
+					perturbed_mean = sample_with_classifier_variance(mean,variance);
+					return -transition_parameter_*log(perturbed_mean)- energy;
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}
@@ -589,27 +592,34 @@ boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
 }
 
 
+double ConservationTracking::get_classifier_transition_variance(Traxel tr1, Traxel tr2) {
+    double var;
+
+    boost::python::object pValue = TransitionClassifier_.attr("getDistance")(tr1,tr2);
+    var = boost::python::extract<double>(pValue.attr("__getitem__")(1));
+
+    return var;
+}
+
 double ConservationTracking::get_classifier_transition_probability(Traxel tr1, Traxel tr2, size_t state) {
-    double prob,variance;
+    double prob;
 
-    //read the FeatureMaps from Traxels and convert them to Python Dictionaries
+    //read the FeatureMaps from Traxels
+    if (TransitionClassifier_.ptr()==boost::python::object().ptr()){
+    	//backwards compatibility
+    	feature_array com1 = tr1.features["com"];
+		feature_array com2 = tr2.features["com"];
+		double distance = 0;
+		for (size_t i=0;i<com1.size();i++){
+			distance+=pow(com1[i]-com2[i],2);
+		}
+		return get_transition_prob(sqrt(distance), state, transition_parameter_);
 
-    FeatureMap::iterator iter;
-    std::cout<<"been here";
-	PyEval_InitThreads();
-	PyGILState_STATE gilstate = PyGILState_Ensure();
-	boost::python::dict dictionary1 = convertFeatureMapToPyDict(tr1.features);
-	boost::python::dict dictionary2 = convertFeatureMapToPyDict(tr2.features);
-
-	boost::python::object mMainModule = boost::python::import("pgmlink");
-	boost::python::object ClassifierModule = boost::python::import("pgmlink.TransitionClassifier");
+    }
 
 	boost::python::object pValue = TransitionClassifier_.attr("getDistance")(tr1,tr2);
-	//boost::python::object pValue = TransitionClassifier_.attr("test")();
 
 	prob = boost::python::extract<double>(pValue.attr("__getitem__")(0));
-	variance = boost::python::extract<double>(pValue.attr("__getitem__")(1));
-	PyGILState_Release(gilstate);
 
 	if (state == 0) {
 	        return 1 - prob;
@@ -642,32 +652,9 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		g.get(tracklet_intern_arc_ids());
 
 
-    bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
-    //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
+   //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
 
 	map<Traxel,vector<double> > offset;
-    if (perturb_transitions_locally){
-    	Traxel tr;
-    	for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
-
-    		if (with_tracklets_) {
-    			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it];
-    			for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-    					tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-    				HypothesesGraph::Node n = *tr_n_it;
-    				tr = traxel_map_[n];
-    				for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    					offset[tr].push_back(generateRandomOffset(Transition));
-    				}
-    			}
-    		} else {
-    			tr = traxel_map_[it];
-    			for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    				offset[tr].push_back(generateRandomOffset(Transition));
-    			}
-    		}
-    	}
-    }
 
     ////
     //// add detection factors
@@ -753,7 +740,11 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         			HypothesesGraph::Arc arc = g.arcFromId(*intern_arc_id_it);
         			Traxel tr1 = traxel_map_[g.source(arc)];
         			Traxel tr2 = traxel_map_[g.target(arc)];
-        			energy += transition_( get_classifier_transition_probability(tr1, tr2, state));
+        			e = transition_( get_classifier_transition_probability(tr1, tr2, state));
+        			energy+=e;
+        			if (perturb){
+						energy+= generateRandomOffset(Transition,e,tr1,tr2);
+					}
         		}
         	} else {
         		e = detection_(traxel_map_[n], state);
@@ -830,22 +821,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         	distance = arc_distances_[a];
         	Traxel tr1 = traxel_map_[g.source(a)];
 			Traxel tr2 = traxel_map_[g.target(a)];
-        	if (perturb_transitions_locally){
-
-        		feature_array com1 = tr1.features["com"];
-        		feature_array com2 = tr2.features["com"];
-        		std::cout<<distance<<std::endl;
-        		distance = 0;//calculate Euclidean distance of perturbed RegionCenters
-        		for (size_t i=0;i<com1.size();i++){
-        			distance+=pow((com1[i]+offset[tr1][i])-(com2[i]+offset[tr2][i]),2);
-        		}
-        		distance = sqrt(distance);
-        		std::cout<<distance<<std::endl<<std::endl;
-        	}
 
         	double energy = transition_(get_classifier_transition_probability(tr1,tr2,state));
         	if (perturb){
-        		energy+= generateRandomOffset(Transition);
+        		energy+= generateRandomOffset(Transition,energy,tr1,tr2);
         	}
 
         	LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state

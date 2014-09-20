@@ -164,9 +164,10 @@ class ConservationTracking : public Reasoner {
     double getEnergyByEvent(EnergyType event, HypothesesGraph::NodeIt n,bool perturb=false,size_t state=0);
     void printResults( HypothesesGraph&);
     double sample_with_classifier_variance(double mean, double variance);
-    double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0);
+    double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0, Traxel tr2=0);
     double get_classifier_transition_probability(Traxel tr1, Traxel tr2, size_t state);
-    const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
+    double get_classifier_transition_variance(Traxel tr1, Traxel tr2);
+        const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
 
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
