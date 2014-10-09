@@ -46,8 +46,10 @@ namespace pgmlink {
       typedef OutgoingNoDivConstraintFunction<Energy, size_t, size_t> OutNoDivConsFunc;
       typedef DetectionConstraintFunction<Energy, size_t, size_t> DetConsFunc;
 
-      typedef OPENGM_TYPELIST_5(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc) ogmFunctionsTypelist;
-      typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
+      typedef opengm::GraphicalModel<Energy, opengm::Adder, typename opengm::meta::TypeListGenerator <ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc,marray::Marray<Energy> >::type> ogmGraphicalModel;
+
+//      typedef OPENGM_TYPELIST_6(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, marray::Marray<Energy>) ogmFunctionsTypelist;
+//      typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
       typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
       typedef opengm::Minimizer ogmAccumulator;
       typedef opengm::Inference<ogmGraphicalModel, ogmAccumulator> ogmInference;
@@ -154,7 +156,7 @@ namespace pgmlink {
     class FactorEntry {
     public:
     FactorEntry() : entry_(NULL) {}
-    FactorEntry( shared_ptr<OpengmModel> m, /**< has to be valid */
+    FactorEntry( boost::shared_ptr<OpengmModel> m, /**< has to be valid */
 		 OpengmModel::ValueType* entry /**< has to point into the opengm model to ensure the same lifetime */
 		 ) :
       m_(m), entry_(entry) {}
@@ -162,10 +164,10 @@ namespace pgmlink {
       void set( OpengmModel::ValueType );
       OpengmModel::ValueType get() const;
 
-      shared_ptr<OpengmModel> model() const { return m_; }
+      boost::shared_ptr<OpengmModel> model() const { return m_; }
 
     private:
-      shared_ptr<OpengmModel> m_;
+      boost::shared_ptr<OpengmModel> m_;
       OpengmModel::ValueType* entry_;
     };
 

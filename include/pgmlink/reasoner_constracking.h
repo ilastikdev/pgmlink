@@ -172,7 +172,7 @@ class ConservationTracking : public Reasoner {
 
     double forbidden_cost_;
     
-    shared_ptr<pgm::OpengmModelDeprecated> pgm_;
+    boost::shared_ptr<pgm::OpengmModelDeprecated> pgm_;
     //opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel, pgm::OpengmModelDeprecated::ogmAccumulator>* optimizer_;
 	cplex_optimizer* optimizer_;
 	std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> solution_;

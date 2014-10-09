@@ -76,7 +76,7 @@ namespace pgmlink {
     bool with_divisions_;
     double cplex_timeout_;
     bool alternative_builder_;
-    shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+    boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
   };
 
   class NNTracking 
@@ -107,7 +107,7 @@ namespace pgmlink {
     std::vector<std::string> distanceFeatures_;
     double divisionThreshold_;
     bool splitterHandling_, mergerHandling_;
-    shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+    boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
     std::vector<int> maxTraxelIdAt_;
   };
 
@@ -139,7 +139,7 @@ namespace pgmlink {
       std::vector<std::string> distanceFeatures_;
       double divisionThreshold_;
       bool splitterHandling_, mergerHandling_;
-      shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+      boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
       std::vector<int> maxTraxelIdAt_;
   };
 
@@ -218,7 +218,7 @@ namespace pgmlink {
       double disappearance_cost_, appearance_cost_;
       std::vector<double> means_, sigmas_;
       bool with_merger_resolution_;
-      shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+      boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
       int number_of_dimensions_;
       double transition_parameter_;
       double border_width_;

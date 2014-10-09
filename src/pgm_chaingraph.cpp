@@ -32,7 +32,7 @@ namespace pgmlink {
       init();
     }
 
-    Model::Model(shared_ptr<OpengmModel> m,
+    Model::Model(boost::shared_ptr<OpengmModel> m,
 				     const node_var_map& node_var,
 				     const arc_var_map& arc_var
 				     )
