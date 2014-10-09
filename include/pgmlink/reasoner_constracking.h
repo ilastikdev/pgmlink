@@ -213,6 +213,8 @@ class ConservationTracking : public Reasoner {
 
 	HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
+
+    std::map< size_t, std::vector<size_t> > nodes_per_timestep_;
 };
 
 

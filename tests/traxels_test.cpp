@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE( global_fun_filter_by_fov )
   BOOST_CHECK_EQUAL(ts.size(), 5);
   BOOST_CHECK_EQUAL(n, 2);
   BOOST_CHECK_EQUAL(ts_out.size(), 2);
-  BOOST_CHECK_EQUAL(ts_out.get<by_timeid>().count(tuple<int, unsigned int>(2,1)), 1);
-  BOOST_CHECK_EQUAL(ts_out.get<by_timeid>().count(tuple<int, unsigned int>(1,2)), 1);
+  BOOST_CHECK_EQUAL(ts_out.get<by_timeid>().count(boost::tuple<int, unsigned int>(2,1)), 1);
+  BOOST_CHECK_EQUAL(ts_out.get<by_timeid>().count(boost::tuple<int, unsigned int>(1,2)), 1);
 }
 // EOF
