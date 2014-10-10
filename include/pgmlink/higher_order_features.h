@@ -16,7 +16,8 @@ Minimal example:
 \code
 #include <pgmlink/higher_order_features.h>
 
-using namespace pgmlink
+using namespace pgmlink;
+using namespace features;
 
 // Get the hypotheses graph with the MAP solution written into the node_active
 // and arc_active property map
