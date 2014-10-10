@@ -300,9 +300,10 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Serialization_Test)
     cp.add_constraint(ConstraintPool::OutgoingConstraint(3, 4, {5,6}));
     cp.add_constraint(ConstraintPool::IncomingConstraint({0,1}, 2));
 
-    // save constraint pool to string
-    std::stringstream cp_out_str;
+    // save constraint pool to temp file
+    std::string cp_filename(tmpnam(NULL));
     {
+        std::ofstream cp_out_str(cp_filename.c_str());
         boost::archive::text_oarchive oa(cp_out_str);
         oa & cp;
     }
@@ -332,10 +333,9 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Serialization_Test)
     //---------------------------------------------------------------------
     OpengmModelDeprecated::ogmGraphicalModel model2;
     opengm::hdf5::load(model2, filename, "tmp");
-    std::stringstream cp_in_str(cp_out_str.str());
-
     ConstraintPool cp2;
     {
+        std::ifstream cp_in_str(cp_filename.c_str());
         boost::archive::text_iarchive ia(cp_in_str);
         ia & cp2;
     }
