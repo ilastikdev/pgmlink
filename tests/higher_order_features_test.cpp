@@ -936,12 +936,12 @@ BOOST_AUTO_TEST_CASE( EuclideanNormCalculator_test){
   BOOST_CHECK_EQUAL(matrix.shape(0), 7);
   BOOST_CHECK_EQUAL(matrix.shape(1), 1);
   BOOST_CHECK(4.24264 < matrix(0, 0) && matrix(0, 0) < 4.24265);
-  BOOST_CHECK(4.99999 < matrix(1, 0) && matrix(0, 0) < 5.00001);
-  BOOST_CHECK(4.99999 < matrix(2, 0) && matrix(0, 1) < 5.00001);
-  BOOST_CHECK(5.65685 < matrix(3, 0) && matrix(0, 0) < 5.65686);
-  BOOST_CHECK(6.40312 < matrix(4, 0) && matrix(0, 0) < 6.40313);
-  BOOST_CHECK(7.07106 < matrix(5, 0) && matrix(0, 0) < 7.07107);
-  BOOST_CHECK(12.0415 < matrix(6, 0) && matrix(0, 0) < 12.0416);
+  BOOST_CHECK(4.99999 < matrix(1, 0) && matrix(1, 0) < 5.00001);
+  BOOST_CHECK(4.99999 < matrix(2, 0) && matrix(2, 0) < 5.00001);
+  BOOST_CHECK(5.65685 < matrix(3, 0) && matrix(3, 0) < 5.65686);
+  BOOST_CHECK(6.40312 < matrix(4, 0) && matrix(4, 0) < 6.40313);
+  BOOST_CHECK(7.07106 < matrix(5, 0) && matrix(5, 0) < 7.07107);
+  BOOST_CHECK(12.0415 < matrix(6, 0) && matrix(6, 0) < 12.0416);
 }
 
 BOOST_AUTO_TEST_CASE( AngleCosineCalculator_test ){
@@ -959,10 +959,10 @@ BOOST_AUTO_TEST_CASE( AngleCosineCalculator_test ){
   BOOST_CHECK_EQUAL(matrix.shape(0), 5);
   BOOST_CHECK_EQUAL(matrix.shape(1), 1);
   BOOST_CHECK(-0.70711 < matrix(0, 0) && matrix(0, 0) < -0.70710);
-  BOOST_CHECK(-0.70711 < matrix(1, 0) && matrix(0, 0) < -0.70710);
-  BOOST_CHECK( 0.99999 < matrix(2, 0) && matrix(0, 1) <  1.00001);
-  BOOST_CHECK(-0.00001 < matrix(3, 0) && matrix(0, 0) <  0.00001);
-  BOOST_CHECK( 0.59999 < matrix(4, 0) && matrix(0, 0) <  0.60001);
+  BOOST_CHECK(-0.70711 < matrix(1, 0) && matrix(1, 0) < -0.70710);
+  BOOST_CHECK( 0.99999 < matrix(2, 0) && matrix(2, 0) <  1.00001);
+  BOOST_CHECK(-0.00001 < matrix(3, 0) && matrix(3, 0) <  0.00001);
+  BOOST_CHECK( 0.59999 < matrix(4, 0) && matrix(4, 0) <  0.60001);
 }
 
 BOOST_AUTO_TEST_CASE( ChildParentDiffCalculator_test ) {
