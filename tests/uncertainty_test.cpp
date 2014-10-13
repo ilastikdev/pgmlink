@@ -77,30 +77,34 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
 	UncertaintyParameter uparam(10,PerturbAndMAP,sigmas);//10 iterations, Gumbel distribution, sigma=1
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-	ConsTracking tracking = ConsTracking(
-				  1, // max_number_objects
-	              20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-	              false, // detection_by_volume
-	              0, // forbidden_cost
-	              0.0, // ep_gap
-	              double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  10., // disappearance_cost,
-				  10., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-	              fov, //field of view
-	              true, //with_constraints
-	              uparam
-		  	      );
-	tracking(ts, TimestepIdCoordinateMapPtr());
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20.0, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
+
+    // TODO: test something here??!
 }
 
 BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision ) {
@@ -168,30 +172,35 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision ) {
 	UncertaintyParameter uparam(2,ClassifierUncertainty,sigmas);//2 iterations, Gaussian pertubation with classifier variance, sigma=1
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-	ConsTracking tracking = ConsTracking(
-				  1, // max_number_objects
-	              20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-	              false, // detection_by_volume
-	              0, // forbidden_cost
-	              0.0, // ep_gap
-	              double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  10., // disappearance_cost,
-				  10., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-	              fov, //field of view
-	              true, //with_constraints
-	              uparam
-		  	      );
-	tracking(ts, TimestepIdCoordinateMapPtr());
+
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
+
+    // TODO: test something here??!
 }
 
 
@@ -252,31 +261,33 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	UncertaintyParameter uparam(3,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
 
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-	ConsTracking tracking = ConsTracking(
-				  1, // max_number_objects
-	              20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-	              false, // detection_by_volume
-	              0, // forbidden_cost
-	              0.0, // ep_gap
-	              double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  10., // disappearance_cost,
-				  10., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-	              fov, //field of view
-	              true, //with_constraints
-	              uparam
-		  	      );
-	
-	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
+
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    EventVectorVectorVector events = tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
 
 	//two iterations: two event vectors
 	BOOST_CHECK_EQUAL(events.size(),3);
@@ -342,31 +353,34 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	UncertaintyParameter uparam(mbest,MbestCPLEX,0);
 	
 	FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-	ConsTracking tracking = ConsTracking(
-				  1, // max_number_objects
-	              20, // max_neighbor_distance
-				  0.3, // division_threshold
-				  "none", // random_forest_filename
-	              false, // detection_by_volume
-	              0, // forbidden_cost
-	              0.0, // ep_gap
-	              double(1.1), // avg_obj_size
-				  false, // with_tracklets
-				  10.0, //division_weight
-				  10.0, //transition_weight
-				  true, //with_divisions
-				  10., // disappearance_cost,
-				  10., // appearance_cost
-				  false, //with_merger_resolution
-				  3, //n_dim
-				  5, //transition_parameter
-				  0, //border_width for app/disapp costs
-	              fov, //field of view
-	              true, //with_constraints
-	              uparam
-		  	      );
+
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    EventVectorVectorVector events = tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
 	
-	std::vector<std::vector< std::vector<Event> > >events = tracking(ts, TimestepIdCoordinateMapPtr());
 	int counter = 0;
 	BOOST_CHECK_EQUAL(events.size(),mbest);
 			

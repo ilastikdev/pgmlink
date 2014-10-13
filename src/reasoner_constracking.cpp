@@ -239,6 +239,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		rel_uncertainty.set(n,count/param_.numberOfIterations);
 	}
 }
+
 boost::math::normal standard_gaussian_distribution(0.0, 1.0);
 double sigmoid(double x){
 	return cdf(standard_gaussian_distribution, x);

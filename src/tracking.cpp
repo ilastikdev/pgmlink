@@ -57,6 +57,8 @@ vector<vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts) {
    	       << "\tcplex timeout: " << cplex_timeout_ << "\n"
    	       << "\talternative builder: " << alternative_builder_;
 
+  
+  
 	cout << "-> building feature functions " << endl;
 	SquaredDistance move;
 	BorderAwareConstant appearance(app_, earliest_timestep(ts), true, 0);
@@ -218,25 +220,83 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 ////
 //// class ConsTracking
 ////
-vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, TimestepIdCoordinateMapPtr coordinates) {
-	cout << "-> building energy functions " << endl;
+EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
+						  double forbidden_cost,
+						  double ep_gap,
+						  bool with_tracklets,
+						  double division_weight,
+						  double transition_weight,
+						  double disappearance_cost,
+						  double appearance_cost,
+						  bool with_merger_resolution,
+						  int n_dim,
+						  double transition_parameter,
+						  double border_width,
+						  bool with_constraints,
+                          UncertaintyParameter uncertaintyParam,
+						  double cplex_timeout,
+						  TimestepIdCoordinateMapPtr coordinates) {
+    build_hypo_graph(ts);
+    // TODO need solution without copying the event vector
+    EventVectorVectorVector events = track(
+                forbidden_cost,
+                ep_gap,
+                with_tracklets,
+                division_weight,
+                transition_weight,
+                disappearance_cost,
+                appearance_cost,
+                with_merger_resolution,
+                n_dim,
+                transition_parameter,
+                border_width,
+                with_constraints,
+                uncertaintyParam,
+                cplex_timeout
+                );
 
-	double detection_weight = 10;
-	Traxels empty;
-	boost::function<double(const Traxel&, const size_t)> detection, division;
-	boost::function<double(const double)> transition;
+		if (with_merger_resolution) {
+            EventVectorVectorVector merger_resolved_events;
 
-	bool use_classifier_prior = false;
-	Traxel trax = *(ts.begin());
+            for(auto& event : events)
+            {
+                merger_resolved_events.push_back(resolve_mergers(
+                    event,
+                    coordinates,
+                    ep_gap=0.01,
+                    transition_weight=10.0,
+                    with_tracklets=true,
+                    n_dim = 3,
+                    transition_parameter = 5.,
+                    with_constraints = true
+                ));
+            }
+
+            return merger_resolved_events;
+		} else {
+            return events;
+		}
+}
+
+boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts) {
+
+  
+  LOG(logDEBUG3) << "enering build_hypo_graph"<< endl;;
+  
+	traxel_store_ = &ts;
+
+	use_classifier_prior_ = false;
+	Traxel trax = *(traxel_store_->begin());
 	FeatureMap::const_iterator it = trax.features.find("detProb");
 	if(it != trax.features.end()) {
-		use_classifier_prior = true;
+	        use_classifier_prior_ = true;
+	        LOG(logDEBUG3) << "could not find detProb, falling back to classifier prior";
+	} else {
+	        LOG(logDEBUG3) << "COULD find detProb!!";
 	}
-	if (use_classifier_prior) {
-		LOG(logINFO) << "Using classifier prior";
-		detection = NegLnDetection(detection_weight);
-	} else if (use_size_dependent_detection_) {
-		LOG(logINFO) << "Using size dependent prior";
+
+	if(not use_classifier_prior_ and use_size_dependent_detection_){
+	        LOG(logDEBUG3) << "creating detProb feature in traxel store!!";
 		vector<double> means;
 		if (means_.size() == 0 ) {
 			for(int i = 0; i<max_number_objects_+1; ++i) {
@@ -268,7 +328,7 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 			}
 		}
 
-		for(TraxelStore::iterator tr = ts.begin(); tr != ts.end(); ++tr) {
+		for(TraxelStore::iterator tr = traxel_store_->begin(); tr != traxel_store_->end(); ++tr) {
 			Traxel trax = *tr;
 			FeatureMap::const_iterator it = trax.features.find("count");
 			if(it == trax.features.end()) {
@@ -289,14 +349,109 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 				detProbFeat[i] = d;
 			}
 			trax.features["detProb"] = detProbFeat;
-			ts.replace(tr, trax);
+			traxel_store_->replace(tr, trax);
 		}
-		detection = NegLnDetection(detection_weight); // weight 1
+	}
+
+	LOG(logDEBUG1) << "-> building hypotheses" << endl;
+	SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
+				max_dist_,
+				true, // forward_backward
+				with_divisions_, // consider_divisions
+				division_threshold_
+				);
+	SingleTimestepTraxel_HypothesesBuilder hyp_builder(traxel_store_, builder_opts);
+	hypotheses_graph_ = boost::shared_ptr<HypothesesGraph>(hyp_builder.build());
+
+	hypotheses_graph_->add(arc_distance()).add(tracklet_intern_dist()).add(node_tracklet()).add(tracklet_intern_arc_ids()).add(traxel_arc_id());
+ 	
+	property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances = (hypotheses_graph_)->get(arc_distance());
+	property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = (hypotheses_graph_)->get(node_traxel());
+
+	bool with_optical_correction = false;
+	Traxel some_traxel = (*traxel_map.beginValue());
+	if (some_traxel.features.find("com_corrected") != some_traxel.features.end()) {
+		LOG(logINFO) << "optical correction enabled";
+		with_optical_correction = true;
+	}
+
+	for(HypothesesGraph::ArcIt a(*hypotheses_graph_); a!=lemon::INVALID; ++a) {
+		HypothesesGraph::Node from = (hypotheses_graph_)->source(a);
+		HypothesesGraph::Node to = (hypotheses_graph_)->target(a);
+		Traxel from_tr = traxel_map[from];
+		Traxel to_tr = traxel_map[to];
+
+		if (with_optical_correction) {
+			arc_distances.set(a, from_tr.distance_to_corr(to_tr));
+		} else {
+			arc_distances.set(a, from_tr.distance_to(to_tr));
+		}
+	}
+
+        if(event_vector_dump_filename_ != "none")
+	  {
+	    // store the traxel store and the resulting event vector
+	    std::ofstream ofs(event_vector_dump_filename_.c_str());
+	    boost::archive::text_oarchive out_archive(ofs);
+	    out_archive << ts;
+	  }
+	return hypotheses_graph_;
+    
+  }
+
+  EventVectorVectorVector ConsTracking::track(double forbidden_cost,
+						      double ep_gap,
+						      bool with_tracklets,
+						      double division_weight,
+						      double transition_weight,
+						      double disappearance_cost,
+						      double appearance_cost,
+						      bool with_merger_resolution,
+						      int n_dim,
+						      double transition_parameter,
+						      double border_width,
+						      bool with_constraints,
+                              UncertaintyParameter uncertaintyParam,
+						      double cplex_timeout){
+    
+    LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ; 
+    LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ; 
+    LOG(logDEBUG1) <<"forbidden_cost\t"<<      forbidden_cost; 
+    LOG(logDEBUG1) <<"ep_gap\t"<<      ep_gap; 
+    LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_; 
+    LOG(logDEBUG1) <<"with_tracklets\t"<<      with_tracklets; 
+    LOG(logDEBUG1) <<"division_weight\t"<<      division_weight; 
+    LOG(logDEBUG1) <<"transition_weight\t"<<      transition_weight; 
+    LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_; 
+    LOG(logDEBUG1) <<"disappearance_cost\t"<<      disappearance_cost; 
+    LOG(logDEBUG1) <<"appearance_cost\t"<<      appearance_cost; 
+    LOG(logDEBUG1) <<"with_merger_resolution\t"<<      with_merger_resolution; 
+    LOG(logDEBUG1) <<"n_dim\t"<<      n_dim; 
+    LOG(logDEBUG1) <<"transition_parameter\t"<<      transition_parameter; 
+    LOG(logDEBUG1) <<"border_width\t"<<      border_width; 
+    LOG(logDEBUG1) <<"with_constraints\t"<<      with_constraints; 
+    LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
+    uncertaintyParam.print(); // TODO: do not use cout here!
+    
+    
+
+	double detection_weight = 10;
+	Traxels empty;
+	boost::function<double(const Traxel&, const size_t)> detection, division;
+	boost::function<double(const double)> transition;
+
+
+	if (use_classifier_prior_) {
+		LOG(logINFO) << "Using classifier prior";
+		detection = NegLnDetection(detection_weight);
+	} else if (use_size_dependent_detection_) {
+		LOG(logINFO) << "Using size dependent prior";
+		detection = NegLnDetection(detection_weight); // weight 
 	} else {
 		LOG(logINFO) << "Using hard prior";
 		// assume a quasi geometric distribution
 		vector<double> prob_vector;
-		double p = 0.7; // e.g. for max_number_objects_=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
+		double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
 		double sum = 0;
 		for(double state = 0; state < max_number_objects_; ++state) {
 			double prob = p*pow(1-p,state);
@@ -308,96 +463,61 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 		detection = boost::bind<double>(NegLnConstant(detection_weight,prob_vector), _2);
 	}
 
-	LOG(logDEBUG1) << "division_weight_ = " << division_weight_;
-	LOG(logDEBUG1) << "transition_weight_ = " << transition_weight_;
-	division = NegLnDivision(division_weight_);
-	transition = NegLnTransition(transition_weight_);
+	
 
-	cout << "-> building hypotheses" << endl;
-	SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
-				max_dist_,
-				true, // forward_backward
-				with_divisions_, // consider_divisions
-				division_threshold_
-				);
-	SingleTimestepTraxel_HypothesesBuilder hyp_builder(&ts, builder_opts);
-	HypothesesGraph* graph = hyp_builder.build();
+	LOG(logDEBUG1) << "division_weight = " << division_weight;
+	LOG(logDEBUG1) << "transition_weight = " << transition_weight;
+	division = NegLnDivision(division_weight);
+	transition = NegLnTransition(transition_weight);
 
-
-	LOG(logDEBUG1) << "ConsTracking(): adding distance property to edges";
-	HypothesesGraph& g = *graph;
-	g.add(arc_distance()).add(tracklet_intern_dist()).add(node_tracklet()).add(tracklet_intern_arc_ids()).add(traxel_arc_id());
-	property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances = g.get(arc_distance());
-	property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-
-	bool with_optical_correction = false;
-	Traxel some_traxel = (*traxel_map.beginValue());
-	if (some_traxel.features.find("com_corrected") != some_traxel.features.end()) {
-		LOG(logINFO) << "optical correction enabled";
-		with_optical_correction = true;
-	}
-
-	for(HypothesesGraph::ArcIt a(g); a!=lemon::INVALID; ++a) {
-		HypothesesGraph::Node from = g.source(a);
-		HypothesesGraph::Node to = g.target(a);
-		Traxel from_tr = traxel_map[from];
-		Traxel to_tr = traxel_map[to];
-
-		if (with_optical_correction) {
-			arc_distances.set(a, from_tr.distance_to_corr(to_tr));
-		} else {
-			arc_distances.set(a, from_tr.distance_to(to_tr));
-		}
-	}
 	//border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
 	boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
-	LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width_;
-	appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost_,
-												border_width_,
+	LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+	appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost,
+												border_width,
 												false, // true if relative margin to border
 												fov_);
-	disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost_,
-												border_width_,
+	disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
+												border_width,
 												false, // true if relative margin to border
 												fov_);
 
 	cout << "-> init ConservationTracking reasoner" << endl;
+	
 	ConservationTracking pgm(
 			max_number_objects_,
 			detection,
 			division,
 			transition,
-			forbidden_cost_,
-			ep_gap_,
-			with_tracklets_,
+			forbidden_cost,
+			ep_gap,
+			with_tracklets,
 			with_divisions_,
 			disappearance_cost_fn,
 			appearance_cost_fn,
 			true, // with_misdetections_allowed
 			true, // with_appearance
 			true, // with_disappearance
-			transition_parameter_,
-			with_constraints_,
-			uncertaintyParam_,
-			cplex_timeout_,
-			division_weight_,
+            transition_parameter,
+            with_constraints,
+            uncertaintyParam,
+            cplex_timeout,
+            division_weight,
 			detection_weight
 	);
 
-	size_t totalNumberOfSolutions = uncertaintyParam_.numberOfIterations;
+    size_t totalNumberOfSolutions = uncertaintyParam.numberOfIterations;
 
 	if (totalNumberOfSolutions>1) {
-
-
 		cout << "-> perturbed Inference" << endl;
-		pgm.perturbedInference(*graph);
+        pgm.perturbedInference(*hypotheses_graph_);
 		cout << "-> finished perturbed Inference" << endl;
 		}
 	else {
-		pgm.perturbedInference(*graph);
+        pgm.perturbedInference(*hypotheses_graph_);
 
 		cout << "-> storing state of detection vars" << endl;
-		last_detections_ = state_of_nodes(*graph);
+        last_detections_ = state_of_nodes(*hypotheses_graph_);
 
 		cout << "-> pruning inactive hypotheses" << endl;
 
@@ -407,51 +527,86 @@ vector< vector<vector<Event> > >ConsTracking::operator()(TraxelStore& ts, Timest
 	
     cout << "-> constructing unresolved events" << endl;
 
-    std::vector < std::vector< std::vector<Event> > > all_ev(totalNumberOfSolutions);
+    EventVectorVectorVector all_ev(totalNumberOfSolutions);
     for (size_t i=0;i<totalNumberOfSolutions;++i){
-		all_ev[i] = *events(*graph,i);
+        all_ev[i] = *events(*hypotheses_graph_,i);
 	}
 
-	std::vector< std::vector<Event> >* ev = &(all_ev[0]);
-
-    if (max_number_objects_ > 1 && with_merger_resolution_ && all_true(ev->begin()+1, ev->end(), has_data<Event>)) {
-      cout << "-> resolving mergers" << endl;
-      MergerResolver m(graph);
-      FeatureExtractorBase* extractor;
-      DistanceFromCOMs distance;
-      if (coordinates) {
-        extractor = new FeatureExtractorArmadillo(coordinates);
-      } else {
-        calculate_gmm_beforehand(*graph, 1, number_of_dimensions_);
-        extractor = new FeatureExtractorMCOMsFromMCOMs;
-      }
-      FeatureHandlerFromTraxels handler(*extractor, distance);
-
-      m.resolve_mergers(handler);
-
-      HypothesesGraph g_res;
-      resolve_graph(*graph, g_res, transition, ep_gap_, with_tracklets_, transition_parameter_, with_constraints_);
-      prune_inactive(*graph);
-
-      cout << "-> constructing resolved events" << endl;
-      boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*graph);
-
-      cout << "-> merging unresolved and resolved events" << endl;
-      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
-    }
-
-    prune_inactive(*graph);
-    if(event_vector_dump_filename_ != "none")
-    {
-        // store the traxel store and the resulting event vector
-        std::ofstream ofs(event_vector_dump_filename_.c_str());
-        boost::archive::text_oarchive out_archive(ofs);
-        out_archive << ts;
-        out_archive << all_ev;
-    }
+	if(event_vector_dump_filename_ != "none")
+	  {
+	    // store the traxel store and the resulting event vector
+	    std::ofstream ofs(event_vector_dump_filename_.c_str());
+	    boost::archive::text_oarchive out_archive(ofs);
+        out_archive << all_ev[0];
+	  }
 
     return all_ev;
-}
+
+  }
+
+    EventVectorVector ConsTracking::resolve_mergers(
+        EventVectorVector& events,
+		TimestepIdCoordinateMapPtr coordinates,
+		double ep_gap,
+		double transition_weight,
+		bool with_tracklets,
+		int n_dim,
+		double transition_parameter,
+		bool with_constraints
+  ) {
+		// TODO Redundancy to track(). -> Problem?
+		boost::function<double(const double)> transition;
+		transition = NegLnTransition(transition_weight);
+
+		cout << "-> resolving mergers" << endl;
+		// TODO why doesn't it check for empty vectors in the event vector from the
+		// first element on?
+        if ( not all_true(events.begin()+1, events.end(), has_data<Event>)) {
+			LOG(logDEBUG) << "Nothing to be done in ConstTracking::resolve_mergers:";
+			LOG(logDEBUG) << "Empty vector in event vector";
+		} else if (max_number_objects_ == 1) {
+			LOG(logDEBUG) << "Nothing to resolve in ConstTracking::resolve_mergers:";
+			LOG(logDEBUG) << "max_number_objects = 1";
+		} else {
+			MergerResolver m(hypotheses_graph_.get());
+			FeatureExtractorBase* extractor;
+			DistanceFromCOMs distance;
+			if (coordinates) {
+				extractor = new FeatureExtractorArmadillo(coordinates);
+			} else {
+				calculate_gmm_beforehand(*hypotheses_graph_, 1, n_dim);
+				extractor = new FeatureExtractorMCOMsFromMCOMs;
+			}
+			FeatureHandlerFromTraxels handler(*extractor, distance);
+
+			m.resolve_mergers(handler);
+
+			HypothesesGraph g_res;
+			resolve_graph(*hypotheses_graph_, g_res, transition, ep_gap, with_tracklets, transition_parameter, with_constraints);
+			prune_inactive(*hypotheses_graph_);
+
+			cout << "-> constructing resolved events" << endl;
+			boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*hypotheses_graph_);
+
+			cout << "-> merging unresolved and resolved events" << endl;
+			// delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
+            boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(events, *multi_frame_moves);
+        //      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
+
+			// TODO The in serialized event vector written in the track() function
+			// will be overwritten. Is this the desired behaviour?
+			if(event_vector_dump_filename_ != "none") {
+				// store the traxel store and the resulting event vector
+				std::ofstream ofs(event_vector_dump_filename_.c_str());
+				boost::archive::text_oarchive out_archive(ofs);
+				out_archive << *events_ptr;
+            }
+
+            return *events_ptr;
+		}
+		cout << "-> done resolving mergers" << endl;
+        return events;
+  }
 
 vector<map<unsigned int, bool> > ConsTracking::detections() {
 	vector<map<unsigned int, bool> > res;

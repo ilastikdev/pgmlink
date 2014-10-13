@@ -88,6 +88,9 @@ class Event
     }
   };
 
+typedef std::vector<std::vector< std::vector<Event> > > EventVectorVectorVector;
+typedef std::vector<std::vector< Event> > EventVectorVector;
+
 struct EventsStatistics 
 {
     PGMLINK_EXPORT EventsStatistics() 
