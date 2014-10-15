@@ -88,8 +88,9 @@ class Event
     }
   };
 
-typedef std::vector<std::vector< std::vector<Event> > > EventVectorVectorVector;
-typedef std::vector<std::vector< Event> > EventVectorVector;
+typedef std::vector<Event> EventVector;
+typedef std::vector<EventVector> EventVectorVector;
+typedef std::vector<EventVectorVector> EventVectorVectorVector;
 
 struct EventsStatistics 
 {
