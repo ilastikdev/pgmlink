@@ -34,6 +34,11 @@ public:
     /// Dispatch computation of features here
     void compute_features();
 
+    /// Append features for this solution to the given file.
+    /// If file does not exist, create it.
+    /// Comments are ignored, and will not be copied to the edited file
+    void append_feature_vector_to_file(const std::string &filename);
+
 private:
     /**
      * methods that compute each feature
