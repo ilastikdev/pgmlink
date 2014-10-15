@@ -3,9 +3,13 @@
 namespace pgmlink {
 namespace features {
 
-TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
-    graph_(graph)
+TrackingFeatureExtractor::TrackingFeatureExtractor(
+        const TraxelStore &traxel_store,
+        const EventVectorVector &event_vector):
+    traxel_store_(traxel_store),
+    event_vector_(event_vector)
 {
+
 }
 
 void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::JointFeatureVector &feature_vector) const
@@ -28,9 +32,11 @@ void TrackingFeatureExtractor::compute_features()
 void TrackingFeatureExtractor::compute_velocity_features()
 {
     // extract all tracks
+    std::cout << "Extracting Tracks" << std::endl;
     TrackTraxels track_extractor;
-    std::vector<ConstTraxelRefVector> track_traxels = track_extractor(graph_);
+    std::vector<ConstTraxelRefVector> track_traxels = track_extractor(traxel_store_, event_vector_);
 
+    std::cout << "computing features" << std::endl;
     size_t num_velocity_entries = 0;
     double sum_of_squared_velocities = 0;
     double min_squared_velocity = std::numeric_limits<double>::max();

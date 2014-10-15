@@ -29,10 +29,10 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
     Traxel n11, n21;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
-    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    n11.Id = 1; n11.Timestep = 1; com[0] = 1.0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n11.features["com"] = com; n11.features["divProb"] = divProb;
     add(ts,n11);
-    n21.Id = 10; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    n21.Id = 10; n21.Timestep = 2; com[0] = 0; com[1] = 1.0; com[2] = 0; divProb[0] = 0.1;
     n21.features["com"] = com; n21.features["divProb"] = divProb;
     add(ts,n21);
 
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
 
     boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.build_hypo_graph(ts);
 
-    std::vector< std::vector<Event> > events = tracking.track(
+    EventVectorVector events = tracking.track(
                                 0, // forbidden_cost
                                 0.0, // ep_gap
                                 false, // with_tracklets
@@ -71,39 +71,9 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
                                 )[0];
 
 
-    std::map<std::string, bool> config;
-    config["node_timestep"] = hypotheses_graph->has_property(node_timestep());
-    config["node_active"] = hypotheses_graph->has_property(node_active());
-    config["node_active2"] = hypotheses_graph->has_property(node_active2());
-    config["node_active_count"] = hypotheses_graph->has_property(node_active_count());
-    config["node_offered"] = hypotheses_graph->has_property(node_offered());
-    config["split_from"] = hypotheses_graph->has_property(split_from());
-    config["division_active"] = hypotheses_graph->has_property(division_active());
-    config["merger_resolved_to"] = hypotheses_graph->has_property(merger_resolved_to());
-    config["node_originated_from"] = hypotheses_graph->has_property(node_originated_from());
-    config["node_resolution_candidate"] = hypotheses_graph->has_property(node_resolution_candidate());
-    config["arc_distance"] = hypotheses_graph->has_property(arc_distance());
-    config["traxel_arc_id"] = hypotheses_graph->has_property(traxel_arc_id());
-    config["arc_vol_ratio"] = hypotheses_graph->has_property(arc_vol_ratio());
-    config["arc_from_timestep"] = hypotheses_graph->has_property(arc_from_timestep());
-    config["arc_to_timestep"] = hypotheses_graph->has_property(arc_to_timestep());
-    config["arc_active"] = hypotheses_graph->has_property(arc_active());
-    config["arc_resolution_candidate"] = hypotheses_graph->has_property(arc_resolution_candidate());
-    config["tracklet_intern_dist"] = hypotheses_graph->has_property(tracklet_intern_dist());
-    config["tracklet_intern_arc_ids"] = hypotheses_graph->has_property(tracklet_intern_arc_ids());
-    config["arc_active_count"] = hypotheses_graph->has_property(arc_active_count());
-    config["node_traxel"] = hypotheses_graph->has_property(node_traxel());
-
-    for(const auto it : config)
-    {
-        std::cout << it.first << ": " << it.second << std::endl;
-    }
-
-//    set_solution(*hypotheses_graph, 0);
-
     std::cout << "Computing higher order features" << std::endl;
 
-    TrackingFeatureExtractor extractor(*hypotheses_graph);
+    TrackingFeatureExtractor extractor(ts, events);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -111,6 +81,7 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
     for(size_t i = 0; i < joint_feature_vector.size(); i++)
     {
         std::cout << "Feature:\t" << extractor.get_feature_description(i) << "\t\tValue:\t" << joint_feature_vector[i] << std::endl;
+        BOOST_CHECK_EQUAL(joint_feature_vector[i], 2.0);
     }
     std::cout << "done" << std::endl;
 }

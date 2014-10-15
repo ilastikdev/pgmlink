@@ -1,7 +1,8 @@
 #ifndef TRACKING_FEATURE_EXTRACTOR_H
 #define TRACKING_FEATURE_EXTRACTOR_H
 
-#include "pgmlink/hypotheses.h"
+#include "pgmlink/traxels.h"
+#include "pgmlink/event.h"
 #include "pgmlink/higher_order_features.h"
 
 namespace pgmlink {
@@ -22,7 +23,7 @@ public:
     TrackingFeatureExtractor() = delete;
 
     /// Create the extractor given a hypotheses graph
-    TrackingFeatureExtractor(HypothesesGraph& graph);
+    TrackingFeatureExtractor(const TraxelStore& traxel_store, const EventVectorVector& event_vector);
 
     /// Get the complete vector of features computed for the currently set solution
     void get_feature_vector(JointFeatureVector& feature_vector) const;
@@ -44,7 +45,8 @@ private:
 private:
     JointFeatureVector joint_feature_vector_;
     FeatureDescription feature_descriptions_;
-    HypothesesGraph& graph_;
+    const TraxelStore& traxel_store_;
+    const EventVectorVector& event_vector_;
 };
 
 } // end namespace features
