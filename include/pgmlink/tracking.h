@@ -225,6 +225,9 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
 
+      /// Return reference to the ilp solutions
+      PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
+
     private:
       int max_number_objects_;
       double max_dist_;
@@ -238,6 +241,7 @@ namespace pgmlink {
       boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
       FieldOfView fov_;
       std::string event_vector_dump_filename_;
+      std::vector<ConservationTracking::IlpSolution> ilp_solutions_;
 
       TraxelStore* traxel_store_;
 

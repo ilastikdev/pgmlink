@@ -58,6 +58,8 @@ class Traxel;
 
 class ConservationTracking : public Reasoner {
     public:
+    typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
+
 	ConservationTracking(
                              unsigned int max_number_objects,
                              boost::function<double (const Traxel&, const size_t)> detection,
@@ -135,6 +137,8 @@ class ConservationTracking : public Reasoner {
      */
     const std::map<HypothesesGraph::Arc, size_t>& get_arc_map() const;
     
+    /// Return reference to all CPLEX solution vectors
+    const std::vector<IlpSolution>& get_ilp_solutions() const;
 
     private:
     // copy and assingment have to be implemented, yet
@@ -175,7 +179,8 @@ class ConservationTracking : public Reasoner {
     boost::shared_ptr<pgm::OpengmModelDeprecated> pgm_;
     //opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel, pgm::OpengmModelDeprecated::ogmAccumulator>* optimizer_;
 	cplex_optimizer* optimizer_;
-	std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> solution_;
+
+    std::vector<IlpSolution> solutions_;
 	
     std::map<HypothesesGraph::Node, size_t> div_node_map_;
     std::map<HypothesesGraph::Node, size_t> app_node_map_;
