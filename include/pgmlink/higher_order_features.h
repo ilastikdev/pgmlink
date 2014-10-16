@@ -53,7 +53,6 @@ diffusion_calculator.calculate(positions, return_value);
 // pgmlink
 #include "pgmlink/traxels.h" /* for traxels */
 #include "pgmlink/hypotheses.h" /* for hypotheses graph */
-#include "pgmlink/event.h" /* for events */
 #include "pgmlink/classifier_auxiliary.h" /* for class FeatureCalculator */
 
 // boost
@@ -122,18 +121,6 @@ class TraxelsOfInterest {
   */
   virtual const std::vector<ConstTraxelRefVector>& operator()(
     const HypothesesGraph& graph
-  ) = 0;
-
-  /**
-   \brief Extract the traxels of interest from solution event vector
-
-   \param[in] vector of a vector of events per timestep
-  \return vector of vectors of traxel references: ((t1, t2, t3), (t1, t3), ...).
-    They are stored as std::vector<std::vector<const *pgmlink::Traxel> >
-  */
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const TraxelStore& traxel_store,
-    const EventVectorVector& event_vector
   ) = 0;
 };
 
@@ -326,12 +313,6 @@ class TrackTraxels : public TraxelsOfInterest {
   virtual const std::vector<ConstTraxelRefVector>& operator()(
     const HypothesesGraph& graph
   );
-
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const TraxelStore& traxel_store,
-    const EventVectorVector& event_vector
-  );
-
  protected:
   static const std::string name_;
   std::vector<ConstTraxelRefVector> ret_;
@@ -370,12 +351,6 @@ class DivisionTraxels : public TraxelsOfInterest {
     const HypothesesGraph& graph,
     size_t depth
   );
-
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const TraxelStore& traxel_store,
-    const EventVectorVector& event_vector
-  );
-
  protected:
   const std::vector<ConstTraxelRefVector>& from_tracklet_graph(
     const HypothesesGraph& graph,

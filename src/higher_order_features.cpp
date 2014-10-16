@@ -390,111 +390,6 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
   return ret_;
 }
 
-const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
-  const TraxelStore& traxel_store,
-  const EventVectorVector& event_vector
-)
-{
-    typedef std::pair<size_t,size_t> TimeId;
-    typedef boost::shared_ptr< std::vector<TimeId> > Track;
-
-    // This map is populated with all tracks, always such that the key
-    // to a track is the last mentioned traxel's timestep and id, to ease
-    // track continuation when looping over events
-    typedef std::map< TimeId, Track> TrackMap;
-    TrackMap tracks_by_last_traxel_timeid;
-
-    // helper function
-    auto add_new_track = [&](size_t t, size_t id)
-    {
-        Track track(new std::vector<TimeId>());
-        TimeId timeId = std::make_pair(t, id);
-        track->push_back(timeId);
-        tracks_by_last_traxel_timeid[timeId] = track;
-    };
-
-    // go through all timesteps and the events per timestep
-    for(size_t timestep = 0; timestep < event_vector.size(); timestep++)
-    {
-        const EventVector& timestep_events = event_vector[timestep];
-
-        for(EventVector::const_iterator event_it = timestep_events.begin();
-            event_it != timestep_events.end();
-            ++event_it)
-        {
-            switch(event_it->type)
-            {
-                case Event::Appearance:
-                {
-                    // create new track
-                    add_new_track(timestep + 1, event_it->traxel_ids[0]);
-                } break;
-                case Event::Move:
-                {
-                    // get already existing part of track
-                    TimeId last = std::make_pair(timestep, event_it->traxel_ids[0]);
-                    Track track;
-                    TrackMap::iterator it = tracks_by_last_traxel_timeid.find(last);
-                    if(it == tracks_by_last_traxel_timeid.end())
-                    {
-                        track = Track(new std::vector<TimeId>());
-                        TimeId timeId = std::make_pair(timestep, event_it->traxel_ids[0]);
-                        track->push_back(timeId);
-                    }
-                    else
-                    {
-                        track = it->second;
-                        tracks_by_last_traxel_timeid.erase(it);
-                    }
-
-                    // extend track
-                    TimeId new_last = std::make_pair(timestep + 1, event_it->traxel_ids[1]);
-                    track->push_back(new_last);
-
-                    // add track with new id as key
-                    tracks_by_last_traxel_timeid[new_last] = track;
-                } break;
-                case Event::Disappearance:
-                {
-                    // nothing to do, track simply ends?
-                } break;
-                case Event::Division:
-                {
-                    // last track ends, two new tracks are started for the children
-                    add_new_track(timestep + 1, event_it->traxel_ids[1]);
-                    add_new_track(timestep + 1, event_it->traxel_ids[2]);
-                } break;
-                default:
-                {
-                    // complain that we have no clue what to do here
-                    std::stringstream msg;
-                    msg << "Event type not handled yet in extraction: " << *event_it;
-                    throw std::runtime_error(msg.str());
-                }
-            }
-        }
-    }
-
-    ret_.clear();
-
-    // Create traxels of interest for each track in map
-    for(TrackMap::iterator track_it = tracks_by_last_traxel_timeid.begin();
-        track_it != tracks_by_last_traxel_timeid.end();
-        ++track_it)
-    {
-        ret_.push_back(ConstTraxelRefVector());
-        Track& track = track_it->second;
-
-        for(TimeId time_id : *track)
-        {
-            TraxelStoreByTimeid::iterator traxel_it = traxel_store.get<by_timeid>().find(boost::make_tuple(time_id.first, time_id.second));
-            ret_.back().push_back(&(*traxel_it));
-        }
-    }
-
-    return ret_;
-}
-
 ////
 //// class DivisionTraxels
 ////
@@ -546,14 +441,6 @@ const std::vector<ConstTraxelRefVector>& DivisionTraxels::operator()(
   } else {
     return from_traxel_graph(graph, depth);
   }
-}
-
-const std::vector<ConstTraxelRefVector>& DivisionTraxels::operator()(
-  const TraxelStore& traxel_store,
-  const EventVectorVector& event_vector
-)
-{
-    throw std::runtime_error("Not yet implemented");
 }
 
 const std::vector<ConstTraxelRefVector>& DivisionTraxels::from_traxel_graph(
