@@ -53,7 +53,7 @@ void TrackingFeatureExtractor::compute_velocity_features()
         FeatureMatrix velocities;
         velocity_calculator.calculate(positions, velocities);
 
-        // compute per track min/max/mean of velocity
+        // compute per track min/max/sum of velocity
         MinCalculator<0> min_calculator;
         FeatureMatrix min_velocity;
         min_calculator.calculate(velocities, min_velocity);
@@ -64,11 +64,6 @@ void TrackingFeatureExtractor::compute_velocity_features()
         max_calculator.calculate(velocities, max_velocity);
         max_squared_velocity = std::max(max_squared_velocity, double(max_velocity(0,0)));
 
-        MeanCalculator<0> mean_calculator;
-        FeatureMatrix mean_velocity;
-        mean_calculator.calculate(velocities, mean_velocity);
-
-        // accumulate all velocities
         SumCalculator<0> sum_calculator;
         FeatureMatrix sum_velocity;
         sum_calculator.calculate(velocities, sum_velocity);
