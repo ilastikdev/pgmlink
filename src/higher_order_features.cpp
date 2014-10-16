@@ -72,12 +72,7 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   nodes_active_map_type& nodes_active_map = graph.get(node_active_count());
   arcs_active_map_type& arcs_active_map = graph.get(arc_active_count());
 
-  // check if the solution_index is legal
-  if (nodes_active_map.beginValue()->size() <= solution_index) {
-    throw std::runtime_error("Index of solution out of range");
-  }
-
-  // create the a node_active and arc_active map
+  // create the the node_active and arc_active map
   if (not graph.has_property(node_active())) {
     graph.add(node_active());
   }
@@ -92,9 +87,19 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   // Now we can start the with writing the solution with the index
   // solution_index into the node_active_map
   for (NodeIt n_it(graph); n_it != lemon::INVALID; ++n_it) {
+    if (nodes_active_map[n_it].size() <= solution_index) {
+      throw std::runtime_error(
+        "In set_solution(): Solution index out of range"
+      );
+    }
     node_active_map[n_it] = nodes_active_map[n_it][solution_index];
   }
   for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it) {
+    if (arcs_active_map[a_it].size() <= solution_index) {
+      throw std::runtime_error(
+        "In set_solution(): Solution index out of range"
+      );
+    }
     arc_active_map[a_it] = arcs_active_map[a_it][solution_index];
   }
 }
