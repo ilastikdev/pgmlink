@@ -117,14 +117,11 @@ void export_hypotheses() {
   class_<HypothesesGraph::Node>("Node");
   class_<HypothesesGraph::InArcIt>("InArcIt");
   class_<HypothesesGraph::OutArcIt>("OutArcIt");
-  class_<node_label>("nodeLabel");
-  class_<arc_label>("arcLabel");
 
   GraphIterator<HypothesesGraph::NodeIt ,HypothesesGraph::Node>::wrap("NodeIt" );
-  GraphIterator<HypothesesGraph::ArcIt , HypothesesGraph::Arc >::wrap("ArcIt" );
-  //GraphIterator<HypothesesGraph::OutArcIt,HypothesesGraph::Arc >::wrap("OutArcIt");
-  //GraphIterator<HypothesesGraph::InArcIt ,HypothesesGraph::Arc >::wrap("InArcIt" );
-
+  // GraphIterator<HypothesesGraph::OutArcIt,HypothesesGraph::Arc >::wrap("OutArcIt");
+  // GraphIterator<HypothesesGraph::InArcIt ,HypothesesGraph::Arc >::wrap("InArcIt" );
+  GraphIterator<HypothesesGraph::ArcIt ,HypothesesGraph::Arc >::wrap("ArcIt" );
 
   IterableValueMap_ValueIterator<node_traxel_m>::wrap("NodeTraxelMap_ValueIt");
 
@@ -189,8 +186,10 @@ void export_hypotheses() {
 
     .def("addTraxel", &HypothesesGraph::add_traxel)
 
-    .def("addNodeLabel", &HypothesesGraph::add_node_label)
     .def("addArcLabel" , &HypothesesGraph::add_arc_label )
+    .def("addAppearanceLabel",&HypothesesGraph::add_appearance_label)
+    .def("addDisappearanceLabel",&HypothesesGraph::add_disappearance_label)
+    .def("addDivisionLabel",&HypothesesGraph::add_division_label)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,

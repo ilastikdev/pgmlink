@@ -55,8 +55,9 @@ class ConservationTracking : public Reasoner {
           with_disappearance_(with_disappearance),
           transition_parameter_(transition_parameter),
           with_constraints_(with_constraints),
-          cplex_timeout_(cplex_timeout)
-    { };
+          cplex_timeout_(cplex_timeout),
+          export_from_labeled_graph_(false)
+    {  };
     ~ConservationTracking();
 
     virtual void formulate( const HypothesesGraph& );
@@ -90,6 +91,10 @@ class ConservationTracking : public Reasoner {
     std::string constraints_file_;
     std::string ground_truth_file_;
 
+    bool export_from_labeled_graph_;
+
+    void write_labeledgraph_to_file(const HypothesesGraph&);
+
     private:
     // copy and assingment have to be implemented, yet
     ConservationTracking(const ConservationTracking&) {};
@@ -106,8 +111,11 @@ class ConservationTracking : public Reasoner {
 
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
+    std::map<size_t,label_type> opengmid_variable_label_;
+    std::map<size_t,label_type> opengmid_factor_label_;
 
-    
+    std::map<std::pair<size_t,size_t>,size_t > clpex_variable_id_map_;
+    std::map<std::pair<size_t,std::pair<size_t,size_t> >,size_t> clpex_factor_id_map_;
     
     unsigned int max_number_objects_;
 
@@ -121,10 +129,14 @@ class ConservationTracking : public Reasoner {
     shared_ptr<pgm::OpengmModelDeprecated> pgm_;
     opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel, pgm::OpengmModelDeprecated::ogmAccumulator>* optimizer_;
 
+    //variable id maps
     std::map<HypothesesGraph::Node, size_t> div_node_map_;
     std::map<HypothesesGraph::Node, size_t> app_node_map_;
     std::map<HypothesesGraph::Node, size_t> dis_node_map_;
     std::map<HypothesesGraph::Arc, size_t> arc_map_;
+
+    //factor id maps
+    std::map<HypothesesGraph::Node, size_t> detection_f_node_map_;
 
     double ep_gap_;    
 

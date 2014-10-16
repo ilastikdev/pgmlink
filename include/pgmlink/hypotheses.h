@@ -258,23 +258,37 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   template <typename Graph>
   const std::string property_map<arc_resolution_candidate, Graph>::name = "arc_resolution_candidate";
 
-    enum label_type {
-        negative_label,
-        detection_label,
-        transition_label,
-        disappearance_label,
-        appearance_label,
-        division_label};
+  typedef size_t label_type;
 
-  // node ground truth label
-  struct node_label {};
+  // appearance ground truth label
+  struct appearance_label {};
   template <typename Graph>
-  struct property_map< node_label, Graph> {
+  struct property_map< appearance_label, Graph> {
     typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
     static const std::string name;
   };
   template <typename Graph>
-  const std::string property_map<node_label, Graph>::name = "node_label";
+  const std::string property_map<appearance_label, Graph>::name = "appearance_label";
+
+  // disappearance ground truth label
+  struct disappearance_label {};
+  template <typename Graph>
+  struct property_map< disappearance_label, Graph> {
+    typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<disappearance_label, Graph>::name = "disappearance_label";
+
+  // division ground truth label
+  struct division_label {};
+  template <typename Graph>
+  struct property_map< division_label, Graph> {
+    typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<division_label, Graph>::name = "division_label";
 
   // arc ground truth label
   struct arc_label {};
@@ -309,7 +323,13 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     PGMLINK_EXPORT HypothesesGraph::Node add_traxel(Traxel ts);
 
     // assign ground truth to a node
-    PGMLINK_EXPORT void add_node_label(HypothesesGraph::Node,label_type label);
+    PGMLINK_EXPORT void add_appearance_label(HypothesesGraph::Node,label_type label);
+
+    // assign ground truth to a node
+    PGMLINK_EXPORT void add_disappearance_label(HypothesesGraph::Node,label_type label);
+
+    // assign division ground truth to a node
+    PGMLINK_EXPORT void add_division_label(HypothesesGraph::Node,label_type label);
 
     // assign ground truth to a node
     PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  ,label_type label);

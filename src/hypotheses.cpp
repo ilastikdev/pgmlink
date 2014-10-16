@@ -42,9 +42,21 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
     return node;
 }
 
-void HypothesesGraph::add_node_label(HypothesesGraph::Node node,label_type label) {
-  add(node_label());
-  property_map< node_label, HypothesesGraph::base_graph>::type& gt_label = get(node_label());
+void HypothesesGraph::add_appearance_label(HypothesesGraph::Node node,label_type label) {
+  add(appearance_label());
+  property_map< appearance_label, HypothesesGraph::base_graph>::type& gt_label = get(appearance_label());
+  gt_label.set(node,label);
+}
+
+void HypothesesGraph::add_disappearance_label(HypothesesGraph::Node node,label_type label) {
+  add(disappearance_label());
+  property_map< disappearance_label, HypothesesGraph::base_graph>::type& gt_label = get(disappearance_label());
+  gt_label.set(node,label);
+}
+
+void HypothesesGraph::add_division_label(HypothesesGraph::Node node,label_type label) {
+  add(division_label());
+  property_map< division_label, HypothesesGraph::base_graph>::type& gt_label = get(division_label());
   gt_label.set(node,label);
 }
 

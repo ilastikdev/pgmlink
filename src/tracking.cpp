@@ -44,7 +44,7 @@ std::string exec(const char* cmd) {
 
 void transpose_matrix_in_file(std::string filename){
   //from http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
-  std::string awk_program = "awk '{\n for (i=1; i<=NF; i++)  {\n a[NR,i] = $i \n} \n}\n NF>p { p = NF } \nEND {\n for(j=1; j<=p; j++) {\n str=a[1,j]\n for(i=2; i<=NR; i++){\n str=str\" \"a[i,j];\n }\n print str\n }\n }' ";
+  std::string awk_program = "gawk '{\n for (i=1; i<=NF; i++)  {\n a[NR,i] = $i \n} \n}\n NF>p { p = NF } \nEND {\n for(j=1; j<=p; j++) {\n str=a[1,j]\n for(i=2; i<=NR; i++){\n str=str\" \"a[i,j];\n }\n print str\n }\n }' ";
   system( (awk_program + filename + "> tmp.txt").c_str() ) ;
   system( (std::string("rm ")+ filename).c_str() ) ;
   system( (std::string("cp tmp.txt ")+ filename).c_str() ) ;
@@ -280,7 +280,13 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
   boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts) {
 
   
-  LOG(logDEBUG3) << "enering build_hypo_graph"<< endl;;
+  LOG(logDEBUG3) << "entering build_hypo_graph"<< endl;;
+
+        LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ; 
+        LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ; 
+        LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_; 
+        LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_; 
+        LOG(logDEBUG1) <<"division_threshold\t"<<      division_threshold_;
   
 	traxel_store_ = &ts;
 
@@ -432,7 +438,7 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
     LOG(logDEBUG1) <<"with_constraints\t"<<      with_constraints; 
     LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
     
-    
+
 	Traxels empty;
 	boost::function<double(const Traxel&, const size_t)> detection, division;
 	boost::function<double(const double)> transition;
@@ -502,6 +508,8 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 	pgm.features_file_      = features_file_;   
 	pgm.constraints_file_   = constraints_file_;
 	pgm.ground_truth_file_  = ground_truth_file_;
+	pgm.export_from_labeled_graph_ = export_from_labeled_graph_;
+
 
 	cout << "-> formulate ConservationTracking model" << endl;
 	pgm.formulate(*hypotheses_graph_);
@@ -512,17 +520,22 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 	cout << "-> conclude" << endl;
 	pgm.conclude(*hypotheses_graph_);
 
+	if(export_from_labeled_graph_ and not ground_truth_file_.empty())
+		LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
+		pgm.write_labeledgraph_to_file(*hypotheses_graph_);
+
 	cout << "-> storing state of detection vars" << endl;
 	last_detections_ = state_of_nodes(*hypotheses_graph_);
 
 	cout << "-> pruning inactive hypotheses" << endl;
-	prune_inactive(*hypotheses_graph_);
+	if(not export_from_labeled_graph_)
+		prune_inactive(*hypotheses_graph_);
 
 	cout << "-> constructing unresolved events" << endl;
 	boost::shared_ptr<std::vector< std::vector<Event> > > ev = events(*hypotheses_graph_);
 	
 
-	if (max_number_objects_ > 1 && with_merger_resolution && all_true(ev->begin()+1, ev->end(), has_data<Event>)) {
+	if (max_number_objects_ > 1 && 	not export_from_labeled_graph_ && with_merger_resolution && all_true(ev->begin()+1, ev->end(), has_data<Event>)) {
 	  cout << "-> resolving mergers" << endl;
 	  MergerResolver m(hypotheses_graph_.get());
 	  FeatureExtractorBase* extractor;
@@ -602,18 +615,31 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
     }
   }
 
+  void ConsTracking::set_export_labeled_graph(bool in){
+	export_from_labeled_graph_ = in;
+  }
+
   void ConsTracking::write_funkey_features(TraxelStore ts,vector<vector<double>> parameterlist){
     for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it) {
         
       int ndim = 3;
       std::string tmp_feat_file;
 
-      if(not ground_truth_file_.empty()){
-	tmp_feat_file = features_file_;
-	features_file_.clear();
+      if(not ground_truth_file_.empty() and not export_from_labeled_graph_){
+		tmp_feat_file = features_file_;
+		features_file_.clear();
       }
+      if(not export_from_labeled_graph_)
+      	build_hypo_graph(ts);
 
-      build_hypo_graph(ts);
+      	cout << "writing funkey files with weights:";
+
+      	for(int i = 0; i != 5; i++) {
+    		std::cout << (*it)[i]; 
+		}
+
+		cout << endl;
+
       track(0,//forbidden_cost,
 	    0,
 	    false,
@@ -632,8 +658,9 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
       if(not constraints_file_.empty())
 		constraints_file_.clear();
       if(not ground_truth_file_.empty()){
-		features_file_ = tmp_feat_file;
-		ground_truth_file_.clear();
+			ground_truth_file_.clear();
+		if(not export_from_labeled_graph_)
+			features_file_ = tmp_feat_file;
 		}
   	}
 }
@@ -646,34 +673,41 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
     std::vector<std::vector<double>> list;
 
     if(not  writeConstraints.empty() and writeFeatures.empty() and writeGroundTruth.empty()){
-      list = std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1. ));
+    	//constraints only
+      	list = std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1. ));
     }
-    else if(not writeGroundTruth.empty()){
-      list = std::vector<std::vector<double>>(1,weights);
+    else if(not writeGroundTruth.empty() and export_from_labeled_graph_ == false){
+    	// use provided weights for tracking and generating ground truth
+      	list = std::vector<std::vector<double>>(1,weights);
     }
-   if(not writeFeatures.empty()){
+   	if(not writeFeatures.empty()){
      //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
       for(int i=0;i<number_of_weights;i++){
-	std::vector<double> param(number_of_weights,0.);
-	param[i] = 1;
-	list.push_back(param);
+		std::vector<double> param(number_of_weights,0.);
+		param[i] = 1;
+		list.push_back(param);
       }
     }
 
-   write_funkey_features(ts,list);
+   	write_funkey_features(ts,list);
 
-   if(not writeFeatures.empty()){
-     transpose_matrix_in_file(writeFeatures);
-   }
+   	if(not writeFeatures.empty()){
+    	transpose_matrix_in_file(writeFeatures);
+   	}
   }
 
-  vector<double> ConsTracking::learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth){
+  vector<double> ConsTracking::learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights,std::string options){
     
     vector<double> out;
-    std::string command = std::string(FUNKEY_BINARY_FILE) + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth;
+    std::string command = std::string("/home/swolf/local/src/sbmrm/build/binaries/sbmrm") + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth +" "+  options;
+    if(not weights.empty())
+    	command += " --weightCostsFile="+groundTruth+" --weightCostString="+"\""+weights+"\" ";
+
+
+
     LOG(logINFO) << "calling funkey with "<< command;
     std::string shell_output =  exec(command.c_str());
-    LOG(logDEBUG1) << shell_output<< endl;
+    LOG(logINFO) << shell_output<< endl;
     int start = shell_output.find("optimial w is [")+15;
     int end = shell_output.find("]",start);
     std::string numlist = shell_output.substr(start,end-start);
@@ -686,5 +720,3 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
     return out;
   }
 } // namespace tracking
-
-

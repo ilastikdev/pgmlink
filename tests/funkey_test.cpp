@@ -82,7 +82,8 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learning ) {
 	std::cout << "Write Funkey Files" << std::endl;
 	std::cout << std::endl;
 
-
+	boost::shared_ptr<HypothesesGraph> graph = tracking.build_hypo_graph(ts);
+	tracking.set_export_labeled_graph(false);	
 	tracking.write_funkey_files(ts,"features.txt","constraints.txt","labels_1.txt",vector<double>(5,1.));
 	
 	vector<double> weights = tracking.learn_from_funkey_files("features.txt","constraints.txt","labels_1.txt");
@@ -153,7 +154,8 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_ZeroEnergy ) {
 					     20, // max_neighbor_distance
 					     true, //with_divisions
 					     0.3, // division_threshold
-					     "none" // random_forest_filename
+					     "none", // random_forest_filename
+					     fov
 					     );
 
 	std::cout << "Write Funkey Files" << std::endl;
@@ -161,6 +163,10 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_ZeroEnergy ) {
 
 	int number_of_weights = 5;
 	
+	boost::shared_ptr<HypothesesGraph> graph = tracking.build_hypo_graph(ts);
+
+	tracking.set_export_labeled_graph(false);	
+
 	std::vector<std::vector<double>> list(1,std::vector<double>(number_of_weights,0. ));
 	tracking.write_funkey_set_output_files("test_energy.txt","","");
 	tracking.write_funkey_features(ts,list);
@@ -262,7 +268,8 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learn_From_Labeled_Gr
 					     20, // max_neighbor_distance
 					     true, //with_divisions
 					     0.3, // division_threshold
-					     "none" // random_forest_filename
+					     "none", // random_forest_filename
+					     fov
 					     );
 
 	std::cout << "Write Funkey Files" << std::endl;
@@ -272,8 +279,54 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learn_From_Labeled_Gr
 	
 	boost::shared_ptr<HypothesesGraph> graph = tracking.build_hypo_graph(ts);
 
+	//add graph labels
+	cout << "add graph labels to all Arcs" << endl;
+    for (HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a){
+		cout << graph->id(a)<<"\t"<< (graph->id(a)!=4 and graph->id(a) != 5) <<endl;
+		if(graph->id(a)!=4 and graph->id(a) != 5)
+			graph->add_arc_label(a,1);
+		else
+			graph->add_arc_label(a,0);
+	}
+	cout << "add graph labels to all Node" << endl;
+    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
+    	cout << graph->id(n)<<"\t1"<<endl;
+    	graph->add_appearance_label(n,1);
+    	graph->add_disappearance_label(n,1);
+    	graph->add_division_label(n,0);
+    }
 
-	tracking.track(0,//forbidden_cost,
+    tracking.set_export_labeled_graph(true);
+	tracking.write_funkey_set_output_files("","","label3.txt");
+	tracking.write_funkey_features(ts,std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1.)));
+	tracking.set_export_labeled_graph(false);
+	tracking.write_funkey_set_output_files("","","label4.txt");
+	tracking.write_funkey_features(ts,std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1.)));
+
+
+
+	int count1 = 0;
+	int count2 = 0;
+
+	ifstream in("label3.txt");
+	ifstream in2("label4.txt");
+	while (in.good() && !in.eof())
+	{
+		string line;
+		getline(in,line);
+		count1++;
+	}
+
+	while (in2.good() && !in2.eof()) 
+	{
+		string line;
+		getline(in2,line);
+		count2++;
+    }
+
+   BOOST_CHECK_EQUAL(count1,count2);
+
+	/*tracking.track(0,//forbidden_cost,
 	    0,
 	    false,
 	    1,//detection
@@ -286,24 +339,9 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learn_From_Labeled_Gr
 	    5,//transition_parameter,
 	    0,//border_width,
 	    true);//with constraints  
-
-	//add graph labels
-	cout << "add graph labels to all Arcs" << endl;
-    for (HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a){
-		cout << graph->id(a)<<"\t"<< (graph->id(a)!=4 and graph->id(a) != 5) <<endl;
-		if(graph->id(a)!=4 and graph->id(a) != 5)
-			graph->add_arc_label(a,transition_label);
-		else
-			graph->add_arc_label(a,negative_label);
-	}
-	cout << "add graph labels to all Node" << endl;
-    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
-    	graph->add_node_label(n,transition_label);
-		cout << graph->id(n)<<"\t1"<<endl;
-    }
-
-
+*/
 	//std::vector<std::vector<double>> list(1,std::vector<double>(number_of_weights,0. ));
 	//tracking.write_funkey_set_output_files("test_energy.txt","","");
 	//tracking.write_funkey_features(ts,list);
 }
+

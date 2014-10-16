@@ -171,7 +171,8 @@ namespace pgmlink {
       means_(std::vector<double>()),
       sigmas_(std::vector<double>()),
       fov_(fov),
-      event_vector_dump_filename_(event_vector_dump_filename)
+      event_vector_dump_filename_(event_vector_dump_filename),
+      export_from_labeled_graph_(false)
       {}
 
 
@@ -221,14 +222,11 @@ namespace pgmlink {
        * Get state of detection variables after call to operator().
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
-
       PGMLINK_EXPORT void write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset = true);
-
       PGMLINK_EXPORT void write_funkey_features(TraxelStore ts,std::vector<std::vector<double>> parameterlist);
-
       PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
-
-      PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth);
+      PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights = "",std::string options = "");
+      PGMLINK_EXPORT void set_export_labeled_graph(bool in);
 
     private:
       int max_number_objects_;
@@ -252,6 +250,8 @@ namespace pgmlink {
       std::string features_file_;
       std::string constraints_file_; 
       std::string ground_truth_file_;
+
+      bool export_from_labeled_graph_;
 							    
   };
 }
