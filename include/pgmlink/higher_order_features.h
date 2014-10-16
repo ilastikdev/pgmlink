@@ -70,6 +70,7 @@ namespace features {
 =============================================================================*/
 typedef std::vector<HypothesesGraph::Node> Nodevector;
 typedef std::vector<const Traxel*> ConstTraxelRefVector;
+typedef std::vector<ConstTraxelRefVector> ConstTraxelRefVectors;
 
 typedef feature_type FeatureScalar;
 typedef vigra::MultiArray<1, feature_type> FeatureVector;
