@@ -34,10 +34,12 @@ public:
     void compute_features();
 
 private:
+    void push_back_feature(std::string feature_name, double feature_value);
     /**
      * methods that compute each feature
      */
-    void compute_velocity_features();
+    void compute_velocity_features(ConstTraxelRefVectors&);
+    void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_size_difference_features();
     // TODO: add many more
 

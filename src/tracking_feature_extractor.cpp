@@ -21,15 +21,21 @@ const std::string TrackingFeatureExtractor::get_feature_description(size_t featu
 
 void TrackingFeatureExtractor::compute_features()
 {
-    compute_velocity_features();
+    // extract all tracks
+    TrackTraxels track_extractor;
+    ConstTraxelRefVectors track_traxels = track_extractor(graph_);
+    // extract all divisions to depth 1
+    DivisionTraxels div_1_extractor(1);
+    ConstTraxelRefVectors div_1_traxels = div_1_extractor(graph_);
+
+    compute_velocity_features(track_traxels);
+    compute_track_length_features(track_traxels);
     //compute_size_difference_features();
 }
 
-void TrackingFeatureExtractor::compute_velocity_features()
+void TrackingFeatureExtractor::compute_velocity_features(
+    ConstTraxelRefVectors& track_traxels)
 {
-    // extract all tracks
-    TrackTraxels track_extractor;
-    std::vector<ConstTraxelRefVector> track_traxels = track_extractor(graph_);
 
     size_t num_velocity_entries = 0;
     double sum_of_squared_velocities = 0;
@@ -74,19 +80,43 @@ void TrackingFeatureExtractor::compute_velocity_features()
 
     double mean_squared_velocity = sum_of_squared_velocities / num_velocity_entries;
 
-    joint_feature_vector_.push_back(mean_squared_velocity);
-    feature_descriptions_.push_back("Mean of all velocities (squared)");
+    push_back_feature("Mean of all velocities (squared)", mean_squared_velocity);
+    push_back_feature("Min of all velocities (squared)", min_squared_velocity);
+    push_back_feature("Max of all velocities (squared)", max_squared_velocity);
+}
 
-    joint_feature_vector_.push_back(min_squared_velocity);
-    feature_descriptions_.push_back("Min of all velocities (squared)");
-
-    joint_feature_vector_.push_back(max_squared_velocity);
-    feature_descriptions_.push_back("Max of all velocities (squared)");
+void TrackingFeatureExtractor::compute_track_length_features(
+    ConstTraxelRefVectors& track_traxels)
+{
+    double sum_track_length = 0;
+    double min_track_length = std::numeric_limits<double>::max();
+    double max_track_length = 0.0;
+    for (auto track : track_traxels)
+    {
+        double track_size = static_cast<double>(track.size());
+        min_track_length = std::min(min_track_length, track_size);
+        max_track_length = std::max(max_track_length, track_size);
+        sum_track_length+= track_size;
+    }
+    if (track_traxels.size() != 0) {
+      sum_track_length/= track_traxels.size();
+    }
+    push_back_feature("Mean of track length", sum_track_length);
+    push_back_feature("Min of track length", min_track_length);
+    push_back_feature("Max of track length", max_track_length);
 }
 
 void TrackingFeatureExtractor::compute_size_difference_features()
 {
     throw std::runtime_error("not yet implemented");
+}
+
+void TrackingFeatureExtractor::push_back_feature(
+    std::string feature_name,
+    double feature_value)
+{
+    joint_feature_vector_.push_back(feature_value);
+    feature_descriptions_.push_back(feature_name);
 }
 
 } // end namespace features
