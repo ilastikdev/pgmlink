@@ -312,19 +312,34 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     );
   }
 
+  // Get the property maps
+  node_active_map_type& node_active_map = graph.get(node_active());
+  arc_active_map_type& arc_active_map = graph.get(arc_active());
+
   // check if we have a tracklet graph
   bool with_tracklets = graph.has_property(node_tracklet());
+
+  // check if the traxel vector for any tracklet is empty
+  for (
+    NodeActiveIt n_it(node_active_map);
+    (n_it != lemon::INVALID) and with_tracklets;
+    ++n_it
+  ) {
+    const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
+    if (t_vec.size() == 0) {
+      with_tracklets = false;
+      LOG(logDEBUG) << "In TrackTraxels::operator(): "
+        << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
+      LOG(logDEBUG) << "Use therefore traxel in traxel map";
+    }
+  }
 
   // check if the graph is legal
   if (not (graph.has_property(node_traxel()) or with_tracklets)) {
     throw std::runtime_error(
-      "HypothesesGraph has neither traxel nor tracklet property map"
+      "HypothesesGraph has neither traxel nor complete tracklet property map"
     );
   }
-
-  // Get the property maps
-  node_active_map_type& node_active_map = graph.get(node_active());
-  arc_active_map_type& arc_active_map = graph.get(arc_active());
 
   // Make maps from child to parent and parent to child
   typedef std::map<HypothesesGraph::Node, HypothesesGraph::Node> NodeNodeMap;

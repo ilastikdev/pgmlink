@@ -698,7 +698,7 @@ typedef TCompositionCalculator<
 
 /**
 \brief calculates the squared norm of the difference of neighbouring column
-  vectors of the
+  vectors
 */
 typedef TCompositionCalculator<
   DiffCalculator,
