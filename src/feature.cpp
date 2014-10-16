@@ -133,6 +133,17 @@ double NegLnTransition::operator ()(const double dist_prob) const {
 
 
 ////
+//// class MoveEnergy
+////
+double MoveEnergy::operator ()(const Traxel& tr1,const Traxel& tr2,std::vector<double> weights) const {
+  std::vector<double> features;
+  //compute feature vector
+  
+  
+  return std::inner_product(weights.begin(),weights.end(),features.begin(),0.);
+}
+
+////
 //// class NegLnConstant
 ////
 double NegLnConstant::operator ()(size_t state) const {

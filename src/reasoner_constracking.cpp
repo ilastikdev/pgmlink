@@ -109,7 +109,7 @@ void ConservationTracking::conclude(HypothesesGraph& g) {
         throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
     }
 
-    if(export_from_labeled_graph_){
+    if(export_from_labeled_graph_ and not  ground_truth_file_.empty()){
     clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
     clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
     }
@@ -234,6 +234,8 @@ void ConservationTracking::conclude(HypothesesGraph& g) {
             }
         }
     }
+    cout << "conclude finished" << endl;
+}
 
 const std::map<HypothesesGraph::Arc, size_t>& ConservationTracking::get_arc_map() const {
     return arc_map_;

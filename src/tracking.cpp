@@ -519,10 +519,11 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred) {
 
 	cout << "-> conclude" << endl;
 	pgm.conclude(*hypotheses_graph_);
-
-	if(export_from_labeled_graph_ and not ground_truth_file_.empty())
+    cout << "conclude finished 2" << endl;
+	if(export_from_labeled_graph_ and not ground_truth_file_.empty()){
 		LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
 		pgm.write_labeledgraph_to_file(*hypotheses_graph_);
+	}
 
 	cout << "-> storing state of detection vars" << endl;
 	last_detections_ = state_of_nodes(*hypotheses_graph_);
