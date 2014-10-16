@@ -399,6 +399,10 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     
   }
 
+  boost::shared_ptr<HypothesesGraph> ConsTracking::get_hypo_graph() {
+    return hypotheses_graph_;
+  }
+
   EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 						      double ep_gap,
 						      bool with_tracklets,

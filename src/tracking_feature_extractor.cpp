@@ -4,13 +4,9 @@
 namespace pgmlink {
 namespace features {
 
-TrackingFeatureExtractor::TrackingFeatureExtractor(
-        const TraxelStore &traxel_store,
-        const EventVectorVector &event_vector):
-    traxel_store_(traxel_store),
-    event_vector_(event_vector)
+TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
+    graph_(graph)
 {
-
 }
 
 void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::JointFeatureVector &feature_vector) const
@@ -94,7 +90,7 @@ void TrackingFeatureExtractor::compute_velocity_features()
 {
     // extract all tracks
     TrackTraxels track_extractor;
-    std::vector<ConstTraxelRefVector> track_traxels = track_extractor(traxel_store_, event_vector_);
+    std::vector<ConstTraxelRefVector> track_traxels = track_extractor(graph_);
 
     size_t num_velocity_entries = 0;
     double sum_of_squared_velocities = 0;
@@ -119,22 +115,22 @@ void TrackingFeatureExtractor::compute_velocity_features()
         velocity_calculator.calculate(positions, velocities);
 
         // compute per track min/max/mean of velocity
-        MinCalculator<1> min_calculator;
+        MinCalculator<0> min_calculator;
         FeatureMatrix min_velocity;
         min_calculator.calculate(velocities, min_velocity);
         min_squared_velocity = std::min(min_squared_velocity, double(min_velocity(0,0)));
 
-        MaxCalculator<1> max_calculator;
+        MaxCalculator<0> max_calculator;
         FeatureMatrix max_velocity;
         max_calculator.calculate(velocities, max_velocity);
         max_squared_velocity = std::max(max_squared_velocity, double(max_velocity(0,0)));
 
-        MeanCalculator<1> mean_calculator;
+        MeanCalculator<0> mean_calculator;
         FeatureMatrix mean_velocity;
         mean_calculator.calculate(velocities, mean_velocity);
 
         // accumulate all velocities
-        SumCalculator<1> sum_calculator;
+        SumCalculator<0> sum_calculator;
         FeatureMatrix sum_velocity;
         sum_calculator.calculate(velocities, sum_velocity);
 

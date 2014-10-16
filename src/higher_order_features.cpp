@@ -72,12 +72,7 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   nodes_active_map_type& nodes_active_map = graph.get(node_active_count());
   arcs_active_map_type& arcs_active_map = graph.get(arc_active_count());
 
-  // check if the solution_index is legal
-  if (nodes_active_map.beginValue()->size() <= solution_index) {
-    throw std::runtime_error("Index of solution out of range");
-  }
-
-  // create the a node_active and arc_active map
+  // create the the node_active and arc_active map
   if (not graph.has_property(node_active())) {
     graph.add(node_active());
   }
@@ -92,9 +87,19 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   // Now we can start the with writing the solution with the index
   // solution_index into the node_active_map
   for (NodeIt n_it(graph); n_it != lemon::INVALID; ++n_it) {
+    if (nodes_active_map[n_it].size() <= solution_index) {
+      throw std::runtime_error(
+        "In set_solution(): Solution index out of range"
+      );
+    }
     node_active_map[n_it] = nodes_active_map[n_it][solution_index];
   }
   for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it) {
+    if (arcs_active_map[a_it].size() <= solution_index) {
+      throw std::runtime_error(
+        "In set_solution(): Solution index out of range"
+      );
+    }
     arc_active_map[a_it] = arcs_active_map[a_it][solution_index];
   }
 }
@@ -307,19 +312,34 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     );
   }
 
+  // Get the property maps
+  node_active_map_type& node_active_map = graph.get(node_active());
+  arc_active_map_type& arc_active_map = graph.get(arc_active());
+
   // check if we have a tracklet graph
   bool with_tracklets = graph.has_property(node_tracklet());
+
+  // check if the traxel vector for any tracklet is empty
+  for (
+    NodeActiveIt n_it(node_active_map);
+    (n_it != lemon::INVALID) and with_tracklets;
+    ++n_it
+  ) {
+    const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
+    if (t_vec.size() == 0) {
+      with_tracklets = false;
+      LOG(logDEBUG) << "In TrackTraxels::operator(): "
+        << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
+      LOG(logDEBUG) << "Use therefore traxel in traxel map";
+    }
+  }
 
   // check if the graph is legal
   if (not (graph.has_property(node_traxel()) or with_tracklets)) {
     throw std::runtime_error(
-      "HypothesesGraph has neither traxel nor tracklet property map"
+      "HypothesesGraph has neither traxel nor complete tracklet property map"
     );
   }
-
-  // Get the property maps
-  node_active_map_type& node_active_map = graph.get(node_active());
-  arc_active_map_type& arc_active_map = graph.get(arc_active());
 
   // Make maps from child to parent and parent to child
   typedef std::map<HypothesesGraph::Node, HypothesesGraph::Node> NodeNodeMap;
@@ -385,111 +405,6 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
   return ret_;
 }
 
-const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
-  const TraxelStore& traxel_store,
-  const EventVectorVector& event_vector
-)
-{
-    typedef std::pair<size_t,size_t> TimeId;
-    typedef boost::shared_ptr< std::vector<TimeId> > Track;
-
-    // This map is populated with all tracks, always such that the key
-    // to a track is the last mentioned traxel's timestep and id, to ease
-    // track continuation when looping over events
-    typedef std::map< TimeId, Track> TrackMap;
-    TrackMap tracks_by_last_traxel_timeid;
-
-    // helper function
-    auto add_new_track = [&](size_t t, size_t id)
-    {
-        Track track(new std::vector<TimeId>());
-        TimeId timeId = std::make_pair(t, id);
-        track->push_back(timeId);
-        tracks_by_last_traxel_timeid[timeId] = track;
-    };
-
-    // go through all timesteps and the events per timestep
-    for(size_t timestep = 0; timestep < event_vector.size(); timestep++)
-    {
-        const EventVector& timestep_events = event_vector[timestep];
-
-        for(EventVector::const_iterator event_it = timestep_events.begin();
-            event_it != timestep_events.end();
-            ++event_it)
-        {
-            switch(event_it->type)
-            {
-                case Event::Appearance:
-                {
-                    // create new track
-                    add_new_track(timestep + 1, event_it->traxel_ids[0]);
-                } break;
-                case Event::Move:
-                {
-                    // get already existing part of track
-                    TimeId last = std::make_pair(timestep, event_it->traxel_ids[0]);
-                    Track track;
-                    TrackMap::iterator it = tracks_by_last_traxel_timeid.find(last);
-                    if(it == tracks_by_last_traxel_timeid.end())
-                    {
-                        track = Track(new std::vector<TimeId>());
-                        TimeId timeId = std::make_pair(timestep, event_it->traxel_ids[0]);
-                        track->push_back(timeId);
-                    }
-                    else
-                    {
-                        track = it->second;
-                        tracks_by_last_traxel_timeid.erase(it);
-                    }
-
-                    // extend track
-                    TimeId new_last = std::make_pair(timestep + 1, event_it->traxel_ids[1]);
-                    track->push_back(new_last);
-
-                    // add track with new id as key
-                    tracks_by_last_traxel_timeid[new_last] = track;
-                } break;
-                case Event::Disappearance:
-                {
-                    // nothing to do, track simply ends?
-                } break;
-                case Event::Division:
-                {
-                    // last track ends, two new tracks are started for the children
-                    add_new_track(timestep + 1, event_it->traxel_ids[1]);
-                    add_new_track(timestep + 1, event_it->traxel_ids[2]);
-                } break;
-                default:
-                {
-                    // complain that we have no clue what to do here
-                    std::stringstream msg;
-                    msg << "Event type not handled yet in extraction: " << *event_it;
-                    throw std::runtime_error(msg.str());
-                }
-            }
-        }
-    }
-
-    ret_.clear();
-
-    // Create traxels of interest for each track in map
-    for(TrackMap::iterator track_it = tracks_by_last_traxel_timeid.begin();
-        track_it != tracks_by_last_traxel_timeid.end();
-        ++track_it)
-    {
-        ret_.push_back(ConstTraxelRefVector());
-        Track& track = track_it->second;
-
-        for(TimeId time_id : *track)
-        {
-            TraxelStoreByTimeid::iterator traxel_it = traxel_store.get<by_timeid>().find(boost::make_tuple(time_id.first, time_id.second));
-            ret_.back().push_back(&(*traxel_it));
-        }
-    }
-
-    return ret_;
-}
-
 ////
 //// class DivisionTraxels
 ////
@@ -541,14 +456,6 @@ const std::vector<ConstTraxelRefVector>& DivisionTraxels::operator()(
   } else {
     return from_traxel_graph(graph, depth);
   }
-}
-
-const std::vector<ConstTraxelRefVector>& DivisionTraxels::operator()(
-  const TraxelStore& traxel_store,
-  const EventVectorVector& event_vector
-)
-{
-    throw std::runtime_error("Not yet implemented");
 }
 
 const std::vector<ConstTraxelRefVector>& DivisionTraxels::from_traxel_graph(

@@ -196,6 +196,8 @@ namespace pgmlink {
 
       PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts);
 
+      PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
+
       PGMLINK_EXPORT EventVectorVectorVector track(double forbidden_cost = 0,
 							    double ep_gap=0.01,
 							    bool with_tracklets=true,
