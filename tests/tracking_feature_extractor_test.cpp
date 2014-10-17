@@ -328,12 +328,14 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     // remove file before populating
     std::string proposal_feature_filename = "proposal_features.txt";
     boost::filesystem::remove(proposal_feature_filename);
+    boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
 
     size_t feature_vector_length = 0;
 
     for(size_t m = 0; m < events.size(); m++)
     {
-        TrackingFeatureExtractor extractor(ts, events[m]);
+        set_solution(*hypotheses_graph, m);
+        TrackingFeatureExtractor extractor(*hypotheses_graph);
         extractor.compute_features();
         TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
         extractor.get_feature_vector(joint_feature_vector_m);

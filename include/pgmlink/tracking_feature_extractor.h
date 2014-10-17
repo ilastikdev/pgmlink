@@ -39,14 +39,27 @@ public:
     void append_feature_vector_to_file(const std::string &filename);
 
 private:
+    void push_back_feature(std::string feature_name, double feature_value);
     /**
      * methods that compute each feature
      */
-    void compute_velocity_features();
+    void compute_velocity_features(ConstTraxelRefVectors&);
+    void compute_acceleration_features(ConstTraxelRefVectors&);
+    void compute_angle_features(ConstTraxelRefVectors&);
+    void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_size_difference_features();
     // TODO: add many more
 
 private:
+    boost::shared_ptr<TraxelsFeaturesIdentity> position_extractor_ptr_;
+
+    boost::shared_ptr<SquaredDiffCalculator> sq_diff_calc_ptr_;
+    boost::shared_ptr<SquaredCurveCalculator> sq_curve_calc_ptr_;
+
+    boost::shared_ptr<MinCalculator<0> > row_min_calc_ptr_;
+    boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
+    boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
+
     JointFeatureVector joint_feature_vector_;
     FeatureDescription feature_descriptions_;
     HypothesesGraph& graph_;
