@@ -39,6 +39,7 @@ private:
      * methods that compute each feature
      */
     void compute_velocity_features(ConstTraxelRefVectors&);
+    void compute_acceleration_features(ConstTraxelRefVectors&);
     void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_size_difference_features();
     // TODO: add many more

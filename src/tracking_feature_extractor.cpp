@@ -36,6 +36,7 @@ void TrackingFeatureExtractor::compute_features()
     ConstTraxelRefVectors div_1_traxels = div_1_extractor(graph_);
 
     compute_velocity_features(track_traxels);
+    compute_acceleration_features(track_traxels);
     compute_track_length_features(track_traxels);
     //compute_size_difference_features();
 }
@@ -85,6 +86,54 @@ void TrackingFeatureExtractor::compute_velocity_features(
     push_back_feature("Mean of all velocities (squared)", mean_squared_velocity);
     push_back_feature("Min of all velocities (squared)", min_squared_velocity);
     push_back_feature("Max of all velocities (squared)", max_squared_velocity);
+}
+
+void TrackingFeatureExtractor::compute_acceleration_features(
+    ConstTraxelRefVectors& track_traxels)
+{
+    size_t num_accel_entries = 0;
+    double sq_accel_sum = 0;
+    double sq_accel_min = std::numeric_limits<double>::max();
+    double sq_accel_max = 0.0;
+
+    // for each track:
+    for(auto track : track_traxels)
+    {
+        // only compute velocities if track is longer than 2 elements
+        if(track.size() < 3)
+            continue;
+
+        // extract positions
+        FeatureMatrix positions;
+        position_extractor_ptr_->extract(track, positions);
+
+        // compute acceleration vector's squared magnitude for all triples of positions
+        FeatureMatrix sq_accel;
+        sq_curve_calc_ptr_->calculate(positions, sq_accel);
+
+        // compute per track min/max/sum of acceleration
+        FeatureMatrix temp;
+
+        row_min_calc_ptr_->calculate(sq_accel, temp);
+        sq_accel_min = std::min(sq_accel_min, double(temp(0,0)));
+
+        row_max_calc_ptr_->calculate(sq_accel, temp);
+        sq_accel_max = std::max(sq_accel_max, double(temp(0,0)));
+
+        row_sum_calc_ptr_->calculate(sq_accel, temp);
+        sq_accel_sum+= temp(0,0);
+
+        num_accel_entries += track.size() - 2;
+    }
+
+    if (num_accel_entries != 0)
+        sq_accel_sum/= num_accel_entries;
+    else
+        sq_accel_sum = 0.0;
+
+    push_back_feature("Mean of all accelerations (squared)", sq_accel_sum);
+    push_back_feature("Min of all accelerations (squared)", sq_accel_min);
+    push_back_feature("Max of all accelerations (squared)", sq_accel_max);
 }
 
 void TrackingFeatureExtractor::compute_track_length_features(
