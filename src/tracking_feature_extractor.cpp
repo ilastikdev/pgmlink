@@ -10,7 +10,9 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
-    angle_cos_calc_ptr_(new AngleCosineCalculator)
+    angle_cos_calc_ptr_(new AngleCosineCalculator),
+    child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
+    sq_norm_calc_ptr_(new SquaredNormCalculator<0>)
 {
 }
 
@@ -27,10 +29,10 @@ const std::string TrackingFeatureExtractor::get_feature_description(size_t featu
 
 void TrackingFeatureExtractor::compute_features()
 {
-    // extract all tracks
+    LOG(logDEBUG) << "Extract all tracks";
     TrackTraxels track_extractor;
     ConstTraxelRefVectors track_traxels = track_extractor(graph_);
-    // extract all divisions to depth 1
+    LOG(logDEBUG) << "Extract all divisions to depth 1";
     DivisionTraxels div_1_extractor(1);
     ConstTraxelRefVectors div_1_traxels = div_1_extractor(graph_);
 
@@ -38,6 +40,7 @@ void TrackingFeatureExtractor::compute_features()
     compute_acceleration_features(track_traxels);
     compute_angle_features(track_traxels);
     compute_track_length_features(track_traxels);
+    compute_division_move_distance(div_1_traxels);
     //compute_size_difference_features();
 }
 
@@ -213,6 +216,47 @@ void TrackingFeatureExtractor::compute_track_length_features(
     push_back_feature("Variance of track length", sum_squared_diff);
     push_back_feature("Min of track length", min_track_length);
     push_back_feature("Max of track length", max_track_length);
+}
+
+void TrackingFeatureExtractor::compute_division_move_distance(
+    ConstTraxelRefVectors& div_traxels)
+{
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squared_diff = 0.0;
+    double min = std::numeric_limits<double>::max();
+    double max = 0.0;
+
+    for (auto div : div_traxels)
+    {
+        // extract positions
+        FeatureMatrix positions;
+        position_extractor_ptr_->extract(div, positions);
+
+        // calculate the squared move distance
+        FeatureMatrix temp;
+        FeatureMatrix sq_move_dist;
+        child_parent_diff_calc_ptr_->calculate(positions, temp);
+        sq_norm_calc_ptr_->calculate(temp, sq_move_dist);
+        for(FeatureMatrix::iterator md_it = sq_move_dist.begin();
+            md_it != sq_move_dist.end();
+            md_it++)
+        {
+            min = std::min(min, double(*md_it));
+            max = std::max(max, double(*md_it));
+            n++;
+            prev_mean = mean;
+            mean += (*md_it - prev_mean) / n;
+            sum_squared_diff += (*md_it - prev_mean) * (*md_it - mean);
+        }
+    }
+    if (n != 0)
+      sum_squared_diff /= n;
+    push_back_feature("Mean of child-parent velocities (squared)", mean);
+    push_back_feature("Variance of child-parent velocities (squared)", sum_squared_diff);
+    push_back_feature("Min of child-parent velocities (squared)", min);
+    push_back_feature("Max of child-parent velocities (squared)", max);
 }
 
 void TrackingFeatureExtractor::compute_size_difference_features()
