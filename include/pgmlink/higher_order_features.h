@@ -706,6 +706,15 @@ typedef TCompositionCalculator<
   SquaredNormCalculator<0>
 > SquaredDiffCalculator;
 
+/**
+\brief calculates the squared norm of the difference of neighbouring column
+  vectors
+*/
+typedef TCompositionCalculator<
+  CurveCalculator,
+  SquaredNormCalculator<0>
+> SquaredCurveCalculator;
+
 ////
 //// class DiffusionCalculator
 ////
