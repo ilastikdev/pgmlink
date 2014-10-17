@@ -53,7 +53,6 @@ private:
 
     boost::shared_ptr<MinCalculator<0> > row_min_calc_ptr_;
     boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
-    boost::shared_ptr<SumCalculator<0> > row_sum_calc_ptr_;
     boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
 
     JointFeatureVector joint_feature_vector_;

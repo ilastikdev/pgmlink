@@ -10,7 +10,6 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
-    row_sum_calc_ptr_(new SumCalculator<0>),
     angle_cos_calc_ptr_(new AngleCosineCalculator)
 {
 }
@@ -46,8 +45,10 @@ void TrackingFeatureExtractor::compute_velocity_features(
     ConstTraxelRefVectors& track_traxels)
 {
 
-    size_t num_velocity_entries = 0;
-    double sum_of_squared_velocities = 0;
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squared_diff = 0.0;
     double min_squared_velocity = std::numeric_limits<double>::max();
     double max_squared_velocity = 0.0;
 
@@ -75,16 +76,21 @@ void TrackingFeatureExtractor::compute_velocity_features(
         row_max_calc_ptr_->calculate(velocities, max_velocity);
         max_squared_velocity = std::max(max_squared_velocity, double(max_velocity(0,0)));
 
-        FeatureMatrix sum_velocity;
-        row_sum_calc_ptr_->calculate(velocities, sum_velocity);
-
-        sum_of_squared_velocities += sum_velocity(0,0);
-        num_velocity_entries += track.size() - 1;
+        for(FeatureMatrix::iterator v_it = velocities.begin();
+            v_it != velocities.end();
+            v_it++)
+        {
+            n++;
+            prev_mean = mean;
+            mean += (*v_it - prev_mean) / n;
+            sum_squared_diff += (*v_it - prev_mean) * (*v_it - mean);
+        }
     }
 
-    double mean_squared_velocity = sum_of_squared_velocities / num_velocity_entries;
-
-    push_back_feature("Mean of all velocities (squared)", mean_squared_velocity);
+    if (n != 0)
+        sum_squared_diff /= n;
+    push_back_feature("Mean of all velocities (squared)", mean);
+    push_back_feature("Variance of all velocities (squared)", sum_squared_diff);
     push_back_feature("Min of all velocities (squared)", min_squared_velocity);
     push_back_feature("Max of all velocities (squared)", max_squared_velocity);
 }
@@ -92,8 +98,10 @@ void TrackingFeatureExtractor::compute_velocity_features(
 void TrackingFeatureExtractor::compute_acceleration_features(
     ConstTraxelRefVectors& track_traxels)
 {
-    size_t num_accel_entries = 0;
-    double sq_accel_sum = 0;
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squared_diff = 0.0;
     double sq_accel_min = std::numeric_limits<double>::max();
     double sq_accel_max = 0.0;
 
@@ -121,18 +129,21 @@ void TrackingFeatureExtractor::compute_acceleration_features(
         row_max_calc_ptr_->calculate(sq_accel, temp);
         sq_accel_max = std::max(sq_accel_max, double(temp(0,0)));
 
-        row_sum_calc_ptr_->calculate(sq_accel, temp);
-        sq_accel_sum+= temp(0,0);
-
-        num_accel_entries += track.size() - 2;
+        for(FeatureMatrix::iterator a_it = sq_accel.begin();
+            a_it != sq_accel.end();
+            a_it++)
+        {
+            n++;
+            prev_mean = mean;
+            mean += (*a_it - prev_mean) / n;
+            sum_squared_diff += (*a_it - prev_mean) * (*a_it - mean);
+        }
     }
 
-    if (num_accel_entries != 0)
-        sq_accel_sum/= num_accel_entries;
-    else
-        sq_accel_sum = 0.0;
-
-    push_back_feature("Mean of all accelerations (squared)", sq_accel_sum);
+    if (n != 0)
+        sum_squared_diff /= n;
+    push_back_feature("Mean of all accelerations (squared)", mean);
+    push_back_feature("Variance of all accelerations (squared)", sum_squared_diff);
     push_back_feature("Min of all accelerations (squared)", sq_accel_min);
     push_back_feature("Max of all accelerations (squared)", sq_accel_max);
 }
@@ -143,7 +154,7 @@ void TrackingFeatureExtractor::compute_angle_features(
     size_t n = 0;
     double mean = 0.0;
     double prev_mean = 0.0;
-    double sum_squares = 0.0;
+    double sum_squared_diff = 0.0;
 
     // for each track:
     for(auto track : track_traxels)
@@ -166,22 +177,23 @@ void TrackingFeatureExtractor::compute_angle_features(
         {
             n++;
             prev_mean = mean;
-            mean = prev_mean + (*a_it - prev_mean) / n;
-            sum_squares = sum_squares + (*a_it - prev_mean) * (*a_it - mean);
+            mean += (*a_it - prev_mean) / n;
+            sum_squared_diff += (*a_it - prev_mean) * (*a_it - mean);
         }
     }
-    if (n == 0)
-        sum_squares = 0.0;
-    else
-        sum_squares/= n;
+    if (n != 0)
+        sum_squared_diff /= n;
     push_back_feature("Mean of all angle cosines", mean);
-    push_back_feature("Variance of all angle cosines", sum_squares);
+    push_back_feature("Variance of all angle cosines", sum_squared_diff);
 }
 
 void TrackingFeatureExtractor::compute_track_length_features(
     ConstTraxelRefVectors& track_traxels)
 {
-    double sum_track_length = 0;
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squared_diff = 0.0;
     double min_track_length = std::numeric_limits<double>::max();
     double max_track_length = 0.0;
     for (auto track : track_traxels)
@@ -189,12 +201,16 @@ void TrackingFeatureExtractor::compute_track_length_features(
         double track_size = static_cast<double>(track.size());
         min_track_length = std::min(min_track_length, track_size);
         max_track_length = std::max(max_track_length, track_size);
-        sum_track_length+= track_size;
+        n++;
+        prev_mean = mean;
+        mean += (track_size - prev_mean) / n;
+        sum_squared_diff += (track_size - prev_mean) * (track_size - mean);
     }
-    if (track_traxels.size() != 0) {
-      sum_track_length/= track_traxels.size();
+    if (n != 0) {
+      sum_squared_diff /= n;
     }
-    push_back_feature("Mean of track length", sum_track_length);
+    push_back_feature("Mean of track length", mean);
+    push_back_feature("Variance of track length", sum_squared_diff);
     push_back_feature("Min of track length", min_track_length);
     push_back_feature("Max of track length", max_track_length);
 }
