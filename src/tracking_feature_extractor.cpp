@@ -11,7 +11,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
     row_sum_calc_ptr_(new SumCalculator<0>),
-    row_var_calc_ptr_(new VarianceCalculator)
+    angle_cos_calc_ptr_(new AngleCosineCalculator)
 {
 }
 
@@ -37,6 +37,7 @@ void TrackingFeatureExtractor::compute_features()
 
     compute_velocity_features(track_traxels);
     compute_acceleration_features(track_traxels);
+    compute_angle_features(track_traxels);
     compute_track_length_features(track_traxels);
     //compute_size_difference_features();
 }
@@ -99,7 +100,7 @@ void TrackingFeatureExtractor::compute_acceleration_features(
     // for each track:
     for(auto track : track_traxels)
     {
-        // only compute velocities if track is longer than 2 elements
+        // only compute accelerations if track is longer than 2 elements
         if(track.size() < 3)
             continue;
 
@@ -134,6 +135,47 @@ void TrackingFeatureExtractor::compute_acceleration_features(
     push_back_feature("Mean of all accelerations (squared)", sq_accel_sum);
     push_back_feature("Min of all accelerations (squared)", sq_accel_min);
     push_back_feature("Max of all accelerations (squared)", sq_accel_max);
+}
+
+void TrackingFeatureExtractor::compute_angle_features(
+    ConstTraxelRefVectors& track_traxels)
+{
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squares = 0.0;
+
+    // for each track:
+    for(auto track : track_traxels)
+    {
+        // only compute angles in track if track is longer than 2 elements
+        if(track.size() < 3)
+            continue;
+
+        // extract positions
+        FeatureMatrix positions;
+        position_extractor_ptr_->extract(track, positions);
+
+        // compute for all triples of positions the angle of change of direction
+        FeatureMatrix angles;
+        angle_cos_calc_ptr_->calculate(positions, angles);
+
+        for(FeatureMatrix::iterator a_it = angles.begin();
+            a_it != angles.end();
+            a_it++)
+        {
+            n++;
+            prev_mean = mean;
+            mean = prev_mean + (*a_it - prev_mean) / n;
+            sum_squares = sum_squares + (*a_it - prev_mean) * (*a_it - mean);
+        }
+    }
+    if (n == 0)
+        sum_squares = 0.0;
+    else
+        sum_squares/= n;
+    push_back_feature("Mean of all angle cosines", mean);
+    push_back_feature("Variance of all angle cosines", sum_squares);
 }
 
 void TrackingFeatureExtractor::compute_track_length_features(
