@@ -44,6 +44,16 @@ private:
     // TODO: add many more
 
 private:
+    boost::shared_ptr<TraxelsFeaturesIdentity> position_extractor_ptr_;
+
+    boost::shared_ptr<SquaredDiffCalculator> sq_diff_calc_ptr_;
+    boost::shared_ptr<SquaredCurveCalculator> sq_curve_calc_ptr_;
+
+    boost::shared_ptr<MinCalculator<0> > row_min_calc_ptr_;
+    boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
+    boost::shared_ptr<SumCalculator<0> > row_sum_calc_ptr_;
+    boost::shared_ptr<VarianceCalculator> row_var_calc_ptr_;
+
     JointFeatureVector joint_feature_vector_;
     FeatureDescription feature_descriptions_;
     HypothesesGraph& graph_;

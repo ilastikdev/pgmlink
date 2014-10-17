@@ -4,7 +4,14 @@ namespace pgmlink {
 namespace features {
 
 TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
-    graph_(graph)
+    graph_(graph),
+    position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
+    sq_diff_calc_ptr_(new SquaredDiffCalculator),
+    sq_curve_calc_ptr_(new SquaredCurveCalculator),
+    row_min_calc_ptr_(new MinCalculator<0>),
+    row_max_calc_ptr_(new MaxCalculator<0>),
+    row_sum_calc_ptr_(new SumCalculator<0>),
+    row_var_calc_ptr_(new VarianceCalculator)
 {
 }
 
@@ -50,29 +57,24 @@ void TrackingFeatureExtractor::compute_velocity_features(
             continue;
 
         // extract positions
-        TraxelsFeaturesIdentity position_extractor("com");
         FeatureMatrix positions;
-        position_extractor.extract(track, positions);
+        position_extractor_ptr_->extract(track, positions);
 
         // compute velocity vector's squared magnitude for all pairs of positions
-        SquaredDiffCalculator velocity_calculator;
         FeatureMatrix velocities;
-        velocity_calculator.calculate(positions, velocities);
+        sq_diff_calc_ptr_->calculate(positions, velocities);
 
         // compute per track min/max/sum of velocity
-        MinCalculator<0> min_calculator;
         FeatureMatrix min_velocity;
-        min_calculator.calculate(velocities, min_velocity);
+        row_min_calc_ptr_->calculate(velocities, min_velocity);
         min_squared_velocity = std::min(min_squared_velocity, double(min_velocity(0,0)));
 
-        MaxCalculator<0> max_calculator;
         FeatureMatrix max_velocity;
-        max_calculator.calculate(velocities, max_velocity);
+        row_max_calc_ptr_->calculate(velocities, max_velocity);
         max_squared_velocity = std::max(max_squared_velocity, double(max_velocity(0,0)));
 
-        SumCalculator<0> sum_calculator;
         FeatureMatrix sum_velocity;
-        sum_calculator.calculate(velocities, sum_velocity);
+        row_sum_calc_ptr_->calculate(velocities, sum_velocity);
 
         sum_of_squared_velocities += sum_velocity(0,0);
         num_velocity_entries += track.size() - 1;
