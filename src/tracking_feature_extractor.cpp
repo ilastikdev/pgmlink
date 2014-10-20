@@ -3,8 +3,11 @@
 namespace pgmlink {
 namespace features {
 
-TrackingFeatureExtractor::TrackingFeatureExtractor(HypothesesGraph &graph):
+TrackingFeatureExtractor::TrackingFeatureExtractor(
+        HypothesesGraph &graph,
+        FieldOfView& border_detection_fov):
     graph_(graph),
+    border_detection_fov_(border_detection_fov),
     position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
@@ -29,18 +32,49 @@ const std::string TrackingFeatureExtractor::get_feature_description(size_t featu
 
 void TrackingFeatureExtractor::compute_features()
 {
+    typedef boost::function<bool (const Traxel&)> FilterFunctionType;
+    typedef AppearanceTraxels::AppearanceType AppearanceType;
+    // get the filter function for appearance/disappearance traxels
+    BorderDistanceFilter filter(border_detection_fov_);
+    FilterFunctionType f;
+    f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &filter, _1);
+    // extract traxels of interest
     LOG(logDEBUG) << "Extract all tracks";
     TrackTraxels track_extractor;
     ConstTraxelRefVectors track_traxels = track_extractor(graph_);
     LOG(logDEBUG) << "Extract all divisions to depth 1";
     DivisionTraxels div_1_extractor(1);
     ConstTraxelRefVectors div_1_traxels = div_1_extractor(graph_);
+    LOG(logDEBUG) << "Extract all appearances";
+    AppearanceTraxels appearance_extractor(AppearanceType::Appearance);
+    ConstTraxelRefVectors all_app_traxels = appearance_extractor(graph_);
+    LOG(logDEBUG) << "Extract all disappearances";
+    AppearanceTraxels disappearance_extractor(AppearanceType::Disappearance);
+    ConstTraxelRefVectors all_disapp_traxels = disappearance_extractor(graph_);
+    LOG(logDEBUG) << "Extract filtered appearances";
+    AppearanceTraxels appearance_extractor_f(AppearanceType::Appearance, f);
+    ConstTraxelRefVectors filtered_app_traxels = appearance_extractor_f(graph_);
+    LOG(logDEBUG) << "Extract filtered disappearances";
+    AppearanceTraxels disappearance_extractor_f(AppearanceType::Disappearance, f);
+    ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(graph_);
 
     compute_velocity_features(track_traxels);
     compute_acceleration_features(track_traxels);
     compute_angle_features(track_traxels);
     compute_track_length_features(track_traxels);
     compute_division_move_distance(div_1_traxels);
+    push_back_feature(
+        "Count of all appearances",
+        static_cast<double>(all_app_traxels.size()));
+    push_back_feature(
+        "Count of all disappearances",
+        static_cast<double>(all_disapp_traxels.size()));
+    push_back_feature(
+        "Count of appearances within margin",
+        static_cast<double>(filtered_app_traxels.size()));
+    push_back_feature(
+        "Count of disappearances within margin",
+        static_cast<double>(filtered_disapp_traxels.size()));
     //compute_size_difference_features();
 }
 
@@ -270,6 +304,44 @@ void TrackingFeatureExtractor::push_back_feature(
 {
     joint_feature_vector_.push_back(feature_value);
     feature_descriptions_.push_back(feature_name);
+}
+
+BorderDistanceFilter::BorderDistanceFilter(
+        const FieldOfView& field_of_view):
+    fov_(field_of_view)
+{}
+
+bool BorderDistanceFilter::is_out_of_margin(const Traxel& traxel) const
+{
+    bool ret = false;
+    const FeatureMap& feature_map = traxel.features;
+    FeatureMap::const_iterator com_it = feature_map.find("com");
+    if (com_it == feature_map.end())
+    {
+        LOG(logDEBUG) << "in BorderDistanceFilter::is_out_of_margin(): "
+            << "feature map of traxel has no key \"com\"";
+        LOG(logDEBUG) << "return \"false\"";
+    }
+    else
+    {
+        double t = static_cast<double>(traxel.Timestep);
+        const std::vector<feature_type>& pos = com_it->second;
+        if (pos.size() == 2)
+        {
+            ret = fov_.contains(t, pos[0], pos[1], 0.0);
+        }
+        else if (pos.size() == 3)
+        {
+            ret = fov_.contains(t, pos[0], pos[1], pos[2]);
+        }
+        else
+        {
+            LOG(logDEBUG) << "in BorderDistanceFilter::is_out_of_margin(): "
+                << "dimension is neither 2d+t nor 3d+t";
+            LOG(logDEBUG) << "return \"false\"";
+        }
+    }
+    return ret;
 }
 
 } // end namespace features
