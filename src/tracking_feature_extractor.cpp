@@ -17,7 +17,8 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(
     row_max_calc_ptr_(new MaxCalculator<0>),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
-    sq_norm_calc_ptr_(new SquaredNormCalculator<0>)
+    sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
+    child_decel_calc_ptr_(new ChildDeceleration)
 {}
 
 void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::JointFeatureVector &feature_vector) const
@@ -41,6 +42,9 @@ void TrackingFeatureExtractor::compute_features()
     LOG(logDEBUG) << "Extract all divisions to depth 1";
     DivisionTraxels div_1_extractor(1);
     ConstTraxelRefVectors div_1_traxels = div_1_extractor(graph_);
+    LOG(logDEBUG) << "Extract all divisions to depth 2";
+    DivisionTraxels div_2_extractor(2);
+    ConstTraxelRefVectors div_2_traxels = div_2_extractor(graph_);
     LOG(logDEBUG) << "Extract all appearances";
     AppearanceTraxels appearance_extractor(AppearanceType::Appearance);
     ConstTraxelRefVectors all_app_traxels = appearance_extractor(graph_);
@@ -63,6 +67,7 @@ void TrackingFeatureExtractor::compute_features()
     compute_angle_features(track_traxels);
     compute_track_length_features(track_traxels);
     compute_division_move_distance(div_1_traxels);
+    compute_child_deceleration_features(div_2_traxels);
     push_back_feature(
         "Count of all appearances",
         static_cast<double>(all_app_traxels.size()));
@@ -295,6 +300,45 @@ void TrackingFeatureExtractor::compute_division_move_distance(
     push_back_feature("Max of child-parent velocities (squared)", max);
 }
 
+void TrackingFeatureExtractor::compute_child_deceleration_features(
+    ConstTraxelRefVectors& div_traxels)
+{
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squared_diff = 0.0;
+    double min = std::numeric_limits<double>::max();
+    double max = 0.0;
+
+    for (auto div : div_traxels)
+    {
+        // extract positions
+        FeatureMatrix positions;
+        position_extractor_ptr_->extract(div, positions);
+
+        // calculate the child decelerations
+        FeatureMatrix child_decel_mat;
+        child_decel_calc_ptr_->calculate(positions, child_decel_mat);
+        for(FeatureMatrix::iterator cd_it = child_decel_mat.begin();
+            cd_it != child_decel_mat.end();
+            cd_it++)
+        {
+            min = std::min(min, double(*cd_it));
+            max = std::max(max, double(*cd_it));
+            n++;
+            prev_mean = mean;
+            mean += (*cd_it - prev_mean) / n;
+            sum_squared_diff += (*cd_it - prev_mean) * (*cd_it - mean);
+        }
+    }
+    if (n != 0)
+      sum_squared_diff /= n;
+    push_back_feature("Mean of child decelerations", mean);
+    push_back_feature("Variance of child decelerations", sum_squared_diff);
+    push_back_feature("Min of child decelerations", min);
+    push_back_feature("Max of child decelerations", max);
+}
+
 void TrackingFeatureExtractor::compute_border_distances(
     ConstTraxelRefVectors& appearance_traxels,
     std::string description)
@@ -345,10 +389,10 @@ void TrackingFeatureExtractor::compute_border_distances(
     }
     if (n != 0)
       sum_squared_diff /= n;
-    push_back_feature("Mean of " + description + " border distance", mean);
-    push_back_feature("Variance of " + description + " border distance", sum_squared_diff);
-    push_back_feature("Min of " + description + " border distance", min);
-    push_back_feature("Max of " + description + " border distance", max);
+    push_back_feature("Mean of " + description + " border distances", mean);
+    push_back_feature("Variance of " + description + " border distances", sum_squared_diff);
+    push_back_feature("Min of " + description + " border distances", min);
+    push_back_feature("Max of " + description + " border distances", max);
 }
 
 void TrackingFeatureExtractor::compute_size_difference_features()

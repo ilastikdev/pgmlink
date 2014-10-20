@@ -46,6 +46,7 @@ private:
     void compute_angle_features(ConstTraxelRefVectors&);
     void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_division_move_distance(ConstTraxelRefVectors&);
+    void compute_child_deceleration_features(ConstTraxelRefVectors&);
     void compute_border_distances(ConstTraxelRefVectors&, std::string);
     void compute_size_difference_features();
     // TODO: add many more
@@ -61,6 +62,7 @@ private:
     boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
     boost::shared_ptr<ChildParentDiffCalculator> child_parent_diff_calc_ptr_;
     boost::shared_ptr<SquaredNormCalculator<0> > sq_norm_calc_ptr_;
+    boost::shared_ptr<ChildDeceleration> child_decel_calc_ptr_;
 
     FieldOfView fov_;
     boost::function<bool (const Traxel&)> margin_filter_function_;
