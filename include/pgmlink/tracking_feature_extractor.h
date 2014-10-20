@@ -22,7 +22,10 @@ public:
     TrackingFeatureExtractor() = delete;
 
     /// Create the extractor given a hypotheses graph
-    TrackingFeatureExtractor(HypothesesGraph& graph, FieldOfView& border_detection_fov);
+    TrackingFeatureExtractor(
+        HypothesesGraph& graph,
+        FieldOfView& fov,
+        boost::function<bool (const Traxel&)> margin_filter_function = NULL);
 
     /// Get the complete vector of features computed for the currently set solution
     void get_feature_vector(JointFeatureVector& feature_vector) const;
@@ -58,7 +61,8 @@ private:
     boost::shared_ptr<ChildParentDiffCalculator> child_parent_diff_calc_ptr_;
     boost::shared_ptr<SquaredNormCalculator<0> > sq_norm_calc_ptr_;
 
-    FieldOfView border_detection_fov_;
+    FieldOfView fov_;
+    boost::function<bool (const Traxel&)> margin_filter_function_;
 
     JointFeatureVector joint_feature_vector_;
     FeatureDescription feature_descriptions_;
@@ -68,7 +72,9 @@ private:
 class BorderDistanceFilter {
 public:
     BorderDistanceFilter(
-        const FieldOfView& field_of_view);
+        const FieldOfView& field_of_view,
+        double t_margin,
+        double spatial_margin);
     bool is_out_of_margin(const Traxel& traxel) const;
 private:
     FieldOfView fov_;

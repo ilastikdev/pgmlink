@@ -103,8 +103,10 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
 
     std::cout << "Computing higher order features" << std::endl;
 
-    FieldOfView border_det_fov(0.5, 0.5, 0.5, 0.5, 2.5, 4.5, 4.5, 4.5);
-    TrackingFeatureExtractor extractor(*hypotheses_graph, border_det_fov);
+    BorderDistanceFilter border_distance_filter(fov, 0.5, 0.5);
+    boost::function<bool (const Traxel&)> f;
+    f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &border_distance_filter, _1);
+    TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -205,8 +207,10 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
 
     std::cout << "Features for solution: 0" << std::endl;
     set_solution(*hypotheses_graph, 0);
-    FieldOfView border_det_fov(0.5, 0.5, 0.5, 0.5, 2.5, 4.5, 4.5, 4.5);
-    TrackingFeatureExtractor extractor(*hypotheses_graph, border_det_fov);
+    BorderDistanceFilter border_distance_filter(fov, 0.5, 0.5);
+    boost::function<bool (const Traxel&)> f;
+    f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &border_distance_filter, _1);
+    TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -220,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     {
         std::cout << "\nFeatures for solution: " << m << std::endl;
         set_solution(*hypotheses_graph, m);
-        TrackingFeatureExtractor extractor(*hypotheses_graph, border_det_fov);
+        TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
         extractor.compute_features();
         TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
         extractor.get_feature_vector(joint_feature_vector_m);

@@ -5,9 +5,11 @@ namespace features {
 
 TrackingFeatureExtractor::TrackingFeatureExtractor(
         HypothesesGraph &graph,
-        FieldOfView& border_detection_fov):
+        FieldOfView& fov,
+        boost::function<bool (const Traxel&)> margin_filter_function):
     graph_(graph),
-    border_detection_fov_(border_detection_fov),
+    fov_(fov),
+    margin_filter_function_(margin_filter_function),
     position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
@@ -16,8 +18,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>)
-{
-}
+{}
 
 void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::JointFeatureVector &feature_vector) const
 {
@@ -32,12 +33,7 @@ const std::string TrackingFeatureExtractor::get_feature_description(size_t featu
 
 void TrackingFeatureExtractor::compute_features()
 {
-    typedef boost::function<bool (const Traxel&)> FilterFunctionType;
     typedef AppearanceTraxels::AppearanceType AppearanceType;
-    // get the filter function for appearance/disappearance traxels
-    BorderDistanceFilter filter(border_detection_fov_);
-    FilterFunctionType f;
-    f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &filter, _1);
     // extract traxels of interest
     LOG(logDEBUG) << "Extract all tracks";
     TrackTraxels track_extractor;
@@ -52,10 +48,14 @@ void TrackingFeatureExtractor::compute_features()
     AppearanceTraxels disappearance_extractor(AppearanceType::Disappearance);
     ConstTraxelRefVectors all_disapp_traxels = disappearance_extractor(graph_);
     LOG(logDEBUG) << "Extract filtered appearances";
-    AppearanceTraxels appearance_extractor_f(AppearanceType::Appearance, f);
+    AppearanceTraxels appearance_extractor_f(
+        AppearanceType::Appearance,
+        margin_filter_function_);
     ConstTraxelRefVectors filtered_app_traxels = appearance_extractor_f(graph_);
     LOG(logDEBUG) << "Extract filtered disappearances";
-    AppearanceTraxels disappearance_extractor_f(AppearanceType::Disappearance, f);
+    AppearanceTraxels disappearance_extractor_f(
+        AppearanceType::Disappearance,
+        margin_filter_function_);
     ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(graph_);
 
     compute_velocity_features(track_traxels);
@@ -307,9 +307,39 @@ void TrackingFeatureExtractor::push_back_feature(
 }
 
 BorderDistanceFilter::BorderDistanceFilter(
-        const FieldOfView& field_of_view):
-    fov_(field_of_view)
-{}
+        const FieldOfView& field_of_view,
+        double t_margin,
+        double spatial_margin)
+{
+    std::vector<double> lower_bound = field_of_view.lower_bound();
+    std::vector<double> upper_bound = field_of_view.upper_bound();
+    if ((upper_bound[0] - lower_bound[0]) < 2 * t_margin)
+    {
+        t_margin = (upper_bound[0] - lower_bound[0]) / 2.0;
+    }
+    lower_bound[0] += t_margin;
+    upper_bound[0] -= t_margin;
+    for (size_t i = 1; i < lower_bound.size(); i++)
+    {
+        double spatial_margin_temp = spatial_margin;
+        if ((upper_bound[i] - lower_bound[i]) < 2 * spatial_margin)
+        {
+            spatial_margin_temp = (upper_bound[i] - lower_bound[i]) / 2.0;
+        }
+        lower_bound[i] += spatial_margin_temp;
+        upper_bound[i] -= spatial_margin_temp;
+    }
+    fov_.set_boundingbox(
+        lower_bound[0],
+        lower_bound[1],
+        lower_bound[2],
+        lower_bound[3],
+        upper_bound[0],
+        upper_bound[1],
+        upper_bound[2],
+        upper_bound[3]
+    );
+}
 
 bool BorderDistanceFilter::is_out_of_margin(const Traxel& traxel) const
 {
