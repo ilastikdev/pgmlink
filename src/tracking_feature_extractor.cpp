@@ -75,6 +75,8 @@ void TrackingFeatureExtractor::compute_features()
     push_back_feature(
         "Count of disappearances within margin",
         static_cast<double>(filtered_disapp_traxels.size()));
+    compute_border_distances(all_app_traxels, "appearance");
+    compute_border_distances(all_disapp_traxels, "disappearance");
     //compute_size_difference_features();
 }
 
@@ -291,6 +293,62 @@ void TrackingFeatureExtractor::compute_division_move_distance(
     push_back_feature("Variance of child-parent velocities (squared)", sum_squared_diff);
     push_back_feature("Min of child-parent velocities (squared)", min);
     push_back_feature("Max of child-parent velocities (squared)", max);
+}
+
+void TrackingFeatureExtractor::compute_border_distances(
+    ConstTraxelRefVectors& appearance_traxels,
+    std::string description)
+{
+    size_t n = 0;
+    double mean = 0.0;
+    double prev_mean = 0.0;
+    double sum_squared_diff = 0.0;
+    double min = std::numeric_limits<double>::max();
+    double max = 0.0;
+    for (auto appearance : appearance_traxels)
+    {
+        FeatureMatrix position;
+        position_extractor_ptr_->extract(appearance, position);
+        double border_dist = 0;
+        if (position.shape(1) == 3)
+        {
+            border_dist = fov_.spatial_distance_to_border(
+                0.0,
+                static_cast<double>(position(0,0)),
+                static_cast<double>(position(0,1)),
+                static_cast<double>(position(0,2)),
+                false
+            );
+        }
+        else if (position.shape(1) == 2)
+        {
+            border_dist = fov_.spatial_distance_to_border(
+                0.0,
+                static_cast<double>(position(0,0)),
+                static_cast<double>(position(0,1)),
+                0.0,
+                false
+            );
+        }
+        else
+        {
+            LOG(logDEBUG) << "In TrackingFeatureExtractor::"
+                << "compute_appearance_border_distances:";
+            LOG(logDEBUG) << "data is neither 2d nor 3d";
+        }
+        min = std::min(min, border_dist);
+        max = std::max(max, border_dist);
+        n++;
+        prev_mean = mean;
+        mean += (border_dist - prev_mean) / n;
+        sum_squared_diff += (border_dist - prev_mean) * (border_dist - mean);
+    }
+    if (n != 0)
+      sum_squared_diff /= n;
+    push_back_feature("Mean of " + description + " border distance", mean);
+    push_back_feature("Variance of " + description + " border distance", sum_squared_diff);
+    push_back_feature("Min of " + description + " border distance", min);
+    push_back_feature("Max of " + description + " border distance", max);
 }
 
 void TrackingFeatureExtractor::compute_size_difference_features()
