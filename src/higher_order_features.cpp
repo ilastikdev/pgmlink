@@ -450,7 +450,7 @@ const std::vector<ConstTraxelRefVector>& DivisionTraxels::operator()(
     const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
     if (t_vec.size() == 0) {
       with_tracklets = false;
-      LOG(logDEBUG) << "In TrackTraxels::operator(): "
+      LOG(logDEBUG) << "In DivisionTraxels::operator(): "
         << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
       LOG(logDEBUG) << "Use therefore traxel in traxel map";
     }
@@ -695,7 +695,6 @@ AppearanceTraxels::AppearanceTraxels(
 const std::vector<ConstTraxelRefVector>& AppearanceTraxels::operator()(
   const HypothesesGraph& graph
 ) {
-  LOG(logDEBUG) << "In AppearanceTraxels::operator()";
   ret_.clear();
 
   // Check if the graph has the necessary attributes
@@ -726,7 +725,7 @@ const std::vector<ConstTraxelRefVector>& AppearanceTraxels::operator()(
     const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
     if (t_vec.size() == 0) {
       with_tracklets = false;
-      LOG(logDEBUG) << "In TrackTraxels::operator(): "
+      LOG(logDEBUG) << "In AppearanceTraxels::operator(): "
         << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
       LOG(logDEBUG) << "Use therefore traxel in traxel map";
     }
