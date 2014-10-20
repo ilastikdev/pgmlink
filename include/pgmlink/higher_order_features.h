@@ -58,6 +58,7 @@ diffusion_calculator.calculate(positions, return_value);
 // boost
 #include <boost/serialization/serialization.hpp> /* for serialization */
 #include <boost/shared_ptr.hpp> /* for shared_ptr */
+#include <boost/function.hpp> /* for function in appearance traxels */
 
 // vigra
 #include <vigra/multi_array.hxx> /* for the feature extractors */
@@ -376,6 +377,33 @@ class DivisionTraxels : public TraxelsOfInterest {
   static const std::string name_;
   std::vector<ConstTraxelRefVector> ret_;
   size_t depth_;
+};
+
+////
+//// class AppearanceTraxels
+////
+/**
+\brief TODO
+*/
+class AppearanceTraxels : public TraxelsOfInterest {
+ public:
+  typedef boost::function<bool (const Traxel&)> FilterFunctionType;
+  enum AppearanceType {Appearance, Disappearance};
+
+  AppearanceTraxels(
+    const AppearanceType appearance = AppearanceType::Appearance,
+    FilterFunctionType traxel_filter_function = NULL
+  );
+  virtual ~AppearanceTraxels() {};
+  virtual const std::string& name() const;
+  virtual const std::vector<ConstTraxelRefVector>& operator()(
+    const HypothesesGraph& graph
+  );
+ protected:
+  static const std::string name_;
+  std::vector<ConstTraxelRefVector> ret_;
+  AppearanceType appearance_;
+  FilterFunctionType filter_function_;
 };
 
 ////

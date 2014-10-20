@@ -506,6 +506,98 @@ BOOST_AUTO_TEST_CASE( DivisionTraxels_operator_trackletgraph ) {
   }
 }
 
+BOOST_AUTO_TEST_CASE( AppearanceTraxels_operator_traxelgraph ) {
+  LOG(logINFO) << "test case: AppearanceTraxels_operator_traxelgraph";
+
+  // set up the graph
+  HypothesesGraph graph;
+  get_graph(graph);
+
+  // set the solution index
+  set_solution(graph, 0);
+
+  // get the appearance and disappearance traxels
+  typedef AppearanceTraxels::AppearanceType AppearanceType;
+  LOG(logINFO) << "  get the appearance/disappearance traxels";
+  AppearanceTraxels get_app_traxels(AppearanceType::Appearance);
+  AppearanceTraxels get_disapp_traxels(AppearanceType::Disappearance);
+  ConstTraxelRefVectors app_traxels = get_app_traxels(graph);
+  ConstTraxelRefVectors disapp_traxels = get_disapp_traxels(graph);
+
+  // with a filter function
+  struct filter_function {
+    bool operator()(const Traxel traxel) const {
+      const FeatureMap& feature_map = traxel.features;
+      return (feature_map.at("id").front() >= 8.0);
+    }
+  };
+  boost::function<bool (const Traxel)> f;
+  f = filter_function();
+  LOG(logINFO) << "  get the appearance/disappearance traxels with filter";
+  AppearanceTraxels get_app_traxels_f(AppearanceType::Appearance, f);
+  AppearanceTraxels get_disapp_traxels_f(AppearanceType::Disappearance, f);
+  ConstTraxelRefVectors app_traxels_f = get_app_traxels_f(graph);
+  ConstTraxelRefVectors disapp_traxels_f = get_disapp_traxels_f(graph);
+
+  LOG(logINFO) << "  there are " << app_traxels.size() << " appearances";
+  LOG(logINFO) << "  and " << disapp_traxels.size() << " disappearances";
+  BOOST_CHECK_EQUAL(app_traxels.size(), 1);
+  BOOST_CHECK_EQUAL(app_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels.size(), 2);
+  BOOST_CHECK_EQUAL(disapp_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels[1].size(), 1);
+
+  BOOST_CHECK_EQUAL(app_traxels_f.size(), 0);
+  BOOST_CHECK_EQUAL(disapp_traxels_f.size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels_f[0].size(), 1);
+}
+
+BOOST_AUTO_TEST_CASE( AppearanceTraxels_operator_trackletgraph ) {
+  LOG(logINFO) << "test case: AppearanceTraxels_operator_trackletgraph";
+
+  // set up the graph
+  HypothesesGraph graph;
+  get_tracklet_graph(graph);
+
+  // set the solution index
+  set_solution(graph, 0);
+
+  // get the appearance and disappearance traxels
+  typedef AppearanceTraxels::AppearanceType AppearanceType;
+  LOG(logINFO) << "  get the appearance/disappearance traxels";
+  AppearanceTraxels get_app_traxels(AppearanceType::Appearance);
+  AppearanceTraxels get_disapp_traxels(AppearanceType::Disappearance);
+  ConstTraxelRefVectors app_traxels = get_app_traxels(graph);
+  ConstTraxelRefVectors disapp_traxels = get_disapp_traxels(graph);
+
+  // with a filter function
+  struct filter_function {
+    bool operator()(const Traxel traxel) const {
+      const FeatureMap& feature_map = traxel.features;
+      return (feature_map.at("id").front() >= 8.0);
+    }
+  };
+  boost::function<bool (const Traxel)> f;
+  f = filter_function();
+  LOG(logINFO) << "  get the appearance/disappearance traxels with filter";
+  AppearanceTraxels get_app_traxels_f(AppearanceType::Appearance, f);
+  AppearanceTraxels get_disapp_traxels_f(AppearanceType::Disappearance, f);
+  ConstTraxelRefVectors app_traxels_f = get_app_traxels_f(graph);
+  ConstTraxelRefVectors disapp_traxels_f = get_disapp_traxels_f(graph);
+
+  LOG(logINFO) << "  there are " << app_traxels.size() << " appearances";
+  LOG(logINFO) << "  and " << disapp_traxels.size() << " disappearances";
+  BOOST_CHECK_EQUAL(app_traxels.size(), 1);
+  BOOST_CHECK_EQUAL(app_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels.size(), 2);
+  BOOST_CHECK_EQUAL(disapp_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels[1].size(), 1);
+
+  BOOST_CHECK_EQUAL(app_traxels_f.size(), 0);
+  BOOST_CHECK_EQUAL(disapp_traxels_f.size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels_f[0].size(), 1);
+}
+
 BOOST_AUTO_TEST_CASE( TraxelsFCFromFC_test) {
   LOG(logINFO) << "test case: TraxelsFCFromFC_test";
   

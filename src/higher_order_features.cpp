@@ -676,6 +676,120 @@ bool DivisionTraxels::get_parents_to_depth(
 }
 
 ////
+//// class AppearanceTraxels
+////
+const std::string AppearanceTraxels::name_ = "AppearanceTraxels";
+
+const std::string& AppearanceTraxels::name() const {
+  return name_;
+}
+
+AppearanceTraxels::AppearanceTraxels(
+  const AppearanceType appearance,
+  FilterFunctionType traxel_filter_function
+) :
+  appearance_(appearance),
+  filter_function_(traxel_filter_function)
+{}
+
+const std::vector<ConstTraxelRefVector>& AppearanceTraxels::operator()(
+  const HypothesesGraph& graph
+) {
+  LOG(logDEBUG) << "In AppearanceTraxels::operator()";
+  ret_.clear();
+
+  // Check if the graph has the necessary attributes
+  if (not graph.has_property(node_active())) {
+    throw std::runtime_error(
+      "Graph doesn't have a \"node_active\" property map"
+    );
+  }
+  if (not graph.has_property(arc_active())) {
+    throw std::runtime_error(
+      "Graph doesn't have an \"arc_active\" property map"
+    );
+  }
+
+  // Get the property maps
+  node_active_map_type& node_active_map = graph.get(node_active());
+  arc_active_map_type& arc_active_map = graph.get(arc_active());
+
+  // check if we have a tracklet graph
+  bool with_tracklets = graph.has_property(node_tracklet());
+
+  // check if the traxel vector for any tracklet is empty
+  for (
+    NodeActiveIt n_it(node_active_map);
+    (n_it != lemon::INVALID) and with_tracklets;
+    ++n_it
+  ) {
+    const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
+    if (t_vec.size() == 0) {
+      with_tracklets = false;
+      LOG(logDEBUG) << "In TrackTraxels::operator(): "
+        << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
+      LOG(logDEBUG) << "Use therefore traxel in traxel map";
+    }
+  }
+
+  // check if the graph is legal
+  if (not (graph.has_property(node_traxel()) or with_tracklets)) {
+    throw std::runtime_error(
+      "HypothesesGraph has neither traxel nor complete tracklet property map"
+    );
+  }
+
+  for (NodeActiveIt n_it(node_active_map); n_it != lemon::INVALID; ++n_it) {
+    if (appearance_ == AppearanceType::Appearance) {
+      size_t in_arcs = 0;
+      for (InArcIt a_it(graph, n_it); a_it != lemon::INVALID; ++a_it) {
+        in_arcs += (arc_active_map[a_it] ? 1 : 0);
+      }
+      if (in_arcs == 0) {
+        const Traxel* traxel_ref;
+        if (with_tracklets) {
+          traxel_ref = &(graph.get(node_tracklet())[n_it].front());
+        } else {
+          traxel_ref = &(graph.get(node_traxel())[n_it]);
+        }
+        if (filter_function_) {
+          if (filter_function_(*traxel_ref)) {
+            ret_.resize(ret_.size() + 1);
+            ret_.back().push_back(traxel_ref);
+          }
+        } else {
+          ret_.resize(ret_.size() + 1);
+          ret_.back().push_back(traxel_ref);
+        }
+      }
+    } else if (appearance_ == AppearanceType::Disappearance) {
+      size_t out_arcs = 0;
+      for (OutArcIt a_it(graph, n_it); a_it != lemon::INVALID; ++a_it) {
+        out_arcs += (arc_active_map[a_it] ? 1 : 0);
+      }
+      if (out_arcs == 0) {
+        const Traxel* traxel_ref;
+        if (with_tracklets) {
+          traxel_ref = &(graph.get(node_tracklet())[n_it].front());
+        } else {
+          traxel_ref = &(graph.get(node_traxel())[n_it]);
+        }
+        if (filter_function_) {
+          if (filter_function_(*traxel_ref)) {
+            ret_.resize(ret_.size() + 1);
+            ret_.back().push_back(traxel_ref);
+          }
+        } else {
+          ret_.resize(ret_.size() + 1);
+          ret_.back().push_back(traxel_ref);
+        }
+      }
+    }
+  }
+  return ret_;
+}
+
+////
 //// class CompositionCalculator
 ////
 const std::string CompositionCalculator::name_ = "CompositionCalculator";
