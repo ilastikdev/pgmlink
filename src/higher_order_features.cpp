@@ -226,7 +226,7 @@ void TraxelsFeaturesIdentity::extract(
   size_t y_size = 0;
 
   // get the feature map of the first traxel and iterate over the feature names
-  const FeatureMap& feature_map = traxelrefs.front()->features;
+  const FeatureMap& feature_map = traxelrefs.front()->features.get();
   for (
     std::vector<std::string>::const_iterator fname_it = feature_names_.begin();
     fname_it != feature_names_.end();
@@ -251,7 +251,7 @@ void TraxelsFeaturesIdentity::extract(
     tref_it++, column_index++
   ) {
     // fetch the features which are stored in a map
-    const FeatureMap feature_map = (*tref_it)->features;
+    const FeatureMap feature_map = (*tref_it)->features.get();
 
     // get the current column as a view
     FeatureVectorView column = feature_matrix.bind<0>(column_index);

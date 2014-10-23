@@ -862,6 +862,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_add_arcs_for_replacement_node ) {
 //
 //  feature_array COM(3, 0.0);
 //  TraxelStore ts;
+//  boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 //  Traxel t1, t2, t3, t22;
 //
 //  t1.Id = 11;
@@ -881,9 +882,9 @@ BOOST_AUTO_TEST_CASE( MergerResolver_add_arcs_for_replacement_node ) {
 //  t22.Timestep = 2;
 //  t22.features["com"] = COM;
 //
-//  add(ts, t1);
-//  add(ts, t2);
-//  add(ts, t3);
+//  add(ts, fs, t1);
+//  add(ts, fs, t2);
+//  add(ts, fs, t3);
 //  SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max NN
 //							       1, // max Dist
 //							       false, // forward_backward
@@ -941,6 +942,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_collect_arcs ) {
   
   feature_array COM(3, 0.0);
   TraxelStore ts;
+  boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
   Traxel t1, t2, t3;
   
   t1.Id = 11;
@@ -955,9 +957,9 @@ BOOST_AUTO_TEST_CASE( MergerResolver_collect_arcs ) {
   t3.Timestep = 3;
   t3.features["com"] = COM;
   
-  add(ts, t1);
-  add(ts, t2);
-  add(ts, t3);
+  add(ts, fs, t1);
+  add(ts, fs, t2);
+  add(ts, fs, t3);
   SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max NN
 							       100, // max Dist
 							       false, // forward_backward

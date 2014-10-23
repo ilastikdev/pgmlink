@@ -47,27 +47,28 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger ) {
 	//    |                    |
 	//  o                       o
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n41, n42;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divProb(feature_array::difference_type(1));
 	n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n11.features["com"] = com; n11.features["divProb"] = divProb;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
 	n12.features["com"] = com; n12.features["divProb"] = divProb;
-	add(ts,n12);
+    add(ts, fs, n12);
 	n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
 	n21.features["com"] = com; n21.features["divProb"] = divProb;
-	add(ts,n21);
+    add(ts, fs, n21);
 	n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
 	n31.features["com"] = com; n31.features["divProb"] = divProb;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n41.features["com"] = com; n41.features["divProb"] = divProb;
-	add(ts,n41);
+    add(ts, fs, n41);
 	n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n42.features["com"] = com; n42.features["divProb"] = divProb;
-	add(ts,n42);
+    add(ts, fs, n42);
 
 
 	std::cout << "Initialize Conservation tracking" << std::endl;
@@ -149,21 +150,22 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Division ) {
     //                |
     //                  o
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.8;
     n11.features["com"] = com; n11.features["divProb"] = divProb;
-    add(ts,n11);
+    add(ts, fs, n11);
     n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.7;
     n21.features["com"] = com; n21.features["divProb"] = divProb;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n31.features["com"] = com; n31.features["divProb"] = divProb;
-    add(ts,n31);
+    add(ts, fs, n31);
     n32.Id = 13; n32.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
     n32.features["com"] = com; n32.features["divProb"] = divProb;
-    add(ts,n32);
+    add(ts, fs, n32);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -239,15 +241,16 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove ) {
     //  t=1      2
     //  o ------ o
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n21;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n11.features["com"] = com; n11.features["divProb"] = divProb;
-    add(ts,n11);
+    add(ts, fs, n11);
     n21.Id = 10; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n21.features["com"] = com; n21.features["divProb"] = divProb;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -312,28 +315,29 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger_Volume ) {
     //    |                    |
     //  o                       o
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n41, n42;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 2;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 100;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1; count[0] = 90;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1; count[0] = 90;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-    add(ts,n31);
+    add(ts, fs, n31);
     n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 110;
     n41.features["com"] = com; n41.features["divProb"] = divProb; n41.features["count"] = count;
-    add(ts,n41);
+    add(ts, fs, n41);
     n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 60;
     n42.features["com"] = com; n42.features["divProb"] = divProb; n42.features["count"] = count;
-    add(ts,n42);
+    add(ts, fs, n42);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -414,19 +418,20 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Disappearance ) {
     //    |
     //  1
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 18; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -502,25 +507,26 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceAndDisappearance )
     //    |             |
     //  1                 1
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 18; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 18; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-    add(ts,n31);
+    add(ts, fs, n31);
     n32.Id = 15; n32.Timestep = 3; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -603,50 +609,51 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Appearance ) {
     //           1 ------ 1
     //                    1
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n13, n21, n22, n23, n24, n31, n32, n33, n34, n35;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n21.Id = 2; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 3; n31.Timestep = 3; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-    add(ts,n31);
+    add(ts, fs, n31);
 
     n12.Id = 4; n12.Timestep = 1; com[0] = 5; com[1] = 5; com[2] = 5; divProb[0] = 0.1; count[0] = 1;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n22.Id = 5; n22.Timestep = 2; com[0] = 5; com[1] = 5; com[2] = 5; divProb[0] = 0.1; count[0] = 1;
     n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
-    add(ts,n22);
+    add(ts, fs, n22);
     n32.Id = 6; n32.Timestep = 3; com[0] = 5; com[1] = 5; com[2] = 5; divProb[0] = 0.1; count[0] = 1;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     n13.Id = 7; n13.Timestep = 1; com[0] = 10; com[1] = 10; com[2] = 10; divProb[0] = 0.1; count[0] = 10;
     n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["count"] = count;
-    add(ts,n13);
+    add(ts, fs, n13);
     n23.Id = 8; n23.Timestep = 2; com[0] = 10; com[1] = 10; com[2] = 10; divProb[0] = 0.1; count[0] = 10;
     n23.features["com"] = com; n23.features["divProb"] = divProb; n23.features["count"] = count;
-    add(ts,n23);
+    add(ts, fs, n23);
     n33.Id = 9; n33.Timestep = 3; com[0] = 10; com[1] = 10; com[2] = 10; divProb[0] = 0.1; count[0] = 10;
     n33.features["com"] = com; n33.features["divProb"] = divProb; n33.features["count"] = count;
-    add(ts,n33);
+    add(ts, fs, n33);
 
     n24.Id = 10; n24.Timestep = 2; com[0] = 15; com[1] = 15; com[2] = 15; divProb[0] = 0.1; count[0] = 1;
     n24.features["com"] = com; n24.features["divProb"] = divProb; n24.features["count"] = count;
-    add(ts,n24);
+    add(ts, fs, n24);
     n34.Id = 11; n34.Timestep = 3; com[0] = 15; com[1] = 15; com[2] = 15; divProb[0] = 0.1; count[0] = 1;
     n34.features["com"] = com; n34.features["divProb"] = divProb; n34.features["count"] = count;
-    add(ts,n34);
+    add(ts, fs, n34);
 
     n35.Id = 12; n35.Timestep = 3; com[0] = 20; com[1] = 20; com[2] = 20; divProb[0] = 0.1; count[0] = 1;
     n35.features["com"] = com; n35.features["divProb"] = divProb; n35.features["count"] = count;
-    add(ts,n35);
+    add(ts, fs, n35);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -732,6 +739,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
     //  1 ------ 1 ------ 1
     //  1 ------ 1-\----- 1
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n21, n31;
     Traxel n12, n22, n32;
     feature_array com(feature_array::difference_type(3));
@@ -739,23 +747,23 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n21.Id = 2; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 3; n31.Timestep = 3; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-    add(ts,n31);
+    add(ts, fs, n31);
 
     n12.Id = 4; n12.Timestep = 1; com[0] = 5; com[1] = 5; com[2] = 5; divProb[0] = 0.1; count[0] = 1;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n22.Id = 5; n22.Timestep = 2; com[0] = 5; com[1] = 5; com[2] = 5; divProb[0] = 0.1; count[0] = 1;
     n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
-    add(ts,n22);
+    add(ts, fs, n22);
     n32.Id = 6; n32.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0.1; count[0] = 1;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -836,6 +844,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
     //  1 ----   2 ----- 1
     //  0 ------ 1 ----- 0
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n13, n22, n32;
     Traxel n14, n24, n34;
     feature_array com(feature_array::difference_type(3));
@@ -843,36 +852,36 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 3;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-    add(ts,n31);
+    add(ts, fs, n31);
 
     n13.Id = 12; n13.Timestep = 1; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
     n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["count"] = count;
-    add(ts,n13);
+    add(ts, fs, n13);
     n22.Id = 13; n22.Timestep = 2; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 3;
     n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
-    add(ts,n22);
+    add(ts, fs, n22);
     n32.Id = 14; n32.Timestep = 3; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     n14.Id = 15; n14.Timestep = 1; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
     n14.features["com"] = com; n14.features["divProb"] = divProb; n14.features["count"] = count;
-    add(ts,n14);
+    add(ts, fs, n14);
     n24.Id = 16; n24.Timestep = 2; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
     n24.features["com"] = com; n24.features["divProb"] = divProb; n24.features["count"] = count;
-    add(ts,n24);
+    add(ts, fs, n24);
     n34.Id = 17; n34.Timestep = 3; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
     n34.features["com"] = com; n34.features["divProb"] = divProb; n34.features["count"] = count;
-    add(ts,n34);
+    add(ts, fs, n34);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -957,6 +966,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     //  					  |
     //							0
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n32, n41, n42, n43;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
@@ -970,7 +980,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n11.features["coordinates"] = coordinates;
-    add(ts,n11);
+    add(ts, fs, n11);
 
     n12.Id = 12; n12.Timestep = 1; com[0] = 846; com[1] = 751; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
@@ -978,7 +988,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n12.features["coordinates"] = coordinates;
-    add(ts,n12);
+    add(ts, fs, n12);
 
     n21.Id = 21; n21.Timestep = 2; com[0] = 845; com[1] = 732; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.01; detProb[2] = 0.98;
@@ -986,7 +996,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n21.features["coordinates"] = coordinates;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     n31.Id = 31; n31.Timestep = 3; com[0] = 853; com[1] = 724; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
@@ -994,7 +1004,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n31.features["coordinates"] = coordinates;
-    add(ts,n31);
+    add(ts, fs, n31);
 
     n32.Id = 32; n32.Timestep = 3; com[0] = 835; com[1] = 747; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
@@ -1002,7 +1012,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n32.features["coordinates"] = coordinates;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     n41.Id = 41; n41.Timestep = 4; com[0] = 825; com[1] = 753; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
@@ -1010,7 +1020,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n41.features["coordinates"] = coordinates;
-    add(ts,n41);
+    add(ts, fs, n41);
 
     n42.Id = 42; n42.Timestep = 4; com[0] = 842; com[1] = 761; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.98; detProb[1] = 0.01; detProb[2] = 0.01;
@@ -1018,7 +1028,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n42.features["coordinates"] = coordinates;
-    add(ts,n42);
+    add(ts, fs, n42);
 
     n43.Id = 43; n43.Timestep = 4; com[0] = 853; com[1] = 724; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
@@ -1026,7 +1036,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n43.features["coordinates"] = coordinates;
-    add(ts,n43);
+    add(ts, fs, n43);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -1145,6 +1155,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels ) 
     //
     //  12 ------23 -----33
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n22, n23, n31, n32, n33;
     std::vector<int> center;
     std::vector<int> shift;
@@ -1155,56 +1166,56 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels ) 
     pushBackMultiple(shift, 100,100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n11,11,1,0.00,center,shift,pDet);
-    add(ts,n11);
+    add(ts, fs, n11);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 200, 200, 0);
     pushBackMultiple(shift, 100,100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n12,12,1,0.00,center,shift,pDet);
-    add(ts,n12);
+    add(ts, fs, n12);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 100, 100, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n21,21,2,0.00,center,shift,pDet);
-    add(ts,n21);
+    add(ts, fs, n21);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 200, 200, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n22,22,2,0.00,center,shift,pDet);
-    add(ts,n22);
+    add(ts, fs, n22);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 300, 300, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n23,23,2,0.00,center,shift,pDet);
-    add(ts,n23);
+    add(ts, fs, n23);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 0, 0, 0);
     pushBackMultiple(shift, 100,100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n31,31,3,0.00,center,shift,pDet);
-    add(ts,n31);
+    add(ts, fs, n31);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 100, 100, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n32,32,3,0.00,center,shift,pDet);
-    add(ts,n32);
+    add(ts, fs, n32);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 200, 200, 0);
     pushBackMultiple(shift, 100,100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n33,33,3,0.00,center,shift,pDet);
-    add(ts,n33);
+    add(ts, fs, n33);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -1292,6 +1303,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
     //
     //  12 ------23 -----33
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n22, n23, n31, n32, n33;
     std::vector<int> center;
     std::vector<int> shift;
@@ -1302,56 +1314,56 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
     pushBackMultiple(shift, 100,100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n11,11,1,0.00,center,shift,pDet);
-    add(ts,n11);
+    add(ts, fs, n11);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 200, 200, 0);
     pushBackMultiple(shift, 100,100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n12,12,1,0.00,center,shift,pDet);
-    add(ts,n12);
+    add(ts, fs, n12);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 100, 100, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n21,21,2,0.00,center,shift,pDet);
-    add(ts,n21);
+    add(ts, fs, n21);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 200, 200, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n22,22,2,0.00,center,shift,pDet);
-    add(ts,n22);
+    add(ts, fs, n22);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 300, 300, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n23,23,2,0.00,center,shift,pDet);
-    add(ts,n23);
+    add(ts, fs, n23);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 0, 0, 0);
     pushBackMultiple(shift, 200,200,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n31,31,3,0.00,center,shift,pDet);
-    add(ts,n31);
+    add(ts, fs, n31);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 100, 100, 0);
     pushBackMultiple(shift, -100,-100,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n32,32,3,0.00,center,shift,pDet);
-    add(ts,n32);
+    add(ts, fs, n32);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 300, 300, 0);
     pushBackMultiple(shift, -200,-200,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n33,33,3,0.00,center,shift,pDet);
-    add(ts,n33);
+    add(ts, fs, n33);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -1439,6 +1451,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
     //    |
     //  1
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
@@ -1452,7 +1465,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n11.features["coordinates"] = coordinates;
-    add(ts,n11);
+    add(ts, fs, n11);
 
     n12.Id = 12; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
@@ -1460,7 +1473,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n12.features["coordinates"] = coordinates;
-    add(ts,n12);
+    add(ts, fs, n12);
 
     n21.Id = 21; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.01; detProb[2] = 0.98;
@@ -1468,7 +1481,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n21.features["coordinates"] = coordinates;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     n31.Id = 31; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.01; detProb[1] = 0.01; detProb[2] = 0.98;
@@ -1476,7 +1489,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n31.features["coordinates"] = coordinates;
-    add(ts,n31);
+    add(ts, fs, n31);
 
 
     std::cout << "Initialize Conservation tracking" << std::endl;
@@ -1570,6 +1583,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
     //      |
     //  1 ------ 2
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n13, n21, n22;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
@@ -1583,7 +1597,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n11.features["coordinates"] = coordinates;
-    add(ts,n11);
+    add(ts, fs, n11);
 
     n12.Id = 12; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 0; divProb[0] = 1.;
     detProb[0] = 0.0; detProb[1] = 1.; detProb[2] = 0.0;
@@ -1591,7 +1605,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n12.features["coordinates"] = coordinates;
-    add(ts,n12);
+    add(ts, fs, n12);
 
     n13.Id = 13; n13.Timestep = 1; com[0] = 4; com[1] = 4; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.00; detProb[1] = 1.; detProb[2] = 0.0;
@@ -1599,7 +1613,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
     n13.features["coordinates"] = coordinates;
-    add(ts,n13);
+    add(ts, fs, n13);
 
     n21.Id = 21; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.0; detProb[1] = 0.0; detProb[2] = 1.;
@@ -1607,7 +1621,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 0;
     n21.features["coordinates"] = coordinates;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     n22.Id = 22; n22.Timestep = 2; com[0] = 4; com[1] = 4; com[2] = 0; divProb[0] = 0.01;
     detProb[0] = 0.0; detProb[1] = 0.0; detProb[2] = 1.;
@@ -1615,7 +1629,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
     coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
     coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 0;
     n22.features["coordinates"] = coordinates;
-    add(ts,n22);
+    add(ts, fs, n22);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -1696,6 +1710,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
     std::cout << std::endl;
 
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12;
     Traxel n21, n22;
     Traxel n31, n32;
@@ -1709,56 +1724,56 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
     pushBackMultiple(shift, -7,3,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n11,11,1,0.00,center,shift,pDet);
-    add(ts,n11);
+    add(ts, fs, n11);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 113, 312, 0);
     pushBackMultiple(shift, -7,3,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n12,12,1,0.00,center,shift,pDet);
-    add(ts,n12);
+    add(ts, fs, n12);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 83, 270, 0);
     pushBackMultiple(shift, 7,-3,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n21,21,2,0.00,center,shift,pDet);
-    add(ts,n21);
+    add(ts, fs, n21);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 106, 315, 0);
     pushBackMultiple(shift, 7,-3,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n22,22,2,0.00,center,shift,pDet);
-    add(ts,n22);
+    add(ts, fs, n22);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 90, 267, 0);
     pushBackMultiple(shift, 27,46,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n31,31,3,0.00,center,shift,pDet);
-    add(ts,n31);
+    add(ts, fs, n31);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 113, 312, 0);
     pushBackMultiple(shift, 27,46,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n32,32,3,0.00,center,shift,pDet);
-    add(ts,n32);
+    add(ts, fs, n32);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 117, 313, 0);
     pushBackMultiple(shift, 0,0,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n41,41,4,0.00,center,shift,pDet);
-    add(ts,n41);
+    add(ts, fs, n41);
 
     center.clear(); shift.clear(); pDet.clear();
     pushBackMultiple(center, 140, 358, 0);
     pushBackMultiple(shift, 0,0,0);
     pushBackMultiple(pDet, 0.,1.);
     constructTraxel(n42,42,4,0.00,center,shift,pDet);
-    add(ts,n42);
+    add(ts, fs, n42);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -1856,6 +1871,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Factorize ) {
     //  1 ----   2 ----- 1
     //  0 ------ 1 ----- 0
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n13, n22, n32;
     Traxel n14, n24, n34;
     feature_array com(feature_array::difference_type(3));
@@ -1863,36 +1879,36 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Factorize ) {
     feature_array count(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 3;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-    add(ts,n12);
+    add(ts, fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-    add(ts,n31);
+    add(ts, fs, n31);
 
     n13.Id = 12; n13.Timestep = 1; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
     n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["count"] = count;
-    add(ts,n13);
+    add(ts, fs, n13);
     n22.Id = 13; n22.Timestep = 2; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 3;
     n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
-    add(ts,n22);
+    add(ts, fs, n22);
     n32.Id = 14; n32.Timestep = 3; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     n14.Id = 15; n14.Timestep = 1; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
     n14.features["com"] = com; n14.features["divProb"] = divProb; n14.features["count"] = count;
-    add(ts,n14);
+    add(ts, fs, n14);
     n24.Id = 16; n24.Timestep = 2; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
     n24.features["com"] = com; n24.features["divProb"] = divProb; n24.features["count"] = count;
-    add(ts,n24);
+    add(ts, fs, n24);
     n34.Id = 17; n34.Timestep = 3; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
     n34.features["com"] = com; n34.features["divProb"] = divProb; n34.features["count"] = count;
-    add(ts,n34);
+    add(ts, fs, n34);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;

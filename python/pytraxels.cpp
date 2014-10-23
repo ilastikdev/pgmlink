@@ -88,13 +88,28 @@ namespace pgmlink {
     }
   };
 
-  void add_traxel_to_traxelstore(TraxelStore& ts, const Traxel& t) {
-    add(ts, t);
+  struct FeatureStore_pickle_suite : pickle_suite {
+    static std::string getstate( boost::shared_ptr<FeatureStore> g ) {
+      std::stringstream ss;
+      boost::archive::text_oarchive oa(ss);
+      oa & g;
+      return ss.str();
+    }
+
+    static void setstate( boost::shared_ptr<FeatureStore> g, const std::string& state ) {
+      std::stringstream ss(state);
+      boost::archive::text_iarchive ia(ss);
+      ia & g;
+    }
+  };
+
+  void add_traxel_to_traxelstore(TraxelStore& ts, boost::shared_ptr<FeatureStore> fs, Traxel& t) {
+    add(ts, fs, t);
   }
 
-  void add_Traxels_to_traxelstore(TraxelStore& ts, const Traxels& traxels) {
-    for(Traxels::const_iterator it = traxels.begin(); it!= traxels.end(); ++it){
-      add(ts, it->second);
+  void add_Traxels_to_traxelstore(TraxelStore& ts, boost::shared_ptr<FeatureStore> fs, Traxels& traxels) {
+    for(Traxels::iterator it = traxels.begin(); it!= traxels.end(); ++it){
+      add(ts, fs, it->second);
     }
   }
 
@@ -161,4 +176,7 @@ void export_traxels() {
       .def("size", &TraxelStore::size)
       .def_pickle(TraxelStore_pickle_suite())
       ;
+
+    class_< boost::shared_ptr<FeatureStore> >("FeatureStore")
+            .def_pickle(FeatureStore_pickle_suite());
 }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 message( "\nConfiguring tests:" )
 
 # dependencies
-find_package( Boost REQUIRED COMPONENTS unit_test_framework )
+find_package( Boost REQUIRED COMPONENTS unit_test_framework system filesystem)
 find_package( Cplex REQUIRED )
 
 include_directories(

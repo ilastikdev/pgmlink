@@ -527,7 +527,7 @@ BOOST_AUTO_TEST_CASE( AppearanceTraxels_operator_traxelgraph ) {
   // with a filter function
   struct filter_function {
     bool operator()(const Traxel traxel) const {
-      const FeatureMap& feature_map = traxel.features;
+      const FeatureMap& feature_map = traxel.features.get();
       return (feature_map.at("id").front() >= 8.0);
     }
   };
@@ -573,7 +573,7 @@ BOOST_AUTO_TEST_CASE( AppearanceTraxels_operator_trackletgraph ) {
   // with a filter function
   struct filter_function {
     bool operator()(const Traxel traxel) const {
-      const FeatureMap& feature_map = traxel.features;
+      const FeatureMap& feature_map = traxel.features.get();
       return (feature_map.at("id").front() >= 8.0);
     }
   };

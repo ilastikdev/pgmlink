@@ -41,27 +41,28 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learning ) {
 	std::cout << std::endl;
 
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n41, n42;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divProb(feature_array::difference_type(1));
 	n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n11.features["com"] = com; n11.features["divProb"] = divProb;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
 	n12.features["com"] = com; n12.features["divProb"] = divProb;
-	add(ts,n12);
+    add(ts, fs, n12);
 	n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
 	n21.features["com"] = com; n21.features["divProb"] = divProb;
-	add(ts,n21);
+    add(ts, fs, n21);
 	n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
 	n31.features["com"] = com; n31.features["divProb"] = divProb;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n41.features["com"] = com; n41.features["divProb"] = divProb;
-	add(ts,n41);
+    add(ts, fs, n41);
 	n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n42.features["com"] = com; n42.features["divProb"] = divProb;
-	add(ts,n42);
+    add(ts, fs, n42);
 
 
 	std::cout << "Initialize Conservation tracking" << std::endl;
@@ -120,27 +121,28 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_ZeroEnergy ) {
 	std::cout << std::endl;
 
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n41, n42;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divProb(feature_array::difference_type(1));
 	n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n11.features["com"] = com; n11.features["divProb"] = divProb;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
 	n12.features["com"] = com; n12.features["divProb"] = divProb;
-	add(ts,n12);
+    add(ts, fs, n12);
 	n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
 	n21.features["com"] = com; n21.features["divProb"] = divProb;
-	add(ts,n21);
+    add(ts, fs, n21);
 	n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
 	n31.features["com"] = com; n31.features["divProb"] = divProb;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n41.features["com"] = com; n41.features["divProb"] = divProb;
-	add(ts,n41);
+    add(ts, fs, n41);
 	n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
 	n42.features["com"] = com; n42.features["divProb"] = divProb;
-	add(ts,n42);
+    add(ts, fs, n42);
 
 
 	std::cout << "Initialize Conservation tracking" << std::endl;
@@ -204,6 +206,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learn_From_Labeled_Gr
 	//  1 ----   2 ----- 1
 	//  0 ------ 1 ----- 0
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n13, n22, n32;
 	Traxel n14, n24, n34, n44,n54,n64;
 	feature_array com(feature_array::difference_type(3));
@@ -211,49 +214,49 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Funkey_Learn_From_Labeled_Gr
 	feature_array count(feature_array::difference_type(1));
 	n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
 	n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 3;
 	n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-	add(ts,n12);
+    add(ts, fs, n12);
 	n21.Id = 10; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-	add(ts,n21);
+    add(ts, fs, n21);
 	n31.Id = 11; n31.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-	add(ts,n31);
+    add(ts, fs, n31);
 
 	n13.Id = 12; n13.Timestep = 1; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
 	n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["count"] = count;
-	add(ts,n13);
+    add(ts, fs, n13);
 	n22.Id = 13; n22.Timestep = 2; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 3;
 	n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
-	add(ts,n22);
+    add(ts, fs, n22);
 	n32.Id = 14; n32.Timestep = 3; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-	add(ts,n32);
+    add(ts, fs, n32);
 
 	n14.Id = 15; n14.Timestep = 1; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
 	n14.features["com"] = com; n14.features["divProb"] = divProb; n14.features["count"] = count;
-	add(ts,n14);
+    add(ts, fs, n14);
 	n24.Id = 16; n24.Timestep = 2; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
 	n24.features["com"] = com; n24.features["divProb"] = divProb; n24.features["count"] = count;
-	add(ts,n24);
+    add(ts, fs, n24);
 	n34.Id = 17; n34.Timestep = 3; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
 	n34.features["com"] = com; n34.features["divProb"] = divProb; n34.features["count"] = count;
-	add(ts,n34);
+    add(ts, fs, n34);
 
 
 	n44.Id = 18; n44.Timestep = 1; com[0] = 1; com[1] = 2; com[2] = 3; divProb[0] = 0.01; count[0] = 1;
 	n44.features["com"] = com; n44.features["divProb"] = divProb; n44.features["count"] = count;
-	add(ts,n44);
+    add(ts, fs, n44);
 
 	n54.Id = 18; n54.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.01; count[0] = 1;
 	n54.features["com"] = com; n54.features["divProb"] = divProb; n54.features["count"] = count;
-	add(ts,n54);
+    add(ts, fs, n54);
 
 	n64.Id = 18; n64.Timestep = 3; com[0] = 3; com[1] = 3; com[2] = 3; divProb[0] = 0.01; count[0] = 1;
 	n64.features["com"] = com; n64.features["divProb"] = divProb; n64.features["count"] = count;
-	add(ts,n64);
+    add(ts, fs, n64);
 
 
 

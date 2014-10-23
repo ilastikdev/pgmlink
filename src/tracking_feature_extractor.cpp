@@ -446,7 +446,7 @@ BorderDistanceFilter::BorderDistanceFilter(
 bool BorderDistanceFilter::is_out_of_margin(const Traxel& traxel) const
 {
     bool ret = false;
-    const FeatureMap& feature_map = traxel.features;
+    const FeatureMap& feature_map = traxel.features.get();
     FeatureMap::const_iterator com_it = feature_map.find("com");
     if (com_it == feature_map.end())
     {
