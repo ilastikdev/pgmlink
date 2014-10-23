@@ -20,6 +20,9 @@ typedef typename
   property_map<node_active, HypothesesGraph::base_graph>::type
   node_active_map_type;
 typedef typename
+  property_map<node_active2, HypothesesGraph::base_graph>::type
+  node_active2_map_type;
+typedef typename
   property_map<arc_active, HypothesesGraph::base_graph>::type
   arc_active_map_type;
 typedef typename
@@ -72,9 +75,12 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   nodes_active_map_type& nodes_active_map = graph.get(node_active_count());
   arcs_active_map_type& arcs_active_map = graph.get(arc_active_count());
 
-  // create the the node_active and arc_active map
+  // create the the node_active, node_active2 and arc_active map
   if (not graph.has_property(node_active())) {
     graph.add(node_active());
+  }
+  if (not graph.has_property(node_active2())) {
+    graph.add(node_active2());
   }
   if (not graph.has_property(arc_active())) {
     graph.add(arc_active());
@@ -82,6 +88,7 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
 
   // Get the property maps (caution: "node_active_map" not "nodes_active_map")
   node_active_map_type& node_active_map = graph.get(node_active());
+  node_active2_map_type& node_active2_map = graph.get(node_active2());
   arc_active_map_type& arc_active_map = graph.get(arc_active());
 
   // Now we can start the with writing the solution with the index
@@ -93,6 +100,7 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
       );
     }
     node_active_map[n_it] = nodes_active_map[n_it][solution_index];
+    node_active2_map.set(n_it, nodes_active_map[n_it][solution_index]);
   }
   for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it) {
     if (arcs_active_map[a_it].size() <= solution_index) {
