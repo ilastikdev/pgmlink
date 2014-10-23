@@ -7,11 +7,12 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
-//#include <boost/python.hpp>
 
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/tracking.h"
 #include "pgmlink/tracking_feature_extractor.h"
+
+#include <boost/python.hpp>
 
 using namespace pgmlink;
 using namespace pgmlink::features;
@@ -504,22 +505,40 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
     BOOST_CHECK(proposal_labels[0].size() == events.size());
 }
 
-//void execute_ssvm_python(const std::string& ground_truth,
-//                         const std::string& proposals,
-//                         const std::string& proposal_features)
-//{
-//    using namespace boost::python;
-//    object ssvm_module = import("struct_svm_ranking_problem"); // import ssvm ranking problem
-//    object ssvm_namespace = ssvm_module.attr("__dict__"); // get namespace
+std::vector<double> execute_ssvm_python(const std::string& ground_truth,
+                         const std::string& proposals,
+                         const std::string& proposal_features)
+{
+    using namespace boost::python;
 
-//    std::cout << ssvm_namespace << std::endl;
+    try
+    {
+        object main_module = import("__main__");
+        object main_namespace = main_module.attr("__dict__"); // get namespace
+        exec("import structsvm", main_namespace);
+        exec("problem = structsvm.funkey_problem('structsvm/features.txt', 'structsvm/constraints.txt', 'structsvm/labels.txt', [1,1,1,1,1])", main_namespace);
+        exec("solver = structsvm.struct_svm_solver_bundle(problem)", main_namespace);
+        exec("weights = solver.solve()", main_namespace);
+        object python_weights = extract< boost::python::list >(main_namespace["weights"]);
+        std::vector<double> weights;
+        for(size_t i = 0; i < len(python_weights); i++)
+        {
+            weights.push_back(extract<double>(python_weights[i]));
+        }
+        return weights;
+    }
+    catch (error_already_set const&)
+    {
+        PyErr_Print();
+        return std::vector<double>();
+    }
+}
 
-//    object problem = eval("struct_svm_ranking_problem()", ssvm_namespace); // create problem instance
-//}
-
-//BOOST_AUTO_TEST_CASE(PythonExecutor)
-//{
-//    execute_ssvm_python("bla.txt", "blupp.txt","foobar.txt");
-//}
+BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_PythonLearner)
+{
+    Py_Initialize();
+    std::vector<double> weights = execute_ssvm_python("bla.txt", "blupp.txt","foobar.txt");
+    BOOST_CHECK(weights.size() == 2);
+}
 
 // EOF
