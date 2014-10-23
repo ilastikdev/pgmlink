@@ -102,7 +102,7 @@ namespace pgmlink {
     void reset();
     
     pgm::OpengmLPCplex* optimizer_;
-    shared_ptr<pgm::chaingraph::Model> linking_model_;
+    boost::shared_ptr<pgm::chaingraph::Model> linking_model_;
 
     bool with_constraints_;
     bool fixed_detections_;

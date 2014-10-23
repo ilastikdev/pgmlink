@@ -75,12 +75,12 @@ namespace pgmlink {
       typedef boost::bimap<arc_t, var_t>::right_map var_arc_map;
 
       Model();
-      Model( shared_ptr<OpengmModel>,
+      Model( boost::shared_ptr<OpengmModel>,
 	     const node_var_map&,
 	     const arc_var_map&
 	     );
       
-      shared_ptr<OpengmModel> opengm_model; ///< opengm model usually constructed by chaingraph::ModelBuilder
+      boost::shared_ptr<OpengmModel> opengm_model; ///< opengm model usually constructed by chaingraph::ModelBuilder
 
       const node_var_map& var_of_node() const; ///< maps nodes to random variables representing detections
       const var_node_map& node_of_var() const;

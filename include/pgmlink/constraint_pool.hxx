@@ -8,11 +8,16 @@
 
 #include "pgm.h"
 #include "constraint_function.hxx"
+#include "reasoner_constracking.h"
 
 namespace pgmlink
 {
 namespace pgm
 {
+
+typedef OpengmModelDeprecated::ogmGraphicalModel ConstraintPoolOpengmModel;
+//typedef opengm::LPCplex<ConstraintPoolConstraintPoolOpengmModel,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
+typedef opengm::LPCplex<pgmlink::PertGmType,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
 
 //------------------------------------------------------------------------
 // ConstraintPool
@@ -24,9 +29,9 @@ namespace pgm
 class ConstraintPool
 {
 public:
-    typedef OpengmModelDeprecated::ogmGraphicalModel::ValueType ValueType;
-    typedef OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
-    typedef OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
+    typedef ConstraintPoolOpengmModel::ValueType ValueType;
+    typedef ConstraintPoolOpengmModel::LabelType LabelType;
+    typedef ConstraintPoolOpengmModel::IndexType IndexType;
 
 public:
     ConstraintPool(ValueType big_m = 200.0,
@@ -62,6 +67,8 @@ public:
 
     void force_softconstraint(bool enable)
     {
+        if(enable)
+            LOG(logWARNING) << "[ConstraintPool]: Forcing soft constraint not yet implemented";
         force_softconstraint_ = enable;
     }
 
@@ -284,6 +291,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
+    LOG(logINFO) << "[ConstraintPool]: Using soft constraints";
     std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
     for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -316,16 +324,17 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
 //------------------------------------------------------------------------
 // specialization for IncomingConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
-opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+ConstraintPoolCplexOptimizer,
 IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
 ConstraintPool::IncomingConstraint>
 (
-        OpengmModelDeprecated::ogmGraphicalModel& model,
-        opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>& optimizer,
+        ConstraintPoolOpengmModel& model,
+        ConstraintPoolCplexOptimizer& optimizer,
         const std::vector<ConstraintPool::IncomingConstraint>& constraints
 )
 {
+    LOG(logINFO) << "[ConstraintPool]: Using hard constraints for Incoming";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
         const ConstraintPool::IncomingConstraint& constraint = *it;
@@ -366,13 +375,13 @@ ConstraintPool::IncomingConstraint>
 //------------------------------------------------------------------------
 // specialization for OutgoingConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
-opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+ConstraintPoolCplexOptimizer,
 OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
 ConstraintPool::OutgoingConstraint>
 (
-        OpengmModelDeprecated::ogmGraphicalModel& model,
-        opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>& optimizer,
+        ConstraintPoolOpengmModel& model,
+        ConstraintPoolCplexOptimizer& optimizer,
         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
 )
 {
@@ -529,19 +538,19 @@ ConstraintPool::OutgoingConstraint>
 }
 
 template<>
-void ConstraintPool::add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
-opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+ConstraintPoolCplexOptimizer,
 OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
 ConstraintPool::OutgoingConstraint>
 (
-        OpengmModelDeprecated::ogmGraphicalModel& model,
-        opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>& optimizer,
+        ConstraintPoolOpengmModel& model,
+        ConstraintPoolCplexOptimizer& optimizer,
         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
 )
 {
     // for the CPLEX specialization we do the same for with and without divisions
-    add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
-                                    opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+    add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+                                    ConstraintPoolCplexOptimizer,
                                     OutgoingConstraintFunction<ValueType,IndexType,LabelType>,
                                     OutgoingConstraint>
             (model, optimizer, constraints);
@@ -550,13 +559,13 @@ ConstraintPool::OutgoingConstraint>
 //------------------------------------------------------------------------
 // specialization for DetectionConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<OpengmModelDeprecated::ogmGraphicalModel,
-opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>,
+void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+ConstraintPoolCplexOptimizer,
 DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
 ConstraintPool::DetectionConstraint>
 (
-        OpengmModelDeprecated::ogmGraphicalModel& model,
-        opengm::LPCplex<OpengmModelDeprecated::ogmGraphicalModel,OpengmModelDeprecated::ogmAccumulator>& optimizer,
+        ConstraintPoolOpengmModel& model,
+        ConstraintPoolCplexOptimizer& optimizer,
         const std::vector<ConstraintPool::DetectionConstraint>& constraints
 )
 {

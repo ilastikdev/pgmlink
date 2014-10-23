@@ -570,6 +570,13 @@ void extract_coordinates(TimestepIdCoordinateMapPtr coordinates,
                          const vigra::TinyVector<long int, N>& offsets,
                          const Traxel& trax);
 
+template<int N, typename T>
+void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
+                                  const vigra::MultiArrayView<N, T>& image,
+                                  const vigra::TinyVector<long int, N>& offsets,
+                                  const size_t timestep,
+                                  const size_t traxel_id,
+                                  const size_t traxel_size);
 
 
 ////
@@ -809,9 +816,44 @@ void extract_coordinates(TimestepIdCoordinateMapPtr coordinates,
   LOG(logDEBUG3) << "extract_coordinates -- done";
 }
 
+template<int N, typename T>
+void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
+                                  const vigra::MultiArrayView<N, T>& image,
+                                  const vigra::TinyVector<long int, N>& offsets,
+                                  const size_t timestep,
+                                  const size_t traxel_id,
+                                  const size_t traxel_size) {
+  LOG(logDEBUG3) << "extract_coordinates -- entered for " << traxel_id;
+  typedef typename vigra::CoupledIteratorType<N, T>::type Iterator;
+  Iterator start = createCoupledIterator(image);
+  Iterator end = start.getEndIterator();
+  arma::mat& coord = (*coordinates)[std::make_pair(timestep, traxel_id)];
+  coord = arma::mat(N, traxel_size);
+  // coord stores coordinates: each row is a spatial dimension and each column is a pixel
+  LOG(logDEBUG4) << "extract_coordinates -- coordinate matrix has "
+                 << coord.n_rows << " rows and "
+                 << coord.n_cols << " cols. The traxel size is "
+                 << traxel_size << ".";
+  {
+    size_t index = 0;
+    for (; start != end; ++start) {
+      if (start.template get<1>() == traxel_id) {
+        const vigra::TinyVector<long int, N>& position = start.template get<0>();
+        for (int i = 0; i < N; ++i) {
+          coord(i, index) = position[i] + offsets[i];
+        }        
+        ++index;
+      } else {
+        continue;
+      }
+    }
+    LOG(logDEBUG4) << "matrix has " << index << " columns while there should be "
+                  << coord.n_cols << " columns";
+    assert(index == coord.n_cols);
+  }
+  LOG(logDEBUG3) << "extract_coordinates -- done";
+}
 
-
-  
 /* template <typename ClusteringAlg>
    void MergerResolver::calculate_centers(HypothesesGraph::Node node,					 
    int nMergers) {

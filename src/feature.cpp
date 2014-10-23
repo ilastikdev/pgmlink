@@ -107,7 +107,9 @@ double NegLnDetection::operator ()(const Traxel& tr, size_t state) const {
     if(arg < 0.0000000001) arg = 0.0000000001;
 	return w_*-1*log(arg);
 }
-
+double NegLnDetection::getw(){
+	return w_;
+}
 
 ////
 //// class NegLnDivision
@@ -120,7 +122,9 @@ double NegLnDivision::operator ()(const Traxel& tr, size_t state) const {
     if(arg <0.0000000001) arg = 0.0000000001;
 	return w_*-1*log(arg);
 }
-
+double NegLnDivision::getw(){
+	return w_;
+}
 
 ////
 //// class NegLnTransition
@@ -161,6 +165,18 @@ double NegLnConstant::operator ()(size_t state) const {
   ////
   //// class SquaredDistance
   ////
+  feature_type SquaredDistance::operator()(const feature_array& f1,
+                                           const feature_array& f2) const {
+    assert (f1.size() == f2.size());
+    double res = 0.;
+    feature_array::const_iterator it1 = f1.begin();
+    feature_array::const_iterator it2 = f2.begin();
+    for (; it1 != f1.end(); ++it1, ++it2) {
+      res += (*it1 - *it2)*(*it1 - *it2);
+    }
+    return res;
+  }
+
   double SquaredDistance::operator()(const Traxel& t1,
 				     const Traxel& t2) const {
     return t1.distance_to(t2);

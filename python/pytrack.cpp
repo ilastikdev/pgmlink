@@ -1,10 +1,11 @@
 #define PY_ARRAY_UNIQUE_SYMBOL pgmlink_pyarray
 #define NO_IMPORT_ARRAY
-#define BOOST_PYTHON_MAX_ARITY 25
+#define BOOST_PYTHON_MAX_ARITY 30
 
 #include <vector>
 
 #include "../include/pgmlink/tracking.h"
+#include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/field_of_view.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
@@ -18,7 +19,7 @@ using namespace pgmlink;
 using namespace boost::python;
 
 vector<vector<Event> > pythonChaingraphTracking(ChaingraphTracking& tr, TraxelStore& ts) {
-	vector<vector<Event> > result = std::vector<std::vector<Event> >(0);
+    vector<vector<Event> > result;
 	// release the GIL
 	Py_BEGIN_ALLOW_THREADS
 	try {
@@ -31,7 +32,7 @@ vector<vector<Event> > pythonChaingraphTracking(ChaingraphTracking& tr, TraxelSt
 	return result;
 }
 
-vector<vector<Event> > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
+vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
 					  double forbidden_cost,
 					  double ep_gap,
 					  bool   with_tracklets,
@@ -43,9 +44,10 @@ vector<vector<Event> > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, Tim
 					  int    n_dim,
 					  double transition_parameter,
 					  double border_width,
+                      UncertaintyParameter uncertaintyParam,
 					  bool   with_constraints,
 					  double cplex_timeout) {
-	vector<vector<Event> > result = std::vector<std::vector<Event> >(0);
+    vector<vector<vector<Event> > > result;
 	// release the GIL
 	Py_BEGIN_ALLOW_THREADS
 	try {
@@ -62,6 +64,7 @@ vector<vector<Event> > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, Tim
 			    transition_parameter,
 			    border_width,
 			    with_constraints,
+                uncertaintyParam,
 			    cplex_timeout,
 			    coordinates);
 	} catch (std::exception& e) {
@@ -79,6 +82,10 @@ void export_track() {
 
     class_<vector<vector<Event> > >("NestedEventVector")
 	.def(vector_indexing_suite<vector<vector<Event> > >())
+    ;
+
+    class_<vector<vector<vector<Event> > > >("NestedNestedEventVector")
+	.def(vector_indexing_suite<vector<vector<vector<Event> > > >())
     ;
 
     class_<map<unsigned int, bool> >("DetectionMap")
@@ -109,10 +116,19 @@ void export_track() {
 
     class_<ConsTracking>("ConsTracking",
                          init<int,bool,double,double,bool,double,string,FieldOfView, string>(
-											args("max_number_objects","size_dependent_detection_prob","avg_obj_size","max_neighbor_distance", "with_division", "division_threshold","detection_rf_filename", "fov", "event_vector_dump_filename")))
+                                            args("max_number_objects",
+                                                 "size_dependent_detection_prob",
+                                                 "avg_obj_size",
+                                                 "max_neighbor_distance",
+                                                 "with_division",
+                                                 "division_threshold",
+                                                 "detection_rf_filename",
+                                                 "fov",
+                                                 "event_vector_dump_filename")))
       .def("__call__", &pythonConsTracking)
           .def("buildGraph", &ConsTracking::build_hypo_graph)
           .def("track", &ConsTracking::track)
+          .def("resolve_mergers", &ConsTracking::resolve_mergers)
 	  .def("detections", &ConsTracking::detections)
 
 	  .def("SetFunkeyOutputFiles",&ConsTracking::write_funkey_set_output_files)
@@ -131,6 +147,8 @@ void export_track() {
 	.value("MultiFrameMove", Event::MultiFrameMove)
 	.value("Void", Event::Void)
     ;
+
+
 
     class_<vector<vigra::UInt64> >("IdVector")
     .def(vector_indexing_suite<vector<vigra::UInt64> >())

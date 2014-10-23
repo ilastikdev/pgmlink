@@ -60,14 +60,14 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
 
     FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
     ConsTracking tracking = ConsTracking(
-		  2, // max_number_objects
-		  false, // detection_by_volume
-		  double(1.1), // avg_obj_size
+          2, // max_number_objects
+          false, // detection_by_volume
+          double(1.1), // avg_obj_size
                   20, // max_neighbor_distance
                   true, //with_divisions
                   0.3, // division_threshold
                   "none", // random_forest_filename
-		  /*false, // detection_by_volume
+          /*false, // detection_by_volume
                   0, // forbidden_cost
                   0.0, // ep_gap
                   false, // with_tracklets
@@ -82,27 +82,25 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
                   fov
                   );
 
+    EventVectorVectorVector events = tracking(ts,
+                            0, // forbidden_cost
+                            0.0, // ep_gap
+                            false, // with_tracklets
+                            10.0, //division_weight
+                            10.0, //transition_weight
+                            1500., // disappearance_cost,
+                            1500., // appearance_cost
+                            false, //with_merger_resolution
+                            3, //n_dim
+                            5, //transition_parameter
+                            0, //border_width for app/disapp costs
+                            true); // with_constraints
+                            //cplex_timeout
+                            //20, // max_neighbor_distance
+                            //0.3 );// division_threshold
+                            /*"none", // random_forest_filename */
 
-    std::vector< std::vector<Event> > events = tracking(ts, 
-							0, // forbidden_cost
-							0.0, // ep_gap
-							false, // with_tracklets
-							10.0, //division_weight
-							10.0, //transition_weight
-							1500., // disappearance_cost,
-							1500., // appearance_cost
-							false, //with_merger_resolution
-							3, //n_dim
-							5, //transition_parameter
-							0, //border_width for app/disapp costs
-							true, // with_constraints 
-							1e+75); //cplex_timeout
-    //20, // max_neighbor_distance
-    //0.3 );// division_threshold
-							 
-							/*"none", // random_forest_filename
- */
-    std::vector< std::vector<Event> > events_loaded;
+    EventVectorVectorVector events_loaded;
 
     {
         // now store the results
@@ -127,7 +125,10 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
 
         for(size_t j = 0; j < events[i].size(); j++)
         {
-            BOOST_CHECK(events[i][j] == events_loaded[i][j]);
+            for(size_t k = 0; k < events[i][j].size(); k++)
+            {
+                BOOST_CHECK(events[i][j][k] == events_loaded[i][j][k]);
+            }
         }
     }
 }

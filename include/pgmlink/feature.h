@@ -91,6 +91,7 @@ public:
     {}
     
     PGMLINK_EXPORT double operator()( const Traxel&, const size_t state ) const;
+    PGMLINK_EXPORT double getw();
 private:
     double w_;
 };
@@ -116,6 +117,7 @@ class NegLnDivision
     {}
     
     PGMLINK_EXPORT double operator()( const Traxel&, const size_t state ) const;
+    PGMLINK_EXPORT double getw();
 private:
     double w_;
 };
@@ -235,6 +237,8 @@ class SquaredDistance
 {
 public:
   PGMLINK_EXPORT double operator()(const Traxel& from, const Traxel& to) const;
+  PGMLINK_EXPORT feature_type operator()(const feature_array& f1,
+                                        const feature_array& f2) const;
 };
 
 class KasterDivision 

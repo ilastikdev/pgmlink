@@ -358,7 +358,7 @@ void FeatureHandlerBase::add_arcs_for_replacement_node(HypothesesGraph& g,
     LOG(logDEBUG4) << "FeatureHandlerBase::add_arcs_for_replacement_node: add outgoing arc (" << traxel_map[g.source(arc)].Id <<
         "," << traxel_map[g.target(arc)].Id << ") = " << arc_resolution_map[arc] << " and active = " << arc_active_map[arc];
   }
-  LOG(logDEBUG) << "FeatureHandlerBase::add_arcs_for_replacement_node: checking states of arcs";
+  LOG(logDEBUG4) << "FeatureHandlerBase::add_arcs_for_replacement_node: checking states of arcs";
   for(std::vector<int>::const_iterator arc_it = arc_ids.begin(); arc_it != arc_ids.end(); ++arc_it) {
     assert(arc_active_map[g.arcFromId(*arc_it)]);
   }
@@ -729,9 +729,7 @@ void resolve_graph(HypothesesGraph& src,
       with_constraints
                            );
 
-  pgm.formulate(dest);
-  pgm.infer();
-  pgm.conclude(dest);
+  pgm.perturbedInference(dest);
 
   // Remap results from clones to original nodes.
   merge_split_divisions(dest, division_splits, arc_cross_reference_divisions);

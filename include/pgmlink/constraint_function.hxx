@@ -334,6 +334,13 @@ struct FunctionRegistration< DetectionConstraintFunction<T, I, L> >{
    };
 };
 
+template<>
+struct FunctionRegistration< marray::Marray<double> >{
+   enum ID {
+      Id=opengm::FUNCTION_TYPE_ID_OFFSET
+   };
+};
+
 //------------------------------------------------------------------------
 /// Serialization for the incoming constraint function
 template<class T, class I, class L>
@@ -572,6 +579,63 @@ void FunctionSerialization<DetectionConstraintFunction<T, I, L> >::deserialize
    INDEX_INPUT_ITERATOR indexOutIterator,
    VALUE_INPUT_ITERATOR valueOutIterator,
    DetectionConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+//------------------------------------------------------------------------
+/// Serialization for the incoming constraint function
+template<>
+class FunctionSerialization< marray::Marray<double> >
+{
+public:
+    static size_t indexSequenceSize(const marray::Marray<double> &);
+    static size_t valueSequenceSize(const marray::Marray<double> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const marray::Marray<double>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, marray::Marray<double>  &);
+};
+
+inline size_t FunctionSerialization<marray::Marray<double> >::indexSequenceSize
+(
+   const marray::Marray<double> & src
+)
+{
+   return src.dimension() +1;
+}
+
+inline size_t FunctionSerialization<marray::Marray<double> >::valueSequenceSize
+(
+   const marray::Marray<double> & src
+)
+{
+   return src.size();
+}
+
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< marray::Marray<double> >::serialize
+(
+   const marray::Marray<double> & src,
+   INDEX_OUTPUT_ITERATOR indexOutIterator,
+   VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<marray::Marray<double> >::deserialize
+(
+   INDEX_INPUT_ITERATOR indexOutIterator,
+   VALUE_INPUT_ITERATOR valueOutIterator,
+   marray::Marray<double> & dst
 )
 {
     //TODO implement me

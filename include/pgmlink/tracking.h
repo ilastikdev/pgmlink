@@ -80,7 +80,7 @@ namespace pgmlink {
     bool with_divisions_;
     double cplex_timeout_;
     bool alternative_builder_;
-    shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+    boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
   };
 
   class NNTracking 
@@ -111,7 +111,7 @@ namespace pgmlink {
     std::vector<std::string> distanceFeatures_;
     double divisionThreshold_;
     bool splitterHandling_, mergerHandling_;
-    shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+    boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
     std::vector<int> maxTraxelIdAt_;
   };
 
@@ -143,7 +143,7 @@ namespace pgmlink {
       std::vector<std::string> distanceFeatures_;
       double divisionThreshold_;
       bool splitterHandling_, mergerHandling_;
-      shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+      boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
       std::vector<int> maxTraxelIdAt_;
   };
 
@@ -176,7 +176,7 @@ namespace pgmlink {
       {}
 
 
-    PGMLINK_EXPORT std::vector< std::vector<Event> > operator()(TraxelStore& ts, 
+    PGMLINK_EXPORT EventVectorVectorVector operator()(TraxelStore& ts,
 								double forbidden_cost = 0,
 								double ep_gap=0.01,
 								bool with_tracklets=true,
@@ -189,6 +189,7 @@ namespace pgmlink {
 								double transition_parameter = 5.,
 								double border_width = 0,
 								bool with_constraints = true,
+                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
 								double cplex_timeout = 1e+75,
 								TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
 
@@ -198,9 +199,11 @@ namespace pgmlink {
        * refactoring of operator().
        */
 
-      PGMLINK_EXPORT shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts);
+      PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts);
 
-      PGMLINK_EXPORT std::vector<std::vector<Event> > track(double forbidden_cost = 0,
+      PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
+
+      PGMLINK_EXPORT EventVectorVectorVector track(double forbidden_cost = 0,
 							    double ep_gap=0.01,
 							    bool with_tracklets=true,
 							    double detection_weight = 10., 
@@ -213,10 +216,17 @@ namespace pgmlink {
 							    double transition_parameter = 5.,
 							    double border_width = 0,
 							    bool with_constraints = true,
-							    double cplex_timeout = 1e+75,
-							    TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
-						           
+                  UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+							    double cplex_timeout = 1e+75);
 
+      PGMLINK_EXPORT EventVectorVector resolve_mergers(EventVectorVector &events,
+                                TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
+                                double ep_gap=0.01,
+                                double transition_weight=10.0,
+                                bool with_tracklets=true,
+                                int n_dim = 3,
+                                double transition_parameter = 5.,
+                                bool with_constraints = true);
 
       /**
        * Get state of detection variables after call to operator().
@@ -238,13 +248,13 @@ namespace pgmlink {
       bool use_classifier_prior_;
       double avg_obj_size_;
       std::vector<double> means_, sigmas_;
-      shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
+      boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > last_detections_;
       FieldOfView fov_;
       std::string event_vector_dump_filename_;
 
       TraxelStore* traxel_store_;
 
-      shared_ptr<HypothesesGraph> hypotheses_graph_;
+      boost::shared_ptr<HypothesesGraph> hypotheses_graph_;
       boost::shared_ptr<ConservationTracking> pgm_;
 							    
       std::string features_file_;
