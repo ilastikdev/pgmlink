@@ -270,6 +270,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     //    |               |
     //   o                 o
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
@@ -277,21 +278,21 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     //detProb[2]=0;
     n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-    add(ts,n12);
+    add(ts, fs, n12);
 
     n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-    add(ts,n31);
+    add(ts, fs, n31);
     n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -344,7 +345,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     for(size_t m = 0; m < events.size(); m++)
     {
         set_solution(*hypotheses_graph, m);
-        TrackingFeatureExtractor extractor(*hypotheses_graph);
+        TrackingFeatureExtractor extractor(*hypotheses_graph, fov);
         extractor.compute_features();
         TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
         extractor.get_feature_vector(joint_feature_vector_m);
@@ -411,6 +412,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
     //    |               |
     //   o                 o
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
@@ -418,21 +420,21 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
     //detProb[2]=0;
     n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
     n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-    add(ts,n11);
+    add(ts, fs, n11);
     n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-    add(ts,n12);
+    add(ts, fs, n12);
 
     n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
     n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-    add(ts,n21);
+    add(ts, fs, n21);
 
     n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-    add(ts,n31);
+    add(ts, fs, n31);
     n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
     n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-    add(ts,n32);
+    add(ts, fs, n32);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
