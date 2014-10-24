@@ -7,6 +7,7 @@
 #include "../include/pgmlink/tracking.h"
 #include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/field_of_view.h"
+#include "../include/pgmlink/tracking_feature_extractor.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
@@ -130,12 +131,13 @@ void export_track() {
           .def("track", &ConsTracking::track)
           .def("resolve_mergers", &ConsTracking::resolve_mergers)
 	  .def("detections", &ConsTracking::detections)
-
+      .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)
 	  .def("SetFunkeyOutputFiles",&ConsTracking::write_funkey_set_output_files)
       .def("writeFunkeyFeatures",&ConsTracking::write_funkey_features)
       .def("writeFunkeyFiles",&ConsTracking::write_funkey_files)
       .def("LearnWithFunkey",&ConsTracking::learn_from_funkey_files)
       .def("SetFunkeyExportLabeledGraph",&ConsTracking::set_export_labeled_graph)
+      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
 	;
 
     enum_<Event::EventType>("EventType")
@@ -148,7 +150,10 @@ void export_track() {
 	.value("Void", Event::Void)
     ;
 
-
+    class_<pgmlink::features::TrackingFeatureExtractor>("TrackingFeatureExtractor",
+                                                        init<boost::shared_ptr<HypothesesGraph>, FieldOfView>(args("HypothesesGraph, FieldOfView")))
+            .def("compute_features", &pgmlink::features::TrackingFeatureExtractor::compute_features)
+            .def("append_feature_vector_to_file", &pgmlink::features::TrackingFeatureExtractor::append_feature_vector_to_file);
 
     class_<vector<vigra::UInt64> >("IdVector")
     .def(vector_indexing_suite<vector<vigra::UInt64> >())

@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
     BorderDistanceFilter border_distance_filter(fov, 0.5, 0.5);
     boost::function<bool (const Traxel&)> f;
     f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &border_distance_filter, _1);
-    TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
+    TrackingFeatureExtractor extractor(hypotheses_graph, fov, f);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     BorderDistanceFilter border_distance_filter(fov, 0.5, 0.5);
     boost::function<bool (const Traxel&)> f;
     f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &border_distance_filter, _1);
-    TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
+    TrackingFeatureExtractor extractor(hypotheses_graph, fov, f);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     {
         std::cout << "\nFeatures for solution: " << m << std::endl;
         set_solution(*hypotheses_graph, m);
-        TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
+        TrackingFeatureExtractor extractor(hypotheses_graph, fov, f);
         extractor.compute_features();
         TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
         extractor.get_feature_vector(joint_feature_vector_m);
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     for(size_t m = 0; m < events.size(); m++)
     {
         set_solution(*hypotheses_graph, m);
-        TrackingFeatureExtractor extractor(*hypotheses_graph, fov);
+        TrackingFeatureExtractor extractor(hypotheses_graph, fov);
         extractor.compute_features();
         TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
         extractor.get_feature_vector(joint_feature_vector_m);

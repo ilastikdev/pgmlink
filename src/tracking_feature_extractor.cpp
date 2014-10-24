@@ -4,13 +4,28 @@
 namespace pgmlink {
 namespace features {
 
-TrackingFeatureExtractor::TrackingFeatureExtractor(
-        HypothesesGraph &graph,
-        FieldOfView& fov,
+TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
+        const FieldOfView& fov,
         boost::function<bool (const Traxel&)> margin_filter_function):
     graph_(graph),
     fov_(fov),
     margin_filter_function_(margin_filter_function),
+    position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
+    sq_diff_calc_ptr_(new SquaredDiffCalculator),
+    sq_curve_calc_ptr_(new SquaredCurveCalculator),
+    row_min_calc_ptr_(new MinCalculator<0>),
+    row_max_calc_ptr_(new MaxCalculator<0>),
+    angle_cos_calc_ptr_(new AngleCosineCalculator),
+    child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
+    sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
+    child_decel_calc_ptr_(new ChildDeceleration)
+{}
+
+TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
+        const FieldOfView& fov):
+    graph_(graph),
+    fov_(fov),
+    margin_filter_function_(NULL),
     position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
@@ -39,29 +54,29 @@ void TrackingFeatureExtractor::compute_features()
     // extract traxels of interest
     LOG(logDEBUG) << "Extract all tracks";
     TrackTraxels track_extractor;
-    ConstTraxelRefVectors track_traxels = track_extractor(graph_);
+    ConstTraxelRefVectors track_traxels = track_extractor(*graph_);
     LOG(logDEBUG) << "Extract all divisions to depth 1";
     DivisionTraxels div_1_extractor(1);
-    ConstTraxelRefVectors div_1_traxels = div_1_extractor(graph_);
+    ConstTraxelRefVectors div_1_traxels = div_1_extractor(*graph_);
     LOG(logDEBUG) << "Extract all divisions to depth 2";
     DivisionTraxels div_2_extractor(2);
-    ConstTraxelRefVectors div_2_traxels = div_2_extractor(graph_);
+    ConstTraxelRefVectors div_2_traxels = div_2_extractor(*graph_);
     LOG(logDEBUG) << "Extract all appearances";
     AppearanceTraxels appearance_extractor(AppearanceType::Appearance);
-    ConstTraxelRefVectors all_app_traxels = appearance_extractor(graph_);
+    ConstTraxelRefVectors all_app_traxels = appearance_extractor(*graph_);
     LOG(logDEBUG) << "Extract all disappearances";
     AppearanceTraxels disappearance_extractor(AppearanceType::Disappearance);
-    ConstTraxelRefVectors all_disapp_traxels = disappearance_extractor(graph_);
+    ConstTraxelRefVectors all_disapp_traxels = disappearance_extractor(*graph_);
     LOG(logDEBUG) << "Extract filtered appearances";
     AppearanceTraxels appearance_extractor_f(
         AppearanceType::Appearance,
         margin_filter_function_);
-    ConstTraxelRefVectors filtered_app_traxels = appearance_extractor_f(graph_);
+    ConstTraxelRefVectors filtered_app_traxels = appearance_extractor_f(*graph_);
     LOG(logDEBUG) << "Extract filtered disappearances";
     AppearanceTraxels disappearance_extractor_f(
         AppearanceType::Disappearance,
         margin_filter_function_);
-    ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(graph_);
+    ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
 
     compute_velocity_features(track_traxels);
     compute_acceleration_features(track_traxels);
