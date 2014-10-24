@@ -3,6 +3,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <string.h>
+#include <sstream> 
 #include <memory.h>
 #include <opengm/inference/lpcplex.hxx>
 #include <opengm/datastructures/marray/marray.hxx>
@@ -156,9 +157,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		numberOfSolutions = param_.numberOfIterations;
 	}
 
-	optimizer_ = new cplex_optimizer(PertModel, param, numberOfSolutions);
-	LOG(logINFO) << "add_constraints";
+	optimizer_ = new cplex_optimizer(PertModel, param, numberOfSolutions,features_file_,constraints_file_,ground_truth_file_,export_from_labeled_graph_);
+
 	if (with_constraints_) {
+        LOG(logINFO) << "add_constraints";
 		add_constraints(*graph);
 	}
 
@@ -166,6 +168,13 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 	infer();
 	LOG(logINFO) << "conclude MAP";
 	conclude(hypotheses);
+
+    if(export_from_labeled_graph_ and not ground_truth_file_.empty()){
+        LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
+        write_labeledgraph_to_file(hypotheses);
+    }
+    //TODO: export more than MAP solution
+    optimizer_->set_export_file_names("","","");
 
 	for (size_t k=1;k<numberOfSolutions;++k){
 		LOG(logINFO) << "conclude "<<k+1<<"-best solution";
@@ -325,12 +334,15 @@ void ConservationTracking::infer() {
     solutions_.push_back(IlpSolution());
     opengm::InferenceTermination statusExtract = optimizer_->arg(solutions_.back());
     if (statusExtract != opengm::NORMAL) {
-        throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
+        throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
     }
 }
 
 void ConservationTracking::conclude( HypothesesGraph& g) {
-    // extract solution from optimizer
+    if(export_from_labeled_graph_ and not  ground_truth_file_.empty()){
+        clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
+        clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
+    }
 
     // add 'active' properties to graph
     g.add(node_active2()).add(arc_active()).add(division_active());
@@ -566,7 +578,6 @@ void ConservationTracking::add_transition_nodes(const HypothesesGraph& g) {
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
         pgm_->Model()->addVariable(max_number_objects_ + 1);
         arc_map_[a] = pgm_->Model()->numberOfVariables() - 1;
-
         // store these nodes by the timestep of the base-appearance node,
         // as well as in the timestep of the disappearance node they enter
         HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
@@ -592,7 +603,6 @@ void ConservationTracking::add_division_nodes(const HypothesesGraph& g) {
         if (number_of_outarcs > 1) {
             pgm_->Model()->addVariable(2);
             div_node_map_[n] = pgm_->Model()->numberOfVariables() - 1;
-
             HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
             nodes_per_timestep_[timestep_map[n]].push_back(pgm_->Model()->numberOfVariables() - 1);
 
@@ -755,18 +765,17 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     				energy+= generateRandomOffset(Detection, e, traxel_map_[n]);
     			}
         	}
-
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: detection[" << state
-                    << "] = " << energy;
+            	 << "] = " << energy;
             for (size_t var_idx = 0; var_idx < num_vars; ++var_idx) {
-                coords[var_idx] = state;
+                coords[var_idx] = state;   
                 // if only one of the variables is > 0, then it is an appearance in this time frame
                 // or a disappearance in the next timeframe. Hence, add the cost of appearance/disappearance
                 // to the detection cost
                 energies(coords.begin()) = energy + state * cost[var_idx];
                 coords[var_idx] = 0;
                 LOG(logDEBUG4) << "ConservationTracking::add_finite_factors: var_idx "
-                        << var_idx << " = " << energy;
+                 << var_idx << " = " << energy;
             }
             // also this energy if both variables have the same state
             if (num_vars == 2) {
@@ -779,7 +788,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 coords[1] = 0;
 
                 LOG(logDEBUG4) << "ConservationTracking::add_finite_factors: var_idxs 0 and var_idx 1 = "
-                        << energy;
+               	   << energy;
             }
         }
 
@@ -796,11 +805,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
 
         sort(vi.begin(),vi.end());
         model->addFactor(funcId,vi.begin(),vi.end());
+        if (not perturb)
+            detection_f_node_map_[n] = model->numberOfFactors() -1;
         //table.add_to(model);
     }
-
-
-
     ////
     //// add transition factors
     ////
@@ -854,9 +862,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         }
         typename ModelType::FunctionIdentifier funcId = model->addFunction(energies);
         model->addFactor(funcId,vi,vi+1);
-        //table.add_to(model);
     }
-
+       
     ////
     //// add division factors
     ////
@@ -904,6 +911,87 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             model->addFactor(funcId,vi,vi+1);
         }
     }
+}
+
+void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
+
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
+
+    //write this map to label file
+    map<int,label_type> cplexid_label_map;
+    map<int,stringstream> cplexid_label_info_map;
+    map<size_t,size_t> cplexid_weight_class_map;
+
+    // fill labels of Variables
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
+        //appearance 
+        for (size_t state = 0; state < pgm_->Model()->numberOfLabels(app_node_map_[n]); ++state) {
+            int id = clpex_variable_id_map_[make_pair(app_node_map_[n],state)];
+            cplexid_label_map[id] = ((g.get(appearance_label())[n]==state)?1:0);
+            LOG(logDEBUG4) <<"app\t"<< cplexid_label_map[id] << "  " << id << "  " <<  app_node_map_[n] << "  " << state;
+            cplexid_label_info_map[id] <<  "# appearance id:" << id << " state:" << g.get(appearance_label())[n] << "/" << state << "  node:" << app_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+            cplexid_weight_class_map[id] = 0;     
+        }    
+        //disappearance
+        for (size_t state = 0; state < pgm_->Model()->numberOfLabels(dis_node_map_[n]); ++state) { 
+            int id = clpex_variable_id_map_[make_pair(dis_node_map_[n],state)];
+            cplexid_label_map[id] = ((g.get(disappearance_label())[n]==state)?1:0);
+            LOG(logDEBUG4) <<"dis\t"<< cplexid_label_map[id] << "  " << id << "  " <<  dis_node_map_[n] << "  " << state;
+            cplexid_label_info_map[id] <<  "# disappearance id:" << id << " state:" << g.get(disappearance_label())[n] << "/" << state << "  node:" << dis_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+            cplexid_weight_class_map[id] = 1;
+        }    
+        //division
+        if(with_divisions_ and div_node_map_.count(n) != 0){
+                
+            for (size_t state = 0; state < pgm_->Model()->numberOfLabels(div_node_map_[n]); ++state) {
+                int id = clpex_variable_id_map_[make_pair(div_node_map_[n],state)];
+                cplexid_label_map[id] = ((g.get(division_label())[n]==state)?1:0);
+                LOG(logDEBUG4) <<"div\t"<< cplexid_label_map[id] << "  " << id << "  " <<  div_node_map_[n] << "  " << state <<"   "<< number_of_division_nodes_;
+                cplexid_label_info_map[id] <<  "# division id:" << id << " state:" << g.get(division_label())[n] << "/" << state << "  node:" << div_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+                cplexid_weight_class_map[id] = 2;
+            }    
+        }
+    }
+    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
+        //move
+        for (size_t state = 0; state < pgm_->Model()->numberOfLabels(arc_map_[a]); ++state) {
+            int id = clpex_variable_id_map_[make_pair(arc_map_[a],state)];
+            cplexid_label_map[id] = ((g.get(arc_label())[a]==state)?1:0);
+            LOG(logDEBUG4) <<"arc\t"<< cplexid_label_map[id] << "  " <<id << "  " <<  arc_map_[a] << "  " << state;
+            cplexid_label_info_map[id] <<  "# move id:" << id << " state:" << g.get(arc_label())[a] << "/" << state << "  node:" << arc_map_[a]  << "traxel id:" <<  traxel_map[g.source(a)].Id << "-->" << traxel_map[g.target(a)].Id << "  ts:" << traxel_map[g.target(a)].Timestep ;
+            cplexid_weight_class_map[id] = 3;
+            //traxel_arc_id_map[a].Timestep
+        }
+    }
+
+    // fill labels of Factors (only second order factors need to be exported (others accounted for in variable states))
+    
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
+        //detection factor detection_node_map_
+        for (size_t s1 = 0; s1 < pgm_->Model()->numberOfLabels(detection_f_node_map_[n]); ++s1) {
+            for (size_t s2 = 0; s2 < pgm_->Model()->numberOfLabels(detection_f_node_map_[n]); ++s2) {
+                int id = clpex_factor_id_map_[make_pair(detection_f_node_map_[n],make_pair(s1,s2))];
+                cplexid_label_map[id] = ((g.get(appearance_label())[n]==s1 and g.get(disappearance_label())[n]==s2)?1:0);
+                LOG(logDEBUG4) <<"detection\t"<< cplexid_label_map[id] <<"  "<<id<< "  " <<  detection_f_node_map_[n] << "  " << s1 <<"  " << s2 << endl;
+                cplexid_weight_class_map[id] = 4;
+                cplexid_label_info_map[id] <<  "# factor id:" << id << " state:" << g.get(appearance_label())[n] <<","<<g.get(disappearance_label())[n]<< "/" << s1 << "," << s2 << "  node:" << app_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+            }
+        }
+    }
+
+    
+
+    //write labels to file
+    std::ofstream ground_truth_file;
+        
+    ground_truth_file.open (ground_truth_file_,std::ios::app);
+        
+    for(std::map<int,size_t>::iterator iterator = cplexid_label_map.begin(); iterator != cplexid_label_map.end(); iterator++) {
+        ground_truth_file << iterator->second <<"\t\t#c"<<cplexid_weight_class_map[iterator->first]<<"\t\tcplexid:" << iterator->first  << cplexid_label_info_map[iterator->first].str() <<endl;
+    }
+    ground_truth_file.close();
+
 }
 
 size_t ConservationTracking::cplex_id(size_t opengm_id, size_t state) {
@@ -961,6 +1049,7 @@ void ConservationTracking::add_constraints(const HypothesesGraph& g) {
     }
 
     constraint_pool.force_softconstraint(!with_constraints_);
+
 
 //    // For testing purposes:
 //    boost::posix_time::time_facet *facet = new boost::posix_time::time_facet("%Y%m%d-%H%M%S");

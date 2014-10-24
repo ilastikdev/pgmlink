@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
@@ -19,10 +20,46 @@
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/merger_resolving.h"
 
+#include <stdio.h>
 
 using namespace std;
 using boost::shared_ptr;
 using boost::shared_array;
+
+//Quick and dity utilities
+  
+// from http://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c
+std::string exec(const char* cmd) {
+  FILE* pipe = popen(cmd, "r");
+  if (!pipe) return "ERROR";
+  char buffer[128];
+  std::string result = "";
+  while(!feof(pipe)) {
+    if(fgets(buffer, 128, pipe) != NULL)
+      result += buffer;
+  }
+  pclose(pipe);
+  return result;
+}
+
+void transpose_matrix_in_file(std::string filename){
+  //from http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
+  std::string awk_program = "gawk '{\n for (i=1; i<=NF; i++)  {\n a[NR,i] = $i \n} \n}\n NF>p { p = NF } \nEND {\n for(j=1; j<=p; j++) {\n str=a[1,j]\n for(i=2; i<=NR; i++){\n str=str\" \"a[i,j];\n }\n print str\n }\n }' ";
+  system( (awk_program + filename + "> tmp.txt").c_str() ) ;
+  system( (std::string("rm ")+ filename).c_str() ) ;
+  system( (std::string("cp tmp.txt ")+ filename).c_str() ) ;
+  system( "rm tmp.txt") ;
+}
+
+//from  http://stackoverflow.com/questions/392981/how-can-i-convert-string-to-double-in-c
+double string_to_double( const std::string& s )
+{
+  std::istringstream i(s);
+  double x;
+   if (!(i >> x))
+     return 0;
+   return x;
+ } 
 
 namespace pgmlink {
 ////
@@ -237,11 +274,14 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 						  double cplex_timeout,
 						  TimestepIdCoordinateMapPtr coordinates) {
     build_hypo_graph(ts);
+
+
     // TODO need solution without copying the event vector
     EventVectorVectorVector events = track(
                 forbidden_cost,
                 ep_gap,
                 with_tracklets,
+                10./*detection*/,
                 division_weight,
                 transition_weight,
                 disappearance_cost,
@@ -279,9 +319,14 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 }
 
 boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts) {
-
   
-  LOG(logDEBUG3) << "enering build_hypo_graph"<< endl;;
+  LOG(logDEBUG3) << "entering build_hypo_graph"<< endl;;
+
+        LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ; 
+        LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ; 
+        LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_; 
+        LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_; 
+        LOG(logDEBUG1) <<"division_threshold\t"<<      division_threshold_;
   
 	traxel_store_ = &ts;
 
@@ -406,6 +451,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
   EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 						      double ep_gap,
 						      bool with_tracklets,
+						      double detection_weight,
 						      double division_weight,
 						      double transition_weight,
 						      double disappearance_cost,
@@ -424,6 +470,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     LOG(logDEBUG1) <<"ep_gap\t"<<      ep_gap; 
     LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_; 
     LOG(logDEBUG1) <<"with_tracklets\t"<<      with_tracklets; 
+    LOG(logDEBUG1) <<"detection_weight\t"<<      detection_weight; 
     LOG(logDEBUG1) <<"division_weight\t"<<      division_weight; 
     LOG(logDEBUG1) <<"transition_weight\t"<<      transition_weight; 
     LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_; 
@@ -437,13 +484,10 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
     uncertaintyParam.print(); // TODO: do not use cout here!
     
-    
 
-	double detection_weight = 10;
 	Traxels empty;
 	boost::function<double(const Traxel&, const size_t)> detection, division;
 	boost::function<double(const double)> transition;
-
 
 	if (use_classifier_prior_) {
 		LOG(logINFO) << "Using classifier prior";
@@ -510,6 +554,12 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 			detection_weight
 	);
 
+	pgm.features_file_      = features_file_;   
+	pgm.constraints_file_   = constraints_file_;
+	pgm.ground_truth_file_  = ground_truth_file_;
+	pgm.export_from_labeled_graph_ = export_from_labeled_graph_;
+
+
     size_t totalNumberOfSolutions = uncertaintyParam.numberOfIterations;
 
 	if (totalNumberOfSolutions>1) {
@@ -522,7 +572,6 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 
 		cout << "-> storing state of detection vars" << endl;
         last_detections_ = state_of_nodes(*hypotheses_graph_);
-
 		cout << "-> pruning inactive hypotheses" << endl;
 
 	}
@@ -650,5 +699,137 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     }
 }
 
+  void ConsTracking::write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset){
+    if(reset){
+      constraints_file_.clear();
+      features_file_.clear();
+      ground_truth_file_.clear();
+    }
 
+    if(not  writeConstraints.empty()){
+      constraints_file_   = writeConstraints;
+      std::ofstream constraints_file;
+      constraints_file.open (writeConstraints);
+      constraints_file.close();
+    }
+
+   if(not writeFeatures.empty()){
+      features_file_      = writeFeatures;   
+      std::ofstream feature_file;
+      feature_file.open (writeFeatures);
+      feature_file.close();
+    }
+
+    if(not writeGroundTruth.empty()){
+      ground_truth_file_  = writeGroundTruth;
+      std::ofstream labels_file;
+      labels_file.open (writeGroundTruth);
+      labels_file.close();      
+    }
+  }
+
+  void ConsTracking::set_export_labeled_graph(bool in){
+	export_from_labeled_graph_ = in;
+  }
+
+  void ConsTracking::write_funkey_features(TraxelStore ts,vector<vector<double>> parameterlist){
+    for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it) {
+        
+      int ndim = 3;
+      std::string tmp_feat_file;
+
+      if(not ground_truth_file_.empty() and not export_from_labeled_graph_){
+		tmp_feat_file = features_file_;
+		features_file_.clear();
+      }
+      if(not export_from_labeled_graph_)
+      	build_hypo_graph(ts);
+
+      	cout << "writing funkey files with weights:";
+
+      	for(int i = 0; i != 5; i++) {
+    		std::cout << (*it)[i]; 
+		}
+
+		cout << endl;
+
+      track(0,//forbidden_cost,
+	    0,
+	    false,
+	    (*it)[0],//detection
+	    (*it)[1],//division,
+	    (*it)[2],//transition,
+	    (*it)[3],//disappearance,
+	    (*it)[4],//appearance,
+	    false,//with_merger_resolution,
+	    ndim,
+	    5,//transition_parameter,
+	    0,//border_width,
+	    true);//with constraints  
+      
+	// write constraint and ground truth files only once
+      if(not constraints_file_.empty())
+		constraints_file_.clear();
+      if(not ground_truth_file_.empty()){
+			ground_truth_file_.clear();
+		if(not export_from_labeled_graph_)
+			features_file_ = tmp_feat_file;
+		}
+  	}
+}
+
+  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
+    int number_of_weights = 5;
+
+    write_funkey_set_output_files(writeFeatures,writeConstraints,writeGroundTruth);    
+
+    std::vector<std::vector<double>> list;
+
+    if(not  writeConstraints.empty() and writeFeatures.empty() and writeGroundTruth.empty()){
+    	//constraints only
+      	list = std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1. ));
+    }
+    else if(not writeGroundTruth.empty() and export_from_labeled_graph_ == false){
+    	// use provided weights for tracking and generating ground truth
+      	list = std::vector<std::vector<double>>(1,weights);
+    }
+   	if(not writeFeatures.empty()){
+     //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
+      for(int i=0;i<number_of_weights;i++){
+		std::vector<double> param(number_of_weights,0.);
+		param[i] = 1;
+		list.push_back(param);
+      }
+    }
+
+   	write_funkey_features(ts,list);
+
+   	if(not writeFeatures.empty()){
+    	transpose_matrix_in_file(writeFeatures);
+   	}
+  }
+
+  vector<double> ConsTracking::learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights,std::string options){
+    
+    vector<double> out;
+    std::string command = std::string("/storage/data/Machine_Learning/sbmrm/build/binaries/sbmrm") + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth +" "+  options;
+    if(not weights.empty())
+    	command += " --weightCostsFile="+groundTruth+" --weightCostString="+"\""+weights+"\" ";
+
+
+
+    LOG(logINFO) << "calling funkey with "<< command;
+    std::string shell_output =  exec(command.c_str());
+    LOG(logINFO) << shell_output<< endl;
+    int start = shell_output.find("optimial w is [")+15;
+    int end = shell_output.find("]",start);
+    std::string numlist = shell_output.substr(start,end-start);
+
+
+    for(int i = 0; i != std::string::npos ;i= numlist.find(",",i)){
+      if(i>0) i+=2;
+      out.push_back(string_to_double(numlist.substr(i,numlist.find(",",i)-i).c_str()));
+    }
+    return out;
+  }
 } // namespace tracking

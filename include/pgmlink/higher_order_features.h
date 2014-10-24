@@ -58,6 +58,7 @@ diffusion_calculator.calculate(positions, return_value);
 // boost
 #include <boost/serialization/serialization.hpp> /* for serialization */
 #include <boost/shared_ptr.hpp> /* for shared_ptr */
+#include <boost/function.hpp> /* for function in appearance traxels */
 
 // vigra
 #include <vigra/multi_array.hxx> /* for the feature extractors */
@@ -84,8 +85,9 @@ typedef vigra::MultiArrayView<2, feature_type> FeatureMatrixView;
 =============================================================================*/
 /**
 \brief write the solution stored in the property maps <TT>node_active_count</TT>
-  and <TT>arc_active_count</TT> into the <TT>node_active</TT> and 
-  <TT>arc_active</TT>.
+  and <TT>arc_active_count</TT> with the given solution index into the
+  <TT>node_active</TT>, <TT>node_active2</TT> and <TT>arc_active</TT> property
+  maps.
 */
 void set_solution(HypothesesGraph& graph, const size_t solution_index);
 
@@ -326,9 +328,9 @@ class TrackTraxels : public TraxelsOfInterest {
 \brief identifies all cell divisions in the tracking an returns the references
   to the involved traxels.
 
-A cell division is detected if one node has two outgoing arcs. One can specify
-the depth to which the traxels are extracted. That is to say how many parent
-and child nodes are returned.
+A cell division is detected if a node has two outgoing arcs and the parent node
+is not a merger object. One can specify the depth to which the traxels are
+extracted. That is to say how many parent and child nodes are returned.
 Division of depth 2:
 \code
           n2 - n3
@@ -376,6 +378,33 @@ class DivisionTraxels : public TraxelsOfInterest {
   static const std::string name_;
   std::vector<ConstTraxelRefVector> ret_;
   size_t depth_;
+};
+
+////
+//// class AppearanceTraxels
+////
+/**
+\brief TODO
+*/
+class AppearanceTraxels : public TraxelsOfInterest {
+ public:
+  typedef boost::function<bool (const Traxel&)> FilterFunctionType;
+  enum AppearanceType {Appearance, Disappearance};
+
+  AppearanceTraxels(
+    const AppearanceType appearance = AppearanceType::Appearance,
+    FilterFunctionType traxel_filter_function = NULL
+  );
+  virtual ~AppearanceTraxels() {};
+  virtual const std::string& name() const;
+  virtual const std::vector<ConstTraxelRefVector>& operator()(
+    const HypothesesGraph& graph
+  );
+ protected:
+  static const std::string name_;
+  std::vector<ConstTraxelRefVector> ret_;
+  AppearanceType appearance_;
+  FilterFunctionType filter_function_;
 };
 
 ////

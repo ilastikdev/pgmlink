@@ -293,19 +293,20 @@ BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp_mrf ) {
     o5.Timestep = 2;
 
     TraxelStore ts;
-    add(ts,n1);
-    add(ts,n2);
-    add(ts,n3);
-    add(ts,n4);
-    add(ts,m1);
-    add(ts,m2);
-    add(ts,m3);
-    add(ts,m4);
-    add(ts,o1);
-    add(ts,o2);
-    add(ts,o3);
-    add(ts,o4);
-    add(ts,o5);
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    add(ts, fs, n1);
+    add(ts, fs, n2);
+    add(ts, fs, n3);
+    add(ts, fs, n4);
+    add(ts, fs, m1);
+    add(ts, fs, m2);
+    add(ts, fs, m3);
+    add(ts, fs, m4);
+    add(ts, fs, o1);
+    add(ts, fs, o2);
+    add(ts, fs, o3);
+    add(ts, fs, o4);
+    add(ts, fs, o5);
 
     SingleTimestepTraxel_HypothesesBuilder builder(&ts);
     boost::shared_ptr<HypothesesGraph> graph = boost::shared_ptr<HypothesesGraph>(builder.build());

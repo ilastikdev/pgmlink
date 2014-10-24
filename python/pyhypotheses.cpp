@@ -29,6 +29,7 @@ node_traxel_m& getNodeTraxelMap(HypothesesGraph* g) {
   return g->get(node_traxel());
 }
 
+
 struct HypothesesGraph_pickle_suite : pickle_suite {
   static std::string getstate( const HypothesesGraph& g ) {
     std::stringstream ss;
@@ -79,16 +80,48 @@ struct IterableValueMap_ValueIterator {
   typename map_type::ValueIt end_;
 };
 
+template <typename GRAPH_ELEMENT_ITERATOR ,typename GRAPH_ELEMENT >
+struct GraphIterator {
+  typedef GRAPH_ELEMENT_ITERATOR iter_type;
+  typedef GRAPH_ELEMENT elem_type;
+  iter_type it_;
 
+  GraphIterator( const HypothesesGraph& g ) {
+    it_ = iter_type(g);
+  }
+  elem_type next() {
+    if( it_ == lemon::INVALID) {
+      PyErr_SetString(PyExc_StopIteration, "No more data.");
+      boost::python::throw_error_already_set();
+    }
+    const elem_type result = it_;
+    ++it_;
+    return result;
+  }
+
+  // static GraphIterator<iter_type,elem_type>values ( const elem_type& n ) {
+  // return GraphIterator<iter_type,map_type>( n );
+  // }
+
+  static void
+  wrap( const char* python_name) {
+    class_<GraphIterator<iter_type,elem_type> >( python_name,init<const HypothesesGraph&>(args("hypotheses_graph")))
+      .def("next", &GraphIterator::next)
+      .def("__iter__", &pass_through)
+      ;
+  }
+};
 
 void export_hypotheses() {
   class_<HypothesesGraph::Arc>("Arc");
-  class_<HypothesesGraph::ArcIt>("ArcIt");
   class_<HypothesesGraph::Node>("Node");
-  class_<HypothesesGraph::NodeIt>("NodeIt");
   class_<HypothesesGraph::InArcIt>("InArcIt");
   class_<HypothesesGraph::OutArcIt>("OutArcIt");
 
+  GraphIterator<HypothesesGraph::NodeIt ,HypothesesGraph::Node>::wrap("NodeIt" );
+  // GraphIterator<HypothesesGraph::OutArcIt,HypothesesGraph::Arc >::wrap("OutArcIt");
+  // GraphIterator<HypothesesGraph::InArcIt ,HypothesesGraph::Arc >::wrap("InArcIt" );
+  GraphIterator<HypothesesGraph::ArcIt ,HypothesesGraph::Arc >::wrap("ArcIt" );
 
   IterableValueMap_ValueIterator<node_traxel_m>::wrap("NodeTraxelMap_ValueIt");
 
@@ -149,6 +182,14 @@ void export_hypotheses() {
     .def("baseNode", baseNode2)
     .def("runningNode", runningNode2)
     .def("oppositeNode", &HypothesesGraph::oppositeNode)
+
+
+    .def("addTraxel", &HypothesesGraph::add_traxel)
+
+    .def("addArcLabel" , &HypothesesGraph::add_arc_label )
+    .def("addAppearanceLabel",&HypothesesGraph::add_appearance_label)
+    .def("addDisappearanceLabel",&HypothesesGraph::add_disappearance_label)
+    .def("addDivisionLabel",&HypothesesGraph::add_division_label)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,

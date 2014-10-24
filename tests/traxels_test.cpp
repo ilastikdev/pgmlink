@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE( Traxel_serialize )
     }
     BOOST_CHECK_EQUAL(loaded.Id, t1.Id);
     BOOST_CHECK_EQUAL(loaded.Timestep, t1.Timestep);
-    BOOST_REQUIRE(loaded.features.count("intmaxpos")==1);
+    BOOST_REQUIRE(loaded.features.get().count("intmaxpos")==1);
     BOOST_CHECK_EQUAL_COLLECTIONS(loaded.features["intmaxpos"].begin(),
 				  loaded.features["intmaxpos"].end(),
 				  intmaxpos.begin(),

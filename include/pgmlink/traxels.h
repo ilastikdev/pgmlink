@@ -19,19 +19,21 @@
 #include <boost/multi_index/composite_key.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "pgmlink/pgmlink_export.h"
+#include "featurestore.h"
 
 namespace pgmlink {
-//
-// feature data structures
-//
+
+/*
+ * Feature datastructures now in featurestore.h
 typedef float feature_type;
 typedef std::vector<feature_type> feature_array;
 typedef std::vector<feature_array> feature_arrays;
 typedef std::map<std::string,feature_array> FeatureMap;
-
-
+*/
 
 //
 // retrieve spatial coordinates from features
@@ -126,8 +128,6 @@ class IntmaxposLocator
     void serialize( Archive&, const unsigned int /*version*/ );  
 };
 
-
-
 //
 // Traxel datatype
 //
@@ -136,21 +136,78 @@ class Traxel
  public:
    // construction / assignment
    //takes ownership of locator pointer
-  PGMLINK_EXPORT Traxel(unsigned int id = 0, int timestep = 0, FeatureMap fmap = FeatureMap(), Locator* l = new ComLocator(),
+  PGMLINK_EXPORT Traxel(unsigned int id = 0,
+                        int timestep = 0,
+//                        FeatureMap fmap = FeatureMap(),
+                        Locator* l = new ComLocator(),
 		                ComCorrLocator* lc = new ComCorrLocator()) 
-  : Id(id), Timestep(timestep), features(fmap), locator_(l), corr_locator_(lc) 
-  {}
+  : Id(id),
+    Timestep(timestep),
+    locator_(l),
+    corr_locator_(lc)
+  {
+      features = FeatureMapAccessor(this);
+  }
 
   PGMLINK_EXPORT Traxel(const Traxel& other);
   PGMLINK_EXPORT Traxel& operator=(const Traxel& other);
   PGMLINK_EXPORT ~Traxel() { delete locator_; }
   PGMLINK_EXPORT Traxel& set_locator(Locator*);
   PGMLINK_EXPORT Locator* locator() {return locator_;}
+  PGMLINK_EXPORT boost::shared_ptr<FeatureStore> get_feature_store() const;
    
    // fields
    unsigned int Id; // id of connected component (aka "label")
    int Timestep; // traxel occured after
-   FeatureMap features;
+
+   /// before the introduction of TraxelStoreFeatures, the features of a traxel were a member of the traxel,
+   /// and one could access the features of a traxel using traxel.features["feat_name"].
+   /// FeatureMapAccessor mimics this behaviour in the [] operator, and a traxel gets an instance with the same name.
+   class FeatureMapAccessor{
+   public:
+       FeatureMapAccessor(){}
+
+       /// constructor
+       FeatureMapAccessor(Traxel* parent):
+           parent_(parent)
+       {}
+
+       FeatureMapAccessor(Traxel* parent, const FeatureMap& fm):
+           parent_(parent),
+           feature_map_(fm)
+       {}
+
+       const size_t size() const;
+
+       // non-const access and iterators
+       feature_array& operator[](const std::string& feature_name);
+       FeatureMap::iterator find(const std::string& feature_name);
+       FeatureMap::iterator begin();
+       FeatureMap::iterator end();
+
+       // const access and iterators
+       FeatureMap::const_iterator find(const std::string& feature_name) const;
+       FeatureMap::const_iterator begin() const;
+       FeatureMap::const_iterator end() const;
+       const FeatureMap& get() const;
+
+       /// This is invoked by a traxel that is added to a feature store
+       void feature_store_set_notification();
+
+   private:
+       Traxel* parent_;
+       FeatureMap feature_map_;
+
+       // boost serialize for Traxel datatype
+       friend class boost::serialization::access;
+       template< typename Archive >
+         void serialize( Archive&, const unsigned int /*version*/ );
+   };
+   // to allow access via traxel.features["name"]
+   FeatureMapAccessor features;
+
+   // method to set the used feature store from outside
+   void set_feature_store(boost::shared_ptr<FeatureStore> fs);
    
    // position according to locator
    PGMLINK_EXPORT double X() const;
@@ -167,7 +224,10 @@ class Traxel
    PGMLINK_EXPORT double angle(const Traxel& leg1, const Traxel& leg2) const;
    friend std::ostream& operator<< (std::ostream &out, const Traxel &t);
 
+
  private:
+   boost::shared_ptr<FeatureStore> features_;
+
    // boost serialize for Traxel datatype
    friend class boost::serialization::access;
    template< typename Archive >
@@ -182,7 +242,6 @@ class Traxel
  PGMLINK_EXPORT bool operator<(const Traxel& t1, const Traxel& t2);
  PGMLINK_EXPORT bool operator>(const Traxel& t1, const Traxel& t2);
  PGMLINK_EXPORT bool operator==(const Traxel& t1, const Traxel& t2);
-
 
 
  //
@@ -242,7 +301,8 @@ class Traxel
    latest_timestep(const TraxelStore&);
 
  // io
- PGMLINK_EXPORT TraxelStore& add(TraxelStore&, const Traxel&);
+ PGMLINK_EXPORT TraxelStore& add(TraxelStore&, boost::shared_ptr<FeatureStore> fs, Traxel &);
+ PGMLINK_EXPORT void set_feature_store(TraxelStore&, boost::shared_ptr<FeatureStore>);
 
  template<typename InputIt>
    TraxelStore& add(TraxelStore&, InputIt begin, InputIt end);
@@ -255,9 +315,7 @@ class Traxel
   * @return the number of Traxels in the field of view
   */
  class FieldOfView;
- PGMLINK_EXPORT size_t filter_by_fov( const TraxelStore& in, TraxelStore& out, const FieldOfView& );
-
-
+ PGMLINK_EXPORT size_t filter_by_fov(const TraxelStore &in, TraxelStore& out, const FieldOfView& );
 
 /**/
 /* implementation */
@@ -288,6 +346,12 @@ void Traxel::serialize( Archive& ar, const unsigned int /*version*/ ) {
   ar & Timestep;
   ar & features;
   ar & locator_;
+}
+
+template< typename Archive >
+void Traxel::FeatureMapAccessor::serialize( Archive& ar, const unsigned int /*version*/ ) {
+  ar & feature_map_;
+  ar & parent_;
 }
 
 template<typename InputIterator>

@@ -506,6 +506,98 @@ BOOST_AUTO_TEST_CASE( DivisionTraxels_operator_trackletgraph ) {
   }
 }
 
+BOOST_AUTO_TEST_CASE( AppearanceTraxels_operator_traxelgraph ) {
+  LOG(logINFO) << "test case: AppearanceTraxels_operator_traxelgraph";
+
+  // set up the graph
+  HypothesesGraph graph;
+  get_graph(graph);
+
+  // set the solution index
+  set_solution(graph, 0);
+
+  // get the appearance and disappearance traxels
+  typedef AppearanceTraxels::AppearanceType AppearanceType;
+  LOG(logINFO) << "  get the appearance/disappearance traxels";
+  AppearanceTraxels get_app_traxels(AppearanceType::Appearance);
+  AppearanceTraxels get_disapp_traxels(AppearanceType::Disappearance);
+  ConstTraxelRefVectors app_traxels = get_app_traxels(graph);
+  ConstTraxelRefVectors disapp_traxels = get_disapp_traxels(graph);
+
+  // with a filter function
+  struct filter_function {
+    bool operator()(const Traxel traxel) const {
+      const FeatureMap& feature_map = traxel.features.get();
+      return (feature_map.at("id").front() >= 8.0);
+    }
+  };
+  boost::function<bool (const Traxel)> f;
+  f = filter_function();
+  LOG(logINFO) << "  get the appearance/disappearance traxels with filter";
+  AppearanceTraxels get_app_traxels_f(AppearanceType::Appearance, f);
+  AppearanceTraxels get_disapp_traxels_f(AppearanceType::Disappearance, f);
+  ConstTraxelRefVectors app_traxels_f = get_app_traxels_f(graph);
+  ConstTraxelRefVectors disapp_traxels_f = get_disapp_traxels_f(graph);
+
+  LOG(logINFO) << "  there are " << app_traxels.size() << " appearances";
+  LOG(logINFO) << "  and " << disapp_traxels.size() << " disappearances";
+  BOOST_CHECK_EQUAL(app_traxels.size(), 1);
+  BOOST_CHECK_EQUAL(app_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels.size(), 2);
+  BOOST_CHECK_EQUAL(disapp_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels[1].size(), 1);
+
+  BOOST_CHECK_EQUAL(app_traxels_f.size(), 0);
+  BOOST_CHECK_EQUAL(disapp_traxels_f.size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels_f[0].size(), 1);
+}
+
+BOOST_AUTO_TEST_CASE( AppearanceTraxels_operator_trackletgraph ) {
+  LOG(logINFO) << "test case: AppearanceTraxels_operator_trackletgraph";
+
+  // set up the graph
+  HypothesesGraph graph;
+  get_tracklet_graph(graph);
+
+  // set the solution index
+  set_solution(graph, 0);
+
+  // get the appearance and disappearance traxels
+  typedef AppearanceTraxels::AppearanceType AppearanceType;
+  LOG(logINFO) << "  get the appearance/disappearance traxels";
+  AppearanceTraxels get_app_traxels(AppearanceType::Appearance);
+  AppearanceTraxels get_disapp_traxels(AppearanceType::Disappearance);
+  ConstTraxelRefVectors app_traxels = get_app_traxels(graph);
+  ConstTraxelRefVectors disapp_traxels = get_disapp_traxels(graph);
+
+  // with a filter function
+  struct filter_function {
+    bool operator()(const Traxel traxel) const {
+      const FeatureMap& feature_map = traxel.features.get();
+      return (feature_map.at("id").front() >= 8.0);
+    }
+  };
+  boost::function<bool (const Traxel)> f;
+  f = filter_function();
+  LOG(logINFO) << "  get the appearance/disappearance traxels with filter";
+  AppearanceTraxels get_app_traxels_f(AppearanceType::Appearance, f);
+  AppearanceTraxels get_disapp_traxels_f(AppearanceType::Disappearance, f);
+  ConstTraxelRefVectors app_traxels_f = get_app_traxels_f(graph);
+  ConstTraxelRefVectors disapp_traxels_f = get_disapp_traxels_f(graph);
+
+  LOG(logINFO) << "  there are " << app_traxels.size() << " appearances";
+  LOG(logINFO) << "  and " << disapp_traxels.size() << " disappearances";
+  BOOST_CHECK_EQUAL(app_traxels.size(), 1);
+  BOOST_CHECK_EQUAL(app_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels.size(), 2);
+  BOOST_CHECK_EQUAL(disapp_traxels[0].size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels[1].size(), 1);
+
+  BOOST_CHECK_EQUAL(app_traxels_f.size(), 0);
+  BOOST_CHECK_EQUAL(disapp_traxels_f.size(), 1);
+  BOOST_CHECK_EQUAL(disapp_traxels_f[0].size(), 1);
+}
+
 BOOST_AUTO_TEST_CASE( TraxelsFCFromFC_test) {
   LOG(logINFO) << "test case: TraxelsFCFromFC_test";
   
@@ -844,12 +936,12 @@ BOOST_AUTO_TEST_CASE( EuclideanNormCalculator_test){
   BOOST_CHECK_EQUAL(matrix.shape(0), 7);
   BOOST_CHECK_EQUAL(matrix.shape(1), 1);
   BOOST_CHECK(4.24264 < matrix(0, 0) && matrix(0, 0) < 4.24265);
-  BOOST_CHECK(4.99999 < matrix(1, 0) && matrix(0, 0) < 5.00001);
-  BOOST_CHECK(4.99999 < matrix(2, 0) && matrix(0, 1) < 5.00001);
-  BOOST_CHECK(5.65685 < matrix(3, 0) && matrix(0, 0) < 5.65686);
-  BOOST_CHECK(6.40312 < matrix(4, 0) && matrix(0, 0) < 6.40313);
-  BOOST_CHECK(7.07106 < matrix(5, 0) && matrix(0, 0) < 7.07107);
-  BOOST_CHECK(12.0415 < matrix(6, 0) && matrix(0, 0) < 12.0416);
+  BOOST_CHECK(4.99999 < matrix(1, 0) && matrix(1, 0) < 5.00001);
+  BOOST_CHECK(4.99999 < matrix(2, 0) && matrix(2, 0) < 5.00001);
+  BOOST_CHECK(5.65685 < matrix(3, 0) && matrix(3, 0) < 5.65686);
+  BOOST_CHECK(6.40312 < matrix(4, 0) && matrix(4, 0) < 6.40313);
+  BOOST_CHECK(7.07106 < matrix(5, 0) && matrix(5, 0) < 7.07107);
+  BOOST_CHECK(12.0415 < matrix(6, 0) && matrix(6, 0) < 12.0416);
 }
 
 BOOST_AUTO_TEST_CASE( AngleCosineCalculator_test ){
@@ -867,10 +959,10 @@ BOOST_AUTO_TEST_CASE( AngleCosineCalculator_test ){
   BOOST_CHECK_EQUAL(matrix.shape(0), 5);
   BOOST_CHECK_EQUAL(matrix.shape(1), 1);
   BOOST_CHECK(-0.70711 < matrix(0, 0) && matrix(0, 0) < -0.70710);
-  BOOST_CHECK(-0.70711 < matrix(1, 0) && matrix(0, 0) < -0.70710);
-  BOOST_CHECK( 0.99999 < matrix(2, 0) && matrix(0, 1) <  1.00001);
-  BOOST_CHECK(-0.00001 < matrix(3, 0) && matrix(0, 0) <  0.00001);
-  BOOST_CHECK( 0.59999 < matrix(4, 0) && matrix(0, 0) <  0.60001);
+  BOOST_CHECK(-0.70711 < matrix(1, 0) && matrix(1, 0) < -0.70710);
+  BOOST_CHECK( 0.99999 < matrix(2, 0) && matrix(2, 0) <  1.00001);
+  BOOST_CHECK(-0.00001 < matrix(3, 0) && matrix(3, 0) <  0.00001);
+  BOOST_CHECK( 0.59999 < matrix(4, 0) && matrix(4, 0) <  0.60001);
 }
 
 BOOST_AUTO_TEST_CASE( ChildParentDiffCalculator_test ) {

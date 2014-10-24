@@ -96,6 +96,10 @@ void export_track() {
       .def(vector_indexing_suite<vector<map<unsigned int, bool> > >())
     ;
 
+    class_<vector<double>>("WeightVector")
+      .def(vector_indexing_suite<vector<double>>())
+    ;
+
     class_<ChaingraphTracking>("ChaingraphTracking", 
 			       init<string,double,double,double,double,
 			       	   bool,double,double,bool,
@@ -126,6 +130,12 @@ void export_track() {
           .def("track", &ConsTracking::track)
           .def("resolve_mergers", &ConsTracking::resolve_mergers)
 	  .def("detections", &ConsTracking::detections)
+
+	  .def("SetFunkeyOutputFiles",&ConsTracking::write_funkey_set_output_files)
+      .def("writeFunkeyFeatures",&ConsTracking::write_funkey_features)
+      .def("writeFunkeyFiles",&ConsTracking::write_funkey_files)
+      .def("LearnWithFunkey",&ConsTracking::learn_from_funkey_files)
+      .def("SetFunkeyExportLabeledGraph",&ConsTracking::set_export_labeled_graph)
 	;
 
     enum_<Event::EventType>("EventType")

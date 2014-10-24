@@ -26,15 +26,22 @@ namespace pgmlink {
   ////
   //// class Traxel
   ////
-  Traxel::Traxel(const Traxel& other): Id(other.Id), Timestep(other.Timestep), features(other.features) {
+  Traxel::Traxel(const Traxel& other):
+      Id(other.Id),
+      Timestep(other.Timestep),
+      features_(other.features_)
+  {
     locator_ = other.locator_->clone();
     corr_locator_ = other.corr_locator_;
+    features = FeatureMapAccessor(this, other.features.get());
   }
 
   Traxel& Traxel::operator=(const Traxel& other) {
     Id = other.Id;
     Timestep = other.Timestep;
-    features = other.features;
+    features_ = other.features_;
+    features = FeatureMapAccessor(this, other.features.get());
+
     corr_locator_ = other.corr_locator_;
     // This gracefully handles self assignment
     Locator* temp = other.locator_->clone();
@@ -49,37 +56,42 @@ namespace pgmlink {
     return *this;
   }
 
+  boost::shared_ptr<FeatureStore> Traxel::get_feature_store() const
+  {
+      return features_;
+  }
+
   double Traxel::X() const {
-    return locator_->X(features);
+    return locator_->X(features.get());
   }
 
   double Traxel::Y() const {
-    return locator_->Y(features);
+    return locator_->Y(features.get());
   }
 
   double Traxel::Z() const {
-    return locator_->Z(features);
+    return locator_->Z(features.get());
   }
 
   double Traxel::X_corr() const {
-	if (features.count("com_corrected") == 1) {
-		return corr_locator_->X(features);
+    if (features.get().count("com_corrected") == 1) {
+        return corr_locator_->X(features.get());
 	} else {
 		return X();
 	}
   }
 
   double Traxel::Y_corr() const {
-	  if (features.count("com_corrected") == 1) {
-		return corr_locator_->Y(features);
+      if (features.get().count("com_corrected") == 1) {
+        return corr_locator_->Y(features.get());
 	} else {
 		return Y();
 	}
   }
 
   double Traxel::Z_corr() const {
-	  if (features.count("com_corrected") == 1) {
-		  return corr_locator_->Z(features);
+      if (features.get().count("com_corrected") == 1) {
+          return corr_locator_->Z(features.get());
 	  } else {
 		  return Z();
 	  }
@@ -126,9 +138,18 @@ namespace pgmlink {
     return std::acos((dot(dx1, dy1, dz1, dx2, dy2, dz2))/(norm(dx1, dy1, dz1)*norm(dx2,dy2,dz2)));
   }
 
+  void Traxel::set_feature_store(boost::shared_ptr<FeatureStore> fs)
+  {
+      if(fs && fs != features_)
+      {
+          features_ = fs;
+          features.feature_store_set_notification();
+      }
+  }
+
   std::ostream& operator<< (std::ostream &out, const Traxel &t) {
-    out << "Traxel("<< t.Id << ", " << t.Timestep << ")";
-    return out;
+      out << "Traxel("<< t.Id << ", " << t.Timestep << ")";
+      return out;
   }
 
   bool operator<(const Traxel& t1, const Traxel& t2) {
@@ -212,8 +233,9 @@ namespace pgmlink {
     return *(timesteps(t).rbegin());
  }
   
-  TraxelStore& add(TraxelStore& ts, const Traxel& t) {
+  TraxelStore& add(TraxelStore& ts, boost::shared_ptr<FeatureStore> fs, Traxel& t) {
     ts.get<by_timestep>().insert(t);
+    t.set_feature_store(fs);
     return ts;
   }
 
@@ -233,15 +255,118 @@ namespace pgmlink {
     return ret;
   }
 
-  size_t filter_by_fov( const TraxelStore& in, TraxelStore& out, const FieldOfView& fov ) {
+  size_t filter_by_fov(const TraxelStore& in, TraxelStore& out, const FieldOfView& fov ) {
     size_t n = 0;
     for(TraxelStore::iterator it = in.begin(); it != in.end(); ++it) {
       if(fov.contains(it->Timestep, it->X(), it->Y(), it->Z())) {
-	  add(out, *it);
+      out.get<by_timestep>().insert(*it);
 	  ++n;
 	}
     }
     return n;
   }
+
+  const size_t Traxel::FeatureMapAccessor::size() const
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).size();
+      else
+          return feature_map_.size();
+  }
+
+  feature_array &Traxel::FeatureMapAccessor::operator[](const string &feature_name)
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_)[feature_name];
+      else
+          return feature_map_[feature_name];
+  }
+
+
+  FeatureMap::iterator Traxel::FeatureMapAccessor::find(const string &feature_name)
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).find(feature_name);
+      else
+          return feature_map_.find(feature_name);
+  }
+
+  FeatureMap::iterator Traxel::FeatureMapAccessor::begin()
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).begin();
+      else
+          return feature_map_.begin();
+  }
+
+  FeatureMap::iterator Traxel::FeatureMapAccessor::end()
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).end();
+      else
+          return feature_map_.end();
+  }
+
+  FeatureMap::const_iterator Traxel::FeatureMapAccessor::find(const string &feature_name) const
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).find(feature_name);
+      else
+          return feature_map_.find(feature_name);
+  }
+
+  FeatureMap::const_iterator Traxel::FeatureMapAccessor::begin() const
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).begin();
+      else
+          return feature_map_.begin();
+  }
+
+  FeatureMap::const_iterator Traxel::FeatureMapAccessor::end() const
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_).end();
+      else
+          return feature_map_.end();
+  }
+
+  const FeatureMap &Traxel::FeatureMapAccessor::get() const
+  {
+      if(parent_->features_)
+          return parent_->features_->get_traxel_features(*parent_);
+      else
+          return feature_map_;
+  }
+
+  void Traxel::FeatureMapAccessor::feature_store_set_notification()
+  {
+      if(parent_->features_)
+      {
+          FeatureMap& feat_map = parent_->features_->get_traxel_features(*parent_);
+          if(feature_map_.size() > 0)
+          {
+              if(feat_map.size() > 0)
+              {
+                  std::runtime_error("both feature maps are non-empty, copying traxel-local features, but this will lead to data loss!");
+              }
+              feat_map = feature_map_;
+              feature_map_.clear();
+          }
+      }
+      else
+      {
+          throw std::runtime_error("Traxel does still not know a FeatureStore");
+      }
+  }
+
+  void set_feature_store(TraxelStore &in, boost::shared_ptr<FeatureStore> feature_store)
+  {
+      auto modifier = [&](Traxel& t){t.set_feature_store(feature_store);};
+      for(TraxelStore::iterator it = in.begin(); it != in.end(); ++it) {
+          in.modify(it, modifier);
+      }
+  }
+
 } /* namespace pgmlink */
 

@@ -44,6 +44,7 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
 	//    |               |
 	//   o                 o
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n32;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divProb(feature_array::difference_type(1));
@@ -51,21 +52,21 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
 	//detProb[2]=0;
 	n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
 	n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-	add(ts,n12);
+    add(ts, fs, n12);
 	
 	n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.39; detProb[0] = 0.1;detProb[1]=0.9;
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-	add(ts,n21);
+    add(ts, fs, n21);
 	
 	n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.2;detProb[1]=0.8;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-	add(ts,n32);
+    add(ts, fs, n32);
 
 	vector<double> sigmas(5);
 	sigmas[0]=1;
@@ -128,6 +129,7 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision ) {
 	//    |               |
 	//   o                 o
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n32;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divUnc(feature_array::difference_type(1));
@@ -141,26 +143,26 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision ) {
 	n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
 	n11.features["com"] = com; n11.features["divProb"] = divProb;  n11.features["detProb"] = detProb;
 	divUnc[0]=0.7;detUnc[0]=0.6;n11.features["divUnc"] = divUnc; n11.features["detUnc"] = detUnc;
-	add(ts,n11);
+    add(ts, fs, n11);
 
 	n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
 	divUnc[0]=0.7;detUnc[0]=0.6;n12.features["divUnc"] = divUnc; n12.features["detUnc"] = detUnc;
-	add(ts,n12);
+    add(ts, fs, n12);
 
 	n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.39; detProb[0] = 0.1;detProb[1]=0.9;
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
 	divUnc[0]=0.4;detUnc[0]=0.6;n21.features["divUnc"] = divUnc; n21.features["detUnc"] = detUnc;
-	add(ts,n21);
+    add(ts, fs, n21);
 
 	n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
 	divUnc[0]=0.2;detUnc[0]=0.6; n31.features["divUnc"] = divUnc; n31.features["detUnc"] = detUnc;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.2;detProb[1]=0.8;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
 	divUnc[0]=0.2;detUnc[0]=0.6; n32.features["divUnc"] = divUnc; n32.features["detUnc"] = detUnc;
-	add(ts,n32);
+    add(ts, fs, n32);
 
 	vector<double> sigmas(5);
 	sigmas[0]=1;
@@ -225,6 +227,7 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	//    |               |
 	//   o                 o
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n32;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divProb(feature_array::difference_type(1));
@@ -232,21 +235,21 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty ) {
 	//detProb[2]=0;
 	n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
 	n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-	add(ts,n12);
+    add(ts, fs, n12);
 	
 	n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-	add(ts,n21);
+    add(ts, fs, n21);
 	
 	n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-	add(ts,n32);
+    add(ts, fs, n32);
 
 	std::cout << "Initialize Conservation tracking" << std::endl;
 	std::cout << std::endl;
@@ -321,6 +324,7 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	//        X        X   
 	//   o ------ o ------ o
 	TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n22, n31, n32;
 	feature_array com(feature_array::difference_type(3));
 	feature_array divProb(feature_array::difference_type(1));
@@ -328,26 +332,26 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty ) {
 	//detProb[2]=0;
 	n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
 	n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-	add(ts,n11);
+    add(ts, fs, n11);
 	n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-	add(ts,n12);
+    add(ts, fs, n12);
 	
 	n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-	add(ts,n21);
+    add(ts, fs, n21);
 	
 	n22.Id = 22; n22.Timestep = 2; com[0] = 3; com[1] = 1; com[2] = 3; divProb[0] = 0.8; detProb[0] = 0.2;detProb[1]=0.8;
 	n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["detProb"] = detProb;
-	add(ts,n22);
+    add(ts, fs, n22);
 	
 	
 	n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-	add(ts,n31);
+    add(ts, fs, n31);
 	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.8;detProb[1]=0.2;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-	add(ts,n32);
+    add(ts, fs, n32);
 		
 	int mbest = 5;
 	UncertaintyParameter uparam(mbest,MbestCPLEX,0);

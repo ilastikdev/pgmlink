@@ -4,6 +4,10 @@
 @brief tracking API
  */
 
+#ifndef FUNKEY_BINARY_FILE
+#define FUNKEY_BINARY_FILE @FUNKEY_BINARY_FILE@
+#endif // FUNKEY_BINARY_FILE
+
 #ifndef TRACKING_H
 #define TRACKING_H
 
@@ -167,7 +171,8 @@ namespace pgmlink {
       means_(std::vector<double>()),
       sigmas_(std::vector<double>()),
       fov_(fov),
-      event_vector_dump_filename_(event_vector_dump_filename)
+      event_vector_dump_filename_(event_vector_dump_filename),
+      export_from_labeled_graph_(false)
       {}
 
 
@@ -184,7 +189,7 @@ namespace pgmlink {
 								double transition_parameter = 5.,
 								double border_width = 0,
 								bool with_constraints = true,
-                                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
 								double cplex_timeout = 1e+75,
 								TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
 
@@ -201,6 +206,7 @@ namespace pgmlink {
       PGMLINK_EXPORT EventVectorVectorVector track(double forbidden_cost = 0,
 							    double ep_gap=0.01,
 							    bool with_tracklets=true,
+							    double detection_weight = 10., 
 							    double division_weight=10.0,
 							    double transition_weight=10.0,
 							    double disappearance_cost = 0,
@@ -210,7 +216,7 @@ namespace pgmlink {
 							    double transition_parameter = 5.,
 							    double border_width = 0,
 							    bool with_constraints = true,
-                                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+                  UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
 							    double cplex_timeout = 1e+75);
 
       PGMLINK_EXPORT EventVectorVector resolve_mergers(EventVectorVector &events,
@@ -226,6 +232,11 @@ namespace pgmlink {
        * Get state of detection variables after call to operator().
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
+      PGMLINK_EXPORT void write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset = true);
+      PGMLINK_EXPORT void write_funkey_features(TraxelStore ts,std::vector<std::vector<double>> parameterlist);
+      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
+      PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights = "",std::string options = "");
+      PGMLINK_EXPORT void set_export_labeled_graph(bool in);
 
       /// Return reference to the ilp solutions
       PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
@@ -249,8 +260,14 @@ namespace pgmlink {
 
       boost::shared_ptr<HypothesesGraph> hypotheses_graph_;
       boost::shared_ptr<ConservationTracking> pgm_;
+							    
+      std::string features_file_;
+      std::string constraints_file_; 
+      std::string ground_truth_file_;
 
-    };
+      bool export_from_labeled_graph_;
+							    
+  };
 }
 
 #endif /* TRACKING_H */

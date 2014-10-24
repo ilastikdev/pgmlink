@@ -32,28 +32,30 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
     //    |                    |
     //  o                       o
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n41, n42;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n11.features["com"] = com; n11.features["divProb"] = divProb;
-    add(ts,n11);
+    add(ts,fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
     n12.features["com"] = com; n12.features["divProb"] = divProb;
-    add(ts,n12);
+    add(ts,fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
     n21.features["com"] = com; n21.features["divProb"] = divProb;
-    add(ts,n21);
+    add(ts,fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
     n31.features["com"] = com; n31.features["divProb"] = divProb;
-    add(ts,n31);
+    add(ts,fs, n31);
     n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n41.features["com"] = com; n41.features["divProb"] = divProb;
-    add(ts,n41);
+    add(ts,fs, n41);
     n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n42.features["com"] = com; n42.features["divProb"] = divProb;
-    add(ts,n42);
+    add(ts,fs, n42);
 
+//    fs->dump(std::cout);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
@@ -136,35 +138,40 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
 BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
 {
     TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n41, n42;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n11.features["com"] = com; n11.features["divProb"] = divProb;
-    add(ts,n11);
+    add(ts,fs, n11);
     n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
     n12.features["com"] = com; n12.features["divProb"] = divProb;
-    add(ts,n12);
+    add(ts, fs, n12);
     n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
     n21.features["com"] = com; n21.features["divProb"] = divProb;
-    add(ts,n21);
+    add(ts, fs, n21);
     n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
     n31.features["com"] = com; n31.features["divProb"] = divProb;
-    add(ts,n31);
+    add(ts, fs, n31);
     n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n41.features["com"] = com; n41.features["divProb"] = divProb;
-    add(ts,n41);
+    add(ts, fs, n41);
     n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n42.features["com"] = com; n42.features["divProb"] = divProb;
-    add(ts,n42);
+    add(ts, fs, n42);
+
+//    fs->dump(std::cout);
 
     TraxelStore ts_loaded;
+    boost::shared_ptr<FeatureStore> fs_loaded;
 
     {
         // now store the results
         std::ofstream ofs("temp_filename.evt");
         boost::archive::text_oarchive out_archive(ofs);
         out_archive << ts;
+        out_archive << fs;
     }
 
     {
@@ -172,8 +179,15 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
         std::ifstream ifs("temp_filename.evt");
         BOOST_CHECK(ifs.good());
         boost::archive::text_iarchive in_archive(ifs);
+        std::cout << "reading traxelstore" << std::endl;
         in_archive >> ts_loaded;
+        std::cout << "reading featurestore" << std::endl;
+        in_archive >> fs_loaded;
+        std::cout << "setting feature store" << std::endl;
+        set_feature_store(ts_loaded, fs_loaded);
     }
+
+//    fs_loaded->dump(std::cout);
 
     // compare if the traxelstores are equal
     BOOST_CHECK_EQUAL(ts.size(), ts_loaded.size());
@@ -187,6 +201,8 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
 
         const Traxel& a = *it;
         const Traxel& b = *it_loaded;
+
+        BOOST_CHECK(b.get_feature_store());
 
         BOOST_CHECK(a == b);
         BOOST_CHECK(fabsf(a.X() - b.X()) < 0.001f);

@@ -301,7 +301,47 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   template <typename Graph>
   const std::string property_map<arc_resolution_candidate, Graph>::name = "arc_resolution_candidate";
 
+  typedef size_t label_type;
 
+  // appearance ground truth label
+  struct appearance_label {};
+  template <typename Graph>
+  struct property_map< appearance_label, Graph> {
+    typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<appearance_label, Graph>::name = "appearance_label";
+
+  // disappearance ground truth label
+  struct disappearance_label {};
+  template <typename Graph>
+  struct property_map< disappearance_label, Graph> {
+    typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<disappearance_label, Graph>::name = "disappearance_label";
+
+  // division ground truth label
+  struct division_label {};
+  template <typename Graph>
+  struct property_map< division_label, Graph> {
+    typedef lemon::IterableValueMap<Graph, typename Graph::Node,label_type> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<division_label, Graph>::name = "division_label";
+
+  // arc ground truth label
+  struct arc_label {};
+  template <typename Graph>
+  struct property_map< arc_label, Graph> {
+    typedef lemon::IterableValueMap<Graph, typename Graph::Arc,label_type> type;
+    static const std::string name;
+  };
+  template <typename Graph>
+  const std::string property_map<arc_label, Graph>::name = "arc_label";
 
   class HypothesesGraph 
   : public PropertyGraph<lemon::ListDigraph> 
@@ -321,6 +361,21 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     PGMLINK_EXPORT HypothesesGraph::Node add_node(node_timestep_map::Value timestep);
     // call this function to add a multi-temporal node (e.g. for tracklets)
     PGMLINK_EXPORT HypothesesGraph::Node add_node(std::vector<node_timestep_map::Value> timesteps);
+
+    // add node with associated traxel
+    PGMLINK_EXPORT HypothesesGraph::Node add_traxel(Traxel ts);
+
+    // assign ground truth to a node
+    PGMLINK_EXPORT void add_appearance_label(HypothesesGraph::Node,label_type label);
+
+    // assign ground truth to a node
+    PGMLINK_EXPORT void add_disappearance_label(HypothesesGraph::Node,label_type label);
+
+    // assign division ground truth to a node
+    PGMLINK_EXPORT void add_division_label(HypothesesGraph::Node,label_type label);
+
+    // assign ground truth to a node
+    PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  ,label_type label);
 
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;

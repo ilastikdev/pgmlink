@@ -134,6 +134,19 @@ private:
     double w_;
 };
 
+class MoveEnergy 
+{
+ public:
+    PGMLINK_EXPORT MoveEnergy(std::vector<double> * weights)
+    : weights_(weights)
+    {}
+
+    PGMLINK_EXPORT double operator()( const Traxel& tr1,const Traxel& tr2,std::vector<double> weights ) const;
+private:
+    std::vector<double> * weights_;
+};
+
+
 /**
    @brief Zero near temporal border, else 1.
 */
