@@ -85,8 +85,9 @@ typedef vigra::MultiArrayView<2, feature_type> FeatureMatrixView;
 =============================================================================*/
 /**
 \brief write the solution stored in the property maps <TT>node_active_count</TT>
-  and <TT>arc_active_count</TT> into the <TT>node_active</TT> and 
-  <TT>arc_active</TT>.
+  and <TT>arc_active_count</TT> with the given solution index into the
+  <TT>node_active</TT>, <TT>node_active2</TT> and <TT>arc_active</TT> property
+  maps.
 */
 void set_solution(HypothesesGraph& graph, const size_t solution_index);
 
@@ -327,9 +328,9 @@ class TrackTraxels : public TraxelsOfInterest {
 \brief identifies all cell divisions in the tracking an returns the references
   to the involved traxels.
 
-A cell division is detected if one node has two outgoing arcs. One can specify
-the depth to which the traxels are extracted. That is to say how many parent
-and child nodes are returned.
+A cell division is detected if a node has two outgoing arcs and the parent node
+is not a merger object. One can specify the depth to which the traxels are
+extracted. That is to say how many parent and child nodes are returned.
 Division of depth 2:
 \code
           n2 - n3
