@@ -72,37 +72,24 @@ namespace pgmlink {
     ts[t.Id] = t;
   }
 
+  // Templated pickle suite
+  template<class T>
+  struct TemplatedPickleSuite : pickle_suite {
+    static std::string getstate( const T& g ) {
+      std::stringstream ss;
+      boost::archive::text_oarchive oa(ss);
+      oa & g;
+      return ss.str();
+    }
+
+    static void setstate( T& g, const std::string& state ) {
+      std::stringstream ss(state);
+      boost::archive::text_iarchive ia(ss);
+      ia & g;
+    }
+  };
+
   // extending TraxelStore
-  struct TraxelStore_pickle_suite : pickle_suite {
-    static std::string getstate( const TraxelStore& g ) {
-      std::stringstream ss;
-      boost::archive::text_oarchive oa(ss);
-      oa & g;
-      return ss.str();
-    }
-    
-    static void setstate( TraxelStore& g, const std::string& state ) {
-      std::stringstream ss(state);
-      boost::archive::text_iarchive ia(ss);
-      ia & g;
-    }
-  };
-
-  struct FeatureStore_pickle_suite : pickle_suite {
-    static std::string getstate( boost::shared_ptr<FeatureStore> g ) {
-      std::stringstream ss;
-      boost::archive::text_oarchive oa(ss);
-      oa & g;
-      return ss.str();
-    }
-
-    static void setstate( boost::shared_ptr<FeatureStore> g, const std::string& state ) {
-      std::stringstream ss(state);
-      boost::archive::text_iarchive ia(ss);
-      ia & g;
-    }
-  };
-
   void add_traxel_to_traxelstore(TraxelStore& ts, boost::shared_ptr<FeatureStore> fs, Traxel& t) {
     add(ts, fs, t);
   }
@@ -162,10 +149,12 @@ void export_traxels() {
 
     class_< std::vector<double> >("VectorOfDouble")
       .def(vector_indexing_suite< std::vector<double> >() )
+        .def_pickle(TemplatedPickleSuite< std::vector<double> >())
     ;
 
     class_< std::vector<int> >("VectorOfInt")
       .def(vector_indexing_suite< std::vector<int> >() )
+        .def_pickle(TemplatedPickleSuite< std::vector<int> >())
     ;
 
     TraxelStoreByTimeid& (TraxelStore::*get_by_timeid)() = &TraxelStore::get<by_timeid>; 
@@ -176,9 +165,9 @@ void export_traxels() {
       .def("get_by_timeid", get_by_timeid, return_internal_reference<>())
       .def("size", &TraxelStore::size)
       .def("set_feature_store", &set_feature_store)
-      .def_pickle(TraxelStore_pickle_suite())
+      .def_pickle(TemplatedPickleSuite< TraxelStore >())
       ;
 
     class_< boost::shared_ptr<FeatureStore> >("FeatureStore")
-            .def_pickle(FeatureStore_pickle_suite());
+        .def_pickle(TemplatedPickleSuite< boost::shared_ptr<FeatureStore> >());
 }
