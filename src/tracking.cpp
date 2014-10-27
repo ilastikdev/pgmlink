@@ -722,9 +722,9 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
 
     if(not writeGroundTruth.empty()){
       ground_truth_file_  = writeGroundTruth;
-      std::ofstream labels_file;
-      labels_file.open (writeGroundTruth);
-      labels_file.close();      
+//      std::ofstream labels_file;
+//      labels_file.open (writeGroundTruth);
+//      labels_file.close();
     }
   }
 
