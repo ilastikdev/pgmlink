@@ -142,11 +142,9 @@ namespace pgmlink {
   {
       if(fs && fs != features_)
       {
-          std::cout << "setting feature store in traxel" << std::endl;
           features_ = fs;
           features.feature_store_set_notification();
       }
-      std::cout << "done" << std::endl;
   }
 
   std::ostream& operator<< (std::ostream &out, const Traxel &t) {

@@ -140,6 +140,7 @@ void export_traxels() {
     class_<Traxel>("Traxel")
 	.def_readwrite("Id", &Traxel::Id)
 	.def_readwrite("Timestep", &Traxel::Timestep)
+        .def("set_feature_store", &Traxel::set_feature_store)
         //.def("set_locator", &Traxel::set_locator, return_self<>())
         .def("set_x_scale", &set_x_scale)
         .def("set_y_scale", &set_y_scale)
@@ -148,10 +149,10 @@ void export_traxels() {
         .def("X", &Traxel::X)
         .def("Y", &Traxel::Y)
         .def("Z", &Traxel::Z)
-	.def_readwrite("features", &Traxel::features)
+//        .def_readwrite("features", &Traxel::features.get())
         .def("add_feature_array", &add_feature_array, args("self","name", "size"), "Add a new feature array to the features map; initialize with zeros. If the name is already present, the old feature array will be replaced.")
-	.def("get_feature_value", &get_feature_value, args("self", "name", "index"))
-	.def("set_feature_value", &set_feature_value, args("self", "name", "index", "value"))
+        .def("get_feature_value", &get_feature_value, args("self", "name", "index"))
+        .def("set_feature_value", &set_feature_value, args("self", "name", "index", "value"))
     ;
 
     class_<map<unsigned int, Traxel> >("Traxels")
@@ -174,6 +175,7 @@ void export_traxels() {
       .def("bounding_box", &bounding_box)
       .def("get_by_timeid", get_by_timeid, return_internal_reference<>())
       .def("size", &TraxelStore::size)
+      .def("set_feature_store", &set_feature_store)
       .def_pickle(TraxelStore_pickle_suite())
       ;
 
