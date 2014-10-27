@@ -489,76 +489,85 @@ const std::vector<ConstTraxelRefVector>& DivisionTraxels::from_traxel_graph(
   size_t depth
 ) {
   ret_.clear();
+  // check if we have a graph with mergers
+  bool with_mergers = graph.has_property(node_active2());
   // Get the property maps
   node_active_map_type& node_active_map = graph.get(node_active());
   node_traxel_map_type& node_traxel_map = graph.get(node_traxel());
 
   // Find the divisions
   for (NodeActiveIt n_it(node_active_map); n_it != lemon::INVALID; ++n_it) {
-    // Count the active outgoing arcs
-    std::vector<HypothesesGraph::Node> out_nodes;
-    get_out_nodes(n_it, graph, out_nodes);
-    ConstTraxelRefVector parents;
-    ConstTraxelRefVector l_children;
-    ConstTraxelRefVector r_children;
-    // Two outgoing arcs: division
-    if (out_nodes.size() == 2) {
-      // Initialize the variables that change during the while loop
-      // Now follows some ugly code
-      bool valid_division = true;
-      size_t curr_depth = depth;
-      // These variables are the current parent node and the child nodes
-      HypothesesGraph::Node parent = n_it;
-      HypothesesGraph::Node l_node = out_nodes[0];
-      HypothesesGraph::Node r_node = out_nodes[1];
-      // Reserve some space for the vectors in which the incoming and out going
-      // nodes are written
-      Nodevector in;
-      Nodevector l_out;
-      Nodevector r_out;
-      while ((curr_depth != 0) and valid_division) {
-        // Save the reference to the traxel corresponding to the nodes
-        parents.push_back( &(node_traxel_map[parent]) );
-        l_children.push_back( &(node_traxel_map[l_node]) );
-        r_children.push_back( &(node_traxel_map[r_node]) );
-
-        // Get the following nodes
-        get_in_nodes(parent, graph, in);
-        get_out_nodes(l_node, graph, l_out);
-        get_out_nodes(r_node, graph, r_out);
-
-        // Check if the track is long enough to return the division to the full
-        // depth
-        valid_division  = (in.size() == 1);
-        valid_division &= (l_out.size() == 1);
-        valid_division &= (r_out.size() == 1);
-
-        // If all sizes fit get the following nodes
-        if (valid_division) {
-          parent = in.front();
-          l_node = l_out.front();
-          r_node = r_out.front();
-        }
-        curr_depth--;
-      }
-
-      // store the results if the while loop ran over the whole depth
-      if (curr_depth == 0) {
-        ret_.resize(ret_.size() + 1);
-        ret_.back().insert(ret_.back().end(), parents.begin(), parents.end());
-        ret_.back().insert(
-          ret_.back().end(),
-          l_children.begin(),
-          l_children.end()
-        );
-        ret_.back().insert(
-          ret_.back().end(),
-          r_children.begin(),
-          r_children.end()
-        );
-      }
+    bool is_single_object_node = true;
+    if (with_mergers) {
+      node_active2_map_type& node_active2_map = graph.get(node_active2());
+      is_single_object_node = (node_active2_map[n_it] == 1);
     }
-  }
+    if (is_single_object_node) {
+      // Count the active outgoing arcs
+      std::vector<HypothesesGraph::Node> out_nodes;
+      get_out_nodes(n_it, graph, out_nodes);
+      ConstTraxelRefVector parents;
+      ConstTraxelRefVector l_children;
+      ConstTraxelRefVector r_children;
+      // Two outgoing arcs: division
+      if (out_nodes.size() == 2) {
+        // Initialize the variables that change during the while loop
+        // Now follows some ugly code
+        bool valid_division = true;
+        size_t curr_depth = depth;
+        // These variables are the current parent node and the child nodes
+        HypothesesGraph::Node parent = n_it;
+        HypothesesGraph::Node l_node = out_nodes[0];
+        HypothesesGraph::Node r_node = out_nodes[1];
+        // Reserve space for the vectors in which the incoming and outgoing
+        // nodes are written
+        Nodevector in;
+        Nodevector l_out;
+        Nodevector r_out;
+        while ((curr_depth != 0) and valid_division) {
+          // Save the reference to the traxel corresponding to the nodes
+          parents.push_back( &(node_traxel_map[parent]) );
+          l_children.push_back( &(node_traxel_map[l_node]) );
+          r_children.push_back( &(node_traxel_map[r_node]) );
+
+          // Get the following nodes
+          get_in_nodes(parent, graph, in);
+          get_out_nodes(l_node, graph, l_out);
+          get_out_nodes(r_node, graph, r_out);
+
+          // Check if the track is long enough to return the division to the
+          // full depth
+          valid_division  = (in.size() == 1);
+          valid_division &= (l_out.size() == 1);
+          valid_division &= (r_out.size() == 1);
+
+          // If all sizes fit get the following nodes
+          if (valid_division) {
+            parent = in.front();
+            l_node = l_out.front();
+            r_node = r_out.front();
+          }
+          curr_depth--;
+        }
+
+        // store the results if the while loop ran over the whole depth
+        if (curr_depth == 0) {
+          ret_.resize(ret_.size() + 1);
+          ret_.back().insert(ret_.back().end(), parents.begin(), parents.end());
+          ret_.back().insert(
+            ret_.back().end(),
+            l_children.begin(),
+            l_children.end()
+          );
+          ret_.back().insert(
+            ret_.back().end(),
+            r_children.begin(),
+            r_children.end()
+          );
+        } // if (curr_depth == 0)
+      } // if (out_nodes.size() == 2)
+    } // if (is_single_object_node)
+  } // for (NodeActiveIt n_it(...) ... )
   return ret_;
 }
 
@@ -569,57 +578,66 @@ const std::vector<ConstTraxelRefVector>& DivisionTraxels::from_tracklet_graph(
   ret_.clear();
   // Get the property maps
   node_active_map_type& node_active_map = graph.get(node_active());
+  // check if we have a graph with mergers
+  bool with_mergers = graph.has_property(node_active2());
 
   // Find the divisions
   for (NodeActiveIt n_it(node_active_map); n_it != lemon::INVALID; ++n_it) {
-    // Count the active outgoing arcs
-    std::vector<HypothesesGraph::Node> out_nodes;
-    get_out_nodes(n_it, graph, out_nodes);
-    // Two outgoing arcs: division
-    if (out_nodes.size() == 2) {
-      ConstTraxelRefVector parents;
-      ConstTraxelRefVector l_children;
-      ConstTraxelRefVector r_children;
-      bool valid_division = true;
-
-      valid_division &= get_parents_to_depth(
-        n_it,
-        graph,
-        depth,
-        parents
-      );
-      valid_division &= get_children_to_depth(
-        out_nodes[0],
-        graph,
-        depth,
-        l_children
-      );
-      valid_division &= get_children_to_depth(
-        out_nodes[1],
-        graph,
-        depth,
-        r_children
-      );
-
-      if (valid_division) {
-        ret_.resize(ret_.size() + 1);
-        ret_.back().insert(
-          ret_.back().end(),
-          parents.begin(),
-          parents.end()
-        );
-        ret_.back().insert(
-          ret_.back().end(),
-          l_children.begin(),
-          l_children.end()
-        );
-        ret_.back().insert(
-          ret_.back().end(),
-          r_children.begin(),
-          r_children.end()
-        );
-      }
+    bool is_single_object_node = true;
+    if (with_mergers) {
+      node_active2_map_type& node_active2_map = graph.get(node_active2());
+      is_single_object_node = (node_active2_map[n_it] == 1);
     }
+    if (is_single_object_node) {
+      // Count the active outgoing arcs
+      std::vector<HypothesesGraph::Node> out_nodes;
+      get_out_nodes(n_it, graph, out_nodes);
+      // Two outgoing arcs: division
+      if (out_nodes.size() == 2) {
+        ConstTraxelRefVector parents;
+        ConstTraxelRefVector l_children;
+        ConstTraxelRefVector r_children;
+        bool valid_division = true;
+
+        valid_division &= get_parents_to_depth(
+          n_it,
+          graph,
+          depth,
+          parents
+        );
+        valid_division &= get_children_to_depth(
+          out_nodes[0],
+          graph,
+          depth,
+          l_children
+        );
+        valid_division &= get_children_to_depth(
+          out_nodes[1],
+          graph,
+          depth,
+          r_children
+        );
+
+        if (valid_division) {
+          ret_.resize(ret_.size() + 1);
+          ret_.back().insert(
+            ret_.back().end(),
+            parents.begin(),
+            parents.end()
+          );
+          ret_.back().insert(
+            ret_.back().end(),
+            l_children.begin(),
+            l_children.end()
+          );
+          ret_.back().insert(
+            ret_.back().end(),
+            r_children.begin(),
+            r_children.end()
+          );
+        }
+      } // if (out_nodes.size() == 2)
+    } // if (is_single_object_node)
   }
   return ret_;
 }
