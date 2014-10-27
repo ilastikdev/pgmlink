@@ -171,6 +171,7 @@ class ConservationTracking : public Reasoner {
     double sample_with_classifier_variance(double mean, double variance);
     double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
+    std::string get_label_export_filename(size_t iteration);
 
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);

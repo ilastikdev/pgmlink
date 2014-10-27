@@ -103,6 +103,28 @@ void ConservationTracking::printResults(HypothesesGraph& g){
 		}
 	}
 
+std::string ConservationTracking::get_label_export_filename(size_t iteration)
+{
+    std::stringstream label_filename;
+    if(!ground_truth_file_.empty())
+    {
+        std::string ground_truth_basename = ground_truth_file_;
+        std::string extension = ".txt";
+
+        // remove extension
+        std::string::size_type extension_pos = ground_truth_file_.find_last_of(".");
+        if(extension_pos != ground_truth_file_.npos)
+        {
+            extension = ground_truth_file_.substr(extension_pos);
+            ground_truth_basename = ground_truth_file_.substr(0, extension_pos);
+        }
+
+        label_filename << ground_truth_basename << "_" << iteration << extension;
+    }
+
+    return label_filename.str();
+}
+
 void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	reset();
@@ -157,7 +179,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		numberOfSolutions = param_.numberOfIterations;
 	}
 
-	optimizer_ = new cplex_optimizer(PertModel, param, numberOfSolutions,features_file_,constraints_file_,ground_truth_file_,export_from_labeled_graph_);
+    optimizer_ = new cplex_optimizer(PertModel, param, numberOfSolutions,features_file_,constraints_file_,get_label_export_filename(0),export_from_labeled_graph_);
 
 	if (with_constraints_) {
         LOG(logINFO) << "add_constraints";
@@ -173,11 +195,13 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
         LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
         write_labeledgraph_to_file(hypotheses);
     }
-    //TODO: export more than MAP solution
+
     optimizer_->set_export_file_names("","","");
 
 	for (size_t k=1;k<numberOfSolutions;++k){
 		LOG(logINFO) << "conclude "<<k+1<<"-best solution";
+        optimizer_->set_export_file_names("","",get_label_export_filename(k));
+
         opengm::InferenceTermination status = optimizer_->arg(solutions_.back(),k);
 		if (status != opengm::NORMAL) {
 			throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
@@ -220,7 +244,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 		add_finite_factors(*graph, &PertModel, true /*perturb*/, &deterministic_offset);
 
 		LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
-		optimizer_ = new cplex_optimizer(PertModel, param);
+        optimizer_ = new cplex_optimizer(PertModel, param);
+
+        optimizer_->set_export_file_names("","",get_label_export_filename(iterStep));
 
 		if (with_constraints_) {
 			add_constraints(*graph);
