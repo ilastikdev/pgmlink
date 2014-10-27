@@ -12,8 +12,6 @@
 #include "pgmlink/tracking.h"
 #include "pgmlink/tracking_feature_extractor.h"
 
-#include <boost/python.hpp>
-
 using namespace pgmlink;
 using namespace pgmlink::features;
 
@@ -515,6 +513,12 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
     BOOST_CHECK(proposal_labels[0].size() == events.size());
 }
 
+#if 0
+// This code just stays here as example how to run python code from within C++.
+// To make it work, you need to link against boost python and the python libraries.
+// In this example, a mock up of how to run structsvm solver from https://bitbucket.org/chaubold/struct-svm.git is shown.
+
+#include <boost/python.hpp>
 std::vector<double> execute_ssvm_python(const std::string& ground_truth,
                          const std::string& proposals,
                          const std::string& proposal_features)
@@ -550,5 +554,6 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_PythonLearner)
     std::vector<double> weights = execute_ssvm_python("bla.txt", "blupp.txt","foobar.txt");
     BOOST_CHECK(weights.size() == 2);
 }
+#endif
 
 // EOF

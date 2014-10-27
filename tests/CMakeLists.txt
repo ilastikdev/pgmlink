@@ -4,31 +4,10 @@ message( "\nConfiguring tests:" )
 # dependencies
 find_package( Boost REQUIRED COMPONENTS unit_test_framework filesystem system python)
 find_package( Cplex REQUIRED )
-find_package( PythonInterp REQUIRED )
-
-if(WIN32)
-  GET_FILENAME_COMPONENT(PYTHON_PREFIX "${PYTHON_EXECUTABLE}" PATH)
-  message(STATUS "PYTHON_PREFIX ${PYTHON_PREFIX}")
-  find_library(PYTHON_LIBRARY
-        NAMES python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}.lib
-        HINTS "${PYTHON_PREFIX}/libs"
-        NO_DEFAULT_PATH)
-  set(PYTHON_LIBRARIES "${PYTHON_LIBRARY}" CACHE FILEPATH "the Python library")
-
-  find_path(PYTHON_INCLUDE_DIRS
-        NAMES Python.h
-        HINTS "${PYTHON_PREFIX}/include"
-        NO_DEFAULT_PATH)
-  set(PYTHON_INCLUDE_DIRS "${PYTHON_INCLUDE_DIRS}" CACHE PATH "the Python include directory")
-else()
-  find_package( PythonLibs REQUIRED )
-endif()
 
 include_directories(
   ${Boost_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/include/
-  ${PYTHON_INCLUDE_DIRS}
-  ${PYTHON_INCLUDE_DIRS}/python2.7
 )
 
 # enable dynamic linking with boost test
@@ -43,7 +22,7 @@ foreach(test_src ${TEST_SRCS})
   else()
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable( ${test_name} ${test_src} )
-    target_link_libraries( ${test_name} pgmlink ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+    target_link_libraries( ${test_name} pgmlink ${Boost_LIBRARIES})
     add_test( ${test_name} ${test_name})
   endif()
 endforeach(test_src)
