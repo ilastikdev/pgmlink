@@ -4,6 +4,9 @@
 #include <string>
 #include <sstream>
 
+#include "../include/pgmlink/hypotheses.h"
+#include "../include/pgmlink/higher_order_features.h"
+
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/python.hpp>
@@ -12,8 +15,6 @@
 #include <boost/utility.hpp>
 
 #include <lemon/core.h>
-
-#include "../include/pgmlink/hypotheses.h"
 
 using namespace pgmlink;
 using namespace boost::python;
@@ -190,6 +191,7 @@ void export_hypotheses() {
     .def("addAppearanceLabel",&HypothesesGraph::add_appearance_label)
     .def("addDisappearanceLabel",&HypothesesGraph::add_disappearance_label)
     .def("addDivisionLabel",&HypothesesGraph::add_division_label)
+    .def("set_solution", &features::set_solution)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,

@@ -575,6 +575,16 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 		cout << "-> pruning inactive hypotheses" << endl;
 
 	}
+
+    // copy solutions
+    const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();
+    for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = pgm_solution.begin();
+        sol_it != pgm_solution.end();
+        ++sol_it)
+    {
+        ilp_solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
+    }
+
 	//TODO: conceptual problem here:
 	//revise prune_inactive//events
 	
@@ -668,7 +678,25 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 	} else {
 		throw std::runtime_error(
 				"MrfTracking::detections(): previous tracking result required");
-	}
+    }
+}
+
+void ConsTracking::save_ilp_solutions(const std::string& filename)
+{
+    std::ofstream result_file(filename.c_str());
+
+    if(!result_file.good())
+        throw std::runtime_error("Couldn't open file to save ILP solutions");
+
+    for(size_t variable_idx = 0; variable_idx < ilp_solutions_[0].size(); variable_idx++)
+    {
+        for(size_t result_idx = 0; result_idx < ilp_solutions_.size(); result_idx++)
+        {
+            result_file << ilp_solutions_[result_idx][variable_idx] << " ";
+        }
+
+        result_file << "\n";
+    }
 }
 
   void ConsTracking::write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset){
@@ -694,9 +722,9 @@ vector<map<unsigned int, bool> > ConsTracking::detections() {
 
     if(not writeGroundTruth.empty()){
       ground_truth_file_  = writeGroundTruth;
-      std::ofstream labels_file;
-      labels_file.open (writeGroundTruth);
-      labels_file.close();      
+//      std::ofstream labels_file;
+//      labels_file.open (writeGroundTruth);
+//      labels_file.close();
     }
   }
 

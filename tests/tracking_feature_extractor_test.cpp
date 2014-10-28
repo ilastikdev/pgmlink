@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
     BorderDistanceFilter border_distance_filter(fov, 0.5, 0.5);
     boost::function<bool (const Traxel&)> f;
     f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &border_distance_filter, _1);
-    TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
+    TrackingFeatureExtractor extractor(hypotheses_graph, fov, f);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     BorderDistanceFilter border_distance_filter(fov, 0.5, 0.5);
     boost::function<bool (const Traxel&)> f;
     f = boost::bind(&BorderDistanceFilter::is_out_of_margin, &border_distance_filter, _1);
-    TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
+    TrackingFeatureExtractor extractor(hypotheses_graph, fov, f);
     extractor.compute_features();
     TrackingFeatureExtractor::JointFeatureVector joint_feature_vector;
     extractor.get_feature_vector(joint_feature_vector);
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     {
         std::cout << "\nFeatures for solution: " << m << std::endl;
         set_solution(*hypotheses_graph, m);
-        TrackingFeatureExtractor extractor(*hypotheses_graph, fov, f);
+        TrackingFeatureExtractor extractor(hypotheses_graph, fov, f);
         extractor.compute_features();
         TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
         extractor.get_feature_vector(joint_feature_vector_m);
@@ -246,5 +246,314 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     }
     std::cout << "done" << std::endl;
 }
+
+BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
+{
+    std::cout << "Constructing HypothesesGraph" << std::endl;
+    std::cout << std::endl;
+
+    typedef HypothesesGraph::ArcIt ArcIt2;
+    typedef HypothesesGraph::Arc Arc;
+    typedef HypothesesGraph::NodeIt NodeIt;
+    typedef HypothesesGraph::Node Node;
+    using lemon::INVALID;
+
+    std::cout << "Adding Traxels to TraxelStore" << std::endl;
+    std::cout << std::endl;
+
+    //  t=1       2       3
+    //   o                 o
+    //    |               |
+    //     ------ o ------
+    //    |               |
+    //   o                 o
+    TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    Traxel n11, n12, n21, n31, n32;
+    feature_array com(feature_array::difference_type(3));
+    feature_array divProb(feature_array::difference_type(1));
+    feature_array detProb(feature_array::difference_type(2));
+    //detProb[2]=0;
+    n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
+    n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+    add(ts, fs, n11);
+    n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
+    add(ts, fs, n12);
+
+    n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
+    n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+    add(ts, fs, n21);
+
+    n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
+    add(ts, fs, n31);
+    n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
+    n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
+    add(ts, fs, n32);
+
+    std::cout << "Initialize Conservation tracking" << std::endl;
+    std::cout << std::endl;
+
+    vector<double> sigmas(5);
+        sigmas[0]=0;
+        sigmas[1]=0;
+        sigmas[2]=10;
+        sigmas[3]=10;
+        sigmas[4]=10;
+
+    UncertaintyParameter uparam(3,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
+
+    FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    EventVectorVectorVector events = tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
+
+    // remove file before populating
+    std::string proposal_feature_filename = "proposal_features.txt";
+    boost::filesystem::remove(proposal_feature_filename);
+    boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
+
+    size_t feature_vector_length = 0;
+
+    for(size_t m = 0; m < events.size(); m++)
+    {
+        set_solution(*hypotheses_graph, m);
+        TrackingFeatureExtractor extractor(hypotheses_graph, fov);
+        extractor.compute_features();
+        TrackingFeatureExtractor::JointFeatureVector joint_feature_vector_m;
+        extractor.get_feature_vector(joint_feature_vector_m);
+        extractor.append_feature_vector_to_file(proposal_feature_filename);
+        feature_vector_length = joint_feature_vector_m.size();
+    }
+
+    // read file again
+    std::vector< std::vector <double> > proposal_features;
+    std::ifstream feature_vector_file(proposal_feature_filename.c_str());
+    if(feature_vector_file.good())
+    {
+        while(!feature_vector_file.eof())
+        {
+            // read line and remove comments and whitespace
+            std::string line;
+            std::getline(feature_vector_file, line);
+            std::string::size_type comment_start = line.find('#');
+            if(comment_start != std::string::npos)
+                line = line.substr(comment_start);
+            boost::algorithm::trim(line);
+
+            // skip lines without features
+            if(line.size() == 0)
+                continue;
+
+            // read features
+            std::stringstream linestream(line);
+            proposal_features.push_back(std::vector<double>());
+            while(!linestream.eof())
+            {
+                double f;
+                linestream >> f;
+                proposal_features.back().push_back(f);
+            }
+        }
+    }
+
+    BOOST_CHECK(proposal_features.size() == feature_vector_length);
+    for(size_t i = 0; i < feature_vector_length; i++)
+    {
+        BOOST_CHECK(proposal_features[i].size() == events.size());
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
+{
+    std::cout << "Constructing HypothesesGraph" << std::endl;
+    std::cout << std::endl;
+
+    typedef HypothesesGraph::ArcIt ArcIt2;
+    typedef HypothesesGraph::Arc Arc;
+    typedef HypothesesGraph::NodeIt NodeIt;
+    typedef HypothesesGraph::Node Node;
+    using lemon::INVALID;
+
+    std::cout << "Adding Traxels to TraxelStore" << std::endl;
+    std::cout << std::endl;
+
+    //  t=1       2       3
+    //   o                 o
+    //    |               |
+    //     ------ o ------
+    //    |               |
+    //   o                 o
+    TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    Traxel n11, n12, n21, n31, n32;
+    feature_array com(feature_array::difference_type(3));
+    feature_array divProb(feature_array::difference_type(1));
+    feature_array detProb(feature_array::difference_type(2));
+    //detProb[2]=0;
+    n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
+    n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+    add(ts, fs, n11);
+    n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
+    add(ts, fs, n12);
+
+    n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
+    n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+    add(ts, fs, n21);
+
+    n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
+    add(ts, fs, n31);
+    n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
+    n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
+    add(ts, fs, n32);
+
+    std::cout << "Initialize Conservation tracking" << std::endl;
+    std::cout << std::endl;
+
+    vector<double> sigmas(5);
+        sigmas[0]=0;
+        sigmas[1]=0;
+        sigmas[2]=10;
+        sigmas[3]=10;
+        sigmas[4]=10;
+
+    UncertaintyParameter uparam(3,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
+
+    FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    EventVectorVectorVector events = tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
+
+
+    std::string proposal_labels_filename = "proposal_labels.txt";
+    tracking.save_ilp_solutions(proposal_labels_filename);
+
+    // read file again
+    std::vector< std::vector <size_t> > proposal_labels;
+    std::ifstream proposal_labels_file(proposal_labels_filename.c_str());
+    if(proposal_labels_file.good())
+    {
+        while(!proposal_labels_file.eof())
+        {
+            // read line and remove comments and whitespace
+            std::string line;
+            std::getline(proposal_labels_file, line);
+            std::string::size_type comment_start = line.find('#');
+            if(comment_start != std::string::npos)
+                line = line.substr(comment_start);
+            boost::algorithm::trim(line);
+
+            // skip lines without labels
+            if(line.size() == 0)
+                continue;
+
+            // read labels
+            std::stringstream linestream(line);
+            proposal_labels.push_back(std::vector<size_t>());
+            while(!linestream.eof())
+            {
+                size_t l;
+                linestream >> l;
+                proposal_labels.back().push_back(l);
+            }
+        }
+    }
+
+    BOOST_CHECK(proposal_labels[0].size() == events.size());
+}
+
+#if 0
+// This code just stays here as example how to run python code from within C++.
+// To make it work, you need to link against boost python and the python libraries.
+// In this example, a mock up of how to run structsvm solver from https://bitbucket.org/chaubold/struct-svm.git is shown.
+
+#include <boost/python.hpp>
+std::vector<double> execute_ssvm_python(const std::string& ground_truth,
+                         const std::string& proposals,
+                         const std::string& proposal_features)
+{
+    using namespace boost::python;
+
+    try
+    {
+        object main_module = import("__main__");
+        object main_namespace = main_module.attr("__dict__"); // get namespace
+        exec("import structsvm", main_namespace);
+        exec("problem = structsvm.funkey_problem('structsvm/features.txt', 'structsvm/constraints.txt', 'structsvm/labels.txt', [1,1,1,1,1])", main_namespace);
+        exec("solver = structsvm.struct_svm_solver_bundle(problem)", main_namespace);
+        exec("weights = solver.solve()", main_namespace);
+        object python_weights = extract< boost::python::list >(main_namespace["weights"]);
+        std::vector<double> weights;
+        for(size_t i = 0; i < len(python_weights); i++)
+        {
+            weights.push_back(extract<double>(python_weights[i]));
+        }
+        return weights;
+    }
+    catch (error_already_set const&)
+    {
+        PyErr_Print();
+        return std::vector<double>();
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_PythonLearner)
+{
+    Py_Initialize();
+    std::vector<double> weights = execute_ssvm_python("bla.txt", "blupp.txt","foobar.txt");
+    BOOST_CHECK(weights.size() == 2);
+}
+#endif
 
 // EOF

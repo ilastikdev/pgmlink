@@ -22,10 +22,13 @@ public:
     TrackingFeatureExtractor() = delete;
 
     /// Create the extractor given a hypotheses graph
-    TrackingFeatureExtractor(
-        HypothesesGraph& graph,
-        FieldOfView& fov,
-        boost::function<bool (const Traxel&)> margin_filter_function = NULL);
+    TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
+        const FieldOfView &fov);
+
+    /// Create the extractor given a hypotheses graph with filter function
+    TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
+        const FieldOfView &fov,
+        boost::function<bool (const Traxel&)> margin_filter_function);
 
     /// Get the complete vector of features computed for the currently set solution
     void get_feature_vector(JointFeatureVector& feature_vector) const;
@@ -35,6 +38,11 @@ public:
 
     /// Dispatch computation of features here
     void compute_features();
+
+    /// Append features for this solution to the given file.
+    /// If file does not exist, create it.
+    /// Comments are ignored, and will not be copied to the edited file
+    void append_feature_vector_to_file(const std::string &filename);
 
 private:
     void push_back_feature(std::string feature_name, double feature_value);
@@ -69,7 +77,7 @@ private:
 
     JointFeatureVector joint_feature_vector_;
     FeatureDescription feature_descriptions_;
-    HypothesesGraph& graph_;
+    boost::shared_ptr<HypothesesGraph> graph_;
 };
 
 class BorderDistanceFilter {
