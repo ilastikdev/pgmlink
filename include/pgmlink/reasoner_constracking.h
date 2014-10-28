@@ -58,6 +58,8 @@ class Traxel;
 
 class ConservationTracking : public Reasoner {
     public:
+    typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
+
 	ConservationTracking(
                              unsigned int max_number_objects,
                              boost::function<double (const Traxel&, const size_t)> detection,
@@ -136,6 +138,8 @@ class ConservationTracking : public Reasoner {
      */
     const std::map<HypothesesGraph::Arc, size_t>& get_arc_map() const;
     
+    /// Return reference to all CPLEX solution vectors
+    const std::vector<IlpSolution>& get_ilp_solutions() const;
     //cplex export file names
     std::string features_file_;
     std::string constraints_file_;
@@ -167,6 +171,7 @@ class ConservationTracking : public Reasoner {
     double sample_with_classifier_variance(double mean, double variance);
     double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
+    std::string get_label_export_filename(size_t iteration);
 
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
@@ -188,7 +193,8 @@ class ConservationTracking : public Reasoner {
     boost::shared_ptr<pgm::OpengmModelDeprecated> pgm_;
     //opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel, pgm::OpengmModelDeprecated::ogmAccumulator>* optimizer_;
 	cplex_optimizer* optimizer_;
-	std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> solution_;
+
+    std::vector<IlpSolution> solutions_;
 	
     std::map<HypothesesGraph::Node, size_t> div_node_map_;
     std::map<HypothesesGraph::Node, size_t> app_node_map_;

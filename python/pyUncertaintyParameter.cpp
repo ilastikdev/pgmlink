@@ -21,7 +21,7 @@ void export_uncertaintyParameter() {
 
 	class_< UncertaintyParameter >("UncertaintyParameter")
 	    .def(init<int,DistrId,std::vector<double> >(
-	    args("nOI","dI","dP")))
+        args("number_of_iterations","distribution_id","distribution_parameters")))
 	    ;
 
 }
