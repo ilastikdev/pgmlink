@@ -15,7 +15,7 @@
 #include <boost/python/return_internal_reference.hpp>
 #include <boost/utility.hpp>
 
-
+#include "pytemplated_pickle_suite.h"
 
 using namespace pgmlink;
 using namespace boost::python;
@@ -71,23 +71,6 @@ namespace pgmlink {
   void add_traxel(Traxels& ts, const Traxel& t) {
     ts[t.Id] = t;
   }
-
-  // Templated pickle suite
-  template<class T>
-  struct TemplatedPickleSuite : pickle_suite {
-    static std::string getstate( const T& g ) {
-      std::stringstream ss;
-      boost::archive::text_oarchive oa(ss);
-      oa & g;
-      return ss.str();
-    }
-
-    static void setstate( T& g, const std::string& state ) {
-      std::stringstream ss(state);
-      boost::archive::text_iarchive ia(ss);
-      ia & g;
-    }
-  };
 
   // extending TraxelStore
   void add_traxel_to_traxelstore(TraxelStore& ts, boost::shared_ptr<FeatureStore> fs, Traxel& t) {

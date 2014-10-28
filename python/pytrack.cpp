@@ -14,6 +14,7 @@
 #include <boost/python.hpp>
 #include <Python.h>
 
+#include "pytemplated_pickle_suite.h"
 
 using namespace std;
 using namespace pgmlink;
@@ -79,26 +80,32 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 void export_track() {
     class_<vector<Event> >("EventVector")
 	.def(vector_indexing_suite<vector<Event> >())
+    .def_pickle(TemplatedPickleSuite<EventVector>() )
     ;
 
     class_<vector<vector<Event> > >("NestedEventVector")
 	.def(vector_indexing_suite<vector<vector<Event> > >())
+    .def_pickle(TemplatedPickleSuite<EventVectorVector>() )
     ;
 
     class_<vector<vector<vector<Event> > > >("NestedNestedEventVector")
 	.def(vector_indexing_suite<vector<vector<vector<Event> > > >())
+    .def_pickle(TemplatedPickleSuite<EventVectorVectorVector>() )
     ;
 
     class_<map<unsigned int, bool> >("DetectionMap")
       .def(map_indexing_suite<map<unsigned int, bool> >())
+      .def_pickle(TemplatedPickleSuite< map<unsigned int, bool> >() )
     ;
 
     class_<vector<map<unsigned int, bool> > >("DetectionMapsVector")
       .def(vector_indexing_suite<vector<map<unsigned int, bool> > >())
+      .def_pickle(TemplatedPickleSuite< vector< map<unsigned int, bool> > >() )
     ;
 
     class_<vector<double>>("WeightVector")
       .def(vector_indexing_suite<vector<double>>())
+      .def_pickle(TemplatedPickleSuite< vector<double> >() )
     ;
 
     class_<ChaingraphTracking>("ChaingraphTracking", 
@@ -158,9 +165,11 @@ void export_track() {
     class_<vector<vigra::UInt64> >("IdVector")
     .def(vector_indexing_suite<vector<vigra::UInt64> >())
     ;
+
     class_<Event>("Event")
 	.def_readonly("type", &Event::type)
 	.def_readonly("traxel_ids", &Event::traxel_ids)
 	.add_property("energy", &Event::energy)
+    .def_pickle(TemplatedPickleSuite<Event>() )
     ;
 }
