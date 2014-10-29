@@ -174,6 +174,9 @@ class TraxelsFeatureCalculator {
     const FeatureMatrix& feature_matrix,
     FeatureMatrix& return_matrix
   ) const = 0;
+  virtual FeatureMatrix calculate(
+    const FeatureMatrix& feature_matrix
+  ) const;
   // TODO documentation of member function
   virtual void calculate_for_all(
     const ConstTraxelRefVectors& traxelrefs,
