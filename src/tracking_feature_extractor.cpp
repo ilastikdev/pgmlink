@@ -29,12 +29,19 @@ void MinMaxMeanVarCalculator::add_value(const double& value)
     max = std::max(max, value);
 }
 
-void MinMaxMeanVarCalculator::add_values(FeatureMatrix& values)
+void MinMaxMeanVarCalculator::add_values(const FeatureMatrix& values)
 {
-    for (FeatureMatrix::iterator it = values.begin(); it != values.end(); it++)
+    for(FeatureMatrix::const_iterator it = values.begin();
+        it != values.end();
+        it++)
     {
         add_value(*it);
     }
+}
+
+void MinMaxMeanVarCalculator::set_min(const double& value)
+{
+    min = value;
 }
 
 size_t MinMaxMeanVarCalculator::get_count() const { return n; }

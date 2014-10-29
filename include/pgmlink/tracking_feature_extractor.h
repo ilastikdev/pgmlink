@@ -12,7 +12,8 @@ public:
     MinMaxMeanVarCalculator();
     void reset();
     void add_value(const double& value);
-    void add_values(FeatureMatrix& values);
+    void add_values(const FeatureMatrix& values);
+    void set_min(const double& value);
     size_t get_count() const;
     double get_mean() const;
     double get_var() const;
