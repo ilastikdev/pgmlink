@@ -6,6 +6,27 @@
 
 namespace pgmlink {
 namespace features {
+class MinMaxMeanVarCalculator
+{
+public:
+    MinMaxMeanVarCalculator();
+    void reset();
+    void add_value(const double& value);
+    void add_values(FeatureMatrix& values);
+    size_t get_count() const;
+    double get_mean() const;
+    double get_var() const;
+    double get_min() const;
+    double get_max() const;
+    double get_sum_squared_diff() const;
+
+private:
+    size_t n;
+    double mean;
+    double sum_squared_diff;
+    double min;
+    double max;
+};
 
 /**
  * @brief Takes a set of events from a tracking solution and computes a bunch of features for struct learning.

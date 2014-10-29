@@ -4,6 +4,49 @@
 namespace pgmlink {
 namespace features {
 
+MinMaxMeanVarCalculator::MinMaxMeanVarCalculator()
+{
+    reset();
+}
+
+void MinMaxMeanVarCalculator::reset()
+{
+    n = 0;
+    mean = 0;
+    sum_squared_diff = 0;
+    min = std::numeric_limits<double>::max();
+    max = std::numeric_limits<double>::min();
+}
+
+void MinMaxMeanVarCalculator::add_value(const double& value)
+{
+    n++;
+    double delta = value - mean;
+    mean += delta / n;
+    sum_squared_diff += delta * (value - mean);
+
+    min = std::min(min, value);
+    max = std::max(max, value);
+}
+
+void MinMaxMeanVarCalculator::add_values(FeatureMatrix& values)
+{
+    for (FeatureMatrix::iterator it = values.begin(); it != values.end(); it++)
+    {
+        add_value(*it);
+    }
+}
+
+size_t MinMaxMeanVarCalculator::get_count() const { return n; };
+
+double MinMaxMeanVarCalculator::get_mean() const { return mean; };
+
+double MinMaxMeanVarCalculator::get_var() const { return sum_squared_diff / n; };
+
+double MinMaxMeanVarCalculator::get_min() const { return min; };
+
+double MinMaxMeanVarCalculator::get_max() const { return max; };
+
 TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
         const FieldOfView& fov,
         boost::function<bool (const Traxel&)> margin_filter_function):
