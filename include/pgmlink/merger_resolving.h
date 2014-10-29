@@ -500,7 +500,7 @@ class MergerResolver
 ////
 //// given a graph, do retracking
 ////
-PGMLINK_EXPORT void resolve_graph(HypothesesGraph& src, HypothesesGraph& dest, boost::function<double(const double)> transition, double ep_gap, bool with_tracklets,
+PGMLINK_EXPORT void resolve_graph(const HypothesesGraph &src, HypothesesGraph& dest, boost::function<double(const double)> transition, double ep_gap, bool with_tracklets,
                    const double transition_parameter=5, const bool with_constraints=true);
 // void resolve_graph(HypothesesGraph& src, HypothesesGraph& dest);
 

@@ -35,6 +35,7 @@ set(PYPGMLINK_SRCS
   pytrack.cpp
   pytraxels.cpp
   pymerger_resolving.cpp
+  pyextract_region_features.cpp
   )
 
 add_library(pypgmlink SHARED ${PYPGMLINK_SRCS})#

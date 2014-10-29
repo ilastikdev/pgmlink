@@ -653,7 +653,7 @@ HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler) {
 }
 
 
-void resolve_graph(HypothesesGraph& src,
+void resolve_graph(const HypothesesGraph& src,
                    HypothesesGraph& dest,
                    boost::function<double(const double)> transition,
                    double ep_gap,
@@ -691,7 +691,7 @@ void resolve_graph(HypothesesGraph& src,
     dest.add(node_originated_from());
   }
 
-  src.add(division_active()).add(arc_active()).add(node_active2());
+//  src.add(division_active()).add(arc_active()).add(node_active2());
   dest.add(division_active()).add(arc_active()).add(node_active2());
     
 

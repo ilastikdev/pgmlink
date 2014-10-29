@@ -14,7 +14,7 @@ void export_hypotheses();
 void export_track();
 void export_traxels();
 void export_gmm();
-
+void export_region_feature_extraction();
 
 BOOST_PYTHON_MODULE( pgmlink )
 {
@@ -25,4 +25,5 @@ BOOST_PYTHON_MODULE( pgmlink )
     export_track();
     export_traxels();
     export_gmm();
+    export_region_feature_extraction();
 }
