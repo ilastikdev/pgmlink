@@ -13,19 +13,25 @@ namespace features{
 template<typename T>
 void set_feature(FeatureMap& feature_map, const std::string& name, T value)
 {
-    feature_map[name] = {feature_type(value)};
+    feature_map[name].clear();
+    feature_map[name].push_back(feature_type(value));
 }
 
 template<>
 void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVector<double,2> value)
 {
-    feature_map[name] = {feature_type(value[0]), feature_type(value[1])};
+    feature_map[name].clear();
+    feature_map[name].push_back(feature_type(value[0]));
+    feature_map[name].push_back(feature_type(value[1]));
 }
 
 template<>
 void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVector<double,3> value)
 {
-    feature_map[name] = {feature_type(value[0]), feature_type(value[1]), feature_type(value[2])};
+    feature_map[name].clear();
+    feature_map[name].push_back(feature_type(value[0]));
+    feature_map[name].push_back(feature_type(value[1]));
+    feature_map[name].push_back(feature_type(value[2]));
 }
 
 template<>

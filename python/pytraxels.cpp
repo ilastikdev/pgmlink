@@ -89,11 +89,6 @@ namespace pgmlink {
       fs->dump(std::cout);
   }
 
-  boost::shared_ptr<FeatureStore> make_featurestore()
-  {
-      return boost::shared_ptr<FeatureStore>(new FeatureStore());
-  }
-
 } /* namespace pgmlink */
 
 void export_traxels() {
@@ -162,8 +157,7 @@ void export_traxels() {
       .def_pickle(TemplatedPickleSuite< TraxelStore >())
       ;
 
-    class_<FeatureStore, boost::shared_ptr<FeatureStore> >("FeatureStore", no_init)
-        .def("__init__", make_constructor(&make_featurestore))
+    class_<FeatureStore, boost::shared_ptr<FeatureStore> >("FeatureStore")
         .def("dump", &dump_featurestore)
-        .def_pickle(TemplatedPickleSuite< boost::shared_ptr<FeatureStore> >());
+        .def_pickle(TemplatedPickleSuite< FeatureStore >());
 }
