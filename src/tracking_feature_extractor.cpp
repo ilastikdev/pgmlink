@@ -44,6 +44,11 @@ void MinMaxMeanVarCalculator::set_min(const double& value)
     min = value;
 }
 
+void MinMaxMeanVarCalculator::set_max(const double& value)
+{
+    max = value;
+}
+
 size_t MinMaxMeanVarCalculator::get_count() const { return n; }
 
 double MinMaxMeanVarCalculator::get_mean() const { return mean; }
@@ -227,13 +232,8 @@ void TrackingFeatureExtractor::append_feature_vector_to_file(const std::string& 
 
 void TrackingFeatureExtractor::compute_velocity_features(ConstTraxelRefVectors& track_traxels)
 {
-
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
-    double min_squared_velocity = std::numeric_limits<double>::max();
-    double max_squared_velocity = 0.0;
+    MinMaxMeanVarCalculator sq_velocity_mmmv;
+    sq_velocity_mmmv.set_max(0.0);
 
     // for each track:
     for(auto track : track_traxels)
@@ -250,43 +250,20 @@ void TrackingFeatureExtractor::compute_velocity_features(ConstTraxelRefVectors& 
         FeatureMatrix velocities;
         sq_diff_calc_ptr_->calculate(positions, velocities);
 
-        // compute per track min/max/sum of velocity
-        FeatureMatrix min_velocity;
-        row_min_calc_ptr_->calculate(velocities, min_velocity);
-        min_squared_velocity = std::min(min_squared_velocity, double(min_velocity(0,0)));
-
-        FeatureMatrix max_velocity;
-        row_max_calc_ptr_->calculate(velocities, max_velocity);
-        max_squared_velocity = std::max(max_squared_velocity, double(max_velocity(0,0)));
-
-        for(FeatureMatrix::iterator v_it = velocities.begin();
-            v_it != velocities.end();
-            v_it++)
-        {
-            n++;
-            prev_mean = mean;
-            mean += (*v_it - prev_mean) / n;
-            sum_squared_diff += (*v_it - prev_mean) * (*v_it - mean);
-        }
+        // add values to min/max/mean/var calculator
+        sq_velocity_mmmv.add_values(velocities);
     }
-
-    if (n != 0)
-        sum_squared_diff /= n;
-    push_back_feature("Mean of all velocities (squared)", mean);
-    push_back_feature("Variance of all velocities (squared)", sum_squared_diff);
-    push_back_feature("Min of all velocities (squared)", min_squared_velocity);
-    push_back_feature("Max of all velocities (squared)", max_squared_velocity);
+    push_back_feature("Mean of all velocities (squared)", sq_velocity_mmmv.get_mean());
+    push_back_feature("Variance of all velocities (squared)", sq_velocity_mmmv.get_var());
+    push_back_feature("Min of all velocities (squared)", sq_velocity_mmmv.get_min());
+    push_back_feature("Max of all velocities (squared)", sq_velocity_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_acceleration_features(
     ConstTraxelRefVectors& track_traxels)
 {
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
-    double sq_accel_min = std::numeric_limits<double>::max();
-    double sq_accel_max = 0.0;
+    MinMaxMeanVarCalculator sq_accel_mmmv;
+    sq_accel_mmmv.set_max(0.0);
 
     // for each track:
     for(auto track : track_traxels)
@@ -303,41 +280,21 @@ void TrackingFeatureExtractor::compute_acceleration_features(
         FeatureMatrix sq_accel;
         sq_curve_calc_ptr_->calculate(positions, sq_accel);
 
-        // compute per track min/max/sum of acceleration
-        FeatureMatrix temp;
-
-        row_min_calc_ptr_->calculate(sq_accel, temp);
-        sq_accel_min = std::min(sq_accel_min, double(temp(0,0)));
-
-        row_max_calc_ptr_->calculate(sq_accel, temp);
-        sq_accel_max = std::max(sq_accel_max, double(temp(0,0)));
-
-        for(FeatureMatrix::iterator a_it = sq_accel.begin();
-            a_it != sq_accel.end();
-            a_it++)
-        {
-            n++;
-            prev_mean = mean;
-            mean += (*a_it - prev_mean) / n;
-            sum_squared_diff += (*a_it - prev_mean) * (*a_it - mean);
-        }
+        // add values to min/max/mean/var calculator
+        sq_accel_mmmv.add_values(sq_accel);
     }
 
-    if (n != 0)
-        sum_squared_diff /= n;
-    push_back_feature("Mean of all accelerations (squared)", mean);
-    push_back_feature("Variance of all accelerations (squared)", sum_squared_diff);
-    push_back_feature("Min of all accelerations (squared)", sq_accel_min);
-    push_back_feature("Max of all accelerations (squared)", sq_accel_max);
+    push_back_feature("Mean of all accelerations (squared)", sq_accel_mmmv.get_mean());
+    push_back_feature("Variance of all accelerations (squared)", sq_accel_mmmv.get_var());
+    push_back_feature("Min of all accelerations (squared)", sq_accel_mmmv.get_min());
+    push_back_feature("Max of all accelerations (squared)", sq_accel_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_angle_features(
     ConstTraxelRefVectors& track_traxels)
 {
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
+    MinMaxMeanVarCalculator angle_mmmv;
+    angle_mmmv.set_max(0.0);
 
     // for each track:
     for(auto track : track_traxels)
@@ -354,48 +311,26 @@ void TrackingFeatureExtractor::compute_angle_features(
         FeatureMatrix angles;
         angle_cos_calc_ptr_->calculate(positions, angles);
 
-        for(FeatureMatrix::iterator a_it = angles.begin();
-            a_it != angles.end();
-            a_it++)
-        {
-            n++;
-            prev_mean = mean;
-            mean += (*a_it - prev_mean) / n;
-            sum_squared_diff += (*a_it - prev_mean) * (*a_it - mean);
-        }
+        angle_mmmv.add_values(angles);
     }
-    if (n != 0)
-        sum_squared_diff /= n;
-    push_back_feature("Mean of all angle cosines", mean);
-    push_back_feature("Variance of all angle cosines", sum_squared_diff);
+    push_back_feature("Mean of all angle cosines", angle_mmmv.get_mean());
+    push_back_feature("Variance of all angle cosines", angle_mmmv.get_var());
 }
 
 void TrackingFeatureExtractor::compute_track_length_features(
     ConstTraxelRefVectors& track_traxels)
 {
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
-    double min_track_length = std::numeric_limits<double>::max();
-    double max_track_length = 0.0;
+    MinMaxMeanVarCalculator track_length_mmmv;
+    track_length_mmmv.set_max(0.0);
+
     for (auto track : track_traxels)
     {
-        double track_size = static_cast<double>(track.size());
-        min_track_length = std::min(min_track_length, track_size);
-        max_track_length = std::max(max_track_length, track_size);
-        n++;
-        prev_mean = mean;
-        mean += (track_size - prev_mean) / n;
-        sum_squared_diff += (track_size - prev_mean) * (track_size - mean);
+        track_length_mmmv.add_value(static_cast<double>(track.size()));
     }
-    if (n != 0) {
-      sum_squared_diff /= n;
-    }
-    push_back_feature("Mean of track length", mean);
-    push_back_feature("Variance of track length", sum_squared_diff);
-    push_back_feature("Min of track length", min_track_length);
-    push_back_feature("Max of track length", max_track_length);
+    push_back_feature("Mean of track length", track_length_mmmv.get_mean());
+    push_back_feature("Variance of track length", track_length_mmmv.get_var());
+    push_back_feature("Min of track length", track_length_mmmv.get_min());
+    push_back_feature("Max of track length", track_length_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_track_outlier_features(
@@ -442,12 +377,8 @@ void TrackingFeatureExtractor::compute_track_outlier_features(
 void TrackingFeatureExtractor::compute_division_move_distance(
     ConstTraxelRefVectors& div_traxels)
 {
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
-    double min = std::numeric_limits<double>::max();
-    double max = 0.0;
+    MinMaxMeanVarCalculator move_dist_mmmv;
+    move_dist_mmmv.set_max(0.0);
 
     for (auto div : div_traxels)
     {
@@ -460,24 +391,18 @@ void TrackingFeatureExtractor::compute_division_move_distance(
         FeatureMatrix sq_move_dist;
         child_parent_diff_calc_ptr_->calculate(positions, temp);
         sq_norm_calc_ptr_->calculate(temp, sq_move_dist);
-        for(FeatureMatrix::iterator md_it = sq_move_dist.begin();
-            md_it != sq_move_dist.end();
-            md_it++)
-        {
-            min = std::min(min, double(*md_it));
-            max = std::max(max, double(*md_it));
-            n++;
-            prev_mean = mean;
-            mean += (*md_it - prev_mean) / n;
-            sum_squared_diff += (*md_it - prev_mean) * (*md_it - mean);
-        }
+        move_dist_mmmv.add_values(sq_move_dist);
     }
-    if (n != 0)
-      sum_squared_diff /= n;
-    push_back_feature("Mean of child-parent velocities (squared)", mean);
-    push_back_feature("Variance of child-parent velocities (squared)", sum_squared_diff);
-    push_back_feature("Min of child-parent velocities (squared)", min);
-    push_back_feature("Max of child-parent velocities (squared)", max);
+    push_back_feature(
+        "Mean of child-parent velocities (squared)",
+        move_dist_mmmv.get_mean());
+    push_back_feature(
+        "Variance of child-parent velocities (squared)",
+        move_dist_mmmv.get_var());
+    push_back_feature("Min of child-parent velocities (squared)",
+        move_dist_mmmv.get_min());
+    push_back_feature("Max of child-parent velocities (squared)",
+        move_dist_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_division_move_outlier(
@@ -505,12 +430,8 @@ void TrackingFeatureExtractor::compute_division_move_outlier(
 void TrackingFeatureExtractor::compute_child_deceleration_features(
     ConstTraxelRefVectors& div_traxels)
 {
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
-    double min = std::numeric_limits<double>::max();
-    double max = 0.0;
+    MinMaxMeanVarCalculator child_decel_mmmv;
+    child_decel_mmmv.set_max(0.0);
 
     for (auto div : div_traxels)
     {
@@ -521,24 +442,13 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
         // calculate the child decelerations
         FeatureMatrix child_decel_mat;
         child_decel_calc_ptr_->calculate(positions, child_decel_mat);
-        for(FeatureMatrix::iterator cd_it = child_decel_mat.begin();
-            cd_it != child_decel_mat.end();
-            cd_it++)
-        {
-            min = std::min(min, double(*cd_it));
-            max = std::max(max, double(*cd_it));
-            n++;
-            prev_mean = mean;
-            mean += (*cd_it - prev_mean) / n;
-            sum_squared_diff += (*cd_it - prev_mean) * (*cd_it - mean);
-        }
+
+        child_decel_mmmv.add_values(child_decel_mat);
     }
-    if (n != 0)
-      sum_squared_diff /= n;
-    push_back_feature("Mean of child decelerations", mean);
-    push_back_feature("Variance of child decelerations", sum_squared_diff);
-    push_back_feature("Min of child decelerations", min);
-    push_back_feature("Max of child decelerations", max);
+    push_back_feature("Mean of child decelerations", child_decel_mmmv.get_mean());
+    push_back_feature("Variance of child decelerations", child_decel_mmmv.get_var());
+    push_back_feature("Min of child decelerations", child_decel_mmmv.get_min());
+    push_back_feature("Max of child decelerations", child_decel_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_child_deceleration_outlier(
@@ -564,12 +474,9 @@ void TrackingFeatureExtractor::compute_border_distances(
     ConstTraxelRefVectors& appearance_traxels,
     std::string description)
 {
-    size_t n = 0;
-    double mean = 0.0;
-    double prev_mean = 0.0;
-    double sum_squared_diff = 0.0;
-    double min = std::numeric_limits<double>::max();
-    double max = 0.0;
+    MinMaxMeanVarCalculator border_dist_mmmv;
+    border_dist_mmmv.set_max(0.0);
+
     for (auto appearance : appearance_traxels)
     {
         FeatureMatrix position;
@@ -601,19 +508,20 @@ void TrackingFeatureExtractor::compute_border_distances(
                 << "compute_appearance_border_distances:";
             LOG(logDEBUG) << "data is neither 2d nor 3d";
         }
-        min = std::min(min, border_dist);
-        max = std::max(max, border_dist);
-        n++;
-        prev_mean = mean;
-        mean += (border_dist - prev_mean) / n;
-        sum_squared_diff += (border_dist - prev_mean) * (border_dist - mean);
+        border_dist_mmmv.add_value(border_dist);
     }
-    if (n != 0)
-      sum_squared_diff /= n;
-    push_back_feature("Mean of " + description + " border distances", mean);
-    push_back_feature("Variance of " + description + " border distances", sum_squared_diff);
-    push_back_feature("Min of " + description + " border distances", min);
-    push_back_feature("Max of " + description + " border distances", max);
+    push_back_feature(
+        "Mean of " + description + " border distances",
+        border_dist_mmmv.get_mean());
+    push_back_feature(
+        "Variance of " + description + " border distances",
+        border_dist_mmmv.get_var());
+    push_back_feature(
+        "Min of " + description + " border distances",
+        border_dist_mmmv.get_min());
+    push_back_feature(
+        "Max of " + description + " border distances",
+        border_dist_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_size_difference_features()
