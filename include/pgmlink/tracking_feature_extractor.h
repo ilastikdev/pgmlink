@@ -73,6 +73,7 @@ private:
     void compute_velocity_features(ConstTraxelRefVectors&);
     void compute_acceleration_features(ConstTraxelRefVectors&);
     void compute_angle_features(ConstTraxelRefVectors&);
+    void compute_track_outlier_features(ConstTraxelRefVectors&);
     void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_division_move_distance(ConstTraxelRefVectors&);
     void compute_child_deceleration_features(ConstTraxelRefVectors&);
@@ -84,10 +85,12 @@ private:
     boost::shared_ptr<TraxelsFeaturesIdentity> position_extractor_ptr_;
 
     boost::shared_ptr<SquaredDiffCalculator> sq_diff_calc_ptr_;
+    boost::shared_ptr<DiffCalculator> diff_calc_ptr_;
     boost::shared_ptr<SquaredCurveCalculator> sq_curve_calc_ptr_;
 
     boost::shared_ptr<MinCalculator<0> > row_min_calc_ptr_;
     boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
+    boost::shared_ptr<MVNOutlierCalculator> mvn_outlier_calc_ptr_;
     boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
     boost::shared_ptr<ChildParentDiffCalculator> child_parent_diff_calc_ptr_;
     boost::shared_ptr<SquaredNormCalculator<0> > sq_norm_calc_ptr_;

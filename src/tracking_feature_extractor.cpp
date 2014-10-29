@@ -61,9 +61,11 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     margin_filter_function_(margin_filter_function),
     position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
+    diff_calc_ptr_(new DiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
+    mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
@@ -77,9 +79,11 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     margin_filter_function_(NULL),
     position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
+    diff_calc_ptr_(new DiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
+    mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
@@ -131,6 +135,8 @@ void TrackingFeatureExtractor::compute_features()
     compute_acceleration_features(track_traxels);
     compute_angle_features(track_traxels);
     compute_track_length_features(track_traxels);
+    compute_track_outlier_features(track_traxels);
+    LOG(logDEBUG) << "Call compute_division_move_distance";
     compute_division_move_distance(div_1_traxels);
     compute_child_deceleration_features(div_2_traxels);
     push_back_feature(
@@ -381,6 +387,47 @@ void TrackingFeatureExtractor::compute_track_length_features(
     push_back_feature("Variance of track length", sum_squared_diff);
     push_back_feature("Min of track length", min_track_length);
     push_back_feature("Max of track length", max_track_length);
+}
+
+void TrackingFeatureExtractor::compute_track_outlier_features(
+    ConstTraxelRefVectors& track_traxels)
+{
+    MinMaxMeanVarCalculator pos_out_mmmv;
+    MinMaxMeanVarCalculator vel_out_mmmv;
+    for (auto track : track_traxels)
+    {
+        // extract positions
+        FeatureMatrix positions;
+        position_extractor_ptr_->extract(track, positions);
+
+        // calculate velocities
+        FeatureMatrix velocities;
+        diff_calc_ptr_->calculate(positions, velocities);
+
+        // calculate position outlier if num_samples > dim
+        FeatureMatrix temp;
+        if (positions.size(0) > positions.size(1))
+        {
+            mvn_outlier_calc_ptr_->calculate(positions, temp);
+            pos_out_mmmv.add_value(temp(0, 0));
+        }
+
+        // calculate velocity outlier if num_samples > dim
+        if (velocities.size(0) > velocities.size(1))
+        {
+            mvn_outlier_calc_ptr_->calculate(velocities, temp);
+            vel_out_mmmv.add_value(temp(0, 0));
+        }
+    }
+    push_back_feature("Mean of position outlier count", pos_out_mmmv.get_mean());
+    push_back_feature("Variance of position outlier count", pos_out_mmmv.get_var());
+    push_back_feature("Min of position outlier count", pos_out_mmmv.get_min());
+    push_back_feature("Max of position outlier count", pos_out_mmmv.get_max());
+
+    push_back_feature("Mean of velocity outlier count", vel_out_mmmv.get_mean());
+    push_back_feature("Variance of velocity outlier count", vel_out_mmmv.get_var());
+    push_back_feature("Min of velocity outlier count", vel_out_mmmv.get_min());
+    push_back_feature("Max of velocity outlier count", vel_out_mmmv.get_max());
 }
 
 void TrackingFeatureExtractor::compute_division_move_distance(
