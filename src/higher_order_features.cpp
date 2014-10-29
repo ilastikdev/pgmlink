@@ -155,24 +155,7 @@ FeatureMatrix TraxelsFeatureExtractor::extract(
   return ret_;
 }
 
-FeatureMatrix TraxelsFeatureCalculator::calculate(
-  const FeatureMatrix& feature_matrix
-) const {
-  FeatureMatrix ret_;
-  calculate(feature_matrix, ret_);
-  return ret_;
-}
-
-FeatureMatrix TraxelsFeatureCalculator::calculate(
-  const ConstTraxelRefVectors& traxelrefs,
-  boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
-) const {
-  FeatureMatrix ret_;
-  calculate(traxelrefs, ret_, feature_extractor_ref);
-  return ret_;
-}
-
-void TraxelsFeatureCalculator::calculate(
+void TraxelsFeatureCalculator::calculate_for_all(
   const ConstTraxelRefVectors& traxelrefs,
   FeatureMatrix& return_matrix,
   boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
