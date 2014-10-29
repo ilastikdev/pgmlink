@@ -138,7 +138,9 @@ void TrackingFeatureExtractor::compute_features()
     compute_track_outlier_features(track_traxels);
     LOG(logDEBUG) << "Call compute_division_move_distance";
     compute_division_move_distance(div_1_traxels);
+    compute_division_move_outlier(div_1_traxels);
     compute_child_deceleration_features(div_2_traxels);
+    compute_child_deceleration_outlier(div_2_traxels);
     push_back_feature(
         "Count of all appearances",
         static_cast<double>(all_app_traxels.size()));
@@ -471,6 +473,28 @@ void TrackingFeatureExtractor::compute_division_move_distance(
     push_back_feature("Max of child-parent velocities (squared)", max);
 }
 
+void TrackingFeatureExtractor::compute_division_move_outlier(
+    ConstTraxelRefVectors& div_traxels)
+{
+    // extract all squared move distances
+    CompositionCalculator sq_move_dist_calc(
+        child_parent_diff_calc_ptr_,
+        sq_norm_calc_ptr_);
+    FeatureMatrix sq_move_distances;
+    sq_move_dist_calc.calculate_for_all(
+        div_traxels,
+        sq_move_distances,
+        position_extractor_ptr_);
+    double outlier = 0.0;
+    if (sq_move_distances.size(0) > sq_move_distances.size(1))
+    {
+        FeatureMatrix outlier_mat;
+        mvn_outlier_calc_ptr_->calculate(sq_move_distances, outlier_mat);
+        outlier = outlier_mat(0,0);
+    }
+    push_back_feature("Outlier in division move distances", outlier);
+}
+
 void TrackingFeatureExtractor::compute_child_deceleration_features(
     ConstTraxelRefVectors& div_traxels)
 {
@@ -508,6 +532,25 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
     push_back_feature("Variance of child decelerations", sum_squared_diff);
     push_back_feature("Min of child decelerations", min);
     push_back_feature("Max of child decelerations", max);
+}
+
+void TrackingFeatureExtractor::compute_child_deceleration_outlier(
+    ConstTraxelRefVectors& div_traxels)
+{
+    // extract all child decelerations
+    FeatureMatrix child_decelerations;
+    child_decel_calc_ptr_->calculate_for_all(
+        div_traxels,
+        child_decelerations,
+        position_extractor_ptr_);
+    double outlier = 0.0;
+    if (child_decelerations.size(0) > child_decelerations.size(1))
+    {
+        FeatureMatrix outlier_mat;
+        mvn_outlier_calc_ptr_->calculate(child_decelerations, outlier_mat);
+        outlier = outlier_mat(0,0);
+    }
+    push_back_feature("Outlier in child decelerations", outlier);
 }
 
 void TrackingFeatureExtractor::compute_border_distances(

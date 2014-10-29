@@ -76,7 +76,9 @@ private:
     void compute_track_outlier_features(ConstTraxelRefVectors&);
     void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_division_move_distance(ConstTraxelRefVectors&);
+    void compute_division_move_outlier(ConstTraxelRefVectors&);
     void compute_child_deceleration_features(ConstTraxelRefVectors&);
+    void compute_child_deceleration_outlier(ConstTraxelRefVectors&);
     void compute_border_distances(ConstTraxelRefVectors&, std::string);
     void compute_size_difference_features();
     // TODO: add many more
