@@ -15,7 +15,7 @@ void MinMaxMeanVarCalculator::reset()
     mean = 0;
     sum_squared_diff = 0;
     min = std::numeric_limits<double>::max();
-    max = std::numeric_limits<double>::min();
+    max = std::numeric_limits<double>::lowest();
 }
 
 void MinMaxMeanVarCalculator::add_value(const double& value)
@@ -37,15 +37,21 @@ void MinMaxMeanVarCalculator::add_values(FeatureMatrix& values)
     }
 }
 
-size_t MinMaxMeanVarCalculator::get_count() const { return n; };
+size_t MinMaxMeanVarCalculator::get_count() const { return n; }
 
-double MinMaxMeanVarCalculator::get_mean() const { return mean; };
+double MinMaxMeanVarCalculator::get_mean() const { return mean; }
 
-double MinMaxMeanVarCalculator::get_var() const { return sum_squared_diff / n; };
+double MinMaxMeanVarCalculator::get_var() const
+{
+    if (n)
+        return sum_squared_diff / n;
+    else
+        return 0.0;
+}
 
-double MinMaxMeanVarCalculator::get_min() const { return min; };
+double MinMaxMeanVarCalculator::get_min() const { return min; }
 
-double MinMaxMeanVarCalculator::get_max() const { return max; };
+double MinMaxMeanVarCalculator::get_max() const { return max; }
 
 TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
         const FieldOfView& fov,
