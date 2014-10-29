@@ -174,8 +174,18 @@ class TraxelsFeatureCalculator {
     const FeatureMatrix& feature_matrix,
     FeatureMatrix& return_matrix
   ) const = 0;
+  // TODO documentation of member function
+  virtual void calculate(
+    const ConstTraxelRefVectors& traxelrefs,
+    FeatureMatrix& return_matrix,
+    boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
+  ) const;
   virtual FeatureMatrix calculate(
     const FeatureMatrix& feature_matrix
+  ) const;
+  virtual FeatureMatrix calculate(
+    const ConstTraxelRefVectors& traxelrefs,
+    boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
   ) const;
 };
 

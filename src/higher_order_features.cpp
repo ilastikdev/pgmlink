@@ -1,5 +1,5 @@
 #include "pgmlink/higher_order_features.h"
-#include <cmath>
+#include <cmath> /* for sqrt */
 
 #include <vigra/multi_math.hxx> /* for operator+ */
 #include <vigra/matrix.hxx> /* for covariance calculation */
@@ -9,7 +9,7 @@
 
 #include <sstream> /* for printing a matrix on the debug level */
 
-#include <algorithm> /* for std::copy */
+#include <algorithm> /* for std::copy, std::min */
 
 namespace pgmlink {
 namespace features {
@@ -161,6 +161,81 @@ FeatureMatrix TraxelsFeatureCalculator::calculate(
   FeatureMatrix ret_;
   calculate(feature_matrix, ret_);
   return ret_;
+}
+
+FeatureMatrix TraxelsFeatureCalculator::calculate(
+  const ConstTraxelRefVectors& traxelrefs,
+  boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
+) const {
+  FeatureMatrix ret_;
+  calculate(traxelrefs, ret_, feature_extractor_ref);
+  return ret_;
+}
+
+void TraxelsFeatureCalculator::calculate(
+  const ConstTraxelRefVectors& traxelrefs,
+  FeatureMatrix& return_matrix,
+  boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
+) const {
+  size_t col_count = traxelrefs.size();
+  // check if the vector of traxels is empty
+  if (col_count == 0) {
+    LOG(logDEBUG) << "In " << name() << ": vector of traxels is empty";
+    LOG(logDEBUG) << "Returning zero";
+    return_matrix.reshape(vigra::Shape2(1, 1));
+    return_matrix.init(0.0);
+  } else {
+    // allocate memory for result of feature extractor and feature calculator
+    FeatureMatrix extr_features;
+    FeatureMatrix calc_features;
+    // row count will contain the size of the row_count of the return matrix
+    size_t row_count = 0;
+    size_t current_col = 0;
+    // iterate over all subsets of traxels and write the flattened result of
+    // the feature calculator for the n-th subset into the n-th column of the
+    // return matrix
+    for (
+      ConstTraxelRefVectors::const_iterator traxelrefs_it = traxelrefs.begin();
+      traxelrefs_it != traxelrefs.end();
+      traxelrefs_it++, current_col++
+    ) {
+      // do the feature extraction and calculation
+      feature_extractor_ref->extract(*traxelrefs_it, extr_features);
+      calculate(extr_features, calc_features);
+      if (row_count == 0) {
+        // if we never had an feature matrix with a size larger than 0 get the
+        // current feature size
+        row_count = calc_features.size();
+        if (row_count != 0) {
+          // if this feature size is not zero set the row count of the return
+          // matrix to this size
+          return_matrix.reshape(vigra::Shape2(col_count, row_count));
+          return_matrix.init(0.0);
+        }
+      }
+      if (row_count != 0) {
+        // write the result if the row count of the return matrix is set
+        // only write the first <row_max> values from the flattened feature
+        // matrix into the current row of the return matrix
+        size_t row_max = std::min(row_count, size_t(calc_features.size()));
+        FeatureMatrix::iterator calc_features_it = calc_features.begin();
+        for (
+          size_t current_row = 0;
+          current_row < row_max;
+          current_row++, calc_features_it++
+        ) {
+          return_matrix(current_col, current_row) = *calc_features_it;
+        }
+      }
+    }
+    if (row_count == 0) {
+      LOG(logDEBUG) << "In " << name()
+        << ": all feature calculators returned empty matrices";
+      LOG(logDEBUG) << "Returning zero";
+      return_matrix.reshape(vigra::Shape2(1, 1));
+      return_matrix.init(0.0);
+    }
+  }
 }
 
 /*=============================================================================
