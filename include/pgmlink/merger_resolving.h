@@ -803,6 +803,11 @@ void extract_coordinates(TimestepIdCoordinateMapPtr coordinates,
   typedef typename vigra::CoupledIteratorType<N, T>::type Iterator;
   Iterator start = createCoupledIterator(image);
   Iterator end = start.getEndIterator();
+
+  // skip computation if already done
+  if(coordinates->find(std::make_pair(trax.Timestep, trax.Id)) != coordinates->end())
+      return;
+
   arma::mat& coord = (*coordinates)[std::make_pair(trax.Timestep, trax.Id)];
   coord = arma::mat(N, trax.features.find("count")->second[0]);
   // coord stores coordinates: each row is a spatial dimension and each column is a pixel
@@ -839,6 +844,11 @@ void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
   typedef typename vigra::CoupledIteratorType<N, T>::type Iterator;
   Iterator start = createCoupledIterator(image);
   Iterator end = start.getEndIterator();
+
+  // skip computation if already done
+  if(coordinates->find(std::make_pair(timestep, traxel_id)) != coordinates->end())
+      return;
+
   arma::mat& coord = (*coordinates)[std::make_pair(timestep, traxel_id)];
   coord = arma::mat(N, traxel_size);
   // coord stores coordinates: each row is a spatial dimension and each column is a pixel
