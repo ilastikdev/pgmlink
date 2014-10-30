@@ -63,6 +63,9 @@ diffusion_calculator.calculate(positions, return_value);
 // vigra
 #include <vigra/multi_array.hxx> /* for the feature extractors */
 
+// dlib
+#include <dlib/svm.h> /* for svm in SVMOutlierCalculator*/
+
 namespace pgmlink {
 namespace features {
 
@@ -985,6 +988,33 @@ class MVNOutlierCalculator : public TraxelsFeatureCalculator {
   ) const;
  protected:
   SquaredMahalanobisCalculator mahalanobis_calculator_;
+  static const std::string name_;
+};
+
+////
+//// class SVMOutlierCalculator
+////
+class SVMOutlierCalculator : public TraxelsFeatureCalculator {
+ public:
+  typedef dlib::matrix<FeatureScalar, 0, 1> SampleType;
+  typedef dlib::radial_basis_kernel<SampleType> KernelType;
+  typedef dlib::decision_function<KernelType> DecisionFunctionType;
+  typedef dlib::svm_one_class_trainer<KernelType> OneClassSVMTrainerType;
+
+  SVMOutlierCalculator() : is_trained_(false) {};
+  virtual ~SVMOutlierCalculator() {};
+  virtual const std::string& name() const;
+  void train(
+    const FeatureMatrix& feature_matrix,
+    const FeatureScalar& kernel_width = 1.0
+  );
+  virtual void calculate(
+    const FeatureMatrix& feature_matrix,
+    FeatureMatrix& return_matrix
+  ) const;
+ protected:
+  DecisionFunctionType decision_function_;
+  bool is_trained_;
   static const std::string name_;
 };
 

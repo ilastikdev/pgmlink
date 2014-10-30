@@ -1801,5 +1801,59 @@ void MVNOutlierCalculator::calculate(
   calculate(feature_matrix, return_matrix, 3.0);
 }
 
+////
+//// class SVMOutlierCalculator
+////
+const std::string SVMOutlierCalculator::name_ = "SVMOutlierCalculator";
+
+const std::string& SVMOutlierCalculator::name() const {
+  return name_;
+}
+
+void SVMOutlierCalculator::train(
+  const FeatureMatrix& feature_matrix,
+  const FeatureScalar& kernel_width
+) {
+  size_t col_count = feature_matrix.shape(0);
+  size_t row_count = feature_matrix.shape(1);
+  std::vector<SampleType> samples;
+  // TODO assert num_samples >> dim ?
+  for (size_t col = 0; col < col_count; col++) {
+    FeatureVectorView column = feature_matrix.bind<0>(col);
+    SampleType sample(row_count);
+    std::copy(column.begin(), column.end(), sample.begin());
+    samples.push_back(sample);
+  }
+  KernelType kernel(kernel_width);
+  OneClassSVMTrainerType trainer;
+  trainer.set_kernel(kernel);
+  decision_function_ = trainer.train(samples);
+  is_trained_ = true;
+}
+
+void SVMOutlierCalculator::calculate(
+  const FeatureMatrix& feature_matrix,
+  FeatureMatrix& return_matrix
+) const {
+  size_t col_count = feature_matrix.shape(0);
+  size_t row_count = feature_matrix.shape(1);
+  std::vector<SampleType> samples;
+  // TODO assert num_samples >> dim ?
+  for (size_t col = 0; col < col_count; col++) {
+    FeatureVectorView column = feature_matrix.bind<0>(col);
+    SampleType sample(row_count);
+    std::copy(column.begin(), column.end(), sample.begin());
+    samples.push_back(sample);
+  }
+  if (is_trained_) {
+    return_matrix.reshape(vigra::Shape2(col_count, 1));
+    for(size_t col = 0; col < col_count; col++) {
+      return_matrix(col, 0) = decision_function_(samples[col]);
+    }
+  } else {
+    throw std::runtime_error("SVMOutlierCalculator not trained");
+  }
+}
+
 } // end namespace features
 } // end namespace pgmlink

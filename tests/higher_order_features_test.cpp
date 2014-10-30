@@ -4,6 +4,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
+#include <cmath> /* for abs() */
 
 #include "pgmlink/log.h"
 #include "pgmlink/higher_order_features.h"
@@ -1132,6 +1133,51 @@ BOOST_AUTO_TEST_CASE( MVNOutlierCalculator_calculate ) {
   BOOST_CHECK_EQUAL(s4.shape(1), 1);
   BOOST_CHECK_EQUAL(s3(0, 0), static_cast<FeatureScalar>(1./7.));
   BOOST_CHECK_EQUAL(s4(0, 0), static_cast<FeatureScalar>(1./7.));
+}
+
+BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_calculate ) {
+  LOG(logINFO) << "test case: SVMOutlierCalculator_calculate";
+
+  // get the test data with outlier in x6
+  FeatureMatrix x;
+  get_feature_matrix(x);
+
+  // create training data
+  FeatureMatrix x_train;
+  get_feature_matrix(x_train);
+  x_train(6,1) = 4.0;
+  x_train(6,2) = 3.0;
+
+  // Create outlier detection
+  LOG(logINFO) << "  set up the outlier calculator";
+  SVMOutlierCalculator svmoutlier;
+  LOG(logINFO) << "  train outlier calculator with kernel width 1.0";
+  svmoutlier.train(x_train, 1.0);
+  LOG(logINFO) << "  calculate outlier";
+  FeatureMatrix s1;
+  svmoutlier.calculate(x, s1);
+  LOG(logINFO) << "scores: " << s1.transpose();
+
+  BOOST_CHECK(abs(s1(6,0) /  s1(0,0)) > 10.0);
+  BOOST_CHECK(abs(s1(6,0) /  s1(1,0)) > 10.0);
+  BOOST_CHECK(abs(s1(6,0) /  s1(2,0)) > 10.0);
+  BOOST_CHECK(abs(s1(6,0) /  s1(3,0)) > 10.0);
+  BOOST_CHECK(abs(s1(6,0) /  s1(4,0)) > 10.0);
+  BOOST_CHECK(abs(s1(6,0) /  s1(5,0)) > 10.0);
+
+  LOG(logINFO) << "  train outlier calculator with kernel width 5.0";
+  svmoutlier.train(x_train, 5.0);
+  LOG(logINFO) << "  calculate outlier";
+  FeatureMatrix s5;
+  svmoutlier.calculate(x, s5);
+  LOG(logINFO) << "scores: " << s5.transpose();
+
+  BOOST_CHECK(abs(s5(6,0) /  s5(0,0)) > 10.0);
+  BOOST_CHECK(abs(s5(6,0) /  s5(1,0)) > 10.0);
+  BOOST_CHECK(abs(s5(6,0) /  s5(2,0)) > 10.0);
+  BOOST_CHECK(abs(s5(6,0) /  s5(3,0)) > 10.0);
+  BOOST_CHECK(abs(s5(6,0) /  s5(4,0)) > 10.0);
+  BOOST_CHECK(abs(s5(6,0) /  s5(5,0)) > 10.0);
 }
 
 BOOST_AUTO_TEST_CASE( GraphFeatureCalculator_calculate_vector ) {
