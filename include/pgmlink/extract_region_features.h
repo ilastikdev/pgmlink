@@ -74,6 +74,8 @@ int extract_region_features(const vigra::MultiArrayView<N, DataType> data,
                 RegionAxes,
                 Skewness,
                 Weighted<PowerSum<0> >,
+                Coord< Minimum >,
+                Coord< Maximum >,
                 DataArg<1>,
                 LabelArg<2> // where to look for data and region labels
             > >
@@ -102,7 +104,9 @@ int extract_region_features(const vigra::MultiArrayView<N, DataType> data,
         set_feature(feature_map, "Variance", get<Variance>(a, label));
         set_feature(feature_map, "Count", get<Count>(a, label));
         set_feature(feature_map, "RegionRadii", get<RegionRadii>(a, label));
-        set_feature(feature_map, "com", get<RegionCenter>(a, label));
+        set_feature(feature_map, "RegionCenter", get<RegionCenter>(a, label));
+        set_feature(feature_map, "Coord< Maximum >", get<Coord< Maximum > >(a, label));
+        set_feature(feature_map, "Coord< Minimum >", get<Coord< Minimum > >(a, label));
         set_feature(feature_map, "RegionAxes", get<RegionAxes>(a, label));
         set_feature(feature_map, "Kurtosis", get<Kurtosis>(a, label));
         set_feature(feature_map, "Minimum", get<Minimum>(a, label));
