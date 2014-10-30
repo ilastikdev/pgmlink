@@ -5,6 +5,7 @@
 #include <vector>
 #include "pgmlink/traxels.h"
 #include "pgmlink/field_of_view.h"
+#include "pgmlink/log.h"
 
 using namespace std;
 
@@ -266,6 +267,19 @@ namespace pgmlink {
     return n;
   }
 
+  Traxel::FeatureMapAccessor::FeatureMapAccessor(Traxel* parent, const FeatureMap& fm):
+      parent_(parent)
+  {
+      if(parent_->features_)
+      {
+          // ignore feature map!
+      }
+      else
+      {
+           feature_map_ = fm;
+      }
+  }
+
   const size_t Traxel::FeatureMapAccessor::size() const
   {
       if(parent_->features_)
@@ -348,7 +362,15 @@ namespace pgmlink {
           {
               if(feat_map.size() > 0)
               {
-                  std::runtime_error("both feature maps are non-empty, copying traxel-local features, but this will lead to data loss!");
+                  std::cout << "Features in Traxel:" << std::endl;
+                  for(auto it : feature_map_)
+                      std::cout << "\t" << it.first << std::endl;
+
+                  std::cout << "Features in FeatureStore:" << std::endl;
+                  for(auto it : feat_map)
+                      std::cout << "\t" << it.first << std::endl;
+
+                  throw std::runtime_error("both feature maps are non-empty, copying traxel-local features, but this will lead to data loss!");
               }
               feat_map = feature_map_;
               feature_map_.clear();

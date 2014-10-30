@@ -44,7 +44,7 @@ namespace pgmlink {
     t.features[key] = feature_array(size, 0);
   }
 
-  float get_feature_value(Traxel& t, string key, MultiArrayIndex i) {
+  float get_feature_value(const Traxel& t, string key, MultiArrayIndex i) {
     FeatureMap::const_iterator it = t.features.find(key);
     if(it == t.features.end()) {
       throw std::runtime_error("key not present in feature map");
@@ -54,6 +54,17 @@ namespace pgmlink {
     }
 
     return it->second[i];
+  }
+
+  void print_available_features(const Traxel& t)
+  {
+      for(auto it : t.features.get())
+          std::cout << "\t" << it.first << std::endl;
+
+      if(t.get_feature_store())
+          std::cout << "\tFeature Store is set" << std::endl;
+      else
+          std::cout << "\tFeature Store is NOT set!" << std::endl;
   }
 
   void set_feature_value(Traxel& t, string key, MultiArrayIndex i, float value) {
@@ -81,6 +92,19 @@ namespace pgmlink {
     for(Traxels::iterator it = traxels.begin(); it!= traxels.end(); ++it){
       add(ts, fs, it->second);
     }
+  }
+
+  const Traxel& get_from_traxel_store(TraxelStore& ts, unsigned int id, int timestep)
+  {
+      TraxelStoreByTimeid::iterator it = (ts.get<by_timeid>().find(boost::make_tuple(timestep, id)));
+      if(it != ts.get<by_timeid>().end())
+          return *it;
+      else
+      {
+          std::stringstream msg;
+          msg << "Trying to access traxel that does not exist in traxelstore: id = " << id << ", timestep = " << timestep;
+          throw std::runtime_error(msg.str());
+      }
   }
 
   // extending featurestore
@@ -114,9 +138,10 @@ void export_traxels() {
 	.def(map_indexing_suite<std::map<std::string,feature_array> >())
     ;
     class_<Traxel>("Traxel")
-	.def_readwrite("Id", &Traxel::Id)
+    .def_readwrite("Id", &Traxel::Id)
 	.def_readwrite("Timestep", &Traxel::Timestep)
         .def("set_feature_store", &Traxel::set_feature_store)
+        .def("print_available_features", &print_available_features)
         //.def("set_locator", &Traxel::set_locator, return_self<>())
         .def("set_x_scale", &set_x_scale)
         .def("set_y_scale", &set_y_scale)
@@ -146,11 +171,13 @@ void export_traxels() {
         .def_pickle(TemplatedPickleSuite< std::vector<int> >())
     ;
 
-    TraxelStoreByTimeid& (TraxelStore::*get_by_timeid)() = &TraxelStore::get<by_timeid>; 
+    TraxelStoreByTimeid& (TraxelStore::*get_by_timeid)() = &TraxelStore::get<by_timeid>;
+
     class_<TraxelStore>("TraxelStore")
       .def("add", &add_traxel_to_traxelstore)
       .def("add_from_Traxels", &add_Traxels_to_traxelstore)
       .def("bounding_box", &bounding_box)
+      .def("get_traxel", &get_from_traxel_store, return_internal_reference<>())
       .def("get_by_timeid", get_by_timeid, return_internal_reference<>())
       .def("size", &TraxelStore::size)
       .def("set_feature_store", &set_feature_store)

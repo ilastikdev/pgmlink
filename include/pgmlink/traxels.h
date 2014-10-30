@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "pgmlink/pgmlink_export.h"
+#include "pgmlink/log.h"
 #include "featurestore.h"
 
 namespace pgmlink {
@@ -172,10 +173,7 @@ class Traxel
            parent_(parent)
        {}
 
-       FeatureMapAccessor(Traxel* parent, const FeatureMap& fm):
-           parent_(parent),
-           feature_map_(fm)
-       {}
+       FeatureMapAccessor(Traxel* parent, const FeatureMap& fm);
 
        const size_t size() const;
 
