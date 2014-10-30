@@ -75,22 +75,20 @@ private:
     /**
      * methods that compute each feature
      */
-    void compute_velocity_features(ConstTraxelRefVectors&);
-    void compute_acceleration_features(ConstTraxelRefVectors&);
-    void compute_angle_features(ConstTraxelRefVectors&);
-    void compute_track_outlier_features(ConstTraxelRefVectors&);
+    void compute_sq_diff_features(ConstTraxelRefVectors&, std::string);
+    void compute_sq_accel_features(ConstTraxelRefVectors&, std::string);
+    void compute_angle_features(ConstTraxelRefVectors&, std::string);
     void compute_track_length_features(ConstTraxelRefVectors&);
-    void compute_division_move_distance(ConstTraxelRefVectors&);
-    void compute_division_move_outlier(ConstTraxelRefVectors&);
-    void compute_child_deceleration_features(ConstTraxelRefVectors&);
-    void compute_child_deceleration_outlier(ConstTraxelRefVectors&);
+    void compute_track_id_outlier(ConstTraxelRefVectors&, std::string);
+    void compute_track_diff_outlier(ConstTraxelRefVectors&, std::string);
+    void compute_division_sq_diff_features(ConstTraxelRefVectors&, std::string);
+    void compute_division_sq_diff_outlier(ConstTraxelRefVectors&, std::string);
+    void compute_child_deceleration_features(ConstTraxelRefVectors&, std::string);
+    void compute_child_deceleration_outlier(ConstTraxelRefVectors&, std::string);
     void compute_border_distances(ConstTraxelRefVectors&, std::string);
-    void compute_size_difference_features();
     // TODO: add many more
 
 private:
-    boost::shared_ptr<TraxelsFeaturesIdentity> position_extractor_ptr_;
-
     boost::shared_ptr<SquaredDiffCalculator> sq_diff_calc_ptr_;
     boost::shared_ptr<DiffCalculator> diff_calc_ptr_;
     boost::shared_ptr<SquaredCurveCalculator> sq_curve_calc_ptr_;

@@ -71,7 +71,6 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     graph_(graph),
     fov_(fov),
     margin_filter_function_(margin_filter_function),
-    position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
     diff_calc_ptr_(new DiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
@@ -89,7 +88,6 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     graph_(graph),
     fov_(fov),
     margin_filter_function_(NULL),
-    position_extractor_ptr_(new TraxelsFeaturesIdentity("com")),
     sq_diff_calc_ptr_(new SquaredDiffCalculator),
     diff_calc_ptr_(new DiffCalculator),
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
@@ -143,15 +141,16 @@ void TrackingFeatureExtractor::compute_features()
         margin_filter_function_);
     ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
 
-    compute_velocity_features(track_traxels);
-    compute_acceleration_features(track_traxels);
-    compute_angle_features(track_traxels);
+    compute_sq_diff_features(track_traxels, "com");
+    compute_sq_accel_features(track_traxels, "com");
+    compute_angle_features(track_traxels, "com");
     compute_track_length_features(track_traxels);
-    compute_track_outlier_features(track_traxels);
-    compute_division_move_distance(div_1_traxels);
-    compute_division_move_outlier(div_1_traxels);
-    compute_child_deceleration_features(div_2_traxels);
-    compute_child_deceleration_outlier(div_2_traxels);
+    compute_track_id_outlier(track_traxels, "com");
+    compute_track_diff_outlier(track_traxels, "com");
+    compute_division_sq_diff_features(div_1_traxels, "com");
+    compute_division_sq_diff_outlier(div_1_traxels, "com");
+    compute_child_deceleration_features(div_2_traxels, "com");
+    compute_child_deceleration_outlier(div_2_traxels, "com");
     push_back_feature(
         "Count of all appearances",
         static_cast<double>(all_app_traxels.size()));
@@ -166,7 +165,6 @@ void TrackingFeatureExtractor::compute_features()
         static_cast<double>(filtered_disapp_traxels.size()));
     compute_border_distances(all_app_traxels, "appearance");
     compute_border_distances(all_disapp_traxels, "disappearance");
-    //compute_size_difference_features();
 }
 
 void TrackingFeatureExtractor::append_feature_vector_to_file(const std::string& filename)
@@ -229,10 +227,12 @@ void TrackingFeatureExtractor::append_feature_vector_to_file(const std::string& 
     }
 }
 
-void TrackingFeatureExtractor::compute_velocity_features(ConstTraxelRefVectors& track_traxels)
+void TrackingFeatureExtractor::compute_sq_diff_features(
+    ConstTraxelRefVectors& track_traxels,
+    std::string feature_name)
 {
-    MinMaxMeanVarCalculator sq_velocity_mmmv;
-    sq_velocity_mmmv.set_max(0.0);
+    MinMaxMeanVarCalculator sq_diff_mmmv;
+    sq_diff_mmmv.set_max(0.0);
 
     // for each track:
     for(auto track : track_traxels)
@@ -241,22 +241,24 @@ void TrackingFeatureExtractor::compute_velocity_features(ConstTraxelRefVectors& 
         if(track.size() < 2)
             continue;
 
-        // extract positions
-        FeatureMatrix positions;
-        position_extractor_ptr_->extract(track, positions);
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(track, feature_matrix);
 
-        // compute velocity vector's squared magnitude for all pairs of positions
-        FeatureMatrix velocities;
-        sq_diff_calc_ptr_->calculate(positions, velocities);
+        // compute the squared norm of the differences of the column vectors
+        FeatureMatrix sq_diff_matrix;
+        sq_diff_calc_ptr_->calculate(feature_matrix, sq_diff_matrix);
 
         // add values to min/max/mean/var calculator
-        sq_velocity_mmmv.add_values(velocities);
+        sq_diff_mmmv.add_values(sq_diff_matrix);
     }
-    push_back_feature("all velocities (squared)", sq_velocity_mmmv);
+    push_back_feature("squared difference of " + feature_name, sq_diff_mmmv);
 }
 
-void TrackingFeatureExtractor::compute_acceleration_features(
-    ConstTraxelRefVectors& track_traxels)
+void TrackingFeatureExtractor::compute_sq_accel_features(
+    ConstTraxelRefVectors& track_traxels,
+    std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_accel_mmmv;
     sq_accel_mmmv.set_max(0.0);
@@ -268,22 +270,24 @@ void TrackingFeatureExtractor::compute_acceleration_features(
         if(track.size() < 3)
             continue;
 
-        // extract positions
-        FeatureMatrix positions;
-        position_extractor_ptr_->extract(track, positions);
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(track, feature_matrix);
 
-        // compute acceleration vector's squared magnitude for all triples of positions
-        FeatureMatrix sq_accel;
-        sq_curve_calc_ptr_->calculate(positions, sq_accel);
+        // compute the squared norm of the accelerations of the column vectors
+        FeatureMatrix sq_accel_matrix;
+        sq_curve_calc_ptr_->calculate(feature_matrix, sq_accel_matrix);
 
         // add values to min/max/mean/var calculator
-        sq_accel_mmmv.add_values(sq_accel);
+        sq_accel_mmmv.add_values(sq_accel_matrix);
     }
-    push_back_feature("all accelerations (squared)", sq_accel_mmmv);
+    push_back_feature("squared acceleration of " + feature_name, sq_accel_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_angle_features(
-    ConstTraxelRefVectors& track_traxels)
+    ConstTraxelRefVectors& track_traxels,
+    std::string feature_name)
 {
     MinMaxMeanVarCalculator angle_mmmv;
     angle_mmmv.set_max(0.0);
@@ -295,18 +299,23 @@ void TrackingFeatureExtractor::compute_angle_features(
         if(track.size() < 3)
             continue;
 
-        // extract positions
-        FeatureMatrix positions;
-        position_extractor_ptr_->extract(track, positions);
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(track, feature_matrix);
 
-        // compute for all triples of positions the angle of change of direction
+        // compute for all triples of features the angle of change of direction
         FeatureMatrix angles;
-        angle_cos_calc_ptr_->calculate(positions, angles);
+        angle_cos_calc_ptr_->calculate(feature_matrix, angles);
 
         angle_mmmv.add_values(angles);
     }
-    push_back_feature("Mean of all angle cosines", angle_mmmv.get_mean());
-    push_back_feature("Variance of all angle cosines", angle_mmmv.get_var());
+    push_back_feature(
+        "Mean of all angle cosines of feature " + feature_name,
+        angle_mmmv.get_mean());
+    push_back_feature(
+        "Variance of all angle cosines of features " + feature_name,
+        angle_mmmv.get_var());
 }
 
 void TrackingFeatureExtractor::compute_track_length_features(
@@ -322,122 +331,156 @@ void TrackingFeatureExtractor::compute_track_length_features(
     push_back_feature("track length", track_length_mmmv);
 }
 
-void TrackingFeatureExtractor::compute_track_outlier_features(
-    ConstTraxelRefVectors& track_traxels)
+void TrackingFeatureExtractor::compute_track_id_outlier(
+    ConstTraxelRefVectors& track_traxels,
+    std::string feature_name)
 {
-    MinMaxMeanVarCalculator pos_out_mmmv;
-    MinMaxMeanVarCalculator vel_out_mmmv;
+    MinMaxMeanVarCalculator id_out_mmmv;
+    id_out_mmmv.set_max(0.0);
     for (auto track : track_traxels)
     {
-        // extract positions
-        FeatureMatrix positions;
-        position_extractor_ptr_->extract(track, positions);
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(track, feature_matrix);
 
-        // calculate velocities
-        FeatureMatrix velocities;
-        diff_calc_ptr_->calculate(positions, velocities);
-
-        // calculate position outlier if num_samples > dim
+        // calculate identity outlier if num_samples > dim
         FeatureMatrix temp;
-        if (positions.size(0) > positions.size(1))
+        if (feature_matrix.size(0) > feature_matrix.size(1))
         {
-            mvn_outlier_calc_ptr_->calculate(positions, temp);
-            pos_out_mmmv.add_value(temp(0, 0));
-        }
-
-        // calculate velocity outlier if num_samples > dim
-        if (velocities.size(0) > velocities.size(1))
-        {
-            mvn_outlier_calc_ptr_->calculate(velocities, temp);
-            vel_out_mmmv.add_value(temp(0, 0));
+            mvn_outlier_calc_ptr_->calculate(feature_matrix, temp);
+            id_out_mmmv.add_value(temp(0, 0));
         }
     }
-    push_back_feature("position outlier count", pos_out_mmmv);
-    push_back_feature("velocity outlier count", vel_out_mmmv);
+    push_back_feature("track outlier count of " + feature_name, id_out_mmmv);
 }
 
-void TrackingFeatureExtractor::compute_division_move_distance(
-    ConstTraxelRefVectors& div_traxels)
+void TrackingFeatureExtractor::compute_track_diff_outlier(
+    ConstTraxelRefVectors& track_traxels,
+    std::string feature_name)
 {
-    MinMaxMeanVarCalculator move_dist_mmmv;
-    move_dist_mmmv.set_max(0.0);
+    MinMaxMeanVarCalculator diff_out_mmmv;
+    diff_out_mmmv.set_max(0.0);
+    for (auto track : track_traxels)
+    {
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(track, feature_matrix);
+
+        // calculate differences
+        FeatureMatrix diff_matrix;
+        diff_calc_ptr_->calculate(feature_matrix, diff_matrix);
+
+        // calculate diff outlier if num_samples > dim
+        FeatureMatrix temp;
+        if (diff_matrix.size(0) > diff_matrix.size(1))
+        {
+            mvn_outlier_calc_ptr_->calculate(diff_matrix, temp);
+            diff_out_mmmv.add_value(temp(0, 0));
+        }
+    }
+    push_back_feature(
+        "track outlier count of " + feature_name + " diff",
+        diff_out_mmmv);
+}
+
+void TrackingFeatureExtractor::compute_division_sq_diff_features(
+    ConstTraxelRefVectors& div_traxels,
+    std::string feature_name)
+{
+    MinMaxMeanVarCalculator sq_diff_mmmv;
+    sq_diff_mmmv.set_max(0.0);
 
     for (auto div : div_traxels)
     {
-        // extract positions
-        FeatureMatrix positions;
-        position_extractor_ptr_->extract(div, positions);
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(div, feature_matrix);
 
-        // calculate the squared move distance
+        // calculate the squared child-parent difference
         FeatureMatrix temp;
-        FeatureMatrix sq_move_dist;
-        child_parent_diff_calc_ptr_->calculate(positions, temp);
-        sq_norm_calc_ptr_->calculate(temp, sq_move_dist);
-        move_dist_mmmv.add_values(sq_move_dist);
+        FeatureMatrix sq_diff_matrix;
+        child_parent_diff_calc_ptr_->calculate(feature_matrix, temp);
+        sq_norm_calc_ptr_->calculate(temp, sq_diff_matrix);
+        sq_diff_mmmv.add_values(sq_diff_matrix);
     }
-    push_back_feature("child-parent velocity (squared)", move_dist_mmmv);
+    push_back_feature(
+        "squared child-parent " + feature_name + " difference",
+        sq_diff_mmmv);
 }
 
-void TrackingFeatureExtractor::compute_division_move_outlier(
-    ConstTraxelRefVectors& div_traxels)
+void TrackingFeatureExtractor::compute_division_sq_diff_outlier(
+    ConstTraxelRefVectors& div_traxels,
+    std::string feature_name)
 {
-    // extract all squared move distances
-    CompositionCalculator sq_move_dist_calc(
+    // extract all squared child-parent differences
+    boost::shared_ptr<TraxelsFeaturesIdentity> feature_extractor_ptr(
+        new TraxelsFeaturesIdentity(feature_name));
+    CompositionCalculator sq_diff_calc(
         child_parent_diff_calc_ptr_,
         sq_norm_calc_ptr_);
-    FeatureMatrix sq_move_distances;
-    sq_move_dist_calc.calculate_for_all(
+    FeatureMatrix sq_diff_matrix;
+    sq_diff_calc.calculate_for_all(
         div_traxels,
-        sq_move_distances,
-        position_extractor_ptr_);
+        sq_diff_matrix,
+        feature_extractor_ptr);
     double outlier = 0.0;
-    if (sq_move_distances.size(0) > sq_move_distances.size(1))
+    if (sq_diff_matrix.size(0) > sq_diff_matrix.size(1))
     {
         FeatureMatrix outlier_mat;
-        mvn_outlier_calc_ptr_->calculate(sq_move_distances, outlier_mat);
+        mvn_outlier_calc_ptr_->calculate(sq_diff_matrix, outlier_mat);
         outlier = outlier_mat(0,0);
     }
-    push_back_feature("Outlier in division move distance", outlier);
+    push_back_feature(
+        "outlier of squared child-parent " + feature_name + " difference",
+        outlier);
 }
 
 void TrackingFeatureExtractor::compute_child_deceleration_features(
-    ConstTraxelRefVectors& div_traxels)
+    ConstTraxelRefVectors& div_traxels,
+    std::string feature_name)
 {
     MinMaxMeanVarCalculator child_decel_mmmv;
     child_decel_mmmv.set_max(0.0);
 
     for (auto div : div_traxels)
     {
-        // extract positions
-        FeatureMatrix positions;
-        position_extractor_ptr_->extract(div, positions);
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(div, feature_matrix);
 
         // calculate the child decelerations
         FeatureMatrix child_decel_mat;
-        child_decel_calc_ptr_->calculate(positions, child_decel_mat);
+        child_decel_calc_ptr_->calculate(feature_matrix, child_decel_mat);
 
         child_decel_mmmv.add_values(child_decel_mat);
     }
-    push_back_feature("child deceleration", child_decel_mmmv);
+    push_back_feature("child " + feature_name + " deceleration", child_decel_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_child_deceleration_outlier(
-    ConstTraxelRefVectors& div_traxels)
+    ConstTraxelRefVectors& div_traxels,
+    std::string feature_name)
 {
     // extract all child decelerations
-    FeatureMatrix child_decelerations;
+    boost::shared_ptr<TraxelsFeaturesIdentity> feature_extractor_ptr(
+        new TraxelsFeaturesIdentity(feature_name));
+    FeatureMatrix child_decel_mat;
     child_decel_calc_ptr_->calculate_for_all(
         div_traxels,
-        child_decelerations,
-        position_extractor_ptr_);
+        child_decel_mat,
+        feature_extractor_ptr);
     double outlier = 0.0;
-    if (child_decelerations.size(0) > child_decelerations.size(1))
+    if (child_decel_mat.size(0) > child_decel_mat.size(1))
     {
         FeatureMatrix outlier_mat;
-        mvn_outlier_calc_ptr_->calculate(child_decelerations, outlier_mat);
+        mvn_outlier_calc_ptr_->calculate(child_decel_mat, outlier_mat);
         outlier = outlier_mat(0,0);
     }
-    push_back_feature("Outlier in child decelerations", outlier);
+    push_back_feature("Outlier in child " + feature_name + " decelerations", outlier);
 }
 
 void TrackingFeatureExtractor::compute_border_distances(
@@ -450,7 +493,8 @@ void TrackingFeatureExtractor::compute_border_distances(
     for (auto appearance : appearance_traxels)
     {
         FeatureMatrix position;
-        position_extractor_ptr_->extract(appearance, position);
+        TraxelsFeaturesIdentity position_extractor("com");
+        position_extractor.extract(appearance, position);
         double border_dist = 0;
         if (position.shape(1) == 3)
         {
@@ -481,11 +525,6 @@ void TrackingFeatureExtractor::compute_border_distances(
         border_dist_mmmv.add_value(border_dist);
     }
     push_back_feature(description + " border distances", border_dist_mmmv);
-}
-
-void TrackingFeatureExtractor::compute_size_difference_features()
-{
-    throw std::runtime_error("not yet implemented");
 }
 
 void TrackingFeatureExtractor::push_back_feature(
