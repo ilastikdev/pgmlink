@@ -69,6 +69,9 @@ public:
 
 private:
     void push_back_feature(std::string feature_name, double feature_value);
+    void push_back_feature(
+        std::string feature_name,
+        const MinMaxMeanVarCalculator& mmmv_calculator);
     /**
      * methods that compute each feature
      */

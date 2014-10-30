@@ -148,7 +148,6 @@ void TrackingFeatureExtractor::compute_features()
     compute_angle_features(track_traxels);
     compute_track_length_features(track_traxels);
     compute_track_outlier_features(track_traxels);
-    LOG(logDEBUG) << "Call compute_division_move_distance";
     compute_division_move_distance(div_1_traxels);
     compute_division_move_outlier(div_1_traxels);
     compute_child_deceleration_features(div_2_traxels);
@@ -253,10 +252,7 @@ void TrackingFeatureExtractor::compute_velocity_features(ConstTraxelRefVectors& 
         // add values to min/max/mean/var calculator
         sq_velocity_mmmv.add_values(velocities);
     }
-    push_back_feature("Mean of all velocities (squared)", sq_velocity_mmmv.get_mean());
-    push_back_feature("Variance of all velocities (squared)", sq_velocity_mmmv.get_var());
-    push_back_feature("Min of all velocities (squared)", sq_velocity_mmmv.get_min());
-    push_back_feature("Max of all velocities (squared)", sq_velocity_mmmv.get_max());
+    push_back_feature("all velocities (squared)", sq_velocity_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_acceleration_features(
@@ -283,11 +279,7 @@ void TrackingFeatureExtractor::compute_acceleration_features(
         // add values to min/max/mean/var calculator
         sq_accel_mmmv.add_values(sq_accel);
     }
-
-    push_back_feature("Mean of all accelerations (squared)", sq_accel_mmmv.get_mean());
-    push_back_feature("Variance of all accelerations (squared)", sq_accel_mmmv.get_var());
-    push_back_feature("Min of all accelerations (squared)", sq_accel_mmmv.get_min());
-    push_back_feature("Max of all accelerations (squared)", sq_accel_mmmv.get_max());
+    push_back_feature("all accelerations (squared)", sq_accel_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_angle_features(
@@ -327,10 +319,7 @@ void TrackingFeatureExtractor::compute_track_length_features(
     {
         track_length_mmmv.add_value(static_cast<double>(track.size()));
     }
-    push_back_feature("Mean of track length", track_length_mmmv.get_mean());
-    push_back_feature("Variance of track length", track_length_mmmv.get_var());
-    push_back_feature("Min of track length", track_length_mmmv.get_min());
-    push_back_feature("Max of track length", track_length_mmmv.get_max());
+    push_back_feature("track length", track_length_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_track_outlier_features(
@@ -363,15 +352,8 @@ void TrackingFeatureExtractor::compute_track_outlier_features(
             vel_out_mmmv.add_value(temp(0, 0));
         }
     }
-    push_back_feature("Mean of position outlier count", pos_out_mmmv.get_mean());
-    push_back_feature("Variance of position outlier count", pos_out_mmmv.get_var());
-    push_back_feature("Min of position outlier count", pos_out_mmmv.get_min());
-    push_back_feature("Max of position outlier count", pos_out_mmmv.get_max());
-
-    push_back_feature("Mean of velocity outlier count", vel_out_mmmv.get_mean());
-    push_back_feature("Variance of velocity outlier count", vel_out_mmmv.get_var());
-    push_back_feature("Min of velocity outlier count", vel_out_mmmv.get_min());
-    push_back_feature("Max of velocity outlier count", vel_out_mmmv.get_max());
+    push_back_feature("position outlier count", pos_out_mmmv);
+    push_back_feature("velocity outlier count", vel_out_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_division_move_distance(
@@ -393,16 +375,7 @@ void TrackingFeatureExtractor::compute_division_move_distance(
         sq_norm_calc_ptr_->calculate(temp, sq_move_dist);
         move_dist_mmmv.add_values(sq_move_dist);
     }
-    push_back_feature(
-        "Mean of child-parent velocities (squared)",
-        move_dist_mmmv.get_mean());
-    push_back_feature(
-        "Variance of child-parent velocities (squared)",
-        move_dist_mmmv.get_var());
-    push_back_feature("Min of child-parent velocities (squared)",
-        move_dist_mmmv.get_min());
-    push_back_feature("Max of child-parent velocities (squared)",
-        move_dist_mmmv.get_max());
+    push_back_feature("child-parent velocity (squared)", move_dist_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_division_move_outlier(
@@ -424,7 +397,7 @@ void TrackingFeatureExtractor::compute_division_move_outlier(
         mvn_outlier_calc_ptr_->calculate(sq_move_distances, outlier_mat);
         outlier = outlier_mat(0,0);
     }
-    push_back_feature("Outlier in division move distances", outlier);
+    push_back_feature("Outlier in division move distance", outlier);
 }
 
 void TrackingFeatureExtractor::compute_child_deceleration_features(
@@ -445,10 +418,7 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
 
         child_decel_mmmv.add_values(child_decel_mat);
     }
-    push_back_feature("Mean of child decelerations", child_decel_mmmv.get_mean());
-    push_back_feature("Variance of child decelerations", child_decel_mmmv.get_var());
-    push_back_feature("Min of child decelerations", child_decel_mmmv.get_min());
-    push_back_feature("Max of child decelerations", child_decel_mmmv.get_max());
+    push_back_feature("child deceleration", child_decel_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_child_deceleration_outlier(
@@ -510,18 +480,7 @@ void TrackingFeatureExtractor::compute_border_distances(
         }
         border_dist_mmmv.add_value(border_dist);
     }
-    push_back_feature(
-        "Mean of " + description + " border distances",
-        border_dist_mmmv.get_mean());
-    push_back_feature(
-        "Variance of " + description + " border distances",
-        border_dist_mmmv.get_var());
-    push_back_feature(
-        "Min of " + description + " border distances",
-        border_dist_mmmv.get_min());
-    push_back_feature(
-        "Max of " + description + " border distances",
-        border_dist_mmmv.get_max());
+    push_back_feature(description + " border distances", border_dist_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_size_difference_features()
@@ -535,6 +494,16 @@ void TrackingFeatureExtractor::push_back_feature(
 {
     joint_feature_vector_.push_back(feature_value);
     feature_descriptions_.push_back(feature_name);
+}
+
+void TrackingFeatureExtractor::push_back_feature(
+    std::string feature_name,
+    const MinMaxMeanVarCalculator& mmmv_calculator)
+{
+    push_back_feature("Mean of " + feature_name, mmmv_calculator.get_mean());
+    push_back_feature("Variance of " + feature_name, mmmv_calculator.get_var());
+    push_back_feature("Min of " + feature_name, mmmv_calculator.get_min());
+    push_back_feature("Max of " + feature_name, mmmv_calculator.get_max());
 }
 
 BorderDistanceFilter::BorderDistanceFilter(
