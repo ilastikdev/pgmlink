@@ -81,9 +81,17 @@ void py_extract_coord_by_timestep_id(PyTimestepIdCoordinateMap coordinates,
 template <int N, typename T>
 void py_update_labelimage(PyTimestepIdCoordinateMap coordinates,
                           vigra::NumpyArray<N, T>& image,
+                          const vigra::NumpyArray<1, vigra::Int64>& offsets,
                           const size_t timestep,
                           const size_t traxel_id) {
-  update_labelimage<N, T>(coordinates.get(), image, timestep, traxel_id);
+  if (offsets.shape()[0] != N) {
+    throw std::runtime_error("py_update_labelimage() -- Number of offsets and image dimensions disagree!");
+  }
+  vigra::TinyVector<long int, N> offsets_tv;
+  for (size_t idx = 0; idx < N; ++idx) {
+    offsets_tv[idx] = offsets[idx];
+  }
+  update_labelimage<N, T>(coordinates.get(), image, offsets_tv, timestep, traxel_id);
 }
 
 
