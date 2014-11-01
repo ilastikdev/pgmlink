@@ -437,9 +437,12 @@ ConstraintPool::OutgoingConstraint>
             // couple transitions: sum(Y_ij) = D_i + App_i
             cplex_idxs.clear();
             coeffs.clear();
+            constraint_name.str(std::string()); // clear the name
+            constraint_name << "couple transitions: sum( transition-nodes ";
 
             for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
             {
+                constraint_name << *outgoing_it << " ";
                 for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
                 {
                     coeffs.push_back(state);
@@ -460,9 +463,7 @@ ConstraintPool::OutgoingConstraint>
             }
 
             // 0 <= sum_nu [ sum_j( nu * Y_ij[nu] ) ] - [ sum_nu nu * X_i[nu] + D_i[1] + sum_nu nu * App_i[nu] ]<= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple transitions: ";
-            constraint_name << " sum(Y_ij) = D_i + App_i added for nodes: App_i=" << constraint.appearance_node
+            constraint_name << ") = D_i + App_i added for nodes: App_i=" << constraint.appearance_node
                             << ", D_i = " << constraint.division_node;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
                     constraint_name.str().c_str());
