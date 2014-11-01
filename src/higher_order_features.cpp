@@ -37,6 +37,9 @@ typedef typename
 typedef typename
   property_map<division_active_count, HypothesesGraph::base_graph>::type
   divs_active_count_map_type;
+  typedef typename
+    property_map<division_active, HypothesesGraph::base_graph>::type
+    division_active_map_type;
 typedef typename
   property_map<node_traxel, HypothesesGraph::base_graph>::type
   node_traxel_map_type;
@@ -74,6 +77,7 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   // Get the property maps
   nodes_active_map_type& nodes_active_map = graph.get(node_active_count());
   arcs_active_map_type& arcs_active_map = graph.get(arc_active_count());
+  divs_active_count_map_type& divisions_active_map = graph.get(division_active_count());
 
   // create the the node_active, node_active2 and arc_active map
   if (not graph.has_property(node_active())) {
@@ -85,11 +89,15 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   if (not graph.has_property(arc_active())) {
     graph.add(arc_active());
   }
+  if(not graph.has_property(division_active())) {
+      graph.add(division_active());
+  }
 
   // Get the property maps (caution: "node_active_map" not "nodes_active_map")
   node_active_map_type& node_active_map = graph.get(node_active());
   node_active2_map_type& node_active2_map = graph.get(node_active2());
   arc_active_map_type& arc_active_map = graph.get(arc_active());
+  division_active_map_type& div_active_map = graph.get(division_active());
 
   // Now we can start the with writing the solution with the index
   // solution_index into the node_active_map
@@ -101,6 +109,7 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
     }
     node_active_map[n_it] = nodes_active_map[n_it][solution_index];
     node_active2_map.set(n_it, nodes_active_map[n_it][solution_index]);
+    div_active_map[n_it] = divisions_active_map[n_it][solution_index];
   }
   for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it) {
     if (arcs_active_map[a_it].size() <= solution_index) {
