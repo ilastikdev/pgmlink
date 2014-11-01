@@ -501,6 +501,7 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     config["tracklet_intern_arc_ids"] = this->has_property(tracklet_intern_arc_ids());
     config["arc_active_count"] = this->has_property(arc_active_count());
     config["node_traxel"] = this->has_property(node_traxel());
+    config["node_tracklet"] = this->has_property(node_tracklet());
 
     ar & config;
 

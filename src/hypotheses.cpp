@@ -942,6 +942,9 @@ struct TypeToStrConverter {
     if(config["node_traxel"])
     	writer.nodeMap("node_traxel", g.get(node_traxel()), TypeToStrConverter<Traxel>());
 
+    if(config["node_tracklet"])
+        writer.nodeMap("node_tracklet", g.get(node_tracklet()), TypeToStrConverter<vector<Traxel>>());
+
     writer.run();
   }
   //
@@ -1087,6 +1090,12 @@ struct TypeToStrConverter {
     {
     	g.add(node_traxel());
     	reader.nodeMap("node_traxel", g.get(node_traxel()), StrToTypeConverter<Traxel>());
+    }
+
+    if(config["node_tracklet"])
+    {
+        g.add(node_tracklet());
+        reader.nodeMap("node_tracklet", g.get(node_tracklet()), StrToTypeConverter<vector<Traxel>>());
     }
 
     reader.run();
