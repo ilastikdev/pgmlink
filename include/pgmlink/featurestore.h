@@ -46,6 +46,9 @@ public:
 
     /// dump contents to a stream
     void dump(std::ostream &stream);
+
+    /// dump features of a traxel to a stream
+    void dump(int timestep, unsigned int id, std::ostream &stream);
 private:
     /// Store a feature map for each traxel, but also for pairs,triplets,... of traxels,
     /// to be able to save features corresponding to moves,divisions,.. as well.

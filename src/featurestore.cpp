@@ -62,4 +62,22 @@ void FeatureStore::dump(std::ostream& stream)
     stream << std::endl;
 }
 
+void FeatureStore::dump(int timestep, unsigned int id, std::ostream &stream)
+{
+    TraxelFeatureMap::iterator it = traxel_feature_map_.find({std::make_pair(timestep, id)});
+
+    stream << "Traxel (" << it->first[0].first << ", " << it->first[0].second << ")\n";
+    FeatureMap& feature_map = it->second;
+    for(FeatureMap::iterator map_it = feature_map.begin(); map_it != feature_map.end(); ++map_it)
+    {
+        stream << "\tFeature \"" << map_it->first << "\": ";
+        feature_array& feat = map_it->second;
+        for(auto f : feat)
+        {
+            stream << f << " ";
+        }
+        stream << "\n";
+    }
+}
+
 } // end namespace pgmlink

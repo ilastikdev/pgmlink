@@ -113,6 +113,11 @@ namespace pgmlink {
       fs->dump(std::cout);
   }
 
+  void dump_traxel_features(boost::shared_ptr<FeatureStore>& fs, int timestep, unsigned int id)
+  {
+      fs->dump(timestep, id, std::cout);
+  }
+
 } /* namespace pgmlink */
 
 void export_traxels() {
@@ -186,5 +191,6 @@ void export_traxels() {
 
     class_<FeatureStore, boost::shared_ptr<FeatureStore> >("FeatureStore")
         .def("dump", &dump_featurestore)
+        .def("print_traxel_features", &dump_traxel_features)
         .def_pickle(TemplatedPickleSuite< FeatureStore >());
 }
