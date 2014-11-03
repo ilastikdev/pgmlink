@@ -456,7 +456,15 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 	return ret;
 }
 
-
+template<typename T>
+std::ostream& operator<<(std::ostream& stream, const std::vector<T>& values)
+{
+    stream << "(";
+    for(T t : values)
+        stream << t << ", ";
+    stream << ")";
+    return stream;
+}
 
 boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(const HypothesesGraph& g) {
 
@@ -521,6 +529,44 @@ boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(co
     return ret;
 } /* multi_frame_move_events */
 
+boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph& g)
+{
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    node_timestep_map_t& node_timestep_map = g.get(node_timestep());
+    typedef property_map<merger_resolved_to, HypothesesGraph::base_graph>::type merger_resolved_map_t;
+    merger_resolved_map_t& merger_resolved_map = g.get(merger_resolved_to());
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
+    node_traxel_map_t& node_traxel_map = g.get(node_traxel());
+
+    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t) {
+        LOG(logDEBUG2) << "events(): processing timestep: " << t;
+        ret->push_back(vector<Event>());
+        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
+            if(merger_resolved_map[node_at].size() > 0)
+            {
+                std::vector<unsigned int> new_traxel_ids = merger_resolved_map[node_at];
+                Event e;
+                e.type = Event::ResolvedTo;
+
+                // insert original node
+                Traxel trax = node_traxel_map[node_at];
+                e.traxel_ids.push_back(trax.Id);
+
+                // insert new nodes
+                e.traxel_ids.insert(e.traxel_ids.end(), new_traxel_ids.begin(), new_traxel_ids.end());
+
+                // insert into returned vector
+                ret->back().push_back(e);
+
+                LOG(logDEBUG2) << "Inserting Event::ResolvedTo at timestep " << t << " for traxel: " << trax.Id << " into: " << new_traxel_ids;
+            }
+        }
+    }
+
+    return ret;
+}
 
 boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2) {
 

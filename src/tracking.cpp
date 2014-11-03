@@ -654,10 +654,12 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 
 			cout << "-> constructing resolved events" << endl;
             boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(resolved_graph);
+            boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(resolved_graph);
 
 			cout << "-> merging unresolved and resolved events" << endl;
 			// delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
-            boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(events, *multi_frame_moves);
+            boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
+            boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
         //      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
 
 			// TODO The in serialized event vector written in the track() function

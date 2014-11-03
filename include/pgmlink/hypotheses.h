@@ -401,6 +401,7 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   PGMLINK_EXPORT HypothesesGraph& prune_inactive(HypothesesGraph&);
   PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGraph& g, int iterationStep=0);
   PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(const HypothesesGraph& g);
+  PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > resolved_to_events(const HypothesesGraph& g);
   PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2);
   PGMLINK_EXPORT boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph&);
 
