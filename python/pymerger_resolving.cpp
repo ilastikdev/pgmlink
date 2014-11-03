@@ -79,8 +79,8 @@ void py_extract_coord_by_timestep_id(PyTimestepIdCoordinateMap coordinates,
 }
 
 template <int N, typename T>
-void py_update_labelimage(PyTimestepIdCoordinateMap coordinates,
-                          vigra::NumpyArray<N, T>& image,
+vigra::NumpyAnyArray py_update_labelimage(PyTimestepIdCoordinateMap coordinates,
+                          const vigra::NumpyArray<N, T>& image,
                           const vigra::NumpyArray<1, vigra::Int64>& offsets,
                           const size_t timestep,
                           const size_t traxel_id) {
@@ -91,7 +91,10 @@ void py_update_labelimage(PyTimestepIdCoordinateMap coordinates,
   for (size_t idx = 0; idx < N; ++idx) {
     offsets_tv[idx] = offsets[idx];
   }
-  update_labelimage<N, T>(coordinates.get(), image, offsets_tv, timestep, traxel_id);
+
+  vigra::NumpyArray<N, T> new_image(image);
+  update_labelimage<N, T>(coordinates.get(), new_image, offsets_tv, timestep, traxel_id);
+  return new_image;
 }
 
 
