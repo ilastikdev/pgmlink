@@ -150,7 +150,7 @@ int extract_region_features(const vigra::MultiArrayView<N, DataType>& data,
     // create list of all labels we want to extract features for
     LabelType label_min, label_max;
     labels.minmax(&label_min, &label_max);
-    std::vector<size_t> label_indices(label_max - label_min);
+    std::vector<size_t> label_indices(label_max + 1 - label_min);
     std::iota(label_indices.begin(), label_indices.end(), label_min);
 
     // coordinate offset is zero, use default constructor
