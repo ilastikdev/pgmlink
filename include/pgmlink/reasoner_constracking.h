@@ -156,7 +156,7 @@ class ConservationTracking : public Reasoner {
     double getEnergyByEvent(EnergyType event, HypothesesGraph::NodeIt n,bool perturb=false,size_t state=0);
     void printResults( HypothesesGraph&);
     double sample_with_classifier_variance(double mean, double variance);
-    double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0);
+    double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0, size_t state=0);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
 
     // helper

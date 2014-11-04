@@ -258,7 +258,7 @@ double ConservationTracking::sample_with_classifier_variance(double mean, double
 	return new_probability;
 }
 
-double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr) {
+double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, size_t state) {
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
@@ -269,13 +269,13 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 				case Detection:
 					//mean = tr.features["detProb"][state];
 					mean = exp(energy/-detection_weight_); // convert energy to probability
-					variance = tr.features["detUnc"][0];
+                    variance = tr.features["detProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -detection_weight_*log(perturbed_mean)- energy;
 				case Division:
 					//mean = tr.features["divProb"][state];
 					mean = exp(energy/-division_weight_); // convert energy to probability
-					variance = tr.features["divUnc"][0];
+                    variance = tr.features["divProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
@@ -619,7 +619,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     				HypothesesGraph::Node n = *tr_n_it;
     				tr = traxel_map_[n];
     				for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    					offset[tr].push_back(generateRandomOffset(Transition));
+                        offset[tr].push_back(generateRandomOffset(Transition));
     				}
     			}
     		} else {
@@ -705,7 +705,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         			e = detection_(*trax_it, state);
         			energy += e;
         			if (perturb){
-        				energy+= generateRandomOffset(Detection, e, *trax_it);
+                        energy+= generateRandomOffset(Detection, e, *trax_it, state);
         			}
         		}
         		// add all transition factors of the internal arcs
@@ -718,7 +718,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		e = detection_(traxel_map_[n], state);
         		energy=e;
     			if (perturb){
-    				energy+= generateRandomOffset(Detection, e, traxel_map_[n]);
+                    energy+= generateRandomOffset(Detection, e, traxel_map_[n], state);
     			}
         	}
 
