@@ -27,6 +27,7 @@ class FeatureExtractor
 {
  public:
   PGMLINK_EXPORT FeatureExtractor(boost::shared_ptr<FeatureCalculator> calculator, const std::string& feature_name);
+  PGMLINK_EXPORT FeatureExtractor(const std::string& calculator_name, const std::string& feature_name);
   PGMLINK_EXPORT virtual ~FeatureExtractor();
   PGMLINK_EXPORT virtual feature_array extract(const Traxel& t1) const;
   PGMLINK_EXPORT virtual feature_array extract(const Traxel& t1, const Traxel& t2) const;

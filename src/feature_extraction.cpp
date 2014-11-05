@@ -24,10 +24,13 @@ namespace feature_extraction {
 //// class FeatureExtractor
 ////
 FeatureExtractor::FeatureExtractor(boost::shared_ptr<FeatureCalculator> calculator, const std::string& feature_name)
-    : calculator_(calculator), feature_name_(feature_name) {
-  
+    : calculator_(calculator), feature_name_(feature_name) {  
 }
 
+
+FeatureExtractor::FeatureExtractor(const std::string& calculator_name, const std::string& feature_name)
+    : calculator_(pgmlink::feature_extraction::helpers::CalculatorLookup::extract_calculator(calculator_name)), feature_name_(feature_name) {  
+}
 
 FeatureExtractor::~FeatureExtractor() {
 

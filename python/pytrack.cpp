@@ -8,6 +8,7 @@
 #include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/field_of_view.h"
 #include "../include/pgmlink/tracking_feature_extractor.h"
+#include "../include/pgmlink/feature_extraction.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
@@ -76,6 +77,10 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 	Py_END_ALLOW_THREADS
 	return result;
 	}
+
+feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract1)(const Traxel& t1) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
+feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract2)(const Traxel& t1, const Traxel& t2) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
+feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract3)(const Traxel& t1, const Traxel& t2, const Traxel& t3) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
 
 void export_track() {
     class_<vector<Event> >("EventVector")
@@ -157,6 +162,14 @@ void export_track() {
 	.value("MultiFrameMove", Event::MultiFrameMove)
 	.value("Void", Event::Void)
     ;
+
+	class_<pgmlink::feature_extraction::FeatureExtractor>("FeatureExtractor",
+                                                        init<string, string>(args("Calculator, Feature")))
+            .def("extract", extract1)
+            .def("extract", extract2)
+            .def("extract", extract3)
+    ;
+
 
     class_<pgmlink::features::TrackingFeatureExtractor>("TrackingFeatureExtractor",
                                                         init<boost::shared_ptr<HypothesesGraph>, FieldOfView>(args("HypothesesGraph, FieldOfView")))
