@@ -242,6 +242,7 @@ namespace pgmlink {
       PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
       PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights = "",std::string options = "");
       PGMLINK_EXPORT void set_export_labeled_graph(bool in);
+      PGMLINK_EXPORT double hammingloss_of_files(std::string f1,std::string f2);
 
       /// Return reference to the ilp solutions
       PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);

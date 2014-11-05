@@ -896,4 +896,35 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     }
     return out;
   }
+
+  double ConsTracking::hammingloss_of_files(std::string f1,std::string f2){
+	ifstream in(f1);
+	ifstream in2(f2);
+	double loss = 0.;
+	
+	while ((!in.eof()) && (!in2.eof())) 
+	{
+		string line,line2;
+		getline(in,line); 
+		getline(in2,line2);
+		LOG(logDEBUG4) << "ConsTracking::hammingloss_of_files: comparing  " << line[0] << " and " << line2[0] ;
+		if(line[0] != line2[0])
+			loss += 1;
+    }
+    return loss;
+  }
+
+  void ConsTracking::create_energy_calculator(std::map<std::string,std::map<std::string,std::vector<std::string> > > used_feature_names,TraxelStore& ts)
+  {
+	energy_calculator_.initialize(used_feature_names,ts,max_number_objects_ +1);
+  }
+
+  size_t ConsTracking::get_energy_weight_vector_size(){
+	return energy_calculator_.number_of_weights();
+  }
+
+  std::string ConsTracking::get_featureweight_description(size_t i)
+  {
+	return energy_calculator_.id_description(i);
+  }
 } // namespace tracking
