@@ -18,7 +18,7 @@ class TransitionClassifier:
         self.classifier = classifier
         self.selected_features = selected_features
         
-    def getDistance(self,Traxel1,Traxel2):
+    def predict(self,Traxel1,Traxel2):
         """
         returns probability and variance of transition from Traxel1 to Traxel2
         based on transition classifier (gaussian process classifier)
@@ -33,5 +33,3 @@ class TransitionClassifier:
         classifier_var  = self.classifier.predict_probabilities(X)[0,1]
         return classifier_prob,classifier_var
     
-    def test(self):
-        print "Test"

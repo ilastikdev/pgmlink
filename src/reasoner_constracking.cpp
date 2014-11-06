@@ -595,7 +595,7 @@ boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
 double ConservationTracking::get_classifier_transition_variance(Traxel tr1, Traxel tr2) {
     double var;
 
-    boost::python::object pValue = TransitionClassifier_.attr("getDistance")(tr1,tr2);
+    boost::python::object pValue = TransitionClassifier_.attr("predict")(tr1,tr2);
     var = boost::python::extract<double>(pValue.attr("__getitem__")(1));
 
     return var;
@@ -617,7 +617,7 @@ double ConservationTracking::get_classifier_transition_probability(Traxel tr1, T
 
     }
 
-	boost::python::object pValue = TransitionClassifier_.attr("getDistance")(tr1,tr2);
+    boost::python::object pValue = TransitionClassifier_.attr("predict")(tr1,tr2);
 
 	prob = boost::python::extract<double>(pValue.attr("__getitem__")(0));
 
