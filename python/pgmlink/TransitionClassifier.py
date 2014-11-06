@@ -1,35 +1,21 @@
-import numpy
-
-#inspired by opObjectClassification
-def make_feature_array(feats, selected):
-
-    featsMatrix= []
-    for featname in selected:
-        featurea = feats[featname]
-        for value in featurea:
-            ft = numpy.reshape(numpy.asarray(value),(-1,))
-            featsMatrix.append(ft)
-        
-    featsMatrix = numpy.concatenate(featsMatrix)
-    return featsMatrix
+import numpy as np
 
 class TransitionClassifier:
-    def __init__(self,classifier,selected_features):
+    def __init__(self,classifier, selected_features):
         self.classifier = classifier
-        self.selected_features = selected_features
+        if len(selected_features) != 1 or selected_features[0] != 'SquaredDistance<com>':
+            raise NotImplementedError, 'other features are not supported yet'
         
-    def predict(self,Traxel1,Traxel2):
+    @staticmethod
+    def getFeatures(traxel1, traxel2):
+        # only squared distances for now
+        return np.linalg.norm( np.array(traxel1.features['com']) - np.array(traxel2.features['com']) )
+
+    def predict(self, traxel1, traxel2):
         """
         returns probability and variance of transition from Traxel1 to Traxel2
         based on transition classifier (gaussian process classifier)
         """
+        x = self.getFeatures(traxel1, traxel2)
         
-        Features1 = make_feature_array(Traxel1.features,self.selected_features)
-        Features2 = make_feature_array(Traxel2.features,self.selected_features)
-        
-        X = numpy.reshape(numpy.concatenate((Features1,Features2)),(1,-1))
-        
-        classifier_prob = self.classifier.predict_probabilities(X)[0,0]
-        classifier_var  = self.classifier.predict_probabilities(X)[0,1]
-        return classifier_prob,classifier_var
-    
+        return self.classifier.predit_probabilities(x, with_variance=True)
