@@ -416,11 +416,11 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 	property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances = (hypotheses_graph_)->get(arc_distance());
 	property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = (hypotheses_graph_)->get(node_traxel());
 
-	bool with_optical_correction = false;
+
 	Traxel some_traxel = (*traxel_map.beginValue());
 	if (some_traxel.features.find("com_corrected") != some_traxel.features.end()) {
 		LOG(logINFO) << "optical correction enabled";
-		with_optical_correction = true;
+        with_optical_correction_ = true;
 	}
 
 	for(HypothesesGraph::ArcIt a(*hypotheses_graph_); a!=lemon::INVALID; ++a) {
@@ -429,7 +429,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 		Traxel from_tr = traxel_map[from];
 		Traxel to_tr = traxel_map[to];
 
-		if (with_optical_correction) {
+        if (with_optical_correction_) {
 			arc_distances.set(a, from_tr.distance_to_corr(to_tr));
 		} else {
 			arc_distances.set(a, from_tr.distance_to(to_tr));
@@ -560,7 +560,8 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             cplex_timeout,
             division_weight,
 			detection_weight,
-            transition_classifier
+            transition_classifier,
+            with_optical_correction_
 	);
 
 	pgm.features_file_      = features_file_;   

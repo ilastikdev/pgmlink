@@ -173,7 +173,8 @@ namespace pgmlink {
       sigmas_(std::vector<double>()),
       fov_(fov),
       event_vector_dump_filename_(event_vector_dump_filename),
-      export_from_labeled_graph_(false)
+      export_from_labeled_graph_(false),
+      with_optical_correction_(false)
       {}
 
 
@@ -269,7 +270,7 @@ namespace pgmlink {
       std::string constraints_file_; 
       std::string ground_truth_file_;
 
-      bool export_from_labeled_graph_;
+      bool export_from_labeled_graph_, with_optical_correction_;
 							    
   };
 }

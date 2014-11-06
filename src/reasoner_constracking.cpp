@@ -679,17 +679,18 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
     double prob;
 
     //read the FeatureMaps from Traxels
-    if (transition_classifier_.ptr()==boost::python::object().ptr()){
-        LOG(logDEBUG4) << "get_classifier_transition_probability(): using deterministic function";
-    	//backwards compatibility
-    	feature_array com1 = tr1.features["com"];
-		feature_array com2 = tr2.features["com"];
-		double distance = 0;
-        for (size_t i=0; i<com1.size(); i++) {
-            distance += pow(com1[i]-com2[i],2);
-		}
-		return get_transition_prob(sqrt(distance), state, transition_parameter_);
-
+    if (transition_classifier_.ptr()==boost::python::object().ptr()){        
+        double distance = 0;
+        if (with_optical_correction_) {
+            distance = tr1.distance_to_corr(tr2);
+        } else {
+            distance = tr1.distance_to(tr2);
+        }
+        prob = get_transition_prob(distance, state, transition_parameter_);
+        LOG(logDEBUG4) << "get_transition_probability(): using deterministic function: " << tr1
+                       << " " << tr2 << " [" << state << "] = " << prob << "; distance = " << distance;
+        assert(prob >= 0 && prob <= 1);
+        return prob;
     }    
 
     boost::python::object prediction = transition_classifier_.attr("predict")(tr1,tr2);
@@ -836,6 +837,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 bool first = true;
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
                         trax_it != tracklet_map_[n].end(); ++trax_it) {
+                    LOG(logINFO) << "internal arcs traxel " << *trax_it;
                     Traxel tr = *trax_it;
                     if (!first) {
                         e = transition_( get_transition_probability(tr_prev, tr, state) );
@@ -849,16 +851,13 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                     tr_prev = tr;
                 }
 
-        	} else {
-                LOG(logINFO) << "debug: detection_(*trax_it, state) case 2";
+        	} else {                
         		e = detection_(traxel_map_[n], state);
-        		energy=e;
-                LOG(logINFO) << "debug: detection_(*trax_it, state case 2 done)";
+        		energy=e;                
     			if (perturb){
                     energy+= generateRandomOffset(Detection, e, traxel_map_[n], state);
     			}
-        	}
-            LOG(logINFO) << "state " << state;
+        	}            
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: detection[" << state
             	 << "] = " << energy;
             for (size_t var_idx = 0; var_idx < num_vars; ++var_idx) {
@@ -903,14 +902,12 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             detection_f_node_map_[n] = model->numberOfFactors() -1;
         //table.add_to(model);
     }
+
     ////
     //// add transition factors
     ////
     LOG(logDEBUG) << "ConservationTracking::add_finite_factors: add transition factors";
-    property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances_ = g.get(
-    		arc_distance());
 
-    double distance;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
         size_t vi[] = { arc_map_[a] };
         vector<size_t> coords(1, 0); // number of variables
@@ -921,14 +918,18 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         marray::Marray<double> energies(shape.begin(),shape.end(),forbidden_cost_);
 
         for (size_t state = 0; state <= max_number_objects_; ++state) {
+            Traxel tr1, tr2;
+            if (with_tracklets_) {
+                tr1 = tracklet_map_[g.source(a)].back();
+                tr2 = tracklet_map_[g.target(a)].front();
+            } else {
+                tr1 = traxel_map_[g.source(a)];
+                tr2 = traxel_map_[g.target(a)];
+            }
 
-        	distance = arc_distances_[a];
-        	Traxel tr1 = traxel_map_[g.source(a)];
-			Traxel tr2 = traxel_map_[g.target(a)];
-
-            double energy = transition_(get_transition_probability(tr1,tr2,state));
+            double energy = transition_(get_transition_probability(tr1, tr2, state));
         	if (perturb){
-        		energy+= generateRandomOffset(Transition,energy,tr1,tr2);
+                energy+= generateRandomOffset(Transition, energy, tr1, tr2);
         	}
 
         	LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state

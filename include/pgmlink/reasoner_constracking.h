@@ -83,7 +83,8 @@ class ConservationTracking : public Reasoner {
                              double cplex_timeout = 1e75,
                              double division_weight = 10,
                              double detection_weight = 10,
-                             boost::python::object transition_classifier = boost::python::object()
+                             boost::python::object transition_classifier = boost::python::object(),
+                             bool with_optical_correction = false
                              )
         : max_number_objects_(max_number_objects),
           detection_(detection),
@@ -113,7 +114,8 @@ class ConservationTracking : public Reasoner {
           detection_weight_(detection_weight),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
           random_uniform_(rng_,boost::uniform_real<>(0,1)),
-          transition_classifier_(transition_classifier)
+          transition_classifier_(transition_classifier),
+          with_optical_correction_(with_optical_correction)
     {
 
     };
@@ -244,6 +246,8 @@ class ConservationTracking : public Reasoner {
     uniformRNGType random_uniform_;
 
     boost::python::object transition_classifier_;
+
+    bool with_optical_correction_;
 
 	HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
