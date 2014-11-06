@@ -362,13 +362,13 @@ namespace pgmlink {
           {
               if(feat_map.size() > 0)
               {
-                  std::cout << "Features in Traxel:" << std::endl;
+                  LOG(logINFO) << "Features in Traxel:";
                   for(auto it : feature_map_)
-                      std::cout << "\t" << it.first << std::endl;
+                      LOG(logINFO) << "\t" << it.first;
 
-                  std::cout << "Features in FeatureStore:" << std::endl;
+                  LOG(logINFO) << "Features in FeatureStore:";
                   for(auto it : feat_map)
-                      std::cout << "\t" << it.first << std::endl;
+                      LOG(logINFO) << "\t" << it.first;
 
                   throw std::runtime_error("both feature maps are non-empty, copying traxel-local features, but this will lead to data loss!");
               }

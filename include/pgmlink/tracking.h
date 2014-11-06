@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/python.hpp>
 
 #include "pgmlink/event.h"
 #include "pgmlink/pgmlink_export.h"
@@ -189,9 +190,10 @@ namespace pgmlink {
 								double transition_parameter = 5.,
 								double border_width = 0,
 								bool with_constraints = true,
-                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+                                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
 								double cplex_timeout = 1e+75,
-								TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr());
+                                TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
+                                boost::python::object transition_classifier = boost::python::object());
 
 
       
@@ -216,8 +218,9 @@ namespace pgmlink {
 							    double transition_parameter = 5.,
 							    double border_width = 0,
 							    bool with_constraints = true,
-                  UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
-							    double cplex_timeout = 1e+75);
+                                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+							    double cplex_timeout = 1e+75,
+                                boost::python::object TransitionClassifier = boost::python::object());
 
       PGMLINK_EXPORT EventVectorVector resolve_mergers(EventVectorVector &events,
                                 TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
@@ -227,6 +230,7 @@ namespace pgmlink {
                                 int n_dim = 3,
                                 double transition_parameter = 5.,
                                 bool with_constraints = true);
+
 
       /**
        * Get state of detection variables after call to operator().

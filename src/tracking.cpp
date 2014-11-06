@@ -6,6 +6,7 @@
 #include <sstream>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/python.hpp>
 #include <boost/shared_array.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -272,9 +273,10 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 						  bool with_constraints,
                           UncertaintyParameter uncertaintyParam,
 						  double cplex_timeout,
-						  TimestepIdCoordinateMapPtr coordinates) {
-    build_hypo_graph(ts);
+						  TimestepIdCoordinateMapPtr coordinates,
+                          boost::python::object transition_classifier) {
 
+    build_hypo_graph(ts);
 
     // TODO need solution without copying the event vector
     EventVectorVectorVector events = track(
@@ -292,7 +294,8 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                 border_width,
                 with_constraints,
                 uncertaintyParam,
-                cplex_timeout
+                cplex_timeout,
+                transition_classifier
                 );
 
 		if (with_merger_resolution) {
@@ -462,7 +465,9 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 						      double border_width,
 						      bool with_constraints,
                               UncertaintyParameter uncertaintyParam,
-						      double cplex_timeout){
+						      double cplex_timeout,
+                              boost::python::object transition_classifier
+                              ){
     
     LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ; 
     LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ; 
@@ -482,7 +487,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     LOG(logDEBUG1) <<"border_width\t"<<      border_width; 
     LOG(logDEBUG1) <<"with_constraints\t"<<      with_constraints; 
     LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
-    uncertaintyParam.print(); // TODO: do not use cout here!
+    uncertaintyParam.print();
     
 
 	Traxels empty;
@@ -531,7 +536,10 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 												fov_);
 
 	cout << "-> init ConservationTracking reasoner" << endl;
-	
+
+//	PyEval_InitThreads();
+//	PyGILState_STATE gilstate = PyGILState_Ensure();
+
 	ConservationTracking pgm(
 			max_number_objects_,
 			detection,
@@ -551,7 +559,8 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             uncertaintyParam,
             cplex_timeout,
             division_weight,
-			detection_weight
+			detection_weight,
+            transition_classifier
 	);
 
 	pgm.features_file_      = features_file_;   
@@ -575,6 +584,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 		cout << "-> pruning inactive hypotheses" << endl;
 
 	}
+//	PyGILState_Release(gilstate);
 
     // copy solutions
     const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();

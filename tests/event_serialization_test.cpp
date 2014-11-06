@@ -55,34 +55,23 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
     n42.features["com"] = com; n42.features["divProb"] = divProb;
     add(ts,fs, n42);
 
-//    fs->dump(std::cout);
-
-    std::cout << "Initialize Conservation tracking" << std::endl;
-    std::cout << std::endl;
+    std::cout << "Initialize Conservation tracking" << std::endl;    
 
     FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
     ConsTracking tracking = ConsTracking(
           2, // max_number_objects
           false, // detection_by_volume
           double(1.1), // avg_obj_size
-                  20, // max_neighbor_distance
-                  true, //with_divisions
-                  0.3, // division_threshold
-                  "none", // random_forest_filename
-          /*false, // detection_by_volume
-                  0, // forbidden_cost
-                  0.0, // ep_gap
-                  false, // with_tracklets
-                  10.0, //division_weight
-                  10.0, //transition_weight
-                  1500., // disappearance_cost,
-                  1500., // appearance_cost
-                  false, //with_merger_resolution
-                  3, //n_dim
-                  5, //transition_parameter
-                  0, //border_width for app/disapp costs */
-                  fov
-                  );
+          20, // max_neighbor_distance
+          true, //with_divisions
+          0.3, // division_threshold
+          "none", // random_forest_filename
+          fov,
+          "none" // event_vector_dump_filename
+             );
+
+
+    std::cout << "run conservation tracking" << std::endl;
 
     EventVectorVectorVector events = tracking(ts,
                             0, // forbidden_cost
@@ -97,10 +86,8 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
                             5, //transition_parameter
                             0, //border_width for app/disapp costs
                             true); // with_constraints
-                            //cplex_timeout
-                            //20, // max_neighbor_distance
-                            //0.3 );// division_threshold
-                            /*"none", // random_forest_filename */
+
+    std::cout << "serialize events" << std::endl;
 
     EventVectorVectorVector events_loaded;
 
@@ -110,6 +97,8 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
         boost::archive::text_oarchive out_archive(ofs);
         out_archive << events;
     }
+
+    std::cout << "read events" << std::endl;
 
     {
         // read again
@@ -137,6 +126,8 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
 
 BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
 {
+    std::cout << "Traxelstore_Serialization_Test" << std::endl;
+
     TraxelStore ts;
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
     Traxel n11, n12, n21, n31, n41, n42;
@@ -161,11 +152,10 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
     n42.features["com"] = com; n42.features["divProb"] = divProb;
     add(ts, fs, n42);
 
-//    fs->dump(std::cout);
-
     TraxelStore ts_loaded;
     boost::shared_ptr<FeatureStore> fs_loaded;
 
+    std::cout << "store traxelstore and featurestore in file" << std::endl;
     {
         // now store the results
         std::ofstream ofs("temp_filename.evt");
@@ -174,6 +164,7 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
         out_archive << fs;
     }
 
+    std::cout << "read traxelstore and featurestore from file" << std::endl;
     {
         // read again
         std::ifstream ifs("temp_filename.evt");
@@ -187,9 +178,8 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
         set_feature_store(ts_loaded, fs_loaded);
     }
 
-//    fs_loaded->dump(std::cout);
+    std::cout << "compare if the traxelstores are equal" << std::endl;
 
-    // compare if the traxelstores are equal
     BOOST_CHECK_EQUAL(ts.size(), ts_loaded.size());
     TraxelStore::iterator it_loaded = ts_loaded.begin();
 

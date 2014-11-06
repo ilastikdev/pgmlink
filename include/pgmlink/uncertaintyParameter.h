@@ -7,7 +7,11 @@
 #ifndef UNCERTAINTYPARAMETER_H
 #define UNCERTAINTYPARAMETER_H
 #include <iostream>
+#include <sstream>
+#include <string>
 #include "pgmlink/pgmlink_export.h"
+#include "pgmlink/log.h"
+
 using namespace std;
 
 namespace pgmlink {
@@ -55,13 +59,13 @@ namespace pgmlink {
 
 		}
 		void print(){
-			cout<<"number of iterations "<<numberOfIterations<<endl;
-			cout<<"distribution Id "<<distributionId<<endl;
-			cout<<"distribution Parameters "<<endl;
+            LOG(logDEBUG1) << "uncertainty parameter: number of iterations " << numberOfIterations;
+            LOG(logDEBUG1) << "uncertainty parameter: distribution Id " << distributionId;
+            std::stringstream ss;
 			for(std::vector<double>::iterator it = distributionParam.begin(); it != distributionParam.end(); ++it) {
-				cout << *it << ", ";
+                ss << *it << ", ";
 			}
-			cout<<endl;
+            LOG(logDEBUG1) << "uncertainty parameter: distribution Parameters " << ss;
 		}
 	};
 

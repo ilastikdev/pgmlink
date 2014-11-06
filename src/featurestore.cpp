@@ -1,12 +1,14 @@
 #include "pgmlink/featurestore.h"
 #include "pgmlink/traxels.h"
+#include "pgmlink/log.h"
+
 #include <iostream>
 
 namespace pgmlink {
 
 FeatureStore::FeatureStore()
 {
-    std::cout << "FeatureStore created" << std::endl;
+    LOG(logINFO) << "FeatureStore created";
 }
 
 FeatureMap &FeatureStore::get_traxel_features(int timestep, unsigned int id)

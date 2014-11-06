@@ -13,7 +13,6 @@
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python.hpp>
-#include <Python.h>
 
 #include "pytemplated_pickle_suite.h"
 
@@ -49,7 +48,8 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 					  double border_width,
                       UncertaintyParameter uncertaintyParam,
 					  bool   with_constraints,
-					  double cplex_timeout) {
+					  double cplex_timeout,
+                      object transition_classifier) {
     vector<vector<vector<Event> > > result;
 	// release the GIL
 	Py_BEGIN_ALLOW_THREADS
@@ -69,7 +69,8 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 			    with_constraints,
                 uncertaintyParam,
 			    cplex_timeout,
-			    coordinates);
+			    coordinates,
+                transition_classifier);
 	} catch (std::exception& e) {
 		Py_BLOCK_THREADS
 		throw;

@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE hypotheses_test
+#define BOOST_TEST_MODULE uncertainty_test
 
 #include <vector>
 #include <string>
@@ -22,11 +22,9 @@ using namespace pgmlink;
 using namespace std;
 using namespace boost;
 
+#include <boost/python.hpp>
 
 BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP ) {
-  
-	std::cout << "Constructing HypothesesGraph" << std::endl;
-	std::cout << std::endl;
 
 	typedef HypothesesGraph::ArcIt ArcIt2;
 	typedef HypothesesGraph::Arc Arc;

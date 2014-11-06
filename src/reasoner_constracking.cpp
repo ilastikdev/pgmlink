@@ -12,6 +12,7 @@
 //#include <cstdlib>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/python.hpp>
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
@@ -51,7 +52,6 @@ ConservationTracking::~ConservationTracking() {
           optimizer_ = NULL;
        }*/
 }
-
 
 double ConservationTracking::forbidden_cost() const {
     return forbidden_cost_;
@@ -143,8 +143,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses){
 
 	graph->add(relative_uncertainty()).add(node_active_count());
 
-	LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: "<<param_.numberOfIterations;
-	LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id "<<param_.distributionId;
+    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << param_.numberOfIterations;
+    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << param_.distributionId;
 	LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 	formulate(*graph);
 
@@ -297,7 +297,9 @@ double ConservationTracking::sample_with_classifier_variance(double mean, double
 	return new_probability;
 }
 
-double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr) {
+double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, Traxel tr2, size_t state) {
+
+    LOG(logDEBUG4) << "generateRandomOffset()";
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
@@ -308,17 +310,21 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 				case Detection:
 					//mean = tr.features["detProb"][state];
 					mean = exp(energy/-detection_weight_); // convert energy to probability
-					variance = tr.features["detUnc"][0];
+                    variance = tr.features["detProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -detection_weight_*log(perturbed_mean)- energy;
 				case Division:
 					//mean = tr.features["divProb"][state];
 					mean = exp(energy/-division_weight_); // convert energy to probability
-					variance = tr.features["divUnc"][0];
+                    variance = tr.features["divProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
-					return random_normal_()*param_.distributionParam[Transition];
+                    throw runtime_error("this conversion is wrong; will be fixed in a later commit");
+					mean = exp(energy/-transition_parameter_);
+                    variance = get_transition_variance(tr,tr2);
+					perturbed_mean = sample_with_classifier_variance(mean,variance);
+					return -transition_parameter_*log(perturbed_mean)- energy;
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}
@@ -344,7 +350,6 @@ void ConservationTracking::formulate(const HypothesesGraph& hypotheses) {
     if (with_divisions_) {
         add_division_nodes(hypotheses);
     }
-
 }
 
 void ConservationTracking::infer() {
@@ -649,6 +654,54 @@ double get_transition_prob(double distance, size_t state, double alpha) {
 }
 }
 
+boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
+	boost::python::dict dictionary;
+	for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter) {
+			dictionary[iter->first] = iter->second;
+		}
+	return dictionary;
+}
+
+
+double ConservationTracking::get_transition_variance(Traxel tr1, Traxel tr2) {
+    double var;
+
+    boost::python::object pValue = transition_classifier_.attr("predict")(tr1,tr2);
+    var = boost::python::extract<double>(pValue.attr("__getitem__")(1));
+
+    return var;
+}
+
+double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, size_t state) {
+
+    LOG(logDEBUG4) << "get_transition_probability()";
+
+    double prob;
+
+    //read the FeatureMaps from Traxels
+    if (transition_classifier_.ptr()==boost::python::object().ptr()){
+        LOG(logDEBUG4) << "get_classifier_transition_probability(): using deterministic function";
+    	//backwards compatibility
+    	feature_array com1 = tr1.features["com"];
+		feature_array com2 = tr2.features["com"];
+		double distance = 0;
+        for (size_t i=0; i<com1.size(); i++) {
+            distance += pow(com1[i]-com2[i],2);
+		}
+		return get_transition_prob(sqrt(distance), state, transition_parameter_);
+
+    }    
+
+    boost::python::object prediction = transition_classifier_.attr("predict")(tr1,tr2);
+
+    prob = boost::python::extract<double>(prediction.attr("__getitem__")(0));
+	if (state == 0) {
+        prob = 1-prob;
+    }
+    LOG(logDEBUG4) << "get_transition_probability(): using Gaussian process classifier: p[" << state << "] = " << prob ;
+    return prob;
+}
+
 template <typename ModelType>
 void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelType* model, bool perturb /*=false*/, vector< vector<vector<size_t> > >* detoff /*= NULL*/) {
 	// refactor this:
@@ -670,36 +723,36 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
     		g.get(node_tracklet());
-    property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_intern_dist_map_ =
-    		g.get(tracklet_intern_dist());
+    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_intern_arc_id_map_ =
+        		g.get(tracklet_intern_arc_ids());
 
 
-    bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
-    //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
+//    bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
+//      //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
+//    map<Traxel,vector<double> > offset;
+//    if (perturb_transitions_locally){
+//    	Traxel tr;
+//    	for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
 
-	map<Traxel,vector<double> > offset;
-    if (perturb_transitions_locally){
-    	Traxel tr;
-    	for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
+//    		if (with_tracklets_) {
+//    			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it];
+//    			for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
+//    					tr_n_it != traxel_nodes.end(); ++tr_n_it) {
+//    				HypothesesGraph::Node n = *tr_n_it;
+//    				tr = traxel_map_[n];
+//    				for (size_t dim=0;dim<tr.features["com"].size();dim++){
+//                        offset[tr].push_back(generateRandomOffset(Transition));
+//    				}
+//    			}
+//    		} else {
+//    			tr = traxel_map_[it];
+//    			for (size_t dim=0;dim<tr.features["com"].size();dim++){
+//    				offset[tr].push_back(generateRandomOffset(Transition));
+//    			}
+//    		}
+//    	}
+//    }
 
-    		if (with_tracklets_) {
-    			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it];
-    			for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-    					tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-    				HypothesesGraph::Node n = *tr_n_it;
-    				tr = traxel_map_[n];
-    				for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    					offset[tr].push_back(generateRandomOffset(Transition));
-    				}
-    			}
-    		} else {
-    			tr = traxel_map_[it];
-    			for (size_t dim=0;dim<tr.features["com"].size();dim++){
-    				offset[tr].push_back(generateRandomOffset(Transition));
-    			}
-    		}
-    	}
-    }
 
     ////
     //// add detection factors
@@ -771,26 +824,41 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		energy=0;
         		// add all detection factors of the internal nodes
         		for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
-        				trax_it != tracklet_map_[n].end(); ++trax_it) {
+        				trax_it != tracklet_map_[n].end(); ++trax_it) {                    
         			e = detection_(*trax_it, state);
-        			energy += e;
-        			if (perturb){
-        				energy+= generateRandomOffset(Detection, e, *trax_it);
+        			energy += e;                    
+        			if (perturb){                        
+                        energy+= generateRandomOffset(Detection, e, *trax_it, state);
         			}
         		}
-        		// add all transition factors of the internal arcs
-        		for (std::vector<double>::const_iterator intern_dist_it =
-        				tracklet_intern_dist_map_[n].begin();
-        				intern_dist_it != tracklet_intern_dist_map_[n].end(); ++intern_dist_it) {
-        			energy += transition_(get_transition_prob(*intern_dist_it, state, transition_parameter_));
-        		}
+        		// add all transition factors of the internal arcs                
+                Traxel tr_prev;
+                bool first = true;
+                for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
+                        trax_it != tracklet_map_[n].end(); ++trax_it) {
+                    Traxel tr = *trax_it;
+                    if (!first) {
+                        e = transition_( get_transition_probability(tr_prev, tr, state) );
+                        energy += e;
+                        if (perturb){
+                            energy += generateRandomOffset(Transition, e, tr_prev, tr);
+                        }
+                    } else {
+                        first = false;
+                    }
+                    tr_prev = tr;
+                }
+
         	} else {
+                LOG(logINFO) << "debug: detection_(*trax_it, state) case 2";
         		e = detection_(traxel_map_[n], state);
         		energy=e;
+                LOG(logINFO) << "debug: detection_(*trax_it, state case 2 done)";
     			if (perturb){
-    				energy+= generateRandomOffset(Detection, e, traxel_map_[n]);
+                    energy+= generateRandomOffset(Detection, e, traxel_map_[n], state);
     			}
         	}
+            LOG(logINFO) << "state " << state;
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: detection[" << state
             	 << "] = " << energy;
             for (size_t var_idx = 0; var_idx < num_vars; ++var_idx) {
@@ -855,21 +923,12 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         for (size_t state = 0; state <= max_number_objects_; ++state) {
 
         	distance = arc_distances_[a];
-        	if (perturb_transitions_locally){
-        		Traxel tr1 = traxel_map_[g.source(a)];
-        		Traxel tr2 = traxel_map_[g.target(a)];
-        		feature_array com1 = tr1.features["com"];
-        		feature_array com2 = tr2.features["com"];
-        		distance = 0;//calculate Euclidean distance of perturbed RegionCenters
-        		for (size_t i=0;i<com1.size();i++){
-        			distance+=pow((com1[i]+offset[tr1][i])-(com2[i]+offset[tr2][i]),2);
-        		}
-        		distance = sqrt(distance);
-        	}
+        	Traxel tr1 = traxel_map_[g.source(a)];
+			Traxel tr2 = traxel_map_[g.target(a)];
 
-        	double energy = transition_(get_transition_prob(distance, state, transition_parameter_));
+            double energy = transition_(get_transition_probability(tr1,tr2,state));
         	if (perturb){
-        		energy+= generateRandomOffset(Transition);
+        		energy+= generateRandomOffset(Transition,energy,tr1,tr2);
         	}
 
         	LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state

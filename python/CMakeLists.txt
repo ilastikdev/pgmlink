@@ -46,6 +46,15 @@ else()
   set_target_properties(pypgmlink PROPERTIES PREFIX "" OUTPUT_NAME "pgmlink" SUFFIX ".so")
 endif()
 
+#generate python module directory
+add_custom_command(TARGET pypgmlink POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/python/pgmlink/__init__.py
+                       ${PYPGMLINK_INSTALL_DIR}/__init__.py
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/python/pgmlink/TransitionClassifier.py
+                       ${PYPGMLINK_INSTALL_DIR}/TransitionClassifier.py  
+                        )
 # install
 
 # this will set the install dir to $PYTHON_SITE_PACKAGES
@@ -54,8 +63,9 @@ if(NOT DEFINED PYPGMLINK_INSTALL_DIR OR PYPGMLINK_INSTALL_DIR MATCHES "^$")
     execute_process(COMMAND ${PYTHON_EXECUTABLE} -c 
                     "from distutils.sysconfig import *; print get_python_lib(1)"
                     OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
-    file(TO_CMAKE_PATH ${PYTHON_SITE_PACKAGES} PYPGMLINK_INSTALL_DIR)
+    file(TO_CMAKE_PATH ${PYTHON_SITE_PACKAGES}/pgmlink PYPGMLINK_INSTALL_DIR)
 endif()
+
 set(PYPGMLINK_INSTALL_DIR ${PYPGMLINK_INSTALL_DIR}
     CACHE PATH "where to install the pgmlink Python package" FORCE)
 
@@ -63,6 +73,9 @@ set(PYPGMLINK_INSTALL_DIR ${PYPGMLINK_INSTALL_DIR}
 # use this in INSTALL() commands to get packaging right
 file(RELATIVE_PATH PYPGMLINK_INSTALL_DIR ${CMAKE_INSTALL_PREFIX} ${PYPGMLINK_INSTALL_DIR})
 
-install(TARGETS pypgmlink
+install(TARGETS pypgmlink 
 	RUNTIME DESTINATION ${PYPGMLINK_INSTALL_DIR}
-        LIBRARY DESTINATION ${PYPGMLINK_INSTALL_DIR})
+	LIBRARY DESTINATION ${PYPGMLINK_INSTALL_DIR})
+
+#configure_file( ${PROJECT_SOURCE_DIR}/python/pgmlink/TransitionClassifier.py ${PYPGMLINK_INSTALL_DIR}/TransitionClassifier.py COPYONLY)
+#file(COPY ${PROJECT_SOURCE_DIR}/python/pgmlink DESTINATION ${PYPGMLINK_INSTALL_DIR}/pgmlink)

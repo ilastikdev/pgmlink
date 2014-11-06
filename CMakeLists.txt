@@ -73,7 +73,7 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include/)
 # include external headers as system includes so we do not have to cope with their warnings
-include_directories(SYSTEM ${ANN_INCLUDE_DIR} ${Opengm_INCLUDE_DIR} ${CPLEX_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}  ${Xml2_INCLUDE_DIR})
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIR} ${ANN_INCLUDE_DIR} ${Opengm_INCLUDE_DIR} ${CPLEX_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}  ${Xml2_INCLUDE_DIR})
 
 # CPLEX switch to be compatible with STL
 ADD_DEFINITIONS(-DIL_STD)
@@ -169,7 +169,6 @@ file(GLOB_RECURSE HEADERS include/*.h*)
 add_library(pgmlink SHARED ${LIB_SOURCES} ${HEADERS})
 
 
-
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/pgmlink )
 if(WIN32)
   generate_export_header( pgmlink ) # generates pgmlink_export.h
@@ -183,7 +182,7 @@ endif(WIN32)
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/include )
 
-target_link_libraries(pgmlink ${ANN_LIBRARIES} ${Boost_LIBRARIES}  ${CPLEX_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES})
+target_link_libraries(pgmlink ${PYTHON_LIBRARY} ${ANN_LIBRARIES} ${Boost_LIBRARIES}  ${CPLEX_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES})
 
 # Install target pgmlink
 install(TARGETS pgmlink
@@ -205,7 +204,7 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 # tools
-add_subdirectory(tools/)
+#add_subdirectory(tools/)
 
 # Tests
 if(WITH_TESTS)
