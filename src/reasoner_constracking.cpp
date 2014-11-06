@@ -606,6 +606,7 @@ double ConservationTracking::get_classifier_transition_probability(Traxel tr1, T
 
     //read the FeatureMaps from Traxels
     if (TransitionClassifier_.ptr()==boost::python::object().ptr()){
+        LOG(logDEBUG4) << "get_classifier_transition_probability(): using deterministic function";
     	//backwards compatibility
     	feature_array com1 = tr1.features["com"];
 		feature_array com2 = tr2.features["com"];
@@ -615,15 +616,15 @@ double ConservationTracking::get_classifier_transition_probability(Traxel tr1, T
 		}
 		return get_transition_prob(sqrt(distance), state, transition_parameter_);
 
-    }
+    }    
 
     boost::python::object pValue = TransitionClassifier_.attr("predict")(tr1,tr2);
 
 	prob = boost::python::extract<double>(pValue.attr("__getitem__")(0));
-
 	if (state == 0) {
-	        return 1 - prob;
-	    }
+        prob = 1-prob;
+    }
+    LOG(logDEBUG4) << "get_classifier_transition_probability(): using Gaussian process classifier: p[" << state << "] = " << prob ;
     return prob;
 }
 
