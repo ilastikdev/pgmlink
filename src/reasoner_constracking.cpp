@@ -260,7 +260,7 @@ double ConservationTracking::sample_with_classifier_variance(double mean, double
 	return new_probability;
 }
 
-double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, Traxel tr2) {
+double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, Traxel tr2, size_t state) {
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
@@ -271,16 +271,17 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 				case Detection:
 					//mean = tr.features["detProb"][state];
 					mean = exp(energy/-detection_weight_); // convert energy to probability
-					variance = tr.features["detUnc"][0];
+                    variance = tr.features["detProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -detection_weight_*log(perturbed_mean)- energy;
 				case Division:
 					//mean = tr.features["divProb"][state];
 					mean = exp(energy/-division_weight_); // convert energy to probability
-					variance = tr.features["divUnc"][0];
+                    variance = tr.features["divProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
+                    throw runtime_error("this conversion is wrong; will be fixed in a later commit");
 					mean = exp(energy/-transition_parameter_);
 					variance = get_classifier_transition_variance(tr,tr2);
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
@@ -653,9 +654,32 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		g.get(tracklet_intern_arc_ids());
 
 
-   //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
+//    bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
+//      //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
+//    map<Traxel,vector<double> > offset;
+//    if (perturb_transitions_locally){
+//    	Traxel tr;
+//    	for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
 
-	map<Traxel,vector<double> > offset;
+//    		if (with_tracklets_) {
+//    			std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it];
+//    			for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
+//    					tr_n_it != traxel_nodes.end(); ++tr_n_it) {
+//    				HypothesesGraph::Node n = *tr_n_it;
+//    				tr = traxel_map_[n];
+//    				for (size_t dim=0;dim<tr.features["com"].size();dim++){
+//                        offset[tr].push_back(generateRandomOffset(Transition));
+//    				}
+//    			}
+//    		} else {
+//    			tr = traxel_map_[it];
+//    			for (size_t dim=0;dim<tr.features["com"].size();dim++){
+//    				offset[tr].push_back(generateRandomOffset(Transition));
+//    			}
+//    		}
+//    	}
+//    }
+
 
     ////
     //// add detection factors
@@ -731,7 +755,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         			e = detection_(*trax_it, state);
         			energy += e;
         			if (perturb){
-        				energy+= generateRandomOffset(Detection, e, *trax_it);
+                        energy+= generateRandomOffset(Detection, e, *trax_it, state);
         			}
         		}
         		// add all transition factors of the internal arcs
@@ -751,7 +775,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		e = detection_(traxel_map_[n], state);
         		energy=e;
     			if (perturb){
-    				energy+= generateRandomOffset(Detection, e, traxel_map_[n]);
+                    energy+= generateRandomOffset(Detection, e, traxel_map_[n], state);
     			}
         	}
 
