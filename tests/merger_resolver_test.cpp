@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 ) {
   property_map<arc_active, HypothesesGraph::base_graph>::type::FalseIt f_it(arc_map);
   BOOST_CHECK(!(f_it != lemon::INVALID));
       
-  
+  g.add(division_active());
 
   HypothesesGraph g_res;
   resolve_graph(g, g_res, NegLnTransition(1), 0.05, false);
@@ -416,6 +416,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_2 ) {
   } 
   BOOST_CHECK_EQUAL(resolve_count, 1);
 
+  g.add(division_active());
   HypothesesGraph g_res;
   resolve_graph(g, g_res, NegLnTransition(1), 0.05, false);
   prune_inactive(g);
