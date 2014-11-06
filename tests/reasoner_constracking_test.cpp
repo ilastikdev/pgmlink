@@ -1666,7 +1666,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
                                 )[0];
 
     size_t t = 1;
-    BOOST_CHECK_EQUAL(events[t].size(), 5);
+    BOOST_CHECK_EQUAL(events[t].size(), 7);
     size_t num_mergers = 0;
     for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
         Event e = *it;
@@ -1685,6 +1685,8 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
                                          comparison_set.end());
         } else if (e.type == Event::Merger) {
             ++num_mergers;
+            BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
+        } else if (e.type == Event::ResolvedTo) {
             BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
         } else  {
             cout << "unexpected event: " << e;

@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp_mrf ) {
     como5[1] = 4;
     como5[2] = 0;
     o5.features["com"] = como5;
-    o5.Id = 34;
+    o5.Id = 35;
     o5.Timestep = 2;
 
     TraxelStore ts;
