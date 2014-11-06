@@ -152,17 +152,11 @@ void TrackingFeatureExtractor::compute_features()
     compute_child_deceleration_features(div_2_traxels, "com");
     compute_child_deceleration_outlier(div_2_traxels, "com");
     push_back_feature(
-        "Count of all appearances",
-        static_cast<double>(all_app_traxels.size()));
+        "Share of appearances within margin",
+        static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
     push_back_feature(
-        "Count of all disappearances",
-        static_cast<double>(all_disapp_traxels.size()));
-    push_back_feature(
-        "Count of appearances within margin",
-        static_cast<double>(filtered_app_traxels.size()));
-    push_back_feature(
-        "Count of disappearances within margin",
-        static_cast<double>(filtered_disapp_traxels.size()));
+        "Share of disappearances within margin",
+        static_cast<double>(filtered_disapp_traxels.size() / all_disapp_traxels.size()));
     compute_border_distances(all_app_traxels, "appearance");
     compute_border_distances(all_disapp_traxels, "disappearance");
 }
@@ -352,7 +346,7 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
             id_out_mmmv.add_value(temp(0, 0));
         }
     }
-    push_back_feature("track outlier count of " + feature_name, id_out_mmmv);
+    push_back_feature("track outlier share of " + feature_name, id_out_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_track_diff_outlier(
@@ -381,7 +375,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
         }
     }
     push_back_feature(
-        "track outlier count of " + feature_name + " diff",
+        "track outlier share of " + feature_name + " diff",
         diff_out_mmmv);
 }
 
