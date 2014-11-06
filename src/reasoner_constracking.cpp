@@ -7,9 +7,6 @@
 #include <memory.h>
 #include <opengm/inference/lpcplex.hxx>
 #include <opengm/datastructures/marray/marray.hxx>
-//#include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
-//#include <random>
-//#include <cstdlib>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/python.hpp>
@@ -308,23 +305,23 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 			double mean,variance,perturbed_mean;
 			switch (energyIndex) {
 				case Detection:
-					//mean = tr.features["detProb"][state];
-					mean = exp(energy/-detection_weight_); // convert energy to probability
+                    // this assumes that we use the NegLog as energy function
+					mean = exp(-energy/detection_weight_); // convert energy to probability
                     variance = tr.features["detProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -detection_weight_*log(perturbed_mean)- energy;
 				case Division:
-					//mean = tr.features["divProb"][state];
-					mean = exp(energy/-division_weight_); // convert energy to probability
+                    // this assumes that we use the NegLog as energy function
+					mean = exp(-energy/division_weight_); // convert energy to probability
                     variance = tr.features["divProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
-                    throw runtime_error("this conversion is wrong; will be fixed in a later commit");
-					mean = exp(energy/-transition_parameter_);
+                    // this assumes that we use the NegLog as energy function
+					mean = exp(-energy/transition_weight_);
                     variance = get_transition_variance(tr,tr2);
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
-					return -transition_parameter_*log(perturbed_mean)- energy;
+					return -transition_weight_*log(perturbed_mean)- energy;
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}
@@ -666,8 +663,17 @@ boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
 double ConservationTracking::get_transition_variance(Traxel tr1, Traxel tr2) {
     double var;
 
-    boost::python::object pValue = transition_classifier_.attr("predict")(tr1,tr2);
-    var = boost::python::extract<double>(pValue.attr("__getitem__")(1));
+    if (transition_classifier_.ptr()==boost::python::object().ptr()){
+        var = 0;
+        LOG(logDEBUG4) << "using constant transition variance " << var;
+    } else {
+        TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
+        if ( it == transition_predictions_.end() ) {
+            throw std::runtime_error("cannot find prob/var. get_transition_probability must be called first");
+        }
+        var = it->second.second;
+        LOG(logDEBUG4) << "using GPC transition variance " << var;
+    }
 
     return var;
 }
@@ -679,7 +685,7 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
     double prob;
 
     //read the FeatureMaps from Traxels
-    if (transition_classifier_.ptr()==boost::python::object().ptr()){        
+    if (transition_classifier_.ptr()==boost::python::object().ptr()){
         double distance = 0;
         if (with_optical_correction_) {
             distance = tr1.distance_to_corr(tr2);
@@ -693,9 +699,22 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
         return prob;
     }    
 
-    boost::python::object prediction = transition_classifier_.attr("predict")(tr1,tr2);
+    TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
+    if ( it == transition_predictions_.end() ) {
+        // predict and store
+        double var;
+        try {
+            boost::python::object prediction = transition_classifier_.attr("predict")(tr1,tr2);
+            prob = boost::python::extract<double>(prediction.attr("__getitem__")(0));
+            var = boost::python::extract<double>(prediction.attr("__getitem__")(1));
+        } catch (...) {
+            throw std::runtime_error("cannot call the transition classifier from python");
+        }
+        transition_predictions_[std::make_pair(tr1, tr2)] = std::make_pair(prob, var);
+    } else {
+        prob = it->second.first;
+    }
 
-    prob = boost::python::extract<double>(prediction.attr("__getitem__")(0));
 	if (state == 0) {
         prob = 1-prob;
     }
@@ -785,7 +804,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             		energy = appearance_cost_(traxel_map_[n]);
             	}
             	if (perturb){
-            		energy+= generateRandomOffset(Appearance);
+                    energy+= generateRandomOffset(Appearance);
             	}
             	cost.push_back(energy);
             }
@@ -925,8 +944,9 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             }
 
             double energy = transition_(get_transition_probability(tr1, tr2, state));
-        	if (perturb){
-                energy+= generateRandomOffset(Transition, energy, tr1, tr2);
+
+            if (perturb) {
+                energy += generateRandomOffset(Transition, energy, tr1, tr2);
         	}
 
         	LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: transition[" << state

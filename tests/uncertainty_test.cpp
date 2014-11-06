@@ -130,36 +130,33 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision ) {
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
 	Traxel n11, n12, n21, n31, n32;
 	feature_array com(feature_array::difference_type(3));
-	feature_array divUnc(feature_array::difference_type(1));
+	feature_array divProb_Var(feature_array::difference_type(1));
 	feature_array divProb(feature_array::difference_type(1));
 	feature_array detProb(feature_array::difference_type(2));
-	feature_array detUnc(feature_array::difference_type(1));
-	//detProb[2]=0;
-
-
+	feature_array detProb_Var(feature_array::difference_type(1));
 
 	n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
 	n11.features["com"] = com; n11.features["divProb"] = divProb;  n11.features["detProb"] = detProb;
-	divUnc[0]=0.7;detUnc[0]=0.6;n11.features["divUnc"] = divUnc; n11.features["detUnc"] = detUnc;
+	divProb_Var[0]=0.7;detProb_Var[0]=0.6;n11.features["divProb_Var"] = divProb_Var; n11.features["detProb_Var"] = detProb_Var;
     add(ts, fs, n11);
 
 	n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-	divUnc[0]=0.7;detUnc[0]=0.6;n12.features["divUnc"] = divUnc; n12.features["detUnc"] = detUnc;
+	divProb_Var[0]=0.7;detProb_Var[0]=0.6;n12.features["divProb_Var"] = divProb_Var; n12.features["detProb_Var"] = detProb_Var;
     add(ts, fs, n12);
 
 	n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.39; detProb[0] = 0.1;detProb[1]=0.9;
 	n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-	divUnc[0]=0.4;detUnc[0]=0.6;n21.features["divUnc"] = divUnc; n21.features["detUnc"] = detUnc;
+	divProb_Var[0]=0.4;detProb_Var[0]=0.6;n21.features["divProb_Var"] = divProb_Var; n21.features["detProb_Var"] = detProb_Var;
     add(ts, fs, n21);
 
 	n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
 	n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-	divUnc[0]=0.2;detUnc[0]=0.6; n31.features["divUnc"] = divUnc; n31.features["detUnc"] = detUnc;
+	divProb_Var[0]=0.2;detProb_Var[0]=0.6; n31.features["divProb_Var"] = divProb_Var; n31.features["detProb_Var"] = detProb_Var;
     add(ts, fs, n31);
 	n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.2;detProb[1]=0.8;
 	n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-	divUnc[0]=0.2;detUnc[0]=0.6; n32.features["divUnc"] = divUnc; n32.features["detUnc"] = detUnc;
+	divProb_Var[0]=0.2;detProb_Var[0]=0.6; n32.features["divProb_Var"] = divProb_Var; n32.features["detProb_Var"] = detProb_Var;
     add(ts, fs, n32);
 
 	vector<double> sigmas(5);

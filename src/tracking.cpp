@@ -560,6 +560,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             cplex_timeout,
             division_weight,
 			detection_weight,
+            transition_weight,
             transition_classifier,
             with_optical_correction_
 	);

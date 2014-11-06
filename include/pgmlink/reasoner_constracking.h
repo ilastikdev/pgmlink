@@ -83,6 +83,7 @@ class ConservationTracking : public Reasoner {
                              double cplex_timeout = 1e75,
                              double division_weight = 10,
                              double detection_weight = 10,
+                             double transition_weight = 10,
                              boost::python::object transition_classifier = boost::python::object(),
                              bool with_optical_correction = false
                              )
@@ -112,6 +113,7 @@ class ConservationTracking : public Reasoner {
           isMAP_(true),
           division_weight_(division_weight),
           detection_weight_(detection_weight),
+          transition_weight_(transition_weight),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
           random_uniform_(rng_,boost::uniform_real<>(0,1)),
           transition_classifier_(transition_classifier),
@@ -213,6 +215,9 @@ class ConservationTracking : public Reasoner {
     std::map<HypothesesGraph::Node, size_t> dis_node_map_;
     std::map<HypothesesGraph::Arc, size_t> arc_map_;
 
+    typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
+    TransitionPredictionsMap transition_predictions_;
+
     //factor id maps
     std::map<HypothesesGraph::Node, size_t> detection_f_node_map_;
 
@@ -240,6 +245,7 @@ class ConservationTracking : public Reasoner {
     
     double division_weight_; // these cannot be read from the division/detection variable since
     double detection_weight_;// those were converted to boost::function objects in tracking
+    double transition_weight_;
 
     boost::mt19937 rng_;
     normalRNGType random_normal_;
