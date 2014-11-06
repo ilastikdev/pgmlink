@@ -235,8 +235,8 @@ namespace pgmlink {
  }
   
   TraxelStore& add(TraxelStore& ts, boost::shared_ptr<FeatureStore> fs, Traxel& t) {
-    ts.get<by_timestep>().insert(t);
     t.set_feature_store(fs);
+    ts.get<by_timestep>().insert(t);
     return ts;
   }
 

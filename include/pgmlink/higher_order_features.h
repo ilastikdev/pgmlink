@@ -319,13 +319,15 @@ The tracks in the following example are:
 */
 class TrackTraxels : public TraxelsOfInterest {
  public:
-  TrackTraxels() {};
+  TrackTraxels(bool require_div_start=false, bool require_div_end=false);
   virtual ~TrackTraxels() {};
   virtual const std::string& name() const;
   virtual const std::vector<ConstTraxelRefVector>& operator()(
     const HypothesesGraph& graph
   );
  protected:
+  bool require_div_start_;
+  bool require_div_end_;
   static const std::string name_;
   std::vector<ConstTraxelRefVector> ret_;
 };

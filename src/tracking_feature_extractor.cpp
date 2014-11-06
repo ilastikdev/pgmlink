@@ -142,27 +142,45 @@ void TrackingFeatureExtractor::compute_features()
     ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
 
     compute_sq_diff_features(track_traxels, "com");
+    compute_sq_diff_features(track_traxels, "Count");
+    compute_sq_diff_features(track_traxels, "Mean");
+    compute_sq_diff_features(track_traxels, "Variance");
     compute_sq_accel_features(track_traxels, "com");
+    compute_sq_accel_features(track_traxels, "Count");
+    compute_sq_accel_features(track_traxels, "Mean");
+    compute_sq_accel_features(track_traxels, "Variance");
     compute_angle_features(track_traxels, "com");
     compute_track_length_features(track_traxels);
     compute_track_id_outlier(track_traxels, "com");
+    compute_track_id_outlier(track_traxels, "Count");
+    compute_track_id_outlier(track_traxels, "Mean");
+    compute_track_id_outlier(track_traxels, "Variance");
     compute_track_diff_outlier(track_traxels, "com");
+    compute_track_diff_outlier(track_traxels, "Count");
+    compute_track_diff_outlier(track_traxels, "Mean");
+    compute_track_diff_outlier(track_traxels, "Variance");
     compute_division_sq_diff_features(div_1_traxels, "com");
+    compute_division_sq_diff_features(div_1_traxels, "Count");
+    compute_division_sq_diff_features(div_1_traxels, "Mean");
+    compute_division_sq_diff_features(div_1_traxels, "Variance");
     compute_division_sq_diff_outlier(div_1_traxels, "com");
+    compute_division_sq_diff_outlier(div_1_traxels, "Count");
+    compute_division_sq_diff_outlier(div_1_traxels, "Mean");
+    compute_division_sq_diff_outlier(div_1_traxels, "Variance");
     compute_child_deceleration_features(div_2_traxels, "com");
+    compute_child_deceleration_features(div_2_traxels, "Count");
+    compute_child_deceleration_features(div_2_traxels, "Mean");
+    compute_child_deceleration_features(div_2_traxels, "Variance");
     compute_child_deceleration_outlier(div_2_traxels, "com");
+    compute_child_deceleration_outlier(div_2_traxels, "Count");
+    compute_child_deceleration_outlier(div_2_traxels, "Mean");
+    compute_child_deceleration_outlier(div_2_traxels, "Variance");
     push_back_feature(
-        "Count of all appearances",
-        static_cast<double>(all_app_traxels.size()));
+        "Share of appearances within margin",
+        static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
     push_back_feature(
-        "Count of all disappearances",
-        static_cast<double>(all_disapp_traxels.size()));
-    push_back_feature(
-        "Count of appearances within margin",
-        static_cast<double>(filtered_app_traxels.size()));
-    push_back_feature(
-        "Count of disappearances within margin",
-        static_cast<double>(filtered_disapp_traxels.size()));
+        "Share of disappearances within margin",
+        static_cast<double>(filtered_disapp_traxels.size() / all_disapp_traxels.size()));
     compute_border_distances(all_app_traxels, "appearance");
     compute_border_distances(all_disapp_traxels, "disappearance");
 }
@@ -352,7 +370,7 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
             id_out_mmmv.add_value(temp(0, 0));
         }
     }
-    push_back_feature("track outlier count of " + feature_name, id_out_mmmv);
+    push_back_feature("track outlier share of " + feature_name, id_out_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_track_diff_outlier(
@@ -381,7 +399,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
         }
     }
     push_back_feature(
-        "track outlier count of " + feature_name + " diff",
+        "track outlier share of " + feature_name + " diff",
         diff_out_mmmv);
 }
 
