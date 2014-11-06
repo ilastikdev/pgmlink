@@ -724,9 +724,6 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
     		g.get(node_tracklet());
-    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_intern_arc_id_map_ =
-        		g.get(tracklet_intern_arc_ids());
-
 
 //    bool perturb_transitions_locally=(perturb && param_.distributionId==ClassifierUncertainty);
 //      //if transitions ought to be perturbed, generate offset for RegionCenters in order to perturb distances->probabilities->energies
