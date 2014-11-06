@@ -378,6 +378,14 @@ const std::string& TrackTraxels::name() const {
   return name_;
 }
 
+TrackTraxels::TrackTraxels(
+  bool require_div_start,
+  bool require_div_end
+) :
+  require_div_start_(require_div_start),
+  require_div_end_(require_div_end)
+{}
+
 const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
   const HypothesesGraph& graph
 ) {
@@ -428,14 +436,25 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
   typedef std::map<HypothesesGraph::Node, HypothesesGraph::Node> NodeNodeMap;
   NodeNodeMap parent;
   NodeNodeMap child;
+  // Store for each node if it has a natural parent (simply checks if there
+  // is an active arc that points to this node -> only correct if our solution
+  // is valid)
+  std::map<HypothesesGraph::Node, bool> has_natural_parent;
+  // Store for each node if is has a natural child as well
+  std::map<HypothesesGraph::Node, bool> has_natural_child;
+
   // Initialize
   for (NodeActiveIt n_it(node_active_map); n_it != lemon::INVALID; ++n_it) {
     parent[n_it] = n_it;
     child[n_it] = n_it;
+    has_natural_parent[n_it] = false;
+    has_natural_child[n_it] = false;
   }
 
   // Set connections
   for (ArcActiveIt a_it(arc_active_map); a_it != lemon::INVALID; ++a_it) {
+    has_natural_parent[graph.target(a_it)] = true;
+    has_natural_child[graph.source(a_it)] = true;
     // count the active arcs with the same source
     size_t out_arcs = 0;
     for (
@@ -461,7 +480,12 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     HypothesesGraph::Node current_node = nmap_it->first;
     LOG(logDEBUG4) << "Is parent node invalid?";
     LOG(logDEBUG4) << (parent[current_node] == lemon::INVALID);
-    if (parent[current_node] == current_node) {
+    // check for node if we have to start a new track
+    bool start_track = (parent[current_node] == current_node);
+    if (start_track and require_div_start_) {
+      start_track = has_natural_parent[current_node];
+    }
+    if (start_track) {
       // resize the return vector
       ret_.resize(ret_.size()+1);
       bool loop = true;
@@ -481,6 +505,13 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
           ret_.back().push_back( &(graph.get(node_traxel())[current_node]) );
         }
         loop = current_node != child[current_node];
+        // remove the last vector if a division is required at the end of a
+        // track and this condition isn't fulfilled
+        if ((not loop) and (require_div_end_)) {
+          if (not has_natural_child[current_node]) {
+            ret_.erase(ret_.end()-1);
+          }
+        }
         current_node = child[current_node];
       }
     }

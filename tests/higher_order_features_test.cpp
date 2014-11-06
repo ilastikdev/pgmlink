@@ -325,33 +325,94 @@ BOOST_AUTO_TEST_CASE( TrackTraxels_operator_traxelgraph ) {
   // set the solution index
   set_solution(graph, 0);
   
-  // get the track traxels
-  TrackTraxels get_track_traxels;
-  std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
+  {
+    // get all track traxels
+    TrackTraxels get_track_traxels;
+    std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
 
-  LOG(logINFO) << "  there are " << track_traxels.size() << " tracks";
-  for (
-    std::vector<ConstTraxelRefVector>::iterator tvec_it = track_traxels.begin();
-    tvec_it != track_traxels.end();
-    tvec_it++
-  ) {
-    LOG(logINFO) << "    count of nodes in track: " << tvec_it->size();
-    std::stringstream sstream;
-    sstream << "    the ids are: ";
+    LOG(logINFO) << "  there are " << track_traxels.size() << " tracks:";
     for (
-      ConstTraxelRefVector::iterator tref_it = tvec_it->begin();
-      tref_it != tvec_it->end();
-      tref_it++
+      std::vector<ConstTraxelRefVector>::iterator t_it = track_traxels.begin();
+      t_it != track_traxels.end();
+      t_it++
     ) {
-      sstream << (*tref_it)->Id << " ";
+      LOG(logINFO) << "    count of nodes in track: " << t_it->size();
+      std::stringstream sstream;
+      sstream << "    the ids are: ";
+      for (
+        ConstTraxelRefVector::iterator tref_it = t_it->begin();
+        tref_it != t_it->end();
+        tref_it++
+      ) {
+        sstream << (*tref_it)->Id << " ";
+      }
+      LOG(logINFO) << sstream.str();
     }
-    LOG(logINFO) << sstream.str();
+    LOG(logINFO) << "  test sizes";
+    BOOST_CHECK_EQUAL(track_traxels.size(), 3);
+    BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[1].size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[2].size(), 2);
   }
-  LOG(logINFO) << "  test sizes";
-  BOOST_CHECK_EQUAL(track_traxels.size(), 3);
-  BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
-  BOOST_CHECK_EQUAL(track_traxels[1].size(), 2);
-  BOOST_CHECK_EQUAL(track_traxels[2].size(), 2);
+
+  {
+    // get track traxels with a division at the start
+    TrackTraxels get_track_traxels(true, false);
+    std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
+
+    LOG(logINFO) << "  there are " << track_traxels.size()
+      << " tracks beginning with a division:";
+    for (
+      std::vector<ConstTraxelRefVector>::iterator t_it = track_traxels.begin();
+      t_it != track_traxels.end();
+      t_it++
+    ) {
+      LOG(logINFO) << "    count of nodes in track: " << t_it->size();
+      std::stringstream sstream;
+      sstream << "    the ids are: ";
+      for (
+        ConstTraxelRefVector::iterator tref_it = t_it->begin();
+        tref_it != t_it->end();
+        tref_it++
+      ) {
+        sstream << (*tref_it)->Id << " ";
+      }
+      LOG(logINFO) << sstream.str();
+    }
+    LOG(logINFO) << "  test sizes";
+    BOOST_CHECK_EQUAL(track_traxels.size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[1].size(), 2);
+  }
+
+  {
+    // get track traxels with a division at the end
+    TrackTraxels get_track_traxels(false, true);
+    std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
+
+    LOG(logINFO) << "  there are " << track_traxels.size()
+      << " tracks with a division at the end:";
+    for (
+      std::vector<ConstTraxelRefVector>::iterator t_it = track_traxels.begin();
+      t_it != track_traxels.end();
+      t_it++
+    ) {
+      LOG(logINFO) << "    count of nodes in track: " << t_it->size();
+      std::stringstream sstream;
+      sstream << "    the ids are: ";
+      for (
+        ConstTraxelRefVector::iterator tref_it = t_it->begin();
+        tref_it != t_it->end();
+        tref_it++
+      ) {
+        sstream << (*tref_it)->Id << " ";
+      }
+      LOG(logINFO) << sstream.str();
+    }
+    LOG(logINFO) << "  test sizes";
+    BOOST_CHECK_EQUAL(track_traxels.size(), 1);
+    BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
+  }
 }
 
 BOOST_AUTO_TEST_CASE( TrackTraxels_operator_trackletgraph ) {
@@ -364,33 +425,94 @@ BOOST_AUTO_TEST_CASE( TrackTraxels_operator_trackletgraph ) {
   // set the solution index
   set_solution(graph, 0);
   
-  // get the track traxels
-  TrackTraxels get_track_traxels;
-  std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
+  {
+    // get all track traxels
+    TrackTraxels get_track_traxels;
+    std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
 
-  LOG(logINFO) << "  there are " << track_traxels.size() << " tracks";
-  for (
-    std::vector<ConstTraxelRefVector>::iterator tvec_it = track_traxels.begin();
-    tvec_it != track_traxels.end();
-    tvec_it++
-  ) {
-    LOG(logINFO) << "    count of nodes in track: " << tvec_it->size();
-    std::stringstream sstream;
-    sstream << "    the ids are: ";
+    LOG(logINFO) << "  there are " << track_traxels.size() << " tracks";
     for (
-      ConstTraxelRefVector::iterator tref_it = tvec_it->begin();
-      tref_it != tvec_it->end();
-      tref_it++
+      std::vector<ConstTraxelRefVector>::iterator t_it = track_traxels.begin();
+      t_it != track_traxels.end();
+      t_it++
     ) {
-      sstream << (*tref_it)->Id << " ";
+      LOG(logINFO) << "    count of nodes in track: " << t_it->size();
+      std::stringstream sstream;
+      sstream << "    the ids are: ";
+      for (
+        ConstTraxelRefVector::iterator tref_it = t_it->begin();
+        tref_it != t_it->end();
+        tref_it++
+      ) {
+        sstream << (*tref_it)->Id << " ";
+      }
+      LOG(logINFO) << sstream.str();
     }
-    LOG(logINFO) << sstream.str();
+    LOG(logINFO) << "  test sizes";
+    BOOST_CHECK_EQUAL(track_traxels.size(), 3);
+    BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[1].size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[2].size(), 2);
   }
-  LOG(logINFO) << "  test sizes";
-  BOOST_CHECK_EQUAL(track_traxels.size(), 3);
-  BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
-  BOOST_CHECK_EQUAL(track_traxels[1].size(), 2);
-  BOOST_CHECK_EQUAL(track_traxels[2].size(), 2);
+
+  {
+    // get track traxels with a division at the start
+    TrackTraxels get_track_traxels(true, false);
+    std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
+
+    LOG(logINFO) << "  there are " << track_traxels.size()
+      << " tracks beginning with a division";
+    for (
+      std::vector<ConstTraxelRefVector>::iterator t_it = track_traxels.begin();
+      t_it != track_traxels.end();
+      t_it++
+    ) {
+      LOG(logINFO) << "    count of nodes in track: " << t_it->size();
+      std::stringstream sstream;
+      sstream << "    the ids are: ";
+      for (
+        ConstTraxelRefVector::iterator tref_it = t_it->begin();
+        tref_it != t_it->end();
+        tref_it++
+      ) {
+        sstream << (*tref_it)->Id << " ";
+      }
+      LOG(logINFO) << sstream.str();
+    }
+    LOG(logINFO) << "  test sizes";
+    BOOST_CHECK_EQUAL(track_traxels.size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
+    BOOST_CHECK_EQUAL(track_traxels[1].size(), 2);
+  }
+
+  {
+    // get track traxels with a division at the end
+    TrackTraxels get_track_traxels(false, true);
+    std::vector<ConstTraxelRefVector> track_traxels = get_track_traxels(graph);
+
+    LOG(logINFO) << "  there are " << track_traxels.size()
+      << " tracks with a division at the end";
+    for (
+      std::vector<ConstTraxelRefVector>::iterator t_it = track_traxels.begin();
+      t_it != track_traxels.end();
+      t_it++
+    ) {
+      LOG(logINFO) << "    count of nodes in track: " << t_it->size();
+      std::stringstream sstream;
+      sstream << "    the ids are: ";
+      for (
+        ConstTraxelRefVector::iterator tref_it = t_it->begin();
+        tref_it != t_it->end();
+        tref_it++
+      ) {
+        sstream << (*tref_it)->Id << " ";
+      }
+      LOG(logINFO) << sstream.str();
+    }
+    LOG(logINFO) << "  test sizes";
+    BOOST_CHECK_EQUAL(track_traxels.size(), 1);
+    BOOST_CHECK_EQUAL(track_traxels[0].size(), 2);
+  }
 }
 
 BOOST_AUTO_TEST_CASE( DivisionTraxels_operator_traxelgraph ) {
