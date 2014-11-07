@@ -56,6 +56,14 @@ namespace pgmlink {
     return it->second[i];
   }
 
+  feature_array get_feature_array(const Traxel& t, string key) {
+      FeatureMap::const_iterator it = t.features.find(key);
+      if(it == t.features.end()) {
+        throw std::runtime_error("key not present in feature map");
+      }
+      return it->second;
+  }
+
   void print_available_features(const Traxel& t)
   {
       for(auto it : t.features.get())
@@ -158,6 +166,7 @@ void export_traxels() {
 //        .def_readwrite("features", &Traxel::features.get())
         .def("add_feature_array", &add_feature_array, args("self","name", "size"), "Add a new feature array to the features map; initialize with zeros. If the name is already present, the old feature array will be replaced.")
         .def("get_feature_value", &get_feature_value, args("self", "name", "index"))
+        .def("get_feature_array", &get_feature_array, args("self", "name") )
         .def("set_feature_value", &set_feature_value, args("self", "name", "index", "value"))
     ;
 
