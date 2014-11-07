@@ -8,9 +8,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "pgmlink/reasoner_constracking.h"
-#include "pgmlink/tracking.h"
 #include "pgmlink/tracking_feature_extractor.h"
+#include "pgmlink/tracking.h"
+#include "pgmlink/reasoner_constracking.h"
 
 using namespace pgmlink;
 using namespace pgmlink::features;

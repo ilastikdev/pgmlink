@@ -11,17 +11,16 @@
 #ifndef TRACKING_H
 #define TRACKING_H
 
-#include "pgmlink/randomforest.h"
 #include <vector>
 #include <string>
 #include <boost/shared_ptr.hpp>
-#include <boost/python.hpp>
 
 #include "pgmlink/event.h"
 #include "pgmlink/pgmlink_export.h"
 #include "pgmlink/traxels.h"
 #include "pgmlink/field_of_view.h"
 #include "pgmlink/merger_resolving.h"
+#include <boost/python.hpp>
 
 namespace pgmlink {
   class ChaingraphTracking 

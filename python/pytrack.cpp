@@ -4,11 +4,11 @@
 
 #include <vector>
 
-#include "../include/pgmlink/tracking.h"
-#include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/field_of_view.h"
 #include "../include/pgmlink/tracking_feature_extractor.h"
 #include "../include/pgmlink/feature_extraction.h"
+#include "../include/pgmlink/reasoner_constracking.h"
+#include "../include/pgmlink/tracking.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
