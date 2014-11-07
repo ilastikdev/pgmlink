@@ -46,15 +46,16 @@ else()
   set_target_properties(pypgmlink PROPERTIES PREFIX "" OUTPUT_NAME "pgmlink" SUFFIX ".so")
 endif()
 
-#generate python module directory
-add_custom_command(TARGET pypgmlink POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy
-                       ${PROJECT_SOURCE_DIR}/python/pgmlink/__init__.py
-                       ${PYPGMLINK_INSTALL_DIR}/__init__.py
-                   COMMAND ${CMAKE_COMMAND} -E copy
-                       ${PROJECT_SOURCE_DIR}/python/pgmlink/TransitionClassifier.py
-                       ${PYPGMLINK_INSTALL_DIR}/TransitionClassifier.py  
-                        )
+##generate python module directory
+#add_custom_command(TARGET pypgmlink POST_BUILD
+#                   COMMAND ${CMAKE_COMMAND} -E copy
+#                       ${PROJECT_SOURCE_DIR}/python/pgmlink/__init__.py
+#                       ${PYPGMLINK_INSTALL_DIR}/__init__.py
+#                   COMMAND ${CMAKE_COMMAND} -E copy
+#                       ${PROJECT_SOURCE_DIR}/python/pgmlink/TransitionClassifier.py
+#                       ${PYPGMLINK_INSTALL_DIR}/TransitionClassifier.py  
+#                        )
+
 # install
 
 # this will set the install dir to $PYTHON_SITE_PACKAGES
