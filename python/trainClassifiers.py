@@ -36,7 +36,11 @@ def trainGPClassifier(featureArrays, labels, out_fn, out_path, feature_names):
     gpc = gcf.create_and_train(featureArrays, labels)
 
     print 'writing to file'
-    with h5py.File(out_fn, 'w') as out:
+    with h5py.File(out_fn, 'r+') as out:
+        try:
+            del out[out_path]
+        except:
+            pass
         g = out.create_group(out_path)
         gpc.serialize_hdf5(g)
         h = g.create_group('Features')
@@ -66,6 +70,7 @@ def computeFeatureStore(traxel_ids, labelImage, raw):
         # TODO: relabel with traxel_ids???
         raw_at = raw[t,...,0].astype(np.float32).squeeze()
         print '    extracting features for timestep', t
+        print '    ', raw_at.shape, li_at.shape, raw_at.dtype, li_at.dtype
         pgmlink.extract_region_features(raw_at, li_at, fs, t)
 
     return ts, fs
@@ -80,7 +85,9 @@ def initializeFeatureExtractors(featureNames):
     return extractors
 
 
-def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeatureNames, labelImg_fn, labelImg_path, t_axis, ch_axis, ch, out_fn, out_path, margin=None):
+def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeatureNames, labelImg_fn,
+                            labelImg_path, t_axis, ch_axis, ch, out_fn, out_path, margin=None,
+                            max_distance=1000):
    print 'Transition Classifier:'
    print '======================'
    print '  reading annotations...'
@@ -94,8 +101,8 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
    traxel_ids = {}
    for t in label2Segment.keys():
        for label in label2Segment[t].keys():
-           assert len(label2Segment[t][label]) == 1, \
-                 'only single segment examples are allowed; see the joint-tracking trainClassifier script for more'
+           #assert len(label2Segment[t][label]) == 1, \
+           #      'only single segment examples are allowed; see the joint-tracking trainClassifier script for more'
            traxel_ids.setdefault(t, []).append(label2Segment[t][label][0])
 
    labelImage = h5py.File(labelImg_fn)[labelImg_path]
@@ -139,8 +146,16 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
          # fs.print_traxel_features(t, pair[0])
 
          feats_at_idx = []
+         assert transitionFeatures.keys() == ['SquaredDifference'] and \
+             transitionFeatures['SquaredDifference'] == ['RegionCenter'], "max_distance only defined for SquaredDistance"
          for fe in extractors:
-             feats_at_idx.append(fe.extract(trax1, trax2))
+             v = fe.extract(trax1, trax2)
+             if np.all(np.array(v) < max_distance):
+                feats_at_idx.append(v)
+
+         if len(feats_at_idx) == 0:
+             continue
+
          feats_at_idx = np.array(feats_at_idx)
 
          if idx < len(positivePairs_at):
@@ -168,14 +183,14 @@ if __name__ == '__main__':
    if len(argv) > 1:
       name = argv[1]
    if name == 'mitocheck':
-      fn = '/home/mschiegg/tmp/test-project-transition-classifier.ilp'
-      raw_fn = '/home/mschiegg/00-ilastik-demo-embl/tracking/mitocheck_2d+t/mitocheck_94570_2D+t_01-53.h5'
-      pathRaw = 'volume/data'
-      out_fn = '/home/mschiegg/tmp/test-project-transition-output.h5'
+      fn = '/home/mschiegg/extern/data/cvpr2015/mitocheck/training/training_transition-classifier.ilp'
+      raw_fn = '/home/mschiegg/extern/data/cvpr2015/mitocheck/training/training_raw.h5'
+      pathRaw = 'exported_data'
+      out_fn = '/home/mschiegg/extern/data/cvpr2015/mitocheck/training/training_transition-classifier.ilp'
       pathTransitions = '/ManualTransitions/Labels/0'
 
-      labelImg_fn = '/home/mschiegg/mitocheck_labelimage.h5'
-      pathLabelImg = 'exported_data'
+      labelImg_fn = '/home/mschiegg/extern/data/cvpr2015/mitocheck/training/training_labels.h5'
+      pathLabelImg = 'exported_data_T'
       ch_axis = 3
       ch = 0
       t_axis = 0
@@ -231,12 +246,6 @@ if __name__ == '__main__':
    else:
       raise Exception
 
-   transitionFeatures = { 'AbsoluteDifference': ['RegionCenter'] }
-   ''', 'Count', 'Mean', 'Variance', 'Sum'
-                                ],
-                      'Ratio': ['Count', 'Mean', 'Sum',
-                                'Variance'
-                             ]
-                   }
-   '''
+   transitionFeatures = { 'SquaredDifference': ['RegionCenter'], }
+
    getTransitionClassifier(raw_fn, pathRaw, fn, pathTransitions, transitionFeatures, labelImg_fn, pathLabelImg, t_axis, ch_axis, ch, out_fn, 'Transitions')
