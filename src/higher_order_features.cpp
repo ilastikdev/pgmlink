@@ -1850,6 +1850,10 @@ const std::string& SVMOutlierCalculator::name() const {
   return name_;
 }
 
+bool SVMOutlierCalculator::is_trained() const {
+    return is_trained_;
+}
+
 void SVMOutlierCalculator::train(
   const FeatureMatrix& feature_matrix,
   const FeatureScalar& kernel_width

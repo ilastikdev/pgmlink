@@ -1016,6 +1016,7 @@ class SVMOutlierCalculator : public TraxelsFeatureCalculator {
     const FeatureMatrix& feature_matrix,
     FeatureMatrix& return_matrix
   ) const;
+  bool is_trained() const;
  protected:
   DecisionFunctionType decision_function_;
   bool is_trained_;
