@@ -107,7 +107,7 @@ class ConservationTracking : public Reasoner {
           with_disappearance_(with_disappearance),
           transition_parameter_(transition_parameter),
           with_constraints_(with_constraints),
-          param_(param),
+          uncertainty_param_(param),
           cplex_timeout_(cplex_timeout),
           export_from_labeled_graph_(false),
           isMAP_(true),
@@ -126,7 +126,7 @@ class ConservationTracking : public Reasoner {
     virtual void formulate( const HypothesesGraph& );
     virtual void infer();
     virtual void conclude( HypothesesGraph& );
-    virtual void perturbedInference( HypothesesGraph&);
+    virtual void perturbedInference(HypothesesGraph&, size_t iteration);
     
     double forbidden_cost() const;
     bool with_constraints() const;
@@ -161,7 +161,8 @@ class ConservationTracking : public Reasoner {
 
     void write_labeledgraph_to_file(const HypothesesGraph&);
 
-    private:
+    void compute_relative_uncertainty(HypothesesGraph *graph);
+private:
     // copy and assingment have to be implemented, yet
     
     ConservationTracking(const ConservationTracking&):
@@ -239,7 +240,7 @@ class ConservationTracking : public Reasoner {
     bool with_constraints_;
 
     
-    UncertaintyParameter param_;
+    UncertaintyParameter uncertainty_param_;
     double cplex_timeout_;
     bool isMAP_;
     

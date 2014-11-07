@@ -758,7 +758,7 @@ void resolve_graph(const HypothesesGraph& src,
       with_constraints
                            );
 
-  pgm.perturbedInference(dest);
+  pgm.perturbedInference(dest, 0);
 
   // Remap results from clones to original nodes.
   merge_split_divisions(dest, division_splits, arc_cross_reference_divisions);

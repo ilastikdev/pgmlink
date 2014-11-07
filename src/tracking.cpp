@@ -572,22 +572,26 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 	pgm.export_from_labeled_graph_ = export_from_labeled_graph_;
 
 
-    size_t totalNumberOfSolutions = uncertaintyParam.numberOfIterations;
+    size_t num_solutions = uncertaintyParam.numberOfIterations;
+    size_t num_iterations = num_solutions;
+    if(uncertaintyParam.distributionId == MbestCPLEX)
+        num_iterations = 1;
 
-	if (totalNumberOfSolutions>1) {
-		cout << "-> perturbed Inference" << endl;
-        pgm.perturbedInference(*hypotheses_graph_);
-		cout << "-> finished perturbed Inference" << endl;
-		}
-	else {
-        pgm.perturbedInference(*hypotheses_graph_);
+    for(size_t iteration = 0; iteration < num_iterations; iteration++)
+    {
+        pgm.perturbedInference(*hypotheses_graph_, iteration);
+    }
 
-		cout << "-> storing state of detection vars" << endl;
+    if (num_solutions == 1)
+    {
+        cout << "-> storing state of detection vars" << endl;
         last_detections_ = state_of_nodes(*hypotheses_graph_);
 		cout << "-> pruning inactive hypotheses" << endl;
-
 	}
-//	PyGILState_Release(gilstate);
+
+    pgm.compute_relative_uncertainty(hypotheses_graph_.get());
+
+    //	PyGILState_Release(gilstate);
 
     // copy solutions
     const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();
@@ -603,8 +607,8 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 	
     cout << "-> constructing unresolved events" << endl;
 
-    EventVectorVectorVector all_ev(totalNumberOfSolutions);
-    for (size_t i=0;i<totalNumberOfSolutions;++i){
+    EventVectorVectorVector all_ev(num_solutions);
+    for (size_t i=0;i<num_solutions;++i){
         all_ev[i] = *events(*hypotheses_graph_,i);
 	}
 
