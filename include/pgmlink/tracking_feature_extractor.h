@@ -87,6 +87,14 @@ public:
         const FieldOfView &fov,
         boost::function<bool (const Traxel&)> margin_filter_function);
 
+    /// Train the svm with the given hypotheses graph assuming that the arc and
+    /// node active map contain a correct labeling
+    void train_track_svm();
+
+    /// set and get for the track outlier svm
+    boost::shared_ptr<SVMOutlierCalculator> get_track_svm() const;
+    void set_track_svm(boost::shared_ptr<SVMOutlierCalculator> track_svm);
+
     /// Get the complete vector of features computed for the currently set solution
     void get_feature_vector(JointFeatureVector& feature_vector) const;
 

@@ -278,6 +278,34 @@ void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::Join
     feature_vector.insert(feature_vector.begin(), joint_feature_vector_.begin(), joint_feature_vector_.end());
 }
 
+void TrackingFeatureExtractor::train_track_svm()
+{
+    // get the track traxels
+    // TODO train only with complete tracks? If yes it should also only be
+    // applied to complete tracks, see comment in compute_features()
+    TrackTraxels track_extractor(true, true);
+    ConstTraxelRefVectors track_traxels = track_extractor(*graph_);
+    // calculate the feature vectors for all tracks
+    FeatureMatrix track_feature_matrix;
+    TrackFeatureExtractor track_feature_extractor;
+    track_feature_extractor.compute_features(track_traxels, track_feature_matrix);
+    // train the svm
+    // TODO the kernel width is set to 1.0 but all the features are probably on
+    // different scales -> do some normalization in TrackFeatureExtractor
+    svm_track_outlier_calc_ptr_->train(track_feature_matrix, 1.0);
+}
+
+boost::shared_ptr<SVMOutlierCalculator> TrackingFeatureExtractor::get_track_svm() const
+{
+    return svm_track_outlier_calc_ptr_;
+}
+
+void TrackingFeatureExtractor::set_track_svm(
+    boost::shared_ptr<SVMOutlierCalculator> track_svm)
+{
+    svm_track_outlier_calc_ptr_ = track_svm;
+}
+
 const std::string TrackingFeatureExtractor::get_feature_description(size_t feature_index) const
 {
     return feature_descriptions_[feature_index];
