@@ -44,6 +44,8 @@ def trainGPClassifier(featureArrays, labels, out_fn, out_path, feature_names):
             h.create_dataset(data=v, name=op)
         g.create_dataset(name='timestamp', data=str(datetime.date.today()))
 
+    return gpc
+
 
 def computeFeatureStore(traxel_ids, labelImage, raw):
     print '  computing feature store...'
@@ -151,11 +153,12 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
    featureArrays = np.array(featureArrays).squeeze()
    labels = np.array(labels)
    print '  training Gaussian process classifier...'
-   trainGPClassifier(featureArrays, labels, out_fn, '/TransitionGPClassifier', transitionFeatureNames)
+   gpc = trainGPClassifier(featureArrays, labels, out_fn, '/TransitionGPClassifier', transitionFeatureNames)
    print '  =================================='
    print '  Transition Classifier: done'
    print '  =================================='
 
+   return gpc
 
 
 if __name__ == '__main__':

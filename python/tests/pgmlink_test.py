@@ -1,31 +1,40 @@
 import sys
+
 sys.path.append("../.")
 
 import unittest as ut
 import pgmlink
-from ilastik.applets.tracking.conservation.transitionClassifierTraining import trainTransition
+# from ilastik.applets.tracking.conservation.transitionClassifierTraining import trainTransition
+import trainClassifiers
+from ilastik.applets.tracking.conservation.TransitionClassifier import TransitionClassifier
 
-def mk_traxel(x,y,z,id):
-    t = pgmlink.Traxel()
-    t.ID = id
-    t.add_feature_array("com", 3)
-    t.set_feature_value("com", 0, x)
-    t.set_feature_value("com", 1, y)
-    t.set_feature_value("com", 2, z)
+
+def mk_traxel(x, y, z, id, t, fs):
+    traxel = pgmlink.Traxel()
+    traxel.ID = id
+    traxel.Timestep = t
+    traxel.set_feature_store(fs)
+
+    traxel.add_feature_array("com", 3)
+    traxel.set_feature_value("com", 0, x)
+    traxel.set_feature_value("com", 1, y)
+    traxel.set_feature_value("com", 2, z)
     
-    t.add_feature_array("divProb",2)
-    t.set_feature_value("divProb",0, 0.1)
-    t.set_feature_value("divProb",1, 0.9)
+    traxel.add_feature_array("divProb",2)
+    traxel.set_feature_value("divProb",0, 0.1)
+    traxel.set_feature_value("divProb",1, 0.9)
     
-    t.add_feature_array("count",1)
-    t.set_feature_value("count",0, 1)
-    return t
+    traxel.add_feature_array("count",1)
+    traxel.set_feature_value("count",0, 1)
+    return traxel
 
 class Test_Traxels( ut.TestCase ):
     def runTest( self ):
-        t = mk_traxel(34,23,12,77)
+        fs = pgmlink.FeatureStore()
+
+        t = mk_traxel(34,23,12,77, 0, fs)
         self.assertEqual(t.ID, 77)
-        self.assertEqual(len(t.features), 1)
+        # self.assertEqual(len(t.features), 1)
         self.assertEqual(t.get_feature_value("com", 0), 34)
         self.assertEqual(t.get_feature_value("com", 1), 23)
         self.assertEqual(t.get_feature_value("com", 2), 12)
@@ -33,11 +42,13 @@ class Test_Traxels( ut.TestCase ):
 class Test_TraxelStore( ut.TestCase ):
     def test_pickle( self ):
         import cPickle
-        t1 = mk_traxel(1,2,3,33)
-        t2 = mk_traxel(5,6,7,44)
+        fs = pgmlink.FeatureStore()
+
+        t1 = mk_traxel(1,2,3,33,0,fs)
+        t2 = mk_traxel(5,6,7,44,0,fs)
         ts = pgmlink.TraxelStore()
-        ts.add(t1)
-        ts.add(t2)
+        ts.add(fs, t1)
+        ts.add(fs, t2)
 
         saved = cPickle.dumps(ts)
         loaded = cPickle.loads(saved)
@@ -62,11 +73,11 @@ class Test_HypothesesGraph( ut.TestCase ):
         g.erase(n3)
         self.assertEqual( pgmlink.countNodes(g), 2)
         self.assertEqual( pgmlink.countArcs(g), 1)
-        self.assertTrue( g.valid(n1) ) 
+        self.assertTrue( g.valid(n1) )
         self.assertTrue( g.valid(n2) )
-        self.assertTrue( not g.valid(n3) ) 
-        self.assertTrue( g.valid(a1) ) 
-        self.assertTrue( not g.valid(a2) )  
+        self.assertTrue( not g.valid(n3) )
+        self.assertTrue( g.valid(a1) )
+        self.assertTrue( not g.valid(a2) )
 
     def test_property_maps( self ):
         t = pgmlink.Traxel()
@@ -81,25 +92,49 @@ class Test_HypothesesGraph( ut.TestCase ):
 
 class Test_CrossCorrelation( ut.TestCase ):
     def runTest( self ):
-        import numpy as np
-        img1 = np.array( [ [1, 0, 1], [1, 1, 1], [1, 1, 1] ], dtype=np.float)
-        img2 = np.array( [ [0, 0, 0], [1, 0, 1], [1, 1, 1] ], dtype=np.float)
-#        pgmlink.patchedCrossCorrelation(img1,img2,int(3),int(0),int(0),True)
-        print 'bla'
-        pgmlink.patchedCrossCorrelation(int(3),int(0),int(0),True)
-        print 'success'
+        pass
+#         import numpy as np
+#         img1 = np.array( [ [1, 0, 1], [1, 1, 1], [1, 1, 1] ], dtype=np.float)
+#         img2 = np.array( [ [0, 0, 0], [1, 0, 1], [1, 1, 1] ], dtype=np.float)
+# #        pgmlink.patchedCrossCorrelation(img1,img2,int(3),int(0),int(0),True)
+#         print 'bla'
+#         pgmlink.patchedCrossCorrelation(int(3),int(0),int(0),True)
+#         print 'success'
+
+
+def loadGPClassifier(fn, h5_group='/TransitionGPClassifier/'):
+    import h5py
+    from lazyflow.classifiers.gaussianProcessClassifier import GaussianProcessClassifier
+
+    with h5py.File(fn, 'r') as f:
+        g = f[h5_group]
+        gpc = GaussianProcessClassifier()
+        gpc.deserialize_hdf5(g)
+
+        features = []
+        for op in g['Features'].keys():
+            for feat in g['Features'][op]:
+                features.append('%s<%s>' % (op, feat))
+
+    return gpc, features
+
+
 class TestTransitionClassifier(ut.TestCase):
+
     def runTest( self ):
+        print 'setting up traxels'
         ts = pgmlink.TraxelStore()
-        t1 = mk_traxel(1,2,3,33)
-        t2 = mk_traxel(5,6,7,44)
-        ts = pgmlink.TraxelStore()
-        ts.add(t1)
-        ts.add(t2)
+        fs = pgmlink.FeatureStore()
+
+        t1 = mk_traxel(1,2,3,33,0,fs)
+        t2 = mk_traxel(5,6,7,44,1,fs)
+
+        ts.add(fs, t1)
+        ts.add(fs, t2)
         
         distr = pgmlink.DistrId.GaussianPertubation
-        
-        up = pgmlink.UncertaintyParameter(1,distr,pgmlink.VectorOfDouble())
+        uncertainty_parameter = pgmlink.UncertaintyParameter(1,distr,pgmlink.VectorOfDouble())
+
         fov = pgmlink.FieldOfView(0,
                                   0,
                                   0,
@@ -108,38 +143,48 @@ class TestTransitionClassifier(ut.TestCase):
                                   2,
                                   2,
                                   2,)
-         
-        tracker = pgmlink.ConsTracking(1,
-                                1,
-                                1,
-                                "none",  # detection_rf_filename
-                                1,   # size_dependent_detection_prob
-                                0,       # forbidden_cost
-                                1., # ep_gap
-                                1., # median_object_size
-                                False, #withTracklets,
-                                1.,
-                                1.,
-                                True,
-                                1., # disappearance cost
-                                1., # appearance cost
-                                False,
-                                4,
-                                1.,
-                                1.,
-                                fov,
-                                True, #with_constraints
-                                up,
-                                1.,
-                                "none" # dump traxelstore
+
+        print 'initialize conservation tracking'
+        tracker = pgmlink.ConsTracking(
+                                1, # max_num_objects
+                                True, # size_dependent_detection_prob
+                                1, # average object size
+                                10,  # max neighbor distance
+                                False, # with divisions
+                                0, # division threshold
+                                "none", # rf filename
+                                fov, # field of view
+                                "none", # dump traxelstore
                                 )
-        cm = pgmlink.TimestepIdCoordinateMap()
-        cm.initialize()
-        
-        features = ["RegionCenter"]
-        gpc = trainTransition("/home/bheuer/Documents/ilastik_files/some_tracking_result",features,100)
-        classifier = pgmlink.TransitionClassifier(gpc,["con"])
-        tracker(ts,cm.get(),classifier)
+
+        print 'build hypotheses graph'
+        tracker.buildGraph(ts)
+
+        print 'load pre-trained GP classifier'
+        gpc, selected_features = loadGPClassifier(fn='./test-transition-classifier.h5', h5_group='/TransitionGPClassifier/')
+        classifier = TransitionClassifier(gpc, selected_features)
+
+        print 'track...'
+        tracker.track(
+            0., # forbidden costs
+            0.01, # ep_gap
+            False, # with tracklets
+            10., # detection weight
+            10., # division weight
+            10., # transition weight
+            100., # disappearance cost
+            100., # appearance cost
+            False, # with merger resolution
+            3, # ndim
+            10., # transition parameter
+            0., # border width
+            True, # with constraints
+            uncertainty_parameter,
+            1e+75, # cplex timeout
+            classifier, # transition classifier
+        )
+
+        print 'done.'
         
 if __name__=="__main__":
     ut.main()

@@ -718,10 +718,15 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
     if ( it == transition_predictions_.end() ) {
         // predict and store
         double var;
-        try {
+        try {            
             boost::python::object prediction = transition_classifier_.attr("predict")(tr1,tr2);
-            prob = boost::python::extract<double>(prediction.attr("__getitem__")(0));
+
+            boost::python::object probs_python = prediction.attr("__getitem__")(0);
+            // we are only interested in the probability of the second class, since it is a binary classifier
+            prob = boost::python::extract<double>(probs_python.attr("__getitem__")(1));
             var = boost::python::extract<double>(prediction.attr("__getitem__")(1));
+
+            LOG(logDEBUG4) << "python::transition_classifier, prob =" << prob << "; var =" << var;
         } catch (...) {
             throw std::runtime_error("cannot call the transition classifier from python");
         }
