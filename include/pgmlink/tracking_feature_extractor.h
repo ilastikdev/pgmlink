@@ -30,6 +30,40 @@ private:
     double max;
 };
 
+class TrackFeatureExtractor
+/* TODO:
+    - add track length as a feature as well?
+*/
+{
+public:
+    typedef std::vector<double> JointFeatureVector;
+    typedef std::vector<std::string> FeatureDescription;
+public:
+    TrackFeatureExtractor();
+    void compute_features(
+        ConstTraxelRefVector& traxelref_vec,
+        FeatureVectorView return_vector);
+    void compute_features(
+        ConstTraxelRefVectors& traxelref_vecs,
+        FeatureMatrix& return_matrix);
+    size_t get_feature_vector_length() const;
+    void get_feature_descriptions(FeatureDescription& feature_descriptions) const;
+private:
+    void compute_sq_id_features(ConstTraxelRefVector&, std::string);
+    void compute_sq_diff_features(ConstTraxelRefVector&, std::string);
+    void compute_sq_curve_features(ConstTraxelRefVector&, std::string);
+    void compute_angle_features(ConstTraxelRefVector&, std::string);
+
+    void push_back_feature(std::string feature_name, double feature_value);
+    void push_back_feature(
+        std::string feature_name,
+        const MinMaxMeanVarCalculator& mmmv_calculator);
+private:
+    FeatureVectorView::iterator feature_vector_offset_it_;
+    FeatureDescription::iterator feature_descriptions_offset_it_;
+    FeatureDescription feature_descriptions_;
+};
+
 /**
  * @brief Takes a set of events from a tracking solution and computes a bunch of features for struct learning.
  * @author Carsten Haubold
@@ -81,6 +115,7 @@ private:
     void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_track_id_outlier(ConstTraxelRefVectors&, std::string);
     void compute_track_diff_outlier(ConstTraxelRefVectors&, std::string);
+    void compute_track_feature_outlier(ConstTraxelRefVectors&);
     void compute_division_sq_diff_features(ConstTraxelRefVectors&, std::string);
     void compute_division_sq_diff_outlier(ConstTraxelRefVectors&, std::string);
     void compute_child_deceleration_features(ConstTraxelRefVectors&, std::string);
@@ -96,6 +131,7 @@ private:
     boost::shared_ptr<MinCalculator<0> > row_min_calc_ptr_;
     boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
     boost::shared_ptr<MVNOutlierCalculator> mvn_outlier_calc_ptr_;
+    boost::shared_ptr<SVMOutlierCalculator> svm_track_outlier_calc_ptr_;
     boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
     boost::shared_ptr<ChildParentDiffCalculator> child_parent_diff_calc_ptr_;
     boost::shared_ptr<SquaredNormCalculator<0> > sq_norm_calc_ptr_;

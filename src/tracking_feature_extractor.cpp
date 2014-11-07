@@ -65,6 +65,176 @@ double MinMaxMeanVarCalculator::get_min() const { return min; }
 
 double MinMaxMeanVarCalculator::get_max() const { return max; }
 
+TrackFeatureExtractor::TrackFeatureExtractor()
+{}
+
+size_t TrackFeatureExtractor::get_feature_vector_length() const
+{
+    // TODO: UUUUGLY!
+    return 3 * 4 // compute_sq_id_features (Count, Mean, Variance)
+        + 4 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
+        + 4 * 4 // compute_sq_accel_features (com, Count, Mean, Variance)
+        + 1 * 2; // compute_angle_features (com)
+}
+
+void TrackFeatureExtractor::get_feature_descriptions(
+    FeatureDescription& feature_descriptions) const
+{
+    feature_descriptions.clear();
+    feature_descriptions.insert(
+        feature_descriptions.begin(),
+        feature_descriptions_.begin(),
+        feature_descriptions_.end());
+}
+
+void TrackFeatureExtractor::compute_features(
+    ConstTraxelRefVector& traxelref_vec,
+    FeatureVectorView return_vector)
+{
+    assert(return_vector.shape(0) == get_feature_vector_length());
+    if (feature_descriptions_.size() == 0)
+        feature_descriptions_.resize(get_feature_vector_length());
+    feature_descriptions_offset_it_ = feature_descriptions_.begin();
+    feature_vector_offset_it_ = return_vector.begin();
+    compute_sq_id_features(traxelref_vec, "Count");
+    compute_sq_id_features(traxelref_vec, "Mean");
+    compute_sq_id_features(traxelref_vec, "Variance");
+    compute_sq_diff_features(traxelref_vec, "com");
+    compute_sq_diff_features(traxelref_vec, "Count");
+    compute_sq_diff_features(traxelref_vec, "Mean");
+    compute_sq_diff_features(traxelref_vec, "Variance");
+    compute_sq_curve_features(traxelref_vec, "com");
+    compute_sq_curve_features(traxelref_vec, "Count");
+    compute_sq_curve_features(traxelref_vec, "Mean");
+    compute_sq_curve_features(traxelref_vec, "Variance");
+    compute_angle_features(traxelref_vec, "com");
+}
+
+void TrackFeatureExtractor::compute_features(
+    ConstTraxelRefVectors& traxelref_vecs,
+    FeatureMatrix& return_matrix)
+{
+    size_t f_dim = get_feature_vector_length();
+    return_matrix.reshape(vigra::Shape2(traxelref_vecs.size(), f_dim));
+    for (size_t i = 0; i < traxelref_vecs.size(); i++)
+    {
+        compute_features(traxelref_vecs[i], return_matrix.bind<0>(i));
+    }
+}
+
+void TrackFeatureExtractor::compute_sq_id_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    MinMaxMeanVarCalculator sq_id_mmmv;
+    sq_id_mmmv.set_max(0.0);
+
+    if (traxelref_vec.size() > 1)
+    {
+        // get the features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(traxelref_vec, feature_matrix);
+        // calculate the squared norms
+        SquaredNormCalculator<0> sq_id_calculator;
+        FeatureMatrix sq_id_matrix;
+        sq_id_calculator.calculate(feature_matrix, sq_id_matrix);
+
+        sq_id_mmmv.add_values(sq_id_matrix);
+    }
+    push_back_feature("sq_id of " + feature_name, sq_id_mmmv);
+}
+
+void TrackFeatureExtractor::compute_sq_diff_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    MinMaxMeanVarCalculator sq_diff_mmmv;
+    sq_diff_mmmv.set_max(0.0);
+
+    if (traxelref_vec.size() > 1)
+    {
+        // get the features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(traxelref_vec, feature_matrix);
+        // calculate the squared differences
+        SquaredDiffCalculator sq_diff_calculator;
+        FeatureMatrix sq_diff_matrix;
+        sq_diff_calculator.calculate(feature_matrix, sq_diff_matrix);
+
+        sq_diff_mmmv.add_values(sq_diff_matrix);
+    }
+    push_back_feature("sq_diff of " + feature_name, sq_diff_mmmv);
+}
+
+void TrackFeatureExtractor::compute_sq_curve_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    MinMaxMeanVarCalculator sq_curve_mmmv;
+    sq_curve_mmmv.set_max(0.0);
+
+    if (traxelref_vec.size() > 2)
+    {
+        // get the features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(traxelref_vec, feature_matrix);
+        // calculate the squared curvatures
+        SquaredCurveCalculator sq_curve_calculator;
+        FeatureMatrix sq_curve_matrix;
+        sq_curve_calculator.calculate(feature_matrix, sq_curve_matrix);
+
+        sq_curve_mmmv.add_values(sq_curve_matrix);
+    }
+    push_back_feature("sq_curve of " + feature_name, sq_curve_mmmv);
+}
+
+void TrackFeatureExtractor::compute_angle_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    MinMaxMeanVarCalculator angle_mmmv;
+
+    if (traxelref_vec.size() > 2)
+    {
+        // get the feature matrix
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(traxelref_vec, feature_matrix);
+        // calculate the angle cosines
+        AngleCosineCalculator angle_calculator;
+        FeatureMatrix angle_matrix;
+        angle_calculator.calculate(feature_matrix, angle_matrix);
+
+        angle_mmmv.add_values(angle_matrix);
+    }
+    push_back_feature("mean of angle cosines of " + feature_name, angle_mmmv.get_mean());
+    push_back_feature("var of angle cosines of " + feature_name, angle_mmmv.get_var());
+}
+
+void TrackFeatureExtractor::push_back_feature(
+    std::string feature_name,
+    double feature_value)
+{
+    LOG(logDEBUG4) << "Push back feature " << feature_name << ": " << feature_value;
+    *feature_vector_offset_it_ = feature_value;
+    feature_vector_offset_it_++;
+    *feature_descriptions_offset_it_ = feature_name;
+    feature_descriptions_offset_it_++;
+}
+
+void TrackFeatureExtractor::push_back_feature(
+    std::string feature_name,
+    const MinMaxMeanVarCalculator& mmmv_calculator)
+{
+    push_back_feature("min of " + feature_name, mmmv_calculator.get_min());
+    push_back_feature("max of " + feature_name, mmmv_calculator.get_max());
+    push_back_feature("mean of " + feature_name, mmmv_calculator.get_mean());
+    push_back_feature("var of " + feature_name, mmmv_calculator.get_var());
+}
+
 TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
         const FieldOfView& fov,
         boost::function<bool (const Traxel&)> margin_filter_function):
@@ -77,6 +247,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
     mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
+    svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
@@ -94,6 +265,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
     mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
+    svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
@@ -159,6 +331,8 @@ void TrackingFeatureExtractor::compute_features()
     compute_track_diff_outlier(track_traxels, "Count");
     compute_track_diff_outlier(track_traxels, "Mean");
     compute_track_diff_outlier(track_traxels, "Variance");
+    //TODO filter the tracks for the following? (division start / division end)
+    compute_track_feature_outlier(track_traxels);
     compute_division_sq_diff_features(div_1_traxels, "com");
     compute_division_sq_diff_features(div_1_traxels, "Count");
     compute_division_sq_diff_features(div_1_traxels, "Mean");
@@ -401,6 +575,30 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
     push_back_feature(
         "track outlier share of " + feature_name + " diff",
         diff_out_mmmv);
+}
+
+void TrackingFeatureExtractor::compute_track_feature_outlier(
+    ConstTraxelRefVectors& track)
+{
+    FeatureMatrix track_feature_matrix;
+    TrackFeatureExtractor track_feature_extractor;
+    track_feature_extractor.compute_features(track, track_feature_matrix);
+    FeatureMatrix score_matrix;
+    if (svm_track_outlier_calc_ptr_->is_trained())
+    {
+        svm_track_outlier_calc_ptr_->calculate(track_feature_matrix, score_matrix);
+    }
+    else
+    {
+        LOG(logWARNING) << "in TrackingFeatureExtractor::compute_track_feature_outlier()";
+        LOG(logWARNING) << "SVMOutlierCalculator not trained";
+        score_matrix.reshape(vigra::Shape2(1, 1));
+        score_matrix.init(0.0);
+    }
+    MinMaxMeanVarCalculator mmmv_score;
+    mmmv_score.set_max(0.0);
+    mmmv_score.add_values(score_matrix);
+    push_back_feature("track feature outlier score", mmmv_score);
 }
 
 void TrackingFeatureExtractor::compute_division_sq_diff_features(
