@@ -1278,7 +1278,7 @@ BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_calculate ) {
   LOG(logINFO) << "  calculate outlier";
   FeatureMatrix s1;
   svmoutlier.calculate(x, s1);
-  LOG(logINFO) << "scores: " << s1.transpose();
+  LOG(logINFO) << "  scores: " << s1.transpose();
 
   BOOST_CHECK(abs(s1(6,0) /  s1(0,0)) > 10.0);
   BOOST_CHECK(abs(s1(6,0) /  s1(1,0)) > 10.0);
@@ -1292,7 +1292,7 @@ BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_calculate ) {
   LOG(logINFO) << "  calculate outlier";
   FeatureMatrix s5;
   svmoutlier.calculate(x, s5);
-  LOG(logINFO) << "scores: " << s5.transpose();
+  LOG(logINFO) << "  scores: " << s5.transpose();
 
   BOOST_CHECK(abs(s5(6,0) /  s5(0,0)) > 10.0);
   BOOST_CHECK(abs(s5(6,0) /  s5(1,0)) > 10.0);
@@ -1300,6 +1300,58 @@ BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_calculate ) {
   BOOST_CHECK(abs(s5(6,0) /  s5(3,0)) > 10.0);
   BOOST_CHECK(abs(s5(6,0) /  s5(4,0)) > 10.0);
   BOOST_CHECK(abs(s5(6,0) /  s5(5,0)) > 10.0);
+}
+
+BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_serialization ) {
+  LOG(logINFO) << "test case: SVMOutlierCalculator_serialization";
+
+  // get the test data with outlier in x6
+  FeatureMatrix x;
+  get_feature_matrix(x);
+
+  // create training data
+  FeatureMatrix x_train;
+  get_feature_matrix(x_train);
+  x_train(6,1) = 4.0;
+  x_train(6,2) = 3.0;
+
+  // Create outlier detection
+  LOG(logINFO) << "  set up the outlier calculator";
+  SVMOutlierCalculator svmoutlier;
+  LOG(logINFO) << "  train outlier calculator with kernel width 1.0";
+  svmoutlier.train(x_train, 1.0);
+  LOG(logINFO) << "  calculate outlier";
+  FeatureMatrix s;
+  svmoutlier.calculate(x, s);
+  LOG(logINFO) << "  scores: " << s.transpose();
+  LOG(logINFO) << "  serialize calculator to string:";
+  std::string str;
+  {
+    std::stringstream sstream;
+    boost::archive::text_oarchive oarchive(sstream);
+    oarchive << svmoutlier;
+    str = sstream.str();
+  }
+  LOG(logINFO) << "  deserialize calculator from string";
+  SVMOutlierCalculator svmoutlier_loaded;
+  {
+    std::stringstream sstream(str);
+    boost::archive::text_iarchive iarchive(sstream);
+    iarchive >> svmoutlier_loaded;
+  }
+  LOG(logINFO) << "  calculate outlier";
+  FeatureMatrix s_load;
+  svmoutlier_loaded.calculate(x, s_load);
+  LOG(logINFO) << "  scores: " << s.transpose();
+
+  BOOST_CHECK_EQUAL(s_load.shape(0), s.shape(0));
+  BOOST_CHECK_EQUAL(s_load.shape(1), s.shape(1));
+
+  FeatureMatrix::iterator s_it = s.begin();
+  FeatureMatrix::iterator s_load_it = s_load.begin();
+  for (; s_it != s.end(); s_it++, s_load_it++) {
+    BOOST_CHECK_EQUAL(*s_it, *s_load_it);
+  }
 }
 
 BOOST_AUTO_TEST_CASE( GraphFeatureCalculator_calculate_vector ) {

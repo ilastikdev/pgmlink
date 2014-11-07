@@ -49,6 +49,8 @@ diffusion_calculator.calculate(positions, return_value);
 
 // stl
 #include <vector>
+#include <string> /* for deserialization of decision function */
+#include <sstream> /* for serialization of decision function */
 
 // pgmlink
 #include "pgmlink/traxels.h" /* for traxels */
@@ -1018,7 +1020,41 @@ class SVMOutlierCalculator : public TraxelsFeatureCalculator {
   DecisionFunctionType decision_function_;
   bool is_trained_;
   static const std::string name_;
+ private:
+  friend class boost::serialization::access;
+  template<class Archive>
+  void save(Archive& archive, const unsigned int /*version*/) const;
+  template<class Archive>
+  void load(Archive& archive, const unsigned int /*version*/);
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
+
+template<class Archive>
+void SVMOutlierCalculator::save(
+  Archive& archive,
+  const unsigned int /*version*/
+) const {
+  std::stringstream sstream;
+  dlib::serialize(decision_function_, sstream);
+  std::string str = sstream.str();
+
+  archive & is_trained_;
+  archive & str;
+};
+
+template<class Archive>
+void SVMOutlierCalculator::load(
+  Archive& archive,
+  const unsigned int /*version*/
+) {
+  std::string str;
+
+  archive & is_trained_;
+  archive & str;
+
+  std::stringstream sstream(str);
+  dlib::deserialize(decision_function_, sstream);
+}
 
 } // end namespace features
 } // end namespace pgmlink
