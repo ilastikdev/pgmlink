@@ -300,34 +300,49 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 
 	switch (param_.distributionId) {
 		case GaussianPertubation: //normal distribution
-			return random_normal_()*param_.distributionParam[energyIndex];
+            return random_normal_() * param_.distributionParam[energyIndex];
 		case ClassifierUncertainty://sample from Gaussian Distribution where variance comes from Classifier
-			double mean,variance,perturbed_mean;
+            double mean, variance, perturbed_mean;
 			switch (energyIndex) {
 				case Detection:
                     // this assumes that we use the NegLog as energy function
+                    // TODO: write an inverse() function for each energy function
 					mean = exp(-energy/detection_weight_); // convert energy to probability
                     variance = tr.features["detProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
+                    if (perturbed_mean <= 0) {
+                        perturbed_mean = 0.0000001;
+                    }
+                    // FIXME: the respective energy function should be used here
 					return -detection_weight_*log(perturbed_mean)- energy;
 				case Division:
                     // this assumes that we use the NegLog as energy function
+                    // TODO: write an inverse() function for each energy function
 					mean = exp(-energy/division_weight_); // convert energy to probability
                     variance = tr.features["divProb_Var"][state];
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
+                    if (perturbed_mean <= 0) {
+                        perturbed_mean = 0.0000001;
+                    }
+                    // FIXME: the respective energy function should be used here
 					return -division_weight_*log(perturbed_mean)- energy;
 				case Transition:
                     // this assumes that we use the NegLog as energy function
+                    // TODO: write an inverse() function for each energy function
 					mean = exp(-energy/transition_weight_);
                     variance = get_transition_variance(tr,tr2);
 					perturbed_mean = sample_with_classifier_variance(mean,variance);
+                    if (perturbed_mean <= 0) {
+                        perturbed_mean = 0.0000001;
+                    }
+                    // FIXME: the respective energy function should be used here
 					return -transition_weight_*log(perturbed_mean)- energy;
 				default:
 					return random_normal_()*param_.distributionParam[energyIndex];
 			}
 		case PerturbAndMAP: //Gumbel distribution
 			//distribution parameter: beta
-			return param_.distributionParam[energyIndex]*log(-log(random_uniform_()));
+            return param_.distributionParam[energyIndex] * log(-log(random_uniform_()));
 		default: //i.e. MbestCPLEX, DiverseMbest
 			return 0;
 	}
@@ -685,7 +700,7 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
     double prob;
 
     //read the FeatureMaps from Traxels
-    if (transition_classifier_.ptr()==boost::python::object().ptr()){
+    if (transition_classifier_.ptr()==boost::python::object().ptr()) {
         double distance = 0;
         if (with_optical_correction_) {
             distance = tr1.distance_to_corr(tr2);
@@ -697,7 +712,7 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
                        << " " << tr2 << " [" << state << "] = " << prob << "; distance = " << distance;
         assert(prob >= 0 && prob <= 1);
         return prob;
-    }    
+    }
 
     TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
     if ( it == transition_predictions_.end() ) {
