@@ -306,12 +306,12 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                 merger_resolved_events.push_back(resolve_mergers(
                     event,
                     coordinates,
-                    ep_gap=0.01,
-                    transition_weight=10.0,
-                    with_tracklets=true,
-                    n_dim = 3,
-                    transition_parameter = 5.,
-                    with_constraints = true
+                    ep_gap,
+                    transition_weight,
+                    with_tracklets,
+                    n_dim,
+                    transition_parameter,
+                    with_constraints
                 ));
             }
 
