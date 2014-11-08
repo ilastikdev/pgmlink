@@ -227,16 +227,16 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
     if (uncertainty_param_.distributionId==MbestCPLEX){
         numberOfIterations = 1;
     }
-    size_t nOF = perturbed_model.numberOfFactors();
-    vector<vector<vector<size_t> > >deterministic_offset(nOF);
+    size_t num_factors = perturbed_model.numberOfFactors();
+    vector<vector<vector<size_t> > >deterministic_offset(num_factors);
 
     //deterministic & non-deterministic perturbation
-    for (size_t iterStep=1;iterStep<numberOfIterations;++iterStep){
+    for (size_t iterStep=1; iterStep<numberOfIterations; ++iterStep){
 
-        nOF = perturbed_model.numberOfFactors();
+        num_factors = perturbed_model.numberOfFactors();
         if (uncertainty_param_.distributionId==DiverseMbest){
 
-            for(size_t factorId=0; factorId<nOF; ++factorId) {
+            for(size_t factorId=0; factorId<num_factors; ++factorId) {
                 PertGmType::FactorType factor = perturbed_model[factorId];
                 vector<size_t> varIndices;
                 for (PertGmType::FactorType::VariablesIteratorType ind=factor.variableIndicesBegin();ind!=factor.variableIndicesEnd();++ind){
@@ -246,7 +246,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
             }
         }
 
-        LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
+        LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " << iterStep;
         //initialize new model
         PertGmType perturbed_model2 = PertGmType(model->space());
 
@@ -314,9 +314,24 @@ double ConservationTracking::sample_with_classifier_variance(double mean, double
 	return new_probability;
 }
 
+namespace{
+    double inverseWeightedNegLog(double energy, double weight) {
+        assert (weight != 0);
+        return exp(-energy/weight);
+    }
+
+    double weightedNegLog(double prob, double weight) {
+        if (prob <= 0.00001) {
+            prob = 0.00001;
+        }
+        return -weight * log(prob);
+    }
+}
 double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, Traxel tr2, size_t state) {
 
     LOG(logDEBUG4) << "generateRandomOffset()";
+
+    double rand;
 
     switch (uncertainty_param_.distributionId) {
 		case GaussianPertubation: //normal distribution
@@ -333,9 +348,12 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 
                 switch (energyIndex) {
                     case Detection:
+                        if (detection_weight_ == 0) {
+                            return 0.;
+                        }
                         // this assumes that we use the NegLog as energy function
                         // TODO: write an inverse() function for each energy function
-                        mean = exp(-energy/detection_weight_); // convert energy to probability
+                        mean = inverseWeightedNegLog(energy, detection_weight_); // convert energy to probability
                         it = tr.features.find("detProb_Var");
                         if (it == tr.features.end()) {
                             throw std::runtime_error("feature detProb_Var does not exist");
@@ -347,42 +365,54 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
                             // one vs. all has N variance values
                             variance = it->second[state];
                         }
-                        perturbed_mean = sample_with_classifier_variance(mean,variance);
-                        if (perturbed_mean <= 0) {
-                            perturbed_mean = 0.0000001;
+                        if (variance == 0) {
+                            // do not perturb
+                            LOG(logDEBUG3) << "Detection: variance 0. -> do not perturb";
+                            return 0.;
                         }
+                        perturbed_mean = sample_with_classifier_variance(mean,variance);
                         // FIXME: the respective energy function should be used here
-                        new_energy_offset = -detection_weight_*log(perturbed_mean)- energy;
+                        new_energy_offset = weightedNegLog(perturbed_mean, detection_weight_) - energy;
                         LOG(logDEBUG3) << "Detection: old energy: " << energy << "; new energy offset: " << new_energy_offset;
                         return new_energy_offset;
                     case Division:
+                        if (division_weight_ == 0) {
+                            return 0.;
+                        }
                         // this assumes that we use the NegLog as energy function
                         // TODO: write an inverse() function for each energy function
-                        mean = exp(-energy/division_weight_); // convert energy to probability
+                        mean = inverseWeightedNegLog(energy, division_weight_); // convert energy to probability
                         it = tr.features.find("divProb_Var");
                         if (it == tr.features.end()) {
                             throw std::runtime_error("feature divProb_Var does not exist");
                         }
                         variance = it->second[0];
-                        perturbed_mean = sample_with_classifier_variance(mean,variance);
-                        if (perturbed_mean <= 0) {
-                            perturbed_mean = 0.0000001;
+                        if (variance == 0) {
+                            // do not perturb
+                            LOG(logDEBUG3) << "Division: variance 0. -> do not perturb";
+                            return 0.;
                         }
+                        perturbed_mean = sample_with_classifier_variance(mean,variance);
                         // FIXME: the respective energy function should be used here
-                        new_energy_offset = -division_weight_*log(perturbed_mean)- energy;
+                        new_energy_offset = weightedNegLog(perturbed_mean, division_weight_) - energy;
                         LOG(logDEBUG3) << "Division: old energy: " << energy << "; new energy offset: " << new_energy_offset;
                         return new_energy_offset;
                     case Transition:
+                        if (transition_weight_ == 0.) {
+                            return 0.;
+                        }
                         // this assumes that we use the NegLog as energy function
                         // TODO: write an inverse() function for each energy function
-                        mean = exp(-energy/transition_weight_);
+                        mean = inverseWeightedNegLog(energy, transition_weight_);
                         variance = get_transition_variance(tr,tr2);
-                        perturbed_mean = sample_with_classifier_variance(mean,variance);
-                        if (perturbed_mean <= 0) {
-                            perturbed_mean = 0.0000001;
+                        if (variance == 0) {
+                            // do not perturb
+                            LOG(logDEBUG3) << "Transition: variance 0. -> do not perturb";
+                            return 0.;
                         }
+                        perturbed_mean = sample_with_classifier_variance(mean,variance);
                         // FIXME: the respective energy function should be used here
-                        new_energy_offset = -transition_weight_*log(perturbed_mean)- energy;
+                        new_energy_offset = weightedNegLog(perturbed_mean, transition_weight_) - energy;
                         LOG(logDEBUG3) << "Transition: old energy: " << energy << "; new energy offset: " << new_energy_offset;
                         return new_energy_offset;
                     default:
@@ -400,7 +430,9 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
             if (energyIndex >= uncertainty_param_.distributionParam.size()) {
                 throw std::runtime_error("sigma is not set correctly");
             }
-            return uncertainty_param_.distributionParam[energyIndex] * log(-log(random_uniform_()));
+            rand = random_uniform_();
+            throw std::runtime_error("I don't think this formula is correct; debug when needed; check whether rand>=0");
+            return uncertainty_param_.distributionParam[energyIndex] * log(-log(rand));
 		default: //i.e. MbestCPLEX, DiverseMbest
             LOG(logDEBUG4) << "DiverseMBest/MBestCPLEX: random offset 0";
 			return 0;
@@ -755,8 +787,11 @@ double ConservationTracking::get_transition_variance(Traxel tr1, Traxel tr2) {
     double var;
 
     if (transition_classifier_.ptr()==boost::python::object().ptr()){
-        var = 0;
+        var = uncertainty_param_.distributionParam[Transition];
         LOG(logDEBUG4) << "using constant transition variance " << var;
+        if (var < 0) {
+            throw std::runtime_error("the transition variance must be positive");
+        }
     } else {        
         TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
         if ( it == transition_predictions_.end() ) {
@@ -918,7 +953,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
             		energy = disappearance_cost_(traxel_map_[n]);
             	}
             	if (perturb){
-            		generateRandomOffset(Disappearance);
+                    energy += generateRandomOffset(Disappearance);
             	}
             	cost.push_back(energy);
             } else {
@@ -982,7 +1017,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 energies(coords.begin()) = energy + state * cost[var_idx];
                 coords[var_idx] = 0;
                 LOG(logDEBUG4) << "ConservationTracking::add_finite_factors: var_idx "
-                 << var_idx << " = " << energy;
+                                << var_idx << " = " << energy;
             }
             // also this energy if both variables have the same state
             if (num_vars == 2) {
@@ -995,7 +1030,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 coords[1] = 0;
 
                 LOG(logDEBUG4) << "ConservationTracking::add_finite_factors: var_idxs 0 and var_idx 1 = "
-               	   << energy;
+                                << energy;
             }
         }
 
@@ -1004,7 +1039,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         if (perturb && uncertainty_param_.distributionId==DiverseMbest){
         	vector<vector<size_t> >* indexlist = &detoff->operator[](factorIndex);
         	for (vector<vector<size_t> >::iterator index=indexlist->begin();index !=indexlist->end();index++){
-                energies(index->begin())+=uncertainty_param_.distributionParam[Detection];
+                energies(index->begin()) += uncertainty_param_.distributionParam[Detection];
         	}
         	factorIndex++;
         }
