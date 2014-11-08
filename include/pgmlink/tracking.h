@@ -173,7 +173,8 @@ namespace pgmlink {
       fov_(fov),
       event_vector_dump_filename_(event_vector_dump_filename),
       export_from_labeled_graph_(false),
-      with_optical_correction_(false)
+      with_optical_correction_(false),
+      quit_before_inference_(false)
       {}
 
 
@@ -236,8 +237,8 @@ namespace pgmlink {
        * Get state of detection variables after call to operator().
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
-      PGMLINK_EXPORT void write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset = true);
-      PGMLINK_EXPORT void write_funkey_features(TraxelStore ts,std::vector<std::vector<double>> parameterlist);
+      PGMLINK_EXPORT void write_funkey_set_output_files(std::string writeFeatures, std::string writeConstraints, std::string writeGroundTruth, bool reset = true, UncertaintyParameter uncertaintyParam = UncertaintyParameter());
+      PGMLINK_EXPORT void write_funkey_features(TraxelStore &ts, std::vector<std::vector<double>> parameterlist, UncertaintyParameter uncertaintyParam = UncertaintyParameter(), double forbidden_cost=0, int ndim=3, bool with_tracklets=true, double transition_parameter=5, double border_width=0);
       PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
       PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights = "",std::string options = "");
       PGMLINK_EXPORT void set_export_labeled_graph(bool in);
@@ -263,11 +264,13 @@ namespace pgmlink {
       TraxelStore* traxel_store_;
 
       boost::shared_ptr<HypothesesGraph> hypotheses_graph_;
+      boost::shared_ptr<HypothesesGraph> original_hypotheses_graph_;
       boost::shared_ptr<ConservationTracking> pgm_;
 							    
       std::string features_file_;
       std::string constraints_file_; 
       std::string ground_truth_file_;
+      bool quit_before_inference_;
 
       bool export_from_labeled_graph_, with_optical_correction_;
 							    

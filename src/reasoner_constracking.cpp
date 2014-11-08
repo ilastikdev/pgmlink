@@ -100,57 +100,35 @@ void ConservationTracking::printResults(HypothesesGraph& g){
 		}
 	}
 
-std::string ConservationTracking::get_label_export_filename(size_t iteration)
+std::string ConservationTracking::get_export_filename(size_t iteration, const std::string& orig_file_name)
 {
-    std::stringstream label_filename;
-    if(!ground_truth_file_.empty())
+    std::stringstream export_filename;
+    if(!orig_file_name.empty())
     {
-        std::string ground_truth_basename = ground_truth_file_;
+        std::string orig_basename = orig_file_name;
         std::string extension = ".txt";
 
         // remove extension
-        std::string::size_type extension_pos = ground_truth_file_.find_last_of(".");
-        if(extension_pos != ground_truth_file_.npos)
+        std::string::size_type extension_pos = orig_file_name.find_last_of(".");
+        if(extension_pos != orig_file_name.npos)
         {
-            extension = ground_truth_file_.substr(extension_pos);
-            ground_truth_basename = ground_truth_file_.substr(0, extension_pos);
+            extension = orig_file_name.substr(extension_pos);
+            orig_basename = orig_file_name.substr(0, extension_pos);
         }
 
-        label_filename << ground_truth_basename << "_" << iteration << extension;
+        export_filename << orig_basename << "_" << iteration << extension;
     }
 
-    return label_filename.str();
+    return export_filename.str();
 }
 
-void ConservationTracking::compute_relative_uncertainty(HypothesesGraph *graph)
-{
-    graph->add(relative_uncertainty());
+void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool with_inference){
 
-    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes = graph->get(node_active_count());
-    property_map<relative_uncertainty, HypothesesGraph::base_graph>::type& rel_uncertainty = graph->get(relative_uncertainty());
-    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n) {
-        double count=0;
-        vector<size_t>* active_list = &active_nodes.get_value(n);
-        for (vector<size_t>::iterator is_active = active_list->begin();is_active!=active_list->end();is_active++){
-            if (*is_active!=0){
-                ++count;
-            }
-        }
+    reset();
+    if(with_inference)
+        solutions_.clear();
 
-        rel_uncertainty.set(n,count/uncertainty_param_.numberOfIterations);
-    }
-}
-
-void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, size_t iteration){
-    // initialize stuff needed in each iteration
-    cplex_optimizer::Parameter cplex_param;
-//    cplex_param.verbose_ = true;
-    cplex_param.integerConstraint_ = true;
-    cplex_param.epGap_ = ep_gap_;
-    cplex_param.timeLimit_ = cplex_timeout_;
-
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
-    uncertainty_param_.print();
+    pgm_ = boost::shared_ptr < pgm::OpengmModelDeprecated > (new pgm::OpengmModelDeprecated());
 
     HypothesesGraph *graph;
 
@@ -165,41 +143,52 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, size_
 
     graph->add(relative_uncertainty()).add(node_active_count());
 
-    // We are doing MAP inference
-    if(iteration == 0)
+    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
+    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
+    LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
+    formulate(*graph);
+
+    MAPGmType* model = pgm_->Model();
+
+    LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
+
+    add_finite_factors(*graph,model,false);
+
+    PertGmType perturbed_model = PertGmType(model->space());
+    add_finite_factors(*graph, &perturbed_model, false /*perturb*/);
+
+    LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
+
+    LOG(logINFO) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
+    LOG(logINFO) << "number_of_appearance_nodes_ = " << number_of_appearance_nodes_;
+    LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
+    LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
+
+    LOG(logDEBUG) <<"ConservationTracking::perturbedInference: uncertainty parameter print";
+
+    cplex_optimizer::Parameter cplex_param;
+    cplex_param.verbose_ = true;
+    cplex_param.integerConstraint_ = true;
+    cplex_param.epGap_ = ep_gap_;
+    cplex_param.timeLimit_ = cplex_timeout_;
+    uncertainty_param_.print();
+
+    //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
+    size_t numberOfSolutions = 1;
+    if (uncertainty_param_.distributionId==MbestCPLEX){
+        numberOfSolutions = uncertainty_param_.numberOfIterations;
+    }
+
+    optimizer_ = new cplex_optimizer(perturbed_model,
+                                     cplex_param,
+                                     numberOfSolutions,
+                                     get_export_filename(0, features_file_),
+                                     constraints_file_,
+                                     get_export_filename(0, ground_truth_file_),
+                                     export_from_labeled_graph_);
+
+    if(with_inference)
     {
-        LOG(logINFO) << "Running MAP inference";
-        reset();
-        pgm_ = boost::shared_ptr < pgm::OpengmModelDeprecated >(new pgm::OpengmModelDeprecated());
-
-        LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
-        LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
-        LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
-        formulate(*graph);
-
-        MAPGmType* model = pgm_->Model();
-        PertGmType perturbed_model(model->space()); // TODO: can we get rid of duplicate models?
-
-        LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
-
-        add_finite_factors(*graph,model,false);
-        add_finite_factors(*graph,&perturbed_model,false);
-
-        LOG(logDEBUG) << "ConservationTracking::formulate: finished add_finite_factors";
-
-        LOG(logINFO) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
-        LOG(logINFO) << "number_of_appearance_nodes_ = " << number_of_appearance_nodes_;
-        LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
-        LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
-
-        //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
-        size_t num_solutions = 1;
-        if (uncertainty_param_.distributionId == MbestCPLEX){
-            num_solutions = uncertainty_param_.numberOfIterations;
-        }
-
-        optimizer_ = new cplex_optimizer(perturbed_model, cplex_param, num_solutions,features_file_,constraints_file_,get_label_export_filename(0),export_from_labeled_graph_);
-
         if (with_constraints_) {
             LOG(logINFO) << "add_constraints";
             add_constraints(*graph);
@@ -217,9 +206,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, size_
 
         optimizer_->set_export_file_names("","","");
 
-        for (size_t k=1;k<num_solutions;++k){
+        for (size_t k=1;k<numberOfSolutions;++k){
             LOG(logINFO) << "conclude "<<k+1<<"-best solution";
-            optimizer_->set_export_file_names("","",get_label_export_filename(k));
+            optimizer_->set_export_file_names("","",get_export_filename(k, ground_truth_file_));
 
             opengm::InferenceTermination status = optimizer_->arg(solutions_.back(),k);
             if (status != opengm::NORMAL) {
@@ -228,70 +217,79 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, size_
             conclude(hypotheses);
         }
     }
-    else
-    {
-        LOG(logINFO) << "Running Perturbed inference iteration " << iteration;
-        if (uncertainty_param_.distributionId == MbestCPLEX){
-            LOG(logWARNING) << "Requesting to run iteration " << iteration << " of inference, although CPLEX MBest requires only one. Skipping.";
-            return;
-        }
-        if(!pgm_)
-        {
-            LOG(logERROR) << "You have to run MAP inference before running later iterations of perturbed inference!" << std::endl;
-            throw std::runtime_error("PGM Model for MAP not set.");
-        }
 
-        //store offset by factor index
-        //technical assumption: the number & order of factors remains the same for the perturbed models
-        //performance assumption: the number of pertubations is rather low, so iterating over
-        //a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
-
-        size_t num_perturbed_model_factors_ = pgm_->Model()->numberOfFactors();
-        vector<vector<vector<size_t> > > deterministic_offset(num_perturbed_model_factors_);
-
-        // perturbed inference iteration
-        if (uncertainty_param_.distributionId == DiverseMbest){
-            // push new solution away from all old solutions
-            for(size_t solution_idx = 0; solution_idx < solutions_.size(); solution_idx++)
-            {
-                for(size_t factorId = 0; factorId < num_perturbed_model_factors_; ++factorId) {
-                    MAPGmType::FactorType factor = (*(pgm_->Model()))[factorId];
-                    vector<size_t> varIndices;
-                    for (MAPGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin(); ind != factor.variableIndicesEnd(); ++ind){
-                        varIndices.push_back(solutions_[solution_idx][*ind]);
-                    }
-                    deterministic_offset[factorId].push_back(varIndices);
-                }
-            }
-        }
-
-        LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " << iteration;
-
-        //initialize new model with perturbation
-        PertGmType perturbed_model = PertGmType(pgm_->Model()->space());
-        add_finite_factors(*graph, &perturbed_model, true /*perturb*/, &deterministic_offset);
-
-        LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
-        optimizer_ = new cplex_optimizer(perturbed_model, cplex_param);
-
-        optimizer_->set_export_file_names("","",get_label_export_filename(iteration));
-
-        if (with_constraints_) {
-            add_constraints(*graph);
-        }
-        LOG(logINFO) << "infer ";
-        infer();
-
-        LOG(logINFO) << "conclude";
-        conclude(hypotheses);
-    }
+    //store offset by factor index
+    //technical assumption: the number & order of factors remains the same for the perturbed models
+    //performance assumption: the number of pertubations is rather low, so iterating over
+    //a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
 
     size_t numberOfIterations = uncertainty_param_.numberOfIterations;
     if (uncertainty_param_.distributionId==MbestCPLEX){
-		numberOfIterations = 1;
-	}
+        numberOfIterations = 1;
+    }
+    size_t nOF = perturbed_model.numberOfFactors();
+    vector<vector<vector<size_t> > >deterministic_offset(nOF);
 
+    //deterministic & non-deterministic perturbation
+    for (size_t iterStep=1;iterStep<numberOfIterations;++iterStep){
 
+        nOF = perturbed_model.numberOfFactors();
+        if (uncertainty_param_.distributionId==DiverseMbest){
+
+            for(size_t factorId=0; factorId<nOF; ++factorId) {
+                PertGmType::FactorType factor = perturbed_model[factorId];
+                vector<size_t> varIndices;
+                for (PertGmType::FactorType::VariablesIteratorType ind=factor.variableIndicesBegin();ind!=factor.variableIndicesEnd();++ind){
+                    varIndices.push_back(solutions_[iterStep - 1][*ind]);
+                }
+                deterministic_offset[factorId].push_back(varIndices);
+            }
+        }
+
+        LOG(logINFO) << "ConservationTracking::perturbedInference: prepare perturbation number " <<iterStep;
+        //initialize new model
+        PertGmType perturbed_model2 = PertGmType(model->space());
+
+        add_finite_factors(*graph, &perturbed_model2, true /*perturb*/, &deterministic_offset);
+        LOG(logINFO) << "Model for perturbed inference has num factors: " << perturbed_model2.numberOfFactors();
+
+        LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
+        optimizer_ = new cplex_optimizer(perturbed_model2,
+                                         cplex_param,
+                                         1,
+                                         get_export_filename(iterStep, features_file_),
+                                         "",
+                                         get_export_filename(iterStep, ground_truth_file_),
+                                         false);
+
+        if(with_inference)
+        {
+            if (with_constraints_) {
+                add_constraints(*graph);
+            }
+            LOG(logINFO) << "infer ";
+            infer();
+
+            LOG(logINFO) << "conclude";
+            conclude(hypotheses);
+        }
+    }
+
+    graph->add(relative_uncertainty());
+
+    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes = graph->get(node_active_count());
+    property_map<relative_uncertainty, HypothesesGraph::base_graph>::type& rel_uncertainty = graph->get(relative_uncertainty());
+    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n) {
+        double count=0;
+        vector<size_t>* active_list = &active_nodes.get_value(n);
+        for (vector<size_t>::iterator is_active = active_list->begin();is_active!=active_list->end();is_active++){
+            if (*is_active!=0){
+                ++count;
+            }
+        }
+
+        rel_uncertainty.set(n,count/uncertainty_param_.numberOfIterations);
+    }
 }
 
 boost::math::normal standard_gaussian_distribution(0.0, 1.0);
@@ -596,6 +594,23 @@ const std::vector<ConservationTracking::IlpSolution> &ConservationTracking::get_
     return solutions_;
 }
 
+void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTracking::IlpSolution>& solutions)
+{
+    if(solutions.size() == 0)
+    {
+        LOG(logWARNING) << "No solutions given to set";
+        return;
+    }
+
+    solutions_.clear();
+    for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = solutions.begin();
+        sol_it != solutions.end();
+        ++sol_it)
+    {
+        solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
+    }
+}
+
 void ConservationTracking::reset() {
     if (optimizer_ != NULL) {
         delete optimizer_;
@@ -605,7 +620,7 @@ void ConservationTracking::reset() {
     div_node_map_.clear();
     app_node_map_.clear();
     dis_node_map_.clear();
-    solutions_.clear();
+//    solutions_.clear();
 }
 
 void ConservationTracking::add_appearance_nodes(const HypothesesGraph& g) {
@@ -779,6 +794,8 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
 	// Also, this implies that there is some functor choosing either energy or offset
 
 	size_t factorIndex = 0;
+    if(model->numberOfFactors()!=factorIndex)
+        LOG(logERROR) << "Model has a too large number of factors: " << model->numberOfFactors() << ">" << factorIndex;
 	assert(model->numberOfFactors()==factorIndex);
 
     LOG(logDEBUG) << "ConservationTracking::add_finite_factors: entered";
@@ -895,7 +912,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 bool first = true;
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
                         trax_it != tracklet_map_[n].end(); ++trax_it) {
-                    LOG(logINFO) << "internal arcs traxel " << *trax_it;
+                    LOG(logDEBUG) << "internal arcs traxel " << *trax_it;
                     Traxel tr = *trax_it;
                     if (!first) {
                         e = transition_( get_transition_probability(tr_prev, tr, state) );

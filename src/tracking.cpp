@@ -469,7 +469,9 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 						      double cplex_timeout,
                               boost::python::object transition_classifier
                               ){
-    
+    original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
+    HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+
     LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ; 
     LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ; 
     LOG(logDEBUG1) <<"forbidden_cost\t"<<      forbidden_cost; 
@@ -571,29 +573,31 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 	pgm.ground_truth_file_  = ground_truth_file_;
 	pgm.export_from_labeled_graph_ = export_from_labeled_graph_;
 
-
-    size_t num_solutions = uncertaintyParam.numberOfIterations;
-    size_t num_iterations = num_solutions;
-    if(uncertaintyParam.distributionId == MbestCPLEX)
-        num_iterations = 1;
-
-    for(size_t iteration = 0; iteration < num_iterations; iteration++)
+    // needed for diverse M best when extracting weights
+    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1 && quit_before_inference_)
     {
-        pgm.perturbedInference(*hypotheses_graph_, iteration);
+        if(!ilp_solutions_.size() > 0)
+            throw std::runtime_error("cannot inject solutions into tracker, solutions are empty! Run proper inference first.");
+        pgm.set_ilp_solutions(ilp_solutions_);
     }
 
+    pgm.perturbedInference(*hypotheses_graph_, !quit_before_inference_);
+
+    // if we only want to export features: stop here, return empty vector, no active_ maps are set anyway.
+    if(quit_before_inference_)
+        return EventVectorVectorVector();
+
+    size_t num_solutions = uncertaintyParam.numberOfIterations;
     if (num_solutions == 1)
     {
         cout << "-> storing state of detection vars" << endl;
         last_detections_ = state_of_nodes(*hypotheses_graph_);
-		cout << "-> pruning inactive hypotheses" << endl;
 	}
-
-    pgm.compute_relative_uncertainty(hypotheses_graph_.get());
 
     //	PyGILState_Release(gilstate);
 
     // copy solutions
+    ilp_solutions_.clear();
     const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();
     for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = pgm_solution.begin();
         sol_it != pgm_solution.end();
@@ -610,15 +614,15 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     EventVectorVectorVector all_ev(num_solutions);
     for (size_t i=0;i<num_solutions;++i){
         all_ev[i] = *events(*hypotheses_graph_,i);
-	}
+    }
 
-	if(event_vector_dump_filename_ != "none")
-	  {
-	    // store the traxel store and the resulting event vector
-	    std::ofstream ofs(event_vector_dump_filename_.c_str());
-	    boost::archive::text_oarchive out_archive(ofs);
+    if(event_vector_dump_filename_ != "none")
+      {
+        // store the traxel store and the resulting event vector
+        std::ofstream ofs(event_vector_dump_filename_.c_str());
+        boost::archive::text_oarchive out_archive(ofs);
         out_archive << all_ev[0];
-	  }
+      }
 
     return all_ev;
 
@@ -722,7 +726,11 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     }
 }
 
-  void ConsTracking::write_funkey_set_output_files(std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,bool reset){
+  void ConsTracking::write_funkey_set_output_files(std::string writeFeatures,
+                                                   std::string writeConstraints,
+                                                   std::string writeGroundTruth,
+                                                   bool reset,
+                                                   UncertaintyParameter uncertainty_param){
     if(reset){
       constraints_file_.clear();
       features_file_.clear();
@@ -737,10 +745,20 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     }
 
    if(not writeFeatures.empty()){
-      features_file_      = writeFeatures;   
-      std::ofstream feature_file;
-      feature_file.open (writeFeatures);
-      feature_file.close();
+      std::cout << "creating feature matrix file: " << writeFeatures << std::endl;
+      features_file_      = writeFeatures;
+      if(!features_file_.empty()){
+          size_t num_matrices = 1;
+          if(uncertainty_param.distributionId != MbestCPLEX)
+              num_matrices = uncertainty_param.numberOfIterations;
+
+          for(size_t i = 0; i < num_matrices; i++)
+          {
+              std::ofstream feature_file;
+              feature_file.open (ConservationTracking::get_export_filename(i, features_file_));
+              feature_file.close();
+          }
+      }
     }
 
     if(not writeGroundTruth.empty()){
@@ -755,51 +773,73 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
 	export_from_labeled_graph_ = in;
   }
 
-  void ConsTracking::write_funkey_features(TraxelStore ts,vector<vector<double>> parameterlist){
-    for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it) {
-        
-      int ndim = 3;
-      std::string tmp_feat_file;
+  void ConsTracking::write_funkey_features(TraxelStore& ts,
+                                           vector<vector<double>> parameterlist,
+                                           UncertaintyParameter uncertaintyParam,
+                                           double forbidden_cost,
+                                           int ndim,
+                                           bool with_tracklets,
+                                           double transition_parameter,
+                                           double border_width){
+      const size_t num_parameters = 5;
+      quit_before_inference_ = true;
 
-      if(not ground_truth_file_.empty() and not export_from_labeled_graph_){
-		tmp_feat_file = features_file_;
-		features_file_.clear();
+      for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it) {
+          //      std::string tmp_feat_file;
+
+          //      if(not ground_truth_file_.empty() and not export_from_labeled_graph_){
+          //          std::cout << "clearing features file" << std::endl;
+          //		tmp_feat_file = features_file_;
+          //		features_file_.clear();
+          //      }
+//          if(not export_from_labeled_graph_)
+//              build_hypo_graph(ts);
+
+          cout << "writing funkey files with weights:";
+
+          for(int i = 0; i < num_parameters; i++) {
+              std::cout << (*it)[i];
+          }
+
+          cout << endl;
+
+          track(forbidden_cost,//forbidden_cost,
+                0,
+                with_tracklets,
+                (*it)[0],//detection
+                (*it)[1],//division,
+                (*it)[2],//transition,
+                (*it)[3],//disappearance,
+                (*it)[4],//appearance,
+                false,//with_merger_resolution,
+                ndim,
+                transition_parameter,//transition_parameter,
+                border_width,//border_width,
+                true,//with constraints
+                uncertaintyParam);
+
+          // write constraint and ground truth files only once
+          if(not constraints_file_.empty())
+              constraints_file_.clear();
+          if(not ground_truth_file_.empty()){
+              ground_truth_file_.clear();
+              //		if(not export_from_labeled_graph_)
+              //			features_file_ = tmp_feat_file;
+          }
+
       }
-      if(not export_from_labeled_graph_)
-      	build_hypo_graph(ts);
 
-      	cout << "writing funkey files with weights:";
+      quit_before_inference_ = false;
 
-      	for(int i = 0; i != 5; i++) {
-    		std::cout << (*it)[i]; 
-		}
+      if(!features_file_.empty()){
+          size_t num_matrices = 1;
+          if(uncertaintyParam.distributionId != MbestCPLEX)
+              num_matrices = uncertaintyParam.numberOfIterations;
 
-		cout << endl;
-
-      track(0,//forbidden_cost,
-	    0,
-	    false,
-	    (*it)[0],//detection
-	    (*it)[1],//division,
-	    (*it)[2],//transition,
-	    (*it)[3],//disappearance,
-	    (*it)[4],//appearance,
-	    false,//with_merger_resolution,
-	    ndim,
-	    5,//transition_parameter,
-	    0,//border_width,
-	    true);//with constraints  
-      
-	// write constraint and ground truth files only once
-      if(not constraints_file_.empty())
-		constraints_file_.clear();
-      if(not ground_truth_file_.empty()){
-			ground_truth_file_.clear();
-		if(not export_from_labeled_graph_)
-			features_file_ = tmp_feat_file;
-		}
-  	}
-}
+          for(size_t i = 0; i < num_matrices; i++)
+              transpose_matrix_in_file(ConservationTracking::get_export_filename(i, features_file_));
+      }
+  }
 
   void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
     int number_of_weights = 5;
@@ -825,7 +865,8 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
       }
     }
 
-   	write_funkey_features(ts,list);
+    UncertaintyParameter uncertainty_param(1, MbestCPLEX, 0);
+    write_funkey_features(ts,list, uncertainty_param);
 
    	if(not writeFeatures.empty()){
     	transpose_matrix_in_file(writeFeatures);

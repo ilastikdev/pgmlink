@@ -114,6 +114,7 @@ class ConservationTracking : public Reasoner {
           division_weight_(division_weight),
           detection_weight_(detection_weight),
           transition_weight_(transition_weight),
+          rng_(42),
           random_normal_(rng_,boost::normal_distribution<>(0, 1)),
           random_uniform_(rng_,boost::uniform_real<>(0,1)),
           transition_classifier_(transition_classifier),
@@ -126,7 +127,7 @@ class ConservationTracking : public Reasoner {
     virtual void formulate( const HypothesesGraph& );
     virtual void infer();
     virtual void conclude( HypothesesGraph& );
-    virtual void perturbedInference(HypothesesGraph&, size_t iteration);
+    virtual void perturbedInference(HypothesesGraph&, bool with_inference = true);
     
     double forbidden_cost() const;
     bool with_constraints() const;
@@ -152,6 +153,8 @@ class ConservationTracking : public Reasoner {
     
     /// Return reference to all CPLEX solution vectors
     const std::vector<IlpSolution>& get_ilp_solutions() const;
+    void set_ilp_solutions(const std::vector<IlpSolution>&);
+
     //cplex export file names
     std::string features_file_;
     std::string constraints_file_;
@@ -161,7 +164,7 @@ class ConservationTracking : public Reasoner {
 
     void write_labeledgraph_to_file(const HypothesesGraph&);
 
-    void compute_relative_uncertainty(HypothesesGraph *graph);
+    static std::string get_export_filename(size_t iteration, const std::string &orig_file_name);
 private:
     // copy and assingment have to be implemented, yet
     
@@ -186,7 +189,6 @@ private:
     double get_transition_probability(Traxel tr1, Traxel tr2, size_t state);
     double get_transition_variance(Traxel tr1, Traxel tr2);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
-    std::string get_label_export_filename(size_t iteration);
 
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
