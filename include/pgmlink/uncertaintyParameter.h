@@ -16,7 +16,7 @@ using namespace std;
 
 namespace pgmlink {
 	enum PGMLINK_EXPORT DistrId {
-		GaussianPertubation,PerturbAndMAP,DiverseMbest,MbestCPLEX,ClassifierUncertainty
+        GaussianPertubation, PerturbAndMAP, DiverseMbest, MbestCPLEX, ClassifierUncertainty
 	};
 
 	class PGMLINK_EXPORT UncertaintyParameter{
@@ -35,7 +35,7 @@ namespace pgmlink {
 			//2: diverse-m-best deterministic
 			//3: diverse-m-best cplex
 
-			distributionParam = std::vector<double>(1,0);
+            distributionParam = std::vector<double>(5,0);
 			//various distribution parameters:
 			//for distributions depending on a parameter
 			//distributionParam holds a parameter value for
@@ -46,16 +46,16 @@ namespace pgmlink {
 			// - transition
 			// - division
 		}
-		UncertaintyParameter(std::size_t nOI,DistrId dI,std::vector<double> dP){
-			numberOfIterations=nOI;
-			distributionId = dI;
-			distributionParam = dP;
+        UncertaintyParameter(std::size_t num_iter, DistrId distr_id,std::vector<double> distr_param){
+            numberOfIterations=num_iter;
+            distributionId = distr_id;
+            distributionParam = distr_param;
 		}
 		//constructor for single-parameter distributions
-		UncertaintyParameter(std::size_t nOI,DistrId dI,double dP){
-			numberOfIterations=nOI;
-			distributionId = dI;
-			distributionParam = std::vector<double>(1,dP);
+        UncertaintyParameter(std::size_t num_iter, DistrId distr_id, double distr_param){
+            numberOfIterations=num_iter;
+            distributionId = distr_id;
+            distributionParam = std::vector<double>(1,distr_param);
 
 		}
 		void print(){
