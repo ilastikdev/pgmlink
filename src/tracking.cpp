@@ -914,17 +914,4 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     return loss;
   }
 
-  void ConsTracking::create_energy_calculator(std::map<std::string,std::map<std::string,std::vector<std::string> > > used_feature_names,TraxelStore& ts)
-  {
-	energy_calculator_.initialize(used_feature_names,ts,max_number_objects_ +1);
-  }
-
-  size_t ConsTracking::get_energy_weight_vector_size(){
-	return energy_calculator_.number_of_weights();
-  }
-
-  std::string ConsTracking::get_featureweight_description(size_t i)
-  {
-	return energy_calculator_.id_description(i);
-  }
 } // namespace tracking
