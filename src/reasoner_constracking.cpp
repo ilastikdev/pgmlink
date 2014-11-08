@@ -320,50 +320,77 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
 
     switch (uncertainty_param_.distributionId) {
 		case GaussianPertubation: //normal distribution
+            LOG(logDEBUG4) << "GaussianPerturbation";
+            if (energyIndex >= uncertainty_param_.distributionParam.size()) {
+                throw std::runtime_error("sigma is not set correctly");
+            }
             return random_normal_() * uncertainty_param_.distributionParam[energyIndex];
 		case ClassifierUncertainty://sample from Gaussian Distribution where variance comes from Classifier
-            double mean, variance, perturbed_mean;
+            LOG(logDEBUG4) << "ClassifierUncertainty";
+            double mean, variance, perturbed_mean, new_energy_offset;
 			switch (energyIndex) {
 				case Detection:
                     // this assumes that we use the NegLog as energy function
                     // TODO: write an inverse() function for each energy function
 					mean = exp(-energy/detection_weight_); // convert energy to probability
-                    variance = tr.features["detProb_Var"][state];
-					perturbed_mean = sample_with_classifier_variance(mean,variance);
+                    if (max_number_objects_ == 1) {
+                        // in the binary classification case we only have one variance value
+                        variance = tr.features["detProb_Var"][0];
+                    } else {
+                        // one vs. all has N variance values
+                        variance = tr.features["detProb_Var"][state];
+                    }
+                    perturbed_mean = sample_with_classifier_variance(mean,variance);
                     if (perturbed_mean <= 0) {
                         perturbed_mean = 0.0000001;
                     }
-                    // FIXME: the respective energy function should be used here
-					return -detection_weight_*log(perturbed_mean)- energy;
+                    // FIXME: the respective energy function should be used here                    
+                    new_energy_offset = -detection_weight_*log(perturbed_mean)- energy;
+                    LOG(logDEBUG3) << "Detection: old energy: " << energy << "; new energy offset: " << new_energy_offset;
+                    return new_energy_offset;
 				case Division:
                     // this assumes that we use the NegLog as energy function
                     // TODO: write an inverse() function for each energy function
 					mean = exp(-energy/division_weight_); // convert energy to probability
-                    variance = tr.features["divProb_Var"][state];
-					perturbed_mean = sample_with_classifier_variance(mean,variance);
+                    variance = tr.features["divProb_Var"][0];
+					perturbed_mean = sample_with_classifier_variance(mean,variance);                    
                     if (perturbed_mean <= 0) {
                         perturbed_mean = 0.0000001;
-                    }
+                    }                    
                     // FIXME: the respective energy function should be used here
-					return -division_weight_*log(perturbed_mean)- energy;
+                    new_energy_offset = -division_weight_*log(perturbed_mean)- energy;
+                    LOG(logDEBUG3) << "Division: old energy: " << energy << "; new energy offset: " << new_energy_offset;
+                    return new_energy_offset;
 				case Transition:
                     // this assumes that we use the NegLog as energy function
                     // TODO: write an inverse() function for each energy function
-					mean = exp(-energy/transition_weight_);
-                    variance = get_transition_variance(tr,tr2);
-					perturbed_mean = sample_with_classifier_variance(mean,variance);
+					mean = exp(-energy/transition_weight_);                    
+                    variance = get_transition_variance(tr,tr2);                    
+					perturbed_mean = sample_with_classifier_variance(mean,variance);                    
                     if (perturbed_mean <= 0) {
                         perturbed_mean = 0.0000001;
-                    }
+                    }                    
                     // FIXME: the respective energy function should be used here
-					return -transition_weight_*log(perturbed_mean)- energy;
-				default:
-                    return random_normal_()*uncertainty_param_.distributionParam[energyIndex];
+                    new_energy_offset = -transition_weight_*log(perturbed_mean)- energy;
+                    LOG(logDEBUG3) << "Transition: old energy: " << energy << "; new energy offset: " << new_energy_offset;
+                    return new_energy_offset;
+				default:                    
+                    if (energyIndex >= uncertainty_param_.distributionParam.size()) {
+                        throw std::runtime_error("sigma is not set correctly");
+                    }
+                    new_energy_offset = random_normal_()*uncertainty_param_.distributionParam[energyIndex];
+                    LOG(logDEBUG3) << "Appearance/Disappearance: new energy offset: " << new_energy_offset;
+                    return new_energy_offset;
 			}
 		case PerturbAndMAP: //Gumbel distribution
+            LOG(logDEBUG4) << "PerturbAndMAP";
 			//distribution parameter: beta
+            if (energyIndex >= uncertainty_param_.distributionParam.size()) {
+                throw std::runtime_error("sigma is not set correctly");
+            }
             return uncertainty_param_.distributionParam[energyIndex] * log(-log(random_uniform_()));
 		default: //i.e. MbestCPLEX, DiverseMbest
+            LOG(logDEBUG4) << "DiverseMBest/MBestCPLEX: random offset 0";
 			return 0;
 	}
 }
@@ -718,7 +745,7 @@ double ConservationTracking::get_transition_variance(Traxel tr1, Traxel tr2) {
     if (transition_classifier_.ptr()==boost::python::object().ptr()){
         var = 0;
         LOG(logDEBUG4) << "using constant transition variance " << var;
-    } else {
+    } else {        
         TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
         if ( it == transition_predictions_.end() ) {
             throw std::runtime_error("cannot find prob/var. get_transition_probability must be called first");

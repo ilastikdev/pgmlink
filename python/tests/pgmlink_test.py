@@ -23,6 +23,16 @@ def mk_traxel(x, y, z, id, t, fs):
     traxel.add_feature_array("divProb",2)
     traxel.set_feature_value("divProb",0, 0.1)
     traxel.set_feature_value("divProb",1, 0.9)
+
+    traxel.add_feature_array("divProb_Var", 1)
+    traxel.set_feature_value("divProb_Var", 0, 0.01)
+
+    traxel.add_feature_array("detProb", 2)
+    traxel.set_feature_value("detProb", 0, 0.1)
+    traxel.set_feature_value("detProb", 1, 0.9)
+
+    traxel.add_feature_array("detProb_Var", 1)
+    traxel.set_feature_value("detProb_Var", 0, 0.01)
     
     traxel.add_feature_array("count",1)
     traxel.set_feature_value("count",0, 1)
@@ -131,9 +141,15 @@ class TestTransitionClassifier(ut.TestCase):
 
         ts.add(fs, t1)
         ts.add(fs, t2)
-        
-        distr = pgmlink.DistrId.GaussianPertubation
-        uncertainty_parameter = pgmlink.UncertaintyParameter(1,distr,pgmlink.VectorOfDouble())
+
+        sigmas = pgmlink.VectorOfDouble()
+        sigmas.append(0) # appearance variance
+        sigmas.append(0) # disappearance variance
+
+        distr_id = pgmlink.DistrId.ClassifierUncertainty
+        uncertainty_parameter = pgmlink.UncertaintyParameter(3, # number of iterations
+                                                             distr_id, # distribution id
+                                                             sigmas)
 
         fov = pgmlink.FieldOfView(0,
                                   0,
@@ -188,3 +204,4 @@ class TestTransitionClassifier(ut.TestCase):
         
 if __name__=="__main__":
     ut.main()
+
