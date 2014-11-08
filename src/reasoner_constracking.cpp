@@ -939,7 +939,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 bool first = true;
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
                         trax_it != tracklet_map_[n].end(); ++trax_it) {
-                    LOG(logDEBUG) << "internal arcs traxel " << *trax_it;
+                    LOG(logDEBUG4) << "internal arcs traxel " << *trax_it;
                     Traxel tr = *trax_it;
                     if (!first) {
                         e = transition_( get_transition_probability(tr_prev, tr, state) );
