@@ -782,7 +782,7 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
                                            double transition_parameter,
                                            double border_width){
       const size_t num_parameters = 5;
-      quit_before_inference_ = true;
+      quit_before_inference_ = not(not ground_truth_file_.empty() or not constraints_file_.empty());
 
       for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it) {
           //      std::string tmp_feat_file;
@@ -796,13 +796,11 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
 //              build_hypo_graph(ts);
 
           cout << "writing funkey files with weights:";
-
           for(int i = 0; i < num_parameters; i++) {
-              std::cout << (*it)[i];
+             std::cout << (*it)[i];
           }
 
-          cout << endl;
-
+          cout << "quit_before_inference_" << quit_before_inference_<< endl;
           track(forbidden_cost,//forbidden_cost,
                 0,
                 with_tracklets,
@@ -817,7 +815,6 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
                 border_width,//border_width,
                 true,//with constraints
                 uncertaintyParam);
-
           // write constraint and ground truth files only once
           if(not constraints_file_.empty())
               constraints_file_.clear();
@@ -826,6 +823,7 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
               //		if(not export_from_labeled_graph_)
               //			features_file_ = tmp_feat_file;
           }
+       	quit_before_inference_ = true;
 
       }
 
@@ -843,11 +841,8 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
 
   void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
     int number_of_weights = 5;
-
     write_funkey_set_output_files(writeFeatures,writeConstraints,writeGroundTruth);    
-
     std::vector<std::vector<double>> list;
-
     if(not  writeConstraints.empty() and writeFeatures.empty() and writeGroundTruth.empty()){
     	//constraints only
       	list = std::vector<std::vector<double>>(1,std::vector<double>(number_of_weights,1. ));
@@ -858,16 +853,15 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     }
    	if(not writeFeatures.empty()){
      //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
-      for(int i=0;i<number_of_weights;i++){
-		std::vector<double> param(number_of_weights,0.);
-		param[i] = 1;
-		list.push_back(param);
-      }
+   		for(int i=0;i<number_of_weights;i++){
+			std::vector<double> param(number_of_weights,0.);
+			param[i] = 1;
+			list.push_back(param);
+      	}
+      	cout << "DEBUG OUT " <<number_of_weights << "\t"<< list.size() << endl; 
     }
-
     UncertaintyParameter uncertainty_param(1, MbestCPLEX, 0);
     write_funkey_features(ts,list, uncertainty_param);
-
    	if(not writeFeatures.empty()){
     	transpose_matrix_in_file(writeFeatures);
    	}

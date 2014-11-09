@@ -202,6 +202,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
         if(export_from_labeled_graph_ and not ground_truth_file_.empty()){
             LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
             write_labeledgraph_to_file(hypotheses);
+            ground_truth_file_.clear();
         }
 
         optimizer_->set_export_file_names("","","");
@@ -1116,6 +1117,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
 
 void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
 
+    cout << "write_labeledgraph_to_file" << endl;
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
 
