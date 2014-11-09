@@ -6,7 +6,7 @@ import unittest as ut
 import pgmlink
 # from ilastik.applets.tracking.conservation.transitionClassifierTraining import trainTransition
 import trainClassifiers
-from ilastik.applets.tracking.conservation.TransitionClassifier import TransitionClassifier
+from lazyflow.classifiers.TransitionClassifier import TransitionClassifier
 
 
 def mk_traxel(x, y, z, id, t, fs):
