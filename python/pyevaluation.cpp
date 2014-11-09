@@ -7,18 +7,18 @@
 #include <string>
 #include <sstream>
 
-// boost
-#include <boost/python.hpp>
-#include <boost/python/return_internal_reference.hpp>
+// pgmlink
+#include "pgmlink/feature.h"
+#include "pgmlink/log.h"
+#include "pgmlink/tracking_evaluation.h"
 
 // vigra
 #include <vigra/numpy_array.hxx>
 #include <vigra/numpy_array_converters.hxx>
 
-// pgmlink
-#include "pgmlink/feature.h"
-#include "pgmlink/log.h"
-#include "pgmlink/tracking_evaluation.h"
+// boost
+#include <boost/python.hpp>
+#include <boost/python/return_internal_reference.hpp>
 
 
 using namespace pgmlink;
