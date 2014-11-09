@@ -1,5 +1,5 @@
-#ifndef MULTI_HYPOTHESES_EVALUATION_H
-#define MULTI_HYPOTHESES_EVALUATION_H
+#ifndef TRACKING_EVALUATION_H
+#define TRACKING_EVALUATION_H
 
 // stl
 #include <stdexcept>
@@ -31,7 +31,7 @@ std::pair<IntersectCountType, IntersectCountType> calculate_intersect_union(cons
 
 /* IMPLEMENTATION */
 template <int N, typename T, typename U>
-typename IntersectCountMap<T, U>::type get_intersect_count(vigra::MultiArrayView<N, T> image1, vigra::MultiArrayView<N, U> image2) {
+typename IntersectCountMap<T, U>::type get_intersect_count(vigra::MultiArrayView<N, T> image1, vigra::MultiArrayView<N, U> image2) {  
   if (image1.shape() != image2.shape()) {
     throw std::runtime_error("shape mismatch!");
   }
@@ -39,7 +39,7 @@ typename IntersectCountMap<T, U>::type get_intersect_count(vigra::MultiArrayView
   typedef typename vigra::CoupledIteratorType<N, T, U>::type Iterator;
   Iterator start = vigra::createCoupledIterator(image1, image2);
   Iterator end = start.getEndIterator();
-  for (Iterator it = start; it != end; ++start) {
+  for (Iterator it = start; it != end; ++it) {
     if (it.get<1>() != T()) {
       if(it.get<2>() != U()) {
         counts[it.get<1>()][it.get<2>()] += 1;
