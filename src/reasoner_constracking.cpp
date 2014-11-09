@@ -298,7 +298,18 @@ double sigmoid(double x){
 }
 
 double inverse_sigmoid(double x){
-	return quantile(standard_gaussian_distribution, x);
+    if (x <= 0.000001) {
+        x = 0.000001;
+    }
+    assert(x > 0 && x <= 1);
+    double res = 0.;
+    try {
+        res = quantile(standard_gaussian_distribution, x);
+    } catch (...) {
+        LOG(logERROR) << "error in inverse_sigmoid(), using 0.; x = " << x;
+    }
+    return res;
+
 }
 
 double ConservationTracking::sample_with_classifier_variance(double mean, double variance){
