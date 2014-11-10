@@ -96,6 +96,14 @@ typedef vigra::MultiArrayView<2, feature_type> FeatureMatrixView;
 */
 void set_solution(HypothesesGraph& graph, const size_t solution_index);
 
+/**
+\brief write the solution stored in the property maps <TT>node_active_count</TT>
+  and <TT>arc_active_count</TT> with the given solution index into the
+  <TT>node_active</TT>, <TT>node_active2</TT> and <TT>arc_active</TT> property
+  maps.
+*/
+void set_injected_solution(HypothesesGraph& graph);
+
 /*=============================================================================
   pure virtual classes
 =============================================================================*/

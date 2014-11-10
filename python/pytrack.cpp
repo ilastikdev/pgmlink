@@ -205,7 +205,14 @@ void export_track() {
     class_<pgmlink::features::TrackingFeatureExtractor>("TrackingFeatureExtractor",
                                                         init<boost::shared_ptr<HypothesesGraph>, FieldOfView>(args("HypothesesGraph, FieldOfView")))
             .def("compute_features", &pgmlink::features::TrackingFeatureExtractor::compute_features)
-            .def("append_feature_vector_to_file", &pgmlink::features::TrackingFeatureExtractor::append_feature_vector_to_file);
+            .def("append_feature_vector_to_file", &pgmlink::features::TrackingFeatureExtractor::append_feature_vector_to_file)
+            .def("train_track_svm", &pgmlink::features::TrackingFeatureExtractor::train_track_svm)
+            .def("get_track_svm", &pgmlink::features::TrackingFeatureExtractor::get_track_svm)
+            .def("set_track_svm", &pgmlink::features::TrackingFeatureExtractor::set_track_svm);
+
+    class_<pgmlink::features::SVMOutlierCalculator, boost::shared_ptr<pgmlink::features::SVMOutlierCalculator> >("SVMOutlierCalculator")
+            .def_pickle(TemplatedPickleSuite<pgmlink::features::SVMOutlierCalculator>());
+
 
     class_<vector<vigra::UInt64> >("IdVector")
     .def(vector_indexing_suite<vector<vigra::UInt64> >())

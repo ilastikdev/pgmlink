@@ -121,6 +121,63 @@ void set_solution(HypothesesGraph& graph, const size_t solution_index) {
   }
 }
 
+void set_injected_solution(HypothesesGraph& graph)
+{
+    // check if the graph has the necessary property maps
+    if (!graph.has_property(appearance_label()))
+      throw std::runtime_error("Graph doesn't have a \"appearance_label\" property map");
+
+    if (not graph.has_property(disappearance_label()))
+      throw std::runtime_error("Graph doesn't have an \"disappearance_label\" property map");
+
+    if (not graph.has_property(division_label()))
+      throw std::runtime_error("Graph doesn't have an \"division_label\" property map");
+
+    if (not graph.has_property(arc_label()))
+      throw std::runtime_error("Graph doesn't have an \"arc_label\" property map");
+
+    // get ground truth label maps
+    property_map<appearance_label, HypothesesGraph::base_graph>::type& gt_appearance = graph.get(appearance_label());
+    property_map<disappearance_label, HypothesesGraph::base_graph>::type& gt_disappearance = graph.get(disappearance_label());
+    property_map<division_label, HypothesesGraph::base_graph>::type& gt_division = graph.get(division_label());
+    property_map<arc_label, HypothesesGraph::base_graph>::type& gt_arc = graph.get(arc_label());
+
+    // if not present, add active maps
+    if (not graph.has_property(node_active())) {
+      graph.add(node_active());
+    }
+    if (not graph.has_property(node_active2())) {
+      graph.add(node_active2());
+    }
+    if (not graph.has_property(arc_active())) {
+      graph.add(arc_active());
+    }
+    if(not graph.has_property(division_active())) {
+        graph.add(division_active());
+    }
+
+    // Get the property maps (caution: "node_active_map" not "nodes_active_map")
+    node_active_map_type& node_active_map = graph.get(node_active());
+    node_active2_map_type& node_active2_map = graph.get(node_active2());
+    arc_active_map_type& arc_active_map = graph.get(arc_active());
+    division_active_map_type& div_active_map = graph.get(division_active());
+
+    // insert solution
+    bool is_active;
+    for (NodeIt n_it(graph); n_it != lemon::INVALID; ++n_it)
+    {
+        is_active = gt_appearance[n_it] || gt_disappearance[n_it];
+        node_active_map[n_it] = is_active;
+        node_active2_map.set(n_it, is_active);
+        div_active_map[n_it] = gt_division[n_it];
+    }
+
+    for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it)
+    {
+        arc_active_map[a_it] = gt_arc[a_it];
+    }
+}
+
 ////
 //// function get_out_nodes
 ////

@@ -192,6 +192,7 @@ void export_hypotheses() {
     .def("addDisappearanceLabel",&HypothesesGraph::add_disappearance_label)
     .def("addDivisionLabel",&HypothesesGraph::add_division_label)
     .def("set_solution", &features::set_solution)
+    .def("set_injected_solution", &features::set_injected_solution)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,
