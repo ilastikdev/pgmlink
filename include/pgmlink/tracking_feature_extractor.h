@@ -104,6 +104,9 @@ public:
     /// Dispatch computation of features here
     void compute_features();
 
+    /// Set HDF5 filename to which the features of all tracks will be written
+    void set_track_feature_output_file(const std::string& filename);
+
     /// Append features for this solution to the given file.
     /// If file does not exist, create it.
     /// Comments are ignored, and will not be copied to the edited file
@@ -114,6 +117,10 @@ private:
     void push_back_feature(
         std::string feature_name,
         const MinMaxMeanVarCalculator& mmmv_calculator);
+
+    void save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix);
+    void save_traxel_ids_to_h5(ConstTraxelRefVectors& track_traxels);
+
     /**
      * methods that compute each feature
      */
@@ -151,6 +158,7 @@ private:
     JointFeatureVector joint_feature_vector_;
     FeatureDescription feature_descriptions_;
     boost::shared_ptr<HypothesesGraph> graph_;
+    std::string track_feature_output_file_;
 };
 
 class BorderDistanceFilter {

@@ -99,15 +99,15 @@ void TrackFeatureExtractor::compute_features(
     compute_sq_id_features(traxelref_vec, "Count");
     compute_sq_id_features(traxelref_vec, "Mean");
     compute_sq_id_features(traxelref_vec, "Variance");
-    compute_sq_diff_features(traxelref_vec, "com");
+    compute_sq_diff_features(traxelref_vec, "RegionCenter");
     compute_sq_diff_features(traxelref_vec, "Count");
     compute_sq_diff_features(traxelref_vec, "Mean");
     compute_sq_diff_features(traxelref_vec, "Variance");
-    compute_sq_curve_features(traxelref_vec, "com");
+    compute_sq_curve_features(traxelref_vec, "RegionCenter");
     compute_sq_curve_features(traxelref_vec, "Count");
     compute_sq_curve_features(traxelref_vec, "Mean");
     compute_sq_curve_features(traxelref_vec, "Variance");
-    compute_angle_features(traxelref_vec, "com");
+    compute_angle_features(traxelref_vec, "RegionCenter");
 }
 
 void TrackFeatureExtractor::compute_features(
@@ -311,6 +311,37 @@ const std::string TrackingFeatureExtractor::get_feature_description(size_t featu
     return feature_descriptions_[feature_index];
 }
 
+void TrackingFeatureExtractor::save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix)
+{
+    if(track_feature_output_file_.size() > 0)
+    {
+        std::stringstream dataset_name;
+        dataset_name << "tracks/" << track_id << "/" << feature_name;
+        vigra::writeHDF5(track_feature_output_file_.c_str(), dataset_name.str().c_str(), matrix);
+    }
+}
+
+void TrackingFeatureExtractor::save_traxel_ids_to_h5(ConstTraxelRefVectors &track_traxels)
+{
+    size_t track_id = 0;
+    for(auto track : track_traxels)
+    {
+        if(track.size() == 0)
+        {
+            LOG(logWARNING) << "Cannot output empty track!";
+            continue;
+        }
+        FeatureMatrix traxels(vigra::Shape2(track.size(), 2));
+
+        for(size_t i = 0; i < track.size(); ++i)
+        {
+            traxels(i,0) = track[i]->Timestep;
+            traxels(i,1) = track[i]->Id;
+        }
+        save_features_to_h5(track_id++, "traxels", traxels);
+    }
+}
+
 void TrackingFeatureExtractor::compute_features()
 {
     typedef AppearanceTraxels::AppearanceType AppearanceType;
@@ -341,39 +372,41 @@ void TrackingFeatureExtractor::compute_features()
         margin_filter_function_);
     ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
 
-    compute_sq_diff_features(track_traxels, "com");
+    save_traxel_ids_to_h5(track_traxels);
+
+    compute_sq_diff_features(track_traxels, "RegionCenter");
     compute_sq_diff_features(track_traxels, "Count");
     compute_sq_diff_features(track_traxels, "Mean");
     compute_sq_diff_features(track_traxels, "Variance");
-    compute_sq_accel_features(track_traxels, "com");
+    compute_sq_accel_features(track_traxels, "RegionCenter");
     compute_sq_accel_features(track_traxels, "Count");
     compute_sq_accel_features(track_traxels, "Mean");
     compute_sq_accel_features(track_traxels, "Variance");
-    compute_angle_features(track_traxels, "com");
+    compute_angle_features(track_traxels, "RegionCenter");
     compute_track_length_features(track_traxels);
-    compute_track_id_outlier(track_traxels, "com");
+    compute_track_id_outlier(track_traxels, "RegionCenter");
     compute_track_id_outlier(track_traxels, "Count");
     compute_track_id_outlier(track_traxels, "Mean");
     compute_track_id_outlier(track_traxels, "Variance");
-    compute_track_diff_outlier(track_traxels, "com");
+    compute_track_diff_outlier(track_traxels, "RegionCenter");
     compute_track_diff_outlier(track_traxels, "Count");
     compute_track_diff_outlier(track_traxels, "Mean");
     compute_track_diff_outlier(track_traxels, "Variance");
     //TODO filter the tracks for the following? (division start / division end)
     compute_track_feature_outlier(track_traxels);
-    compute_division_sq_diff_features(div_1_traxels, "com");
+    compute_division_sq_diff_features(div_1_traxels, "RegionCenter");
     compute_division_sq_diff_features(div_1_traxels, "Count");
     compute_division_sq_diff_features(div_1_traxels, "Mean");
     compute_division_sq_diff_features(div_1_traxels, "Variance");
-    compute_division_sq_diff_outlier(div_1_traxels, "com");
+    compute_division_sq_diff_outlier(div_1_traxels, "RegionCenter");
     compute_division_sq_diff_outlier(div_1_traxels, "Count");
     compute_division_sq_diff_outlier(div_1_traxels, "Mean");
     compute_division_sq_diff_outlier(div_1_traxels, "Variance");
-    compute_child_deceleration_features(div_2_traxels, "com");
+    compute_child_deceleration_features(div_2_traxels, "RegionCenter");
     compute_child_deceleration_features(div_2_traxels, "Count");
     compute_child_deceleration_features(div_2_traxels, "Mean");
     compute_child_deceleration_features(div_2_traxels, "Variance");
-    compute_child_deceleration_outlier(div_2_traxels, "com");
+    compute_child_deceleration_outlier(div_2_traxels, "RegionCenter");
     compute_child_deceleration_outlier(div_2_traxels, "Count");
     compute_child_deceleration_outlier(div_2_traxels, "Mean");
     compute_child_deceleration_outlier(div_2_traxels, "Variance");
@@ -385,6 +418,11 @@ void TrackingFeatureExtractor::compute_features()
         static_cast<double>(filtered_disapp_traxels.size() / all_disapp_traxels.size()));
     compute_border_distances(all_app_traxels, "appearance");
     compute_border_distances(all_disapp_traxels, "disappearance");
+}
+
+void TrackingFeatureExtractor::set_track_feature_output_file(const std::string &filename)
+{
+    track_feature_output_file_ = filename;
 }
 
 void TrackingFeatureExtractor::append_feature_vector_to_file(const std::string& filename)
@@ -455,6 +493,7 @@ void TrackingFeatureExtractor::compute_sq_diff_features(
     sq_diff_mmmv.set_max(0.0);
 
     // for each track:
+    size_t track_id = 0;
     for(auto track : track_traxels)
     {
         // only compute velocities if track is longer than 1 element
@@ -472,6 +511,7 @@ void TrackingFeatureExtractor::compute_sq_diff_features(
 
         // add values to min/max/mean/var calculator
         sq_diff_mmmv.add_values(sq_diff_matrix);
+        save_features_to_h5(track_id++, "sq_diff_"+feature_name, sq_diff_matrix);
     }
     push_back_feature("squared difference of " + feature_name, sq_diff_mmmv);
 }
@@ -484,6 +524,7 @@ void TrackingFeatureExtractor::compute_sq_accel_features(
     sq_accel_mmmv.set_max(0.0);
 
     // for each track:
+    size_t track_id = 0;
     for(auto track : track_traxels)
     {
         // only compute accelerations if track is longer than 2 elements
@@ -501,6 +542,7 @@ void TrackingFeatureExtractor::compute_sq_accel_features(
 
         // add values to min/max/mean/var calculator
         sq_accel_mmmv.add_values(sq_accel_matrix);
+        save_features_to_h5(track_id++, "sq_accel_"+feature_name, sq_accel_matrix);
     }
     push_back_feature("squared acceleration of " + feature_name, sq_accel_mmmv);
 }
@@ -513,6 +555,7 @@ void TrackingFeatureExtractor::compute_angle_features(
     angle_mmmv.set_max(0.0);
 
     // for each track:
+    size_t track_id = 0;
     for(auto track : track_traxels)
     {
         // only compute angles in track if track is longer than 2 elements
@@ -529,6 +572,7 @@ void TrackingFeatureExtractor::compute_angle_features(
         angle_cos_calc_ptr_->calculate(feature_matrix, angles);
 
         angle_mmmv.add_values(angles);
+        save_features_to_h5(track_id++, "angles_"+feature_name, angles);
     }
     push_back_feature(
         "Mean of all angle cosines of feature " + feature_name,
@@ -544,9 +588,13 @@ void TrackingFeatureExtractor::compute_track_length_features(
     MinMaxMeanVarCalculator track_length_mmmv;
     track_length_mmmv.set_max(0.0);
 
+    size_t track_id = 0;
     for (auto track : track_traxels)
     {
         track_length_mmmv.add_value(static_cast<double>(track.size()));
+        FeatureMatrix m(vigra::Shape2(1,1));
+        m(0,0) = track.size();
+        save_features_to_h5(track_id++, "track_length", m);
     }
     push_back_feature("track length", track_length_mmmv);
 }
@@ -557,6 +605,7 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
 {
     MinMaxMeanVarCalculator id_out_mmmv;
     id_out_mmmv.set_max(0.0);
+    size_t track_id = 0;
     for (auto track : track_traxels)
     {
         // extract features
@@ -570,6 +619,7 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
         {
             mvn_outlier_calc_ptr_->calculate(feature_matrix, temp);
             id_out_mmmv.add_value(temp(0, 0));
+            save_features_to_h5(track_id++, "outlier_id_"+feature_name, temp);
         }
     }
     push_back_feature("track outlier share of " + feature_name, id_out_mmmv);
@@ -581,6 +631,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
 {
     MinMaxMeanVarCalculator diff_out_mmmv;
     diff_out_mmmv.set_max(0.0);
+    size_t track_id = 0;
     for (auto track : track_traxels)
     {
         // extract features
@@ -598,6 +649,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
         {
             mvn_outlier_calc_ptr_->calculate(diff_matrix, temp);
             diff_out_mmmv.add_value(temp(0, 0));
+            save_features_to_h5(track_id++, "diff_outlier_"+feature_name, temp);
         }
     }
     push_back_feature(
@@ -627,6 +679,11 @@ void TrackingFeatureExtractor::compute_track_feature_outlier(
     mmmv_score.set_max(0.0);
     mmmv_score.add_values(score_matrix);
     push_back_feature("track feature outlier score", mmmv_score);
+
+    if(track_feature_output_file_.size() > 0)
+    {
+        vigra::writeHDF5(track_feature_output_file_.c_str(), "track_outliers_svm", score_matrix);
+    }
 }
 
 void TrackingFeatureExtractor::compute_division_sq_diff_features(
@@ -737,7 +794,7 @@ void TrackingFeatureExtractor::compute_border_distances(
     for (auto appearance : appearance_traxels)
     {
         FeatureMatrix position;
-        TraxelsFeaturesIdentity position_extractor("com");
+        TraxelsFeaturesIdentity position_extractor("RegionCenter");
         position_extractor.extract(appearance, position);
         double border_dist = 0;
         if (position.shape(1) == 3)
@@ -828,7 +885,7 @@ bool BorderDistanceFilter::is_out_of_margin(const Traxel& traxel) const
 {
     bool ret = false;
     const FeatureMap& feature_map = traxel.features.get();
-    FeatureMap::const_iterator com_it = feature_map.find("com");
+    FeatureMap::const_iterator com_it = feature_map.find("RegionCenter");
     if (com_it == feature_map.end())
     {
         LOG(logDEBUG) << "in BorderDistanceFilter::is_out_of_margin(): "

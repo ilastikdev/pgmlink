@@ -111,6 +111,13 @@ feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract1)(cons
 feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract2)(const Traxel& t1, const Traxel& t2) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
 feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract3)(const Traxel& t1, const Traxel& t2, const Traxel& t3) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
 
+std::vector<double> pyextractor_get_feature_vector(pgmlink::features::TrackingFeatureExtractor& fe)
+{
+    std::vector<double> feature_vector;
+    fe.get_feature_vector(feature_vector);
+    return feature_vector;
+}
+
 void export_track() {
     class_<vector<Event> >("EventVector")
 	.def(vector_indexing_suite<vector<Event> >())
@@ -202,14 +209,15 @@ void export_track() {
             .def("extract", extract3)
     ;
 
-
     class_<pgmlink::features::TrackingFeatureExtractor>("TrackingFeatureExtractor",
                                                         init<boost::shared_ptr<HypothesesGraph>, FieldOfView>(args("HypothesesGraph, FieldOfView")))
             .def("compute_features", &pgmlink::features::TrackingFeatureExtractor::compute_features)
             .def("append_feature_vector_to_file", &pgmlink::features::TrackingFeatureExtractor::append_feature_vector_to_file)
             .def("train_track_svm", &pgmlink::features::TrackingFeatureExtractor::train_track_svm)
             .def("get_track_svm", &pgmlink::features::TrackingFeatureExtractor::get_track_svm)
-            .def("set_track_svm", &pgmlink::features::TrackingFeatureExtractor::set_track_svm);
+            .def("set_track_svm", &pgmlink::features::TrackingFeatureExtractor::set_track_svm)
+            .def("get_feature_vector", &pyextractor_get_feature_vector)
+            .def("set_track_feature_output_file", &pgmlink::features::TrackingFeatureExtractor::set_track_feature_output_file);
 
     class_<pgmlink::features::SVMOutlierCalculator, boost::shared_ptr<pgmlink::features::SVMOutlierCalculator> >("SVMOutlierCalculator")
             .def_pickle(TemplatedPickleSuite<pgmlink::features::SVMOutlierCalculator>());
