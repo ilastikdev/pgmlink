@@ -449,7 +449,14 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
   }
 
   boost::shared_ptr<HypothesesGraph> ConsTracking::get_hypo_graph() {
-    return hypotheses_graph_;
+      return hypotheses_graph_;
+  }
+
+  boost::shared_ptr<HypothesesGraph> ConsTracking::get_resolved_hypotheses_graph()
+  {
+      if(!resolved_graph_)
+          throw std::runtime_error("Merger Resolving was not run, cannot get resolved graph.");
+      return resolved_graph_;
   }
 
   EventVectorVectorVector ConsTracking::track(double forbidden_cost,
@@ -653,16 +660,16 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 			LOG(logDEBUG) << "max_number_objects = 1";
 		} else {
             // create a copy of the hypotheses graph to perform merger resolution without destroying the old graph
-            HypothesesGraph resolved_graph;
-            HypothesesGraph::copy(*hypotheses_graph_, resolved_graph);
+            resolved_graph_ = boost::make_shared<HypothesesGraph>();
+            HypothesesGraph::copy(*hypotheses_graph_, *resolved_graph_);
 
-            MergerResolver m(&resolved_graph);
+            MergerResolver m(resolved_graph_.get());
 			FeatureExtractorBase* extractor;
 			DistanceFromCOMs distance;
 			if (coordinates) {
 				extractor = new FeatureExtractorArmadillo(coordinates);
 			} else {
-                calculate_gmm_beforehand(resolved_graph, 1, n_dim);
+                calculate_gmm_beforehand(*resolved_graph_, 1, n_dim);
 				extractor = new FeatureExtractorMCOMsFromMCOMs;
 			}
 			FeatureHandlerFromTraxels handler(*extractor, distance);
@@ -670,12 +677,12 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 			m.resolve_mergers(handler);
 
 			HypothesesGraph g_res;
-            resolve_graph(resolved_graph, g_res, transition, ep_gap, with_tracklets, transition_parameter, with_constraints);
+            resolve_graph(*resolved_graph_, g_res, transition, ep_gap, with_tracklets, transition_parameter, with_constraints);
 //            prune_inactive(resolved_graph);
 
 			cout << "-> constructing resolved events" << endl;
-            boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(resolved_graph);
-            boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(resolved_graph);
+            boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
+            boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
 
 			cout << "-> merging unresolved and resolved events" << endl;
 			// delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS

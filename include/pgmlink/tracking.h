@@ -205,6 +205,7 @@ namespace pgmlink {
       PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts);
 
       PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
+      PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_resolved_hypotheses_graph();
 
       PGMLINK_EXPORT EventVectorVectorVector track(double forbidden_cost = 0,
 							    double ep_gap=0.01,
@@ -266,6 +267,7 @@ namespace pgmlink {
 
       boost::shared_ptr<HypothesesGraph> hypotheses_graph_;
       boost::shared_ptr<HypothesesGraph> original_hypotheses_graph_;
+      boost::shared_ptr<HypothesesGraph> resolved_graph_;
       boost::shared_ptr<ConservationTracking> pgm_;
 							    
       std::string features_file_;

@@ -173,6 +173,7 @@ void export_track() {
       .def("resolve_mergers", &ConsTracking::resolve_mergers)
       .def("detections", &ConsTracking::detections)
       .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)
+      .def("get_resolved_hypotheses_graph", &ConsTracking::get_resolved_hypotheses_graph)
       .def("SetFunkeyOutputFiles",&ConsTracking::write_funkey_set_output_files)
       .def("writeFunkeyFeatures",&ConsTracking::write_funkey_features)
       .def("writeAllFunkeyFeatures",&pywrite_all_funkey_features)
