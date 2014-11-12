@@ -118,7 +118,7 @@ private:
         std::string feature_name,
         const MinMaxMeanVarCalculator& mmmv_calculator);
 
-    void save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix);
+    void save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix, bool tracks=true);
     void save_traxel_ids_to_h5(ConstTraxelRefVectors& track_traxels);
 
     /**
