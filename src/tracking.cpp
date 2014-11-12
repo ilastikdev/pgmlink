@@ -312,7 +312,8 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                     with_tracklets,
                     n_dim,
                     transition_parameter,
-                    with_constraints
+                    with_constraints,
+                    transition_classifier
                 ));
             }
 
