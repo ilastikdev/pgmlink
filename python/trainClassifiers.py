@@ -125,8 +125,8 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
 
          if label not in label2Segment[t+1].keys():
             continue
-         assert len(label2Segment[t][label]) == 1, \
-             'only single segment examples are allowed; see the joint-tracking trainClassifier script for more'
+         #assert len(label2Segment[t][label]) == 1, \
+         #    'only single segment examples are allowed; see the joint-tracking trainClassifier script for more'
          pair = [ label2Segment[t][label][0], label2Segment[t+1][label][0] ]
          if label < 0:
             negativePairs_at.append(pair)
@@ -228,16 +228,29 @@ if __name__ == '__main__':
       t_axis = 0
       div_from_ilastik=True
 
-   elif name == 'rapoport':
-      fn = '/media/mschiegg/Volume/cvpr2014/joint_data/trainingData/rapoport_sub/classifierTraining.ilp'
-      raw_fn = '/media/mschiegg/Volume/cvpr2014/joint_data/trainingData/rapoport_sub/set12_raw_sub.h5'
-      pathRaw = 'volume/data'
-      out_fn = '/media/mschiegg/Volume/cvpr2014/joint_data/trainingData/rapoport_sub/classifiers.h5'
+   elif name == 'rapoport1':
+      fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset1/training1_transition-classifier.ilp'
+      raw_fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset1/training1_raw.h5'
+      pathRaw = 'exported_data'
+      out_fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset1/training1_transition-classifier.ilp'
       pathTransitions = '/ManualTransitions/Labels/0'
-      pathRegions = '/ManualRegions/Labels/0'
-      pathDivisions = '/ManualDivisions/Labels/0'
 
-      segmentImg_fn = '/media/mschiegg/Volume/cvpr2014/joint_data/trainingData/rapoport_sub/set12_oversegmentation_sub.h5'
+      labelImg_fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset1/training1_labels.h5'
+      pathLabelImg = 'exported_data_T'
+      ch_axis = -1
+      ch = 0
+      segmentImg_path = 'exported_data'
+      t_axis = 0
+      
+   elif name == 'rapoport2':
+      fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset2/training2_transition-classifier.ilp'
+      raw_fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset2/training2_raw.h5'
+      pathRaw = 'exported_data_T'
+      out_fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset2/training2_transition-classifier.ilp'
+      pathTransitions = '/ManualTransitions/Labels/0'
+
+      labelImg_fn = '/home/mschiegg/extern/data/cvpr2015/rapoport/dataset2/training2_labels.h5'
+      pathLabelImg = 'exported_data'
       ch_axis = -1
       ch = 0
       segmentImg_path = 'exported_data'
