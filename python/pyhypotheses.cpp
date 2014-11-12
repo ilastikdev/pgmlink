@@ -22,6 +22,10 @@ using namespace boost::python;
 typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_m;
 
 
+std::vector< std::vector<Event> > get_events_of_graph(const HypothesesGraph& g){
+  return *events(g,0);
+}
+
 node_traxel_m& addNodeTraxelMap(HypothesesGraph* g) {
   g->add(node_traxel());
   return g->get(node_traxel());
@@ -201,6 +205,8 @@ void export_hypotheses() {
 	 return_internal_reference<>())
     .def_pickle(HypothesesGraph_pickle_suite())
     ;
+
+  def("getEventsOfGraph",&get_events_of_graph);
 
   //
   // lemon

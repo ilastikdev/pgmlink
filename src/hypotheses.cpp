@@ -757,6 +757,14 @@ void addNodeToTracklet(const HypothesesGraph& traxel_graph, HypothesesGraph& tra
     tracklet.push_back(tr);
     tracklet_map.set(tracklet_node, tracklet);
     traxel2tracklet[traxel_node] = tracklet_node;
+
+
+  	if(traxel_graph.getProperties().count("appearance_label") > 0){
+		// create appropriate labels in tracklet node
+			tracklet_graph.add_appearance_label(tracklet_node,traxel_graph.get(appearance_label())[traxel_node]);
+			tracklet_graph.add_disappearance_label(tracklet_node,traxel_graph.get(disappearance_label())[traxel_node]);
+			tracklet_graph.add_division_label(tracklet_node,traxel_graph.get(division_label())[traxel_node]);
+	}
     //	size_t timestep = tr.Timestep;
     //	timestep_map[tracklet_node].add(timestep);
     //	tracklet_graph.timesteps_.insert(timestep);
@@ -791,6 +799,13 @@ void addNodeToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
     std::vector<double> arc_dists;
     tracklet_intern_dist_map.set(tracklet_node, arc_dists);
 
+	if(traxel_graph.getProperties().count("appearance_label") > 0){
+		// create appropriate labels in tracklet node
+		tracklet_graph.add_appearance_label(tracklet_node,traxel_graph.get(appearance_label())[traxel_node]);
+		tracklet_graph.add_disappearance_label(tracklet_node,traxel_graph.get(disappearance_label())[traxel_node]);
+		tracklet_graph.add_division_label(tracklet_node,traxel_graph.get(division_label())[traxel_node]);
+	}
+
     tracklet2traxel[tracklet_node].push_back(traxel_node);
 }
 
@@ -809,7 +824,11 @@ void addArcsToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
         LOG(logDEBUG4) << "tracklet node from " << tracklet_graph.id(traxel2tracklet[traxel_graph.source(arc)]);
         LOG(logDEBUG4) << "tracklet node to " << tracklet_graph.id(traxel2tracklet[traxel_graph.target(arc)]);
         assert(from != to);
+
         HypothesesGraph::Arc tracklet_arc = tracklet_graph.addArc(from, to);
+        if(traxel_graph.getProperties().count("arc_label") > 0){
+			tracklet_graph.add_arc_label(tracklet_arc,traxel_graph.get(arc_label())[arc]);
+		}
         tracklet_arc_distances.set(tracklet_arc,traxel_arc_distances[arc]);
         traxel_arc_ids.set(tracklet_arc, (int) traxel_graph.id(arc));
     }
