@@ -114,13 +114,16 @@ public:
         const FieldOfView &fov,
         boost::function<bool (const Traxel&)> margin_filter_function);
 
-    /// Train the svm with the given hypotheses graph assuming that the arc and
+    /// Train the svms with the given hypotheses graph assuming that the arc and
     /// node active map contain a correct labeling
     void train_track_svm();
+    void train_division_svm();
 
-    /// set and get for the track outlier svm
+    /// set and get for the outlier svms
     boost::shared_ptr<SVMOutlierCalculator> get_track_svm() const;
+    boost::shared_ptr<SVMOutlierCalculator> get_division_svm() const;
     void set_track_svm(boost::shared_ptr<SVMOutlierCalculator> track_svm);
+    void set_division_svm(boost::shared_ptr<SVMOutlierCalculator> division_svm);
 
     /// Get the complete vector of features computed for the currently set solution
     void get_feature_vector(JointFeatureVector& feature_vector) const;
@@ -162,6 +165,7 @@ private:
     void compute_division_sq_diff_outlier(ConstTraxelRefVectors&, std::string);
     void compute_child_deceleration_features(ConstTraxelRefVectors&, std::string);
     void compute_child_deceleration_outlier(ConstTraxelRefVectors&, std::string);
+    void compute_division_feature_outlier(ConstTraxelRefVectors&);
     void compute_border_distances(ConstTraxelRefVectors&, std::string);
     // TODO: add many more
 
@@ -174,6 +178,7 @@ private:
     boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
     boost::shared_ptr<MVNOutlierCalculator> mvn_outlier_calc_ptr_;
     boost::shared_ptr<SVMOutlierCalculator> svm_track_outlier_calc_ptr_;
+    boost::shared_ptr<SVMOutlierCalculator> svm_div_outlier_calc_ptr_;
     boost::shared_ptr<SquaredMahalanobisCalculator> sq_mahal_calc_ptr_;
     boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
     boost::shared_ptr<ChildParentDiffCalculator> child_parent_diff_calc_ptr_;

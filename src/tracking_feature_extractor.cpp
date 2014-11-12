@@ -306,7 +306,6 @@ void DivisionFeatureExtractor::compute_id_features(
     // the feature matrix does not have to have a feature dimension of one
     // but it's asserted anyway to indicate possible causes of bugs
     assert(feature_matrix.shape(1) == 1);
-    LOG(logDEBUG) << feature_matrix;
     double child_feature_sum = feature_matrix(1,0) + feature_matrix(2,0);
     double child_feature_diff = feature_matrix(1,0) - feature_matrix(2,0);
     child_feature_diff = std::abs(child_feature_diff);
@@ -403,6 +402,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     row_max_calc_ptr_(new MaxCalculator<0>),
     mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
+    svm_div_outlier_calc_ptr_(new SVMOutlierCalculator),
     sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
@@ -422,6 +422,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     row_max_calc_ptr_(new MaxCalculator<0>),
     mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
+    svm_div_outlier_calc_ptr_(new SVMOutlierCalculator),
     sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
@@ -452,15 +453,41 @@ void TrackingFeatureExtractor::train_track_svm()
     svm_track_outlier_calc_ptr_->train(track_feature_matrix, 1.0);
 }
 
+void TrackingFeatureExtractor::train_division_svm()
+{
+    // get the division traxels
+    DivisionTraxels div_extractor;
+    ConstTraxelRefVectors div_traxels = div_extractor(*graph_);
+    // calculate the feature vectors for all divisions
+    FeatureMatrix div_feature_matrix;
+    DivisionFeatureExtractor div_feature_extractor;
+    div_feature_extractor.compute_features(div_traxels, div_feature_matrix);
+    // train the svm
+    // TODO the kernel width is set to 1.0 but all the features are probably on
+    // different scales -> do some normalization in DivisionFeatureExtractor
+    svm_div_outlier_calc_ptr_->train(div_feature_matrix, 1.0);
+}
+
 boost::shared_ptr<SVMOutlierCalculator> TrackingFeatureExtractor::get_track_svm() const
 {
     return svm_track_outlier_calc_ptr_;
+}
+
+boost::shared_ptr<SVMOutlierCalculator> TrackingFeatureExtractor::get_division_svm() const
+{
+    return svm_div_outlier_calc_ptr_;
 }
 
 void TrackingFeatureExtractor::set_track_svm(
     boost::shared_ptr<SVMOutlierCalculator> track_svm)
 {
     svm_track_outlier_calc_ptr_ = track_svm;
+}
+
+void TrackingFeatureExtractor::set_division_svm(
+    boost::shared_ptr<SVMOutlierCalculator> division_svm)
+{
+    svm_div_outlier_calc_ptr_ = division_svm;
 }
 
 const std::string TrackingFeatureExtractor::get_feature_description(size_t feature_index) const
@@ -571,6 +598,7 @@ void TrackingFeatureExtractor::compute_features()
     compute_child_deceleration_outlier(div_2_traxels, "Count");
     compute_child_deceleration_outlier(div_2_traxels, "Mean");
     compute_child_deceleration_outlier(div_2_traxels, "Variance");
+    compute_division_feature_outlier(div_1_traxels);
     push_back_feature(
         "Share of appearances within margin",
         static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
@@ -977,6 +1005,36 @@ void TrackingFeatureExtractor::compute_child_deceleration_outlier(
         outlier /= static_cast<double>(division_count);
     }
     push_back_feature("Outlier in child " + feature_name + " decelerations", outlier);
+}
+
+void TrackingFeatureExtractor::compute_division_feature_outlier(
+    ConstTraxelRefVectors& divisions)
+{
+    FeatureMatrix div_feature_matrix;
+    DivisionFeatureExtractor div_feature_extractor;
+    div_feature_extractor.compute_features(divisions, div_feature_matrix);
+    FeatureMatrix score_matrix;
+    if (svm_div_outlier_calc_ptr_->is_trained())
+    {
+        svm_div_outlier_calc_ptr_->calculate(div_feature_matrix, score_matrix);
+    }
+    else
+    {
+        LOG(logWARNING) << "in TrackingFeatureExtractor::compute_div_feature_outlier()";
+        LOG(logWARNING) << "SVMOutlierCalculator not trained";
+        score_matrix.reshape(vigra::Shape2(1, 1));
+        score_matrix.init(0.0);
+    }
+    MinMaxMeanVarCalculator mmmv_score;
+    mmmv_score.set_max(0.0);
+    mmmv_score.add_values(score_matrix);
+    push_back_feature("division feature outlier score", mmmv_score);
+
+    // TODO
+    //if(track_feature_output_file_.size() > 0)
+    //{
+    //    vigra::writeHDF5(track_feature_output_file_.c_str(), "track_outliers_svm", score_matrix);
+    //}
 }
 
 void TrackingFeatureExtractor::compute_border_distances(
