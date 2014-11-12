@@ -795,7 +795,7 @@ boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
 }
 
 
-double ConservationTracking::get_transition_variance(Traxel tr1, Traxel tr2) {
+double ConservationTracking::get_transition_variance(Traxel& tr1, Traxel& tr2) {
     double var;
 
     if (transition_classifier_.ptr()==boost::python::object().ptr()){
@@ -816,7 +816,14 @@ double ConservationTracking::get_transition_variance(Traxel tr1, Traxel tr2) {
     return var;
 }
 
-double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, size_t state) {
+namespace{
+bool callable(boost::python::object object)
+{
+  return 1 == PyCallable_Check(object.ptr());
+}
+}
+
+double ConservationTracking::get_transition_probability(Traxel& tr1, Traxel& tr2, size_t state) {
 
     LOG(logDEBUG4) << "get_transition_probability()";
 
@@ -840,16 +847,18 @@ double ConservationTracking::get_transition_probability(Traxel tr1, Traxel tr2, 
     TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
     if ( it == transition_predictions_.end() ) {
         // predict and store
-        double var;
-        try {            
-            boost::python::object prediction = transition_classifier_.attr("predict")(tr1,tr2);
-
+        double var;        
+        try {
+            assert(tr1.features.find("RegionCenter") != tr1.features.end());
+            assert(callable(transition_classifier_.attr("predictWithCoordinates")));
+            PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object prediction = transition_classifier_.attr("predictWithCoordinates")(tr1.X(), tr1.Y(), tr1.Z(),
+                                                                                      tr2.X(), tr2.Y(), tr2.Z());
             boost::python::object probs_python = prediction.attr("__getitem__")(0);
             // we are only interested in the probability of the second class, since it is a binary classifier
             prob = boost::python::extract<double>(probs_python.attr("__getitem__")(1));
             var = boost::python::extract<double>(prediction.attr("__getitem__")(1));
-
-            LOG(logDEBUG4) << "python::transition_classifier, prob =" << prob << "; var =" << var;
+            PyGILState_Release(pygilstate);
         } catch (...) {
             throw std::runtime_error("cannot call the transition classifier from python");
         }

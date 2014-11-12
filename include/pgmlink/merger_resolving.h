@@ -17,7 +17,7 @@
 #include <boost/shared_ptr.hpp>
 #include <vigra/multi_iterator_coupled.hxx>
 #include <vigra/tinyvector.hxx>
-
+#include <boost/python.hpp>
 
 // pgmlink headers
 #include "pgmlink/hypotheses.h"

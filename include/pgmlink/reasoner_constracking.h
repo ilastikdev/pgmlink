@@ -186,8 +186,8 @@ private:
     void printResults( HypothesesGraph&);
     double sample_with_classifier_variance(double mean, double variance);
     double generateRandomOffset(EnergyType parameterIndex,  double energy=0, Traxel tr=0, Traxel tr2=0, size_t state=0);
-    double get_transition_probability(Traxel tr1, Traxel tr2, size_t state);
-    double get_transition_variance(Traxel tr1, Traxel tr2);
+    double get_transition_probability(Traxel& tr1, Traxel& tr2, size_t state);
+    double get_transition_variance(Traxel& tr1, Traxel& tr2);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
 
     // helper

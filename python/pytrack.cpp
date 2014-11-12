@@ -9,6 +9,7 @@
 #include "../include/pgmlink/feature_extraction.h"
 #include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/tracking.h"
+#include "../include/pgmlink/log.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
@@ -46,7 +47,7 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 					  int    n_dim,
 					  double transition_parameter,
 					  double border_width,
-                      UncertaintyParameter uncertaintyParam,
+                      UncertaintyParameter& uncertaintyParam,
 					  bool   with_constraints,
 					  double cplex_timeout,
                       object transition_classifier) {
@@ -77,11 +78,38 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 	}
 	Py_END_ALLOW_THREADS
 	return result;
-	}
+}
+
+
+EventVectorVector python_resolve_mergers(ConsTracking& tracker,
+                                         EventVectorVector& events,
+                                         TimestepIdCoordinateMapPtr& coordinates,
+                                         double ep_gap,
+                                         double transition_weight,
+                                         bool with_tracklets,
+                                         int n_dim,
+                                         double transition_parameter,
+                                         bool with_constraints,
+                                         object transitionClassifier
+            ){
+    EventVectorVector result;
+    // release the GIL
+    Py_BEGIN_ALLOW_THREADS
+    try {
+        result = tracker.resolve_mergers(events, coordinates, ep_gap, transition_weight,
+                with_tracklets, n_dim, transition_parameter, with_constraints, transitionClassifier);
+    } catch (std::exception& e) {
+//        std::cerr << "resolve merger call was not successful" << e;
+        Py_BLOCK_THREADS
+        throw;
+    }
+    Py_END_ALLOW_THREADS
+    return result;
+}
 
 void pywrite_all_funkey_features(ConsTracking& tracking,
                                  TraxelStore& ts,
-                                 UncertaintyParameter uncertaintyParam,
+                                 UncertaintyParameter& uncertaintyParam,
                                  double forbidden_cost,
                                  int ndim,
                                  bool with_tracklets,
@@ -177,7 +205,7 @@ void export_track() {
       .def("__call__", &pythonConsTracking)
       .def("buildGraph", &ConsTracking::build_hypo_graph)
       .def("track", &ConsTracking::track)
-      .def("resolve_mergers", &ConsTracking::resolve_mergers)
+      .def("resolve_mergers", &python_resolve_mergers)
       .def("detections", &ConsTracking::detections)
       .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)
       .def("get_resolved_hypotheses_graph", &ConsTracking::get_resolved_hypotheses_graph)
