@@ -1030,11 +1030,10 @@ void TrackingFeatureExtractor::compute_division_feature_outlier(
     mmmv_score.add_values(score_matrix);
     push_back_feature("division feature outlier score", mmmv_score);
 
-    // TODO
-    //if(track_feature_output_file_.size() > 0)
-    //{
-    //    vigra::writeHDF5(track_feature_output_file_.c_str(), "track_outliers_svm", score_matrix);
-    //}
+    if(track_feature_output_file_.size() > 0)
+    {
+        vigra::writeHDF5(track_feature_output_file_.c_str(), "division_outliers_svm", score_matrix);
+    }
 }
 
 void TrackingFeatureExtractor::compute_border_distances(
