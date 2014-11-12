@@ -147,6 +147,7 @@ private:
     boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
     boost::shared_ptr<MVNOutlierCalculator> mvn_outlier_calc_ptr_;
     boost::shared_ptr<SVMOutlierCalculator> svm_track_outlier_calc_ptr_;
+    boost::shared_ptr<SquaredMahalanobisCalculator> sq_mahal_calc_ptr_;
     boost::shared_ptr<AngleCosineCalculator> angle_cos_calc_ptr_;
     boost::shared_ptr<ChildParentDiffCalculator> child_parent_diff_calc_ptr_;
     boost::shared_ptr<SquaredNormCalculator<0> > sq_norm_calc_ptr_;

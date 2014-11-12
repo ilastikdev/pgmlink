@@ -248,6 +248,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     row_max_calc_ptr_(new MaxCalculator<0>),
     mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
+    sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
@@ -266,6 +267,7 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     row_max_calc_ptr_(new MaxCalculator<0>),
     mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
+    sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
@@ -736,9 +738,24 @@ void TrackingFeatureExtractor::compute_division_sq_diff_outlier(
     double outlier = 0.0;
     if (sq_diff_matrix.size(0) > sq_diff_matrix.size(1))
     {
-        FeatureMatrix outlier_mat;
-        mvn_outlier_calc_ptr_->calculate(sq_diff_matrix, outlier_mat);
-        outlier = outlier_mat(0,0);
+        FeatureMatrix score_matrix;
+        sq_mahal_calc_ptr_->calculate(sq_diff_matrix, score_matrix);
+        assert(score_matrix.size(0) == sq_diff_matrix.size(0));
+        size_t division_count = score_matrix.size(0);
+
+        // get the outlier count and save the outlier scores
+        for (size_t col = 0; col < division_count; col++)
+        {
+            if (score_matrix(col, 0) > 3.0 * 3.0)
+                outlier += 1.0;
+            FeatureMatrix score(vigra::Shape2(1,1), score_matrix(col, 0));
+            save_features_to_h5(
+                col,
+                "sq_diff_"+feature_name+"_outlier_score",
+                score,
+                false);
+        }
+        outlier /= static_cast<double>(division_count);
     }
     push_back_feature(
         "outlier of squared child-parent " + feature_name + " difference",
@@ -785,9 +802,24 @@ void TrackingFeatureExtractor::compute_child_deceleration_outlier(
     double outlier = 0.0;
     if (child_decel_mat.size(0) > child_decel_mat.size(1))
     {
-        FeatureMatrix outlier_mat;
-        mvn_outlier_calc_ptr_->calculate(child_decel_mat, outlier_mat);
-        outlier = outlier_mat(0,0);
+        FeatureMatrix score_matrix;
+        sq_mahal_calc_ptr_->calculate(child_decel_mat, score_matrix);
+        assert(score_matrix.size(0) == child_decel_mat.size(0));
+        size_t division_count = score_matrix.size(0);
+
+        // get the outlier count and save the outlier scores
+        for (size_t col = 0; col < division_count; col++)
+        {
+            if (score_matrix(col, 0) > 3.0 * 3.0)
+                outlier += 1.0;
+            FeatureMatrix score(vigra::Shape2(1,1), score_matrix(col, 0));
+            save_features_to_h5(
+                col,
+                "child_decel_"+feature_name+"_outlier_score",
+                score,
+                false);
+        }
+        outlier /= static_cast<double>(division_count);
     }
     push_back_feature("Outlier in child " + feature_name + " decelerations", outlier);
 }
