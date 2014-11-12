@@ -231,7 +231,8 @@ namespace pgmlink {
                                 bool with_tracklets=true,
                                 int n_dim = 3,
                                 double transition_parameter = 5.,
-                                bool with_constraints = true);
+                                bool with_constraints = true,
+                                boost::python::object transitionClassifier = boost::python::object());
 
 
       /**
@@ -239,8 +240,25 @@ namespace pgmlink {
        */
       PGMLINK_EXPORT std::vector< std::map<unsigned int, bool> > detections();
       PGMLINK_EXPORT void write_funkey_set_output_files(std::string writeFeatures, std::string writeConstraints, std::string writeGroundTruth, bool reset = true, UncertaintyParameter uncertaintyParam = UncertaintyParameter());
-      PGMLINK_EXPORT void write_funkey_features(TraxelStore &ts, std::vector<std::vector<double>> parameterlist, UncertaintyParameter uncertaintyParam = UncertaintyParameter(), double forbidden_cost=0, int ndim=3, bool with_tracklets=true, double transition_parameter=5, double border_width=0);
-      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,std::string writeFeatures = "",std::string writeConstraints = "",std::string writeGroundTruth = "",const std::vector<double> weights = std::vector<double>(5,1.));
+      PGMLINK_EXPORT void write_funkey_features(TraxelStore &ts,
+                                              std::vector<std::vector<double>> parameterlist,
+                                              UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+                                              double forbidden_cost=0, 
+                                              int ndim=3,
+                                              bool with_tracklets=true,
+                                              double transition_parameter=5,
+                                              double border_width=0,
+                                              boost::python::object transitionClassifier = boost::python::object());
+      PGMLINK_EXPORT void write_funkey_files(TraxelStore ts,
+                                              std::string writeFeatures = "",
+                                              std::string writeConstraints = "",
+                                              std::string writeGroundTruth = "",
+                                              const std::vector<double> weights = std::vector<double>(5,1.),
+                                              UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+                                              double forbidden_cost=0, int ndim=3, bool with_tracklets=true,
+                                              double transition_parameter=5,
+                                              double border_width=0,
+                                              boost::python::object transitionClassifier = boost::python::object());
       PGMLINK_EXPORT std::vector<double> learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights = "",std::string options = "");
       PGMLINK_EXPORT void set_export_labeled_graph(bool in);
       PGMLINK_EXPORT double hammingloss_of_files(std::string f1,std::string f2);

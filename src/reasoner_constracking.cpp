@@ -201,7 +201,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
 
         if(export_from_labeled_graph_ and not ground_truth_file_.empty()){
             LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
-            write_labeledgraph_to_file(hypotheses);
+            write_labeledgraph_to_file(*graph);
             ground_truth_file_.clear();
         }
 
@@ -1165,12 +1165,17 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
 
     cout << "write_labeledgraph_to_file" << endl;
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
+    // if(with_tracklets_)
+    // {
+        // property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
+        property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = g.get(node_tracklet());
+    // }
+        
 
     //write this map to label file
     map<int,label_type> cplexid_label_map;
     map<int,stringstream> cplexid_label_info_map;
-    map<size_t,size_t> cplexid_weight_class_map;
+    map<size_t,std::vector<std::pair<size_t,double> > > cplexid_weight_class_map;
 
     // fill labels of Variables
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
@@ -1179,16 +1184,18 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
             int id = clpex_variable_id_map_[make_pair(app_node_map_[n],state)];
             cplexid_label_map[id] = ((g.get(appearance_label())[n]==state)?1:0);
             LOG(logDEBUG4) <<"app\t"<< cplexid_label_map[id] << "  " << id << "  " <<  app_node_map_[n] << "  " << state;
-            cplexid_label_info_map[id] <<  "# appearance id:" << id << " state:" << g.get(appearance_label())[n] << "/" << state << "  node:" << app_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-            cplexid_weight_class_map[id] = 0;     
+            // cplexid_label_info_map[id] <<  "# appearance id:" << id << " state:" << g.get(appearance_label())[n] << "/" << state << "  node:" << app_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+            cplexid_weight_class_map[id].clear();
+            cplexid_weight_class_map[id].push_back(std::make_pair(0,1.));
         }    
         //disappearance
         for (size_t state = 0; state < pgm_->Model()->numberOfLabels(dis_node_map_[n]); ++state) { 
             int id = clpex_variable_id_map_[make_pair(dis_node_map_[n],state)];
             cplexid_label_map[id] = ((g.get(disappearance_label())[n]==state)?1:0);
             LOG(logDEBUG4) <<"dis\t"<< cplexid_label_map[id] << "  " << id << "  " <<  dis_node_map_[n] << "  " << state;
-            cplexid_label_info_map[id] <<  "# disappearance id:" << id << " state:" << g.get(disappearance_label())[n] << "/" << state << "  node:" << dis_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-            cplexid_weight_class_map[id] = 1;
+            // cplexid_label_info_map[id] <<  "# disappearance id:" << id << " state:" << g.get(disappearance_label())[n] << "/" << state << "  node:" << dis_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+            cplexid_weight_class_map[id].clear();
+            cplexid_weight_class_map[id].push_back(std::make_pair(1,1.));
         }    
         //division
         if(with_divisions_ and div_node_map_.count(n) != 0){
@@ -1197,8 +1204,9 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
                 int id = clpex_variable_id_map_[make_pair(div_node_map_[n],state)];
                 cplexid_label_map[id] = ((g.get(division_label())[n]==state)?1:0);
                 LOG(logDEBUG4) <<"div\t"<< cplexid_label_map[id] << "  " << id << "  " <<  div_node_map_[n] << "  " << state <<"   "<< number_of_division_nodes_;
-                cplexid_label_info_map[id] <<  "# division id:" << id << " state:" << g.get(division_label())[n] << "/" << state << "  node:" << div_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-                cplexid_weight_class_map[id] = 2;
+                // cplexid_label_info_map[id] <<  "# division id:" << id << " state:" << g.get(division_label())[n] << "/" << state << "  node:" << div_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+                cplexid_weight_class_map[id].clear();
+                cplexid_weight_class_map[id].push_back(std::make_pair(2,1.));
             }    
         }
     }
@@ -1208,9 +1216,21 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
             int id = clpex_variable_id_map_[make_pair(arc_map_[a],state)];
             cplexid_label_map[id] = ((g.get(arc_label())[a]==state)?1:0);
             LOG(logDEBUG4) <<"arc\t"<< cplexid_label_map[id] << "  " <<id << "  " <<  arc_map_[a] << "  " << state;
-            cplexid_label_info_map[id] <<  "# move id:" << id << " state:" << g.get(arc_label())[a] << "/" << state << "  node:" << arc_map_[a]  << "traxel id:" <<  traxel_map[g.source(a)].Id << "-->" << traxel_map[g.target(a)].Id << "  ts:" << traxel_map[g.target(a)].Timestep ;
-            cplexid_weight_class_map[id] = 3;
-            //traxel_arc_id_map[a].Timestep
+            // cplexid_label_info_map[id] <<  "# move id:" << id << " state:" << g.get(arc_label())[a] << "/" << state << "  node:" << arc_map_[a]  << "traxel id:" <<  traxel_map[g.source(a)].Id << "-->" << traxel_map[g.target(a)].Id << "  ts:" << traxel_map[g.target(a)].Timestep ;
+
+            cplexid_weight_class_map[id].clear();
+            if (with_tracklets_ and (tracklet_map[g.source(a)]).size() > 1)
+            {
+                cplexid_weight_class_map[id].push_back(std::make_pair(3,(tracklet_map[g.source(a)]).size()-1));
+                cplexid_weight_class_map[id].push_back(std::make_pair(4,(tracklet_map[g.source(a)]).size()));
+            }
+            else
+            {
+                if (with_tracklets_) {
+                    assert((tracklet_map[g.source(a)]).size() == 1);
+                }
+                cplexid_weight_class_map[id].push_back(std::make_pair(3,1.));
+            }
         }
     }
 
@@ -1223,8 +1243,19 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
                 int id = clpex_factor_id_map_[make_pair(detection_f_node_map_[n],make_pair(s1,s2))];
                 cplexid_label_map[id] = ((g.get(appearance_label())[n]==s1 and g.get(disappearance_label())[n]==s2)?1:0);
                 LOG(logDEBUG4) <<"detection\t"<< cplexid_label_map[id] <<"  "<<id<< "  " <<  detection_f_node_map_[n] << "  " << s1 <<"  " << s2 << endl;
-                cplexid_weight_class_map[id] = 4;
-                cplexid_label_info_map[id] <<  "# factor id:" << id << " state:" << g.get(appearance_label())[n] <<","<<g.get(disappearance_label())[n]<< "/" << s1 << "," << s2 << "  node:" << app_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+                cplexid_weight_class_map[id].clear();
+                if (with_tracklets_ and (tracklet_map[n]).size() > 1)
+                {
+                    cplexid_weight_class_map[id].push_back(std::make_pair(3,(tracklet_map[n]).size()-1));
+                    cplexid_weight_class_map[id].push_back(std::make_pair(4,(tracklet_map[n]).size()));
+                }
+                else{
+                    if (with_tracklets_) {
+                    assert((tracklet_map[n]).size() == 1);
+                    }
+                    cplexid_weight_class_map[id].push_back(std::make_pair(4,1.));
+                }
+                // cplexid_label_info_map[id] <<  "# factor id:" << id << " state:" << g.get(appearance_label())[n] <<","<<g.get(disappearance_label())[n]<< "/" << s1 << "," << s2 << "  node:" << app_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
             }
         }
     }
@@ -1237,7 +1268,15 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
     ground_truth_file.open (ground_truth_file_,std::ios::app);
         
     for(std::map<int,size_t>::iterator iterator = cplexid_label_map.begin(); iterator != cplexid_label_map.end(); iterator++) {
-        ground_truth_file << iterator->second <<"\t\t#c"<<cplexid_weight_class_map[iterator->first]<<"\t\tcplexid:" << iterator->first  << cplexid_label_info_map[iterator->first].str() <<endl;
+        ground_truth_file << iterator->second <<"\t\t";
+            for (std::vector<std::pair<size_t,double>>::iterator class_weight_pair = cplexid_weight_class_map[iterator->first].begin();
+                                                 class_weight_pair != cplexid_weight_class_map[iterator->first].end(); ++class_weight_pair)
+            {
+                ground_truth_file << "#c"<< class_weight_pair->first << ":" << class_weight_pair->second << " ";
+            }
+            ground_truth_file<<"\tc#\tcplexid:" << iterator->first
+            // << cplexid_label_info_map[iterator->first].str()
+            << endl;
     }
     ground_truth_file.close();
 

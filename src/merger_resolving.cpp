@@ -660,7 +660,8 @@ void resolve_graph(const HypothesesGraph& src,
                    double ep_gap,
                    bool with_tracklets, 
                    const double transition_parameter,
-                   const bool with_constraints) {
+                   const bool with_constraints,
+                   boost::python::object transitionClassifier) {
 
   // Optimize the graph built by the class MergerResolver.
   // Up to here everything is only graph (nodes, arcs) based
@@ -755,8 +756,13 @@ void resolve_graph(const HypothesesGraph& src,
       false, // with appearance
       false, // with disappearance
       transition_parameter,
-      with_constraints
-                           );
+      true,// with_constraints,
+      UncertaintyParameter(),// uncertaintyParam,
+      1e75,// cplex_timeout,
+      0.,//division_weight,
+      0.,//detection_weight,
+      1.,//transition_weight
+      transitionClassifier);
 
   pgm.perturbedInference(dest, 0);
 

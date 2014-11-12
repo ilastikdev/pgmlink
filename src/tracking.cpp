@@ -337,15 +337,17 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 	use_classifier_prior_ = false;
 	Traxel trax = *(traxel_store_->begin());
 	FeatureMap::const_iterator it = trax.features.find("detProb");
+	LOG(logDEBUG4) << "available features of " << trax << ":";
+	for(auto it : trax.features.get())
+          LOG(logDEBUG4) << "\t" << it.first << std::endl;
+
 	if(it != trax.features.end()) {
 	        use_classifier_prior_ = true;
-	        LOG(logDEBUG3) << "could not find detProb, falling back to classifier prior";
-	} else {
-	        LOG(logDEBUG3) << "COULD find detProb!!";
+	        LOG(logDEBUG3) << "COULD find detProb, using classifier prior";
 	}
 
 	if(not use_classifier_prior_ and use_size_dependent_detection_){
-	        LOG(logDEBUG3) << "creating detProb feature in traxel store!!";
+	        LOG(logDEBUG3) << "creating detProb feature in traxel store from deterministic detection probability function";
 		vector<double> means;
 		if (means_.size() == 0 ) {
 			for(int i = 0; i<max_number_objects_+1; ++i) {
@@ -643,7 +645,8 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 		bool with_tracklets,
 		int n_dim,
 		double transition_parameter,
-		bool with_constraints
+		bool with_constraints,
+		boost::python::object transitionClassifier
   ) {
 		// TODO Redundancy to track(). -> Problem?
 		boost::function<double(const double)> transition;
@@ -677,7 +680,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 			m.resolve_mergers(handler);
 
 			HypothesesGraph g_res;
-            resolve_graph(*resolved_graph_, g_res, transition, ep_gap, with_tracklets, transition_parameter, with_constraints);
+            resolve_graph(*resolved_graph_, g_res, transition, ep_gap, with_tracklets, transition_parameter, with_constraints, transitionClassifier);
 //            prune_inactive(resolved_graph);
 
 			cout << "-> constructing resolved events" << endl;
@@ -787,7 +790,8 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
                                            int ndim,
                                            bool with_tracklets,
                                            double transition_parameter,
-                                           double border_width){
+                                           double border_width,
+                                           boost::python::object transitionClassifier){
       const size_t num_parameters = 5;
       quit_before_inference_ = not(not ground_truth_file_.empty() or not constraints_file_.empty());
 
@@ -821,7 +825,10 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
                 transition_parameter,//transition_parameter,
                 border_width,//border_width,
                 true,//with constraints
-                uncertaintyParam);
+                uncertaintyParam,
+                1e+75,
+				transitionClassifier
+                );
           // write constraint and ground truth files only once
           if(not constraints_file_.empty())
               constraints_file_.clear();
@@ -846,7 +853,18 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
       }
   }
 
-  void ConsTracking::write_funkey_files(TraxelStore ts,std::string writeFeatures,std::string writeConstraints,std::string writeGroundTruth,const vector<double> weights){
+  void ConsTracking::write_funkey_files(TraxelStore ts,
+									  	std::string writeFeatures,
+									  	std::string writeConstraints,
+									  	std::string writeGroundTruth,
+									  	const vector<double> weights,
+									  	UncertaintyParameter uncertaintyParam,
+                                        double forbidden_cost,
+                                        int ndim,
+                                        bool with_tracklets,
+                                        double transition_parameter,
+                                        double border_width,
+                                        boost::python::object transitionClassifier){
     int number_of_weights = 5;
     write_funkey_set_output_files(writeFeatures,writeConstraints,writeGroundTruth);    
     std::vector<std::vector<double>> list;
@@ -867,8 +885,7 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
       	}
       	cout << "DEBUG OUT " <<number_of_weights << "\t"<< list.size() << endl; 
     }
-    UncertaintyParameter uncertainty_param(1, MbestCPLEX, 0);
-    write_funkey_features(ts,list, uncertainty_param);
+    write_funkey_features(ts,list, uncertaintyParam,forbidden_cost,ndim,with_tracklets,transition_parameter,border_width,transitionClassifier);
    	if(not writeFeatures.empty()){
     	transpose_matrix_in_file(writeFeatures);
    	}
@@ -877,7 +894,7 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
   vector<double> ConsTracking::learn_from_funkey_files(std::string features,std::string constraints,std::string groundTruth,std::string weights,std::string options){
     
     vector<double> out;
-    std::string command = std::string("/storage/data/Machine_Learning/sbmrm/build/binaries/sbmrm") + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth +" "+  options;
+    std::string command = std::string("/home/swolf/local/src/sbmrm/build/binaries/sbmrm") + " --featuresFile="+features+ " --constraintsFile="+constraints+ " --labelsFile="+groundTruth +" "+  options;
     if(not weights.empty())
     	command += " --weightCostsFile="+groundTruth+" --weightCostString="+"\""+weights+"\" ";
 
