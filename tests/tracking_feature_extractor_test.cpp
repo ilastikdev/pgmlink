@@ -15,6 +15,24 @@
 using namespace pgmlink;
 using namespace pgmlink::features;
 
+class RegionCenterLocator : public Locator
+{
+public:
+    RegionCenterLocator() : Locator("RegionCenter") {}
+    virtual RegionCenterLocator* clone() { return new RegionCenterLocator(*this); }
+    double X(const FeatureMap& m) const {return x_scale * coordinate_from(m, 0);}
+    double Y(const FeatureMap& m) const {return y_scale * coordinate_from(m, 1);}
+    double Z(const FeatureMap& m) const {return z_scale * coordinate_from(m, 2);}
+private:
+    // boost serialize
+    friend class boost::serialization::access;
+    template<typename Archive>
+    void serialize(Archive& archive, const unsigned int /*version*/ )
+    {
+        archive & boost::serialization::base_object<Locator>(*this);
+    }
+};
+
 BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
 
     std::cout << "Constructing HypothesesGraph" << std::endl;
@@ -29,13 +47,14 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
     //  o ------ o
     TraxelStore ts;
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-    Traxel n11, n21;
+    RegionCenterLocator locator;
     feature_array com(feature_array::difference_type(3));
     feature_array count(feature_array::difference_type(1));
     feature_array mean(feature_array::difference_type(1));
     feature_array variance(feature_array::difference_type(1));
     feature_array divProb(feature_array::difference_type(1));
-    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    Traxel n11(1, 1, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n11.features["RegionCenter"] = com;
     n11.features["divProb"] = divProb;
@@ -43,7 +62,8 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove ) {
     n11.features["Mean"] = mean;
     n11.features["Variance"] = variance;
     add(ts, fs, n11);
-    n21.Id = 10; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    Traxel n21(1, 2, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
     n21.features["RegionCenter"] = com;
     n21.features["divProb"] = divProb;
     n21.features["Count"] = count;
@@ -155,7 +175,6 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     //   o                 o
     TraxelStore ts;
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-    Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array detProb(feature_array::difference_type(2));
@@ -163,14 +182,14 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     feature_array mean(feature_array::difference_type(1));
     feature_array variance(feature_array::difference_type(1));
     //detProb[2]=0;
-    n11.Id = 11; n11.Timestep = 1;
+    Traxel n11(11, 1, new RegionCenterLocator); // id, timestep, locator
     com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n11.features["RegionCenter"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
     n11.features["Count"] = count; n11.features["Mean"] = mean; n11.features["Variance"] = variance;
     add(ts, fs, n11);
 
-    n12.Id = 12; n12.Timestep = 1;
+    Traxel n12(12, 1, new RegionCenterLocator); // id, timestep, locator
     com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n12.features["RegionCenter"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
@@ -178,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     add(ts, fs, n12);
 
     // next Timestep
-    n21.Id = 21; n21.Timestep = 2;
+    Traxel n21(21, 2, new RegionCenterLocator); // id, timestep, locator
     com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n21.features["RegionCenter"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
@@ -186,14 +205,14 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     add(ts, fs, n21);
 
     // next Timestep
-    n31.Id = 31; n31.Timestep = 3;
+    Traxel n31(31, 3, new RegionCenterLocator); // id, timestep, locator
     com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n31.features["RegionCenter"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
     n31.features["Count"] = count; n31.features["Mean"] = mean; n31.features["Variance"] = variance;
     add(ts, fs, n31);
 
-    n32.Id = 32; n32.Timestep = 3;
+    Traxel n32(32, 3, new RegionCenterLocator); // id, timestep, locator
     com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n32.features["RegionCenter"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
@@ -287,7 +306,6 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     //   o                 o
     TraxelStore ts;
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-    Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array detProb(feature_array::difference_type(2));
@@ -295,14 +313,14 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     feature_array mean(feature_array::difference_type(1));
     feature_array variance(feature_array::difference_type(1));
     //detProb[2]=0;
-    n11.Id = 11; n11.Timestep = 1;
+    Traxel n11(11, 1, new RegionCenterLocator); // id, timestep, locator
     com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n11.features["RegionCenter"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
     n11.features["Count"] = count; n11.features["Mean"] = mean; n11.features["Variance"] = variance;
     add(ts, fs, n11);
 
-    n12.Id = 12; n12.Timestep = 1;
+    Traxel n12(12, 1, new RegionCenterLocator); // id, timestep, locator
     com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n12.features["RegionCenter"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
@@ -310,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     add(ts, fs, n12);
 
     // next Timestep
-    n21.Id = 21; n21.Timestep = 2;
+    Traxel n21(21, 2, new RegionCenterLocator); // id, timestep, locator
     com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n21.features["RegionCenter"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
@@ -318,14 +336,14 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     add(ts, fs, n21);
 
     // next Timestep
-    n31.Id = 31; n31.Timestep = 3;
+    Traxel n31(31, 3, new RegionCenterLocator); // id, timestep, locator
     com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n31.features["RegionCenter"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
     n31.features["Count"] = count; n31.features["Mean"] = mean; n31.features["Variance"] = variance;
     add(ts, fs, n31);
 
-    n32.Id = 32; n32.Timestep = 3;
+    Traxel n32(32, 3, new RegionCenterLocator); // id, timestep, locator
     com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n32.features["RegionCenter"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
@@ -435,7 +453,6 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     //   o                 o
     TraxelStore ts;
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-    Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array detProb(feature_array::difference_type(2));
@@ -443,14 +460,14 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     feature_array mean(feature_array::difference_type(1));
     feature_array variance(feature_array::difference_type(1));
     //detProb[2]=0;
-    n11.Id = 11; n11.Timestep = 1;
+    Traxel n11(11, 1, new RegionCenterLocator); // id, timestep, locator
     com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n11.features["RegionCenter"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
     n11.features["Count"] = count; n11.features["Mean"] = mean; n11.features["Variance"] = variance;
     add(ts, fs, n11);
 
-    n12.Id = 12; n12.Timestep = 1;
+    Traxel n12(12, 1, new RegionCenterLocator); // id, timestep, locator
     com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n12.features["RegionCenter"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
@@ -458,7 +475,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     add(ts, fs, n12);
 
     // next Timestep
-    n21.Id = 21; n21.Timestep = 2;
+    Traxel n21(21, 2, new RegionCenterLocator); // id, timestep, locator
     com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n21.features["RegionCenter"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
@@ -466,14 +483,14 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     add(ts, fs, n21);
 
     // next Timestep
-    n31.Id = 31; n31.Timestep = 3;
+    Traxel n31(31, 3, new RegionCenterLocator); // id, timestep, locator
     com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n31.features["RegionCenter"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
     n31.features["Count"] = count; n31.features["Mean"] = mean; n31.features["Variance"] = variance;
     add(ts, fs, n31);
 
-    n32.Id = 32; n32.Timestep = 3;
+    Traxel n32(32, 3, new RegionCenterLocator); // id, timestep, locator
     com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
     count[0] = 1; mean[0] = 2; variance[0] = 3;
     n32.features["RegionCenter"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
@@ -599,27 +616,48 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
     //   o                 o
     TraxelStore ts;
     boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-    Traxel n11, n12, n21, n31, n32;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
     feature_array detProb(feature_array::difference_type(2));
+    feature_array count(feature_array::difference_type(1));
+    feature_array mean(feature_array::difference_type(1));
+    feature_array variance(feature_array::difference_type(1));
     //detProb[2]=0;
-    n11.Id = 11; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
+    Traxel n11(11, 1, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
     n11.features["RegionCenter"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+    n11.features["Count"] = count; n11.features["Mean"] = mean; n11.features["Variance"] = variance;
     add(ts, fs, n11);
-    n12.Id = 12; n12.Timestep = 1; com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+
+    Traxel n12(12, 1, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
     n12.features["RegionCenter"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
+    n12.features["Count"] = count; n12.features["Mean"] = mean; n12.features["Variance"] = variance;
     add(ts, fs, n12);
 
-    n21.Id = 21; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
+    // next Timestep
+    Traxel n21(21, 2, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
     n21.features["RegionCenter"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+    n21.features["Count"] = count; n21.features["Mean"] = mean; n21.features["Variance"] = variance;
     add(ts, fs, n21);
 
-    n31.Id = 31; n31.Timestep = 3; com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    // next Timestep
+    Traxel n31(31, 3, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
     n31.features["RegionCenter"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
+    n31.features["Count"] = count; n31.features["Mean"] = mean; n31.features["Variance"] = variance;
     add(ts, fs, n31);
-    n32.Id = 32; n32.Timestep = 3; com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
+
+    Traxel n32(32, 3, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
     n32.features["RegionCenter"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
+    n32.features["Count"] = count; n32.features["Mean"] = mean; n32.features["Variance"] = variance;
     add(ts, fs, n32);
 
     std::cout << "Initialize Conservation tracking" << std::endl;
