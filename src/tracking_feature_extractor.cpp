@@ -311,12 +311,16 @@ const std::string TrackingFeatureExtractor::get_feature_description(size_t featu
     return feature_descriptions_[feature_index];
 }
 
-void TrackingFeatureExtractor::save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix)
+void TrackingFeatureExtractor::save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix, bool tracks)
 {
     if(track_feature_output_file_.size() > 0)
     {
         std::stringstream dataset_name;
-        dataset_name << "tracks/" << track_id << "/" << feature_name;
+        if(tracks)
+            dataset_name << "tracks/";
+        else
+            dataset_name << "divisions/";
+        dataset_name << track_id << "/" << feature_name;
         vigra::writeHDF5(track_feature_output_file_.c_str(), dataset_name.str().c_str(), matrix);
     }
 }
@@ -693,6 +697,7 @@ void TrackingFeatureExtractor::compute_division_sq_diff_features(
     MinMaxMeanVarCalculator sq_diff_mmmv;
     sq_diff_mmmv.set_max(0.0);
 
+    size_t division_id = 0;
     for (auto div : div_traxels)
     {
         // extract features
@@ -706,6 +711,7 @@ void TrackingFeatureExtractor::compute_division_sq_diff_features(
         child_parent_diff_calc_ptr_->calculate(feature_matrix, temp);
         sq_norm_calc_ptr_->calculate(temp, sq_diff_matrix);
         sq_diff_mmmv.add_values(sq_diff_matrix);
+        save_features_to_h5(division_id++, "sq_diff_"+feature_name, sq_diff_matrix, false);
     }
     push_back_feature(
         "squared child-parent " + feature_name + " difference",
@@ -746,6 +752,7 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
     MinMaxMeanVarCalculator child_decel_mmmv;
     child_decel_mmmv.set_max(0.0);
 
+    size_t division_id = 0;
     for (auto div : div_traxels)
     {
         // extract features
@@ -758,6 +765,7 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
         child_decel_calc_ptr_->calculate(feature_matrix, child_decel_mat);
 
         child_decel_mmmv.add_values(child_decel_mat);
+        save_features_to_h5(division_id++, "child_decel_"+feature_name, child_decel_mat, false);
     }
     push_back_feature("child " + feature_name + " deceleration", child_decel_mmmv);
 }

@@ -217,6 +217,7 @@ void export_track() {
             .def("get_track_svm", &pgmlink::features::TrackingFeatureExtractor::get_track_svm)
             .def("set_track_svm", &pgmlink::features::TrackingFeatureExtractor::set_track_svm)
             .def("get_feature_vector", &pyextractor_get_feature_vector)
+            .def("get_feature_description", &pgmlink::features::TrackingFeatureExtractor::get_feature_description)
             .def("set_track_feature_output_file", &pgmlink::features::TrackingFeatureExtractor::set_track_feature_output_file);
 
     class_<pgmlink::features::SVMOutlierCalculator, boost::shared_ptr<pgmlink::features::SVMOutlierCalculator> >("SVMOutlierCalculator")
