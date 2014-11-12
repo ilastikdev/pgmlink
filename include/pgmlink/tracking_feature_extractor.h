@@ -64,6 +64,33 @@ private:
     FeatureDescription feature_descriptions_;
 };
 
+class DivisionFeatureExtractor
+{
+public:
+    typedef std::vector<double> JointFeatureVector;
+    typedef std::vector<std::string> FeatureDescription;
+public:
+    DivisionFeatureExtractor();
+    void compute_features(
+        ConstTraxelRefVector& traxelref_vec,
+        FeatureVectorView return_vector);
+    void compute_features(
+        ConstTraxelRefVectors& traxelref_vecs,
+        FeatureMatrix& return_matrix);
+    size_t get_feature_vector_length() const;
+    void get_feature_descriptions(FeatureDescription& feature_descriptions) const;
+private:
+    void compute_id_features(ConstTraxelRefVector&, std::string);
+    void compute_sq_diff_features(ConstTraxelRefVector&, std::string);
+    void compute_angle_features(ConstTraxelRefVector&, std::string);
+
+    void push_back_feature(std::string feature_name, double feature_value);
+private:
+    FeatureVectorView::iterator feature_vector_offset_it_;
+    FeatureDescription::iterator feature_descriptions_offset_it_;
+    FeatureDescription feature_descriptions_;
+};
+
 /**
  * @brief Takes a set of events from a tracking solution and computes a bunch of features for struct learning.
  * @author Carsten Haubold

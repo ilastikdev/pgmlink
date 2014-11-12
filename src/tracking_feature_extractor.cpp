@@ -1,6 +1,8 @@
 #include "pgmlink/tracking_feature_extractor.h"
 #include <boost/algorithm/string.hpp>
 
+#include <cmath> /* for std::abs */
+
 namespace pgmlink {
 namespace features {
 
@@ -235,6 +237,159 @@ void TrackFeatureExtractor::push_back_feature(
     push_back_feature("var of " + feature_name, mmmv_calculator.get_var());
 }
 
+//-----------------------------------------------------------------------------
+// DivisionFeatureExtractor
+//-----------------------------------------------------------------------------
+DivisionFeatureExtractor::DivisionFeatureExtractor()
+{}
+
+size_t DivisionFeatureExtractor::get_feature_vector_length() const
+{
+    // TODO: still ugly
+    return 3 * 3 // compute_sq_id_features (Count, Mean, Variance)
+        + 2 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
+        + 1 * 1; // compute_angle_features (com)
+}
+
+void DivisionFeatureExtractor::get_feature_descriptions(
+    FeatureDescription& feature_descriptions) const
+{
+    feature_descriptions.clear();
+    feature_descriptions.insert(
+        feature_descriptions.begin(),
+        feature_descriptions_.begin(),
+        feature_descriptions_.end());
+}
+
+void DivisionFeatureExtractor::compute_features(
+    ConstTraxelRefVector& traxelref_vec,
+    FeatureVectorView return_vector)
+{
+    assert(return_vector.shape(0) == get_feature_vector_length());
+    if (feature_descriptions_.size() == 0)
+        feature_descriptions_.resize(get_feature_vector_length());
+    feature_descriptions_offset_it_ = feature_descriptions_.begin();
+    feature_vector_offset_it_ = return_vector.begin();
+    compute_id_features(traxelref_vec, "Count");
+    compute_id_features(traxelref_vec, "Mean");
+    compute_id_features(traxelref_vec, "Variance");
+    compute_sq_diff_features(traxelref_vec, "RegionCenter");
+    compute_sq_diff_features(traxelref_vec, "Count");
+    compute_sq_diff_features(traxelref_vec, "Mean");
+    compute_sq_diff_features(traxelref_vec, "Variance");
+    compute_angle_features(traxelref_vec, "RegionCenter");
+}
+
+void DivisionFeatureExtractor::compute_features(
+    ConstTraxelRefVectors& traxelref_vecs,
+    FeatureMatrix& return_matrix)
+{
+    size_t f_dim = get_feature_vector_length();
+    return_matrix.reshape(vigra::Shape2(traxelref_vecs.size(), f_dim));
+    for (size_t i = 0; i < traxelref_vecs.size(); i++)
+    {
+        // TODO implement for divisions of higher order
+        assert(traxelref_vecs[i].size() == 3);
+        compute_features(traxelref_vecs[i], return_matrix.bind<0>(i));
+    }
+}
+
+void DivisionFeatureExtractor::compute_id_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    // get the features
+    FeatureMatrix feature_matrix;
+    TraxelsFeaturesIdentity feature_extractor(feature_name);
+    feature_extractor.extract(traxelref_vec, feature_matrix);
+    assert(feature_matrix.shape(0) == 3);
+    // the feature matrix does not have to have a feature dimension of one
+    // but it's asserted anyway to indicate possible causes of bugs
+    assert(feature_matrix.shape(1) == 1);
+    LOG(logDEBUG) << feature_matrix;
+    double child_feature_sum = feature_matrix(1,0) + feature_matrix(2,0);
+    double child_feature_diff = feature_matrix(1,0) - feature_matrix(2,0);
+    child_feature_diff = std::abs(child_feature_diff);
+
+    push_back_feature("parent " + feature_name, feature_matrix(0,0));
+    push_back_feature("child sum " + feature_name, child_feature_sum);
+    push_back_feature("child diff " + feature_name, child_feature_diff);
+}
+
+void DivisionFeatureExtractor::compute_sq_diff_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    // get the features
+    FeatureMatrix feature_matrix;
+    TraxelsFeaturesIdentity feature_extractor(feature_name);
+    feature_extractor.extract(traxelref_vec, feature_matrix);
+    // calculate the squared differences
+    TCompositionCalculator<
+        ChildParentDiffCalculator,
+        SquaredNormCalculator<0>
+    > sq_diff_calculator;
+    FeatureMatrix sq_diff_matrix;
+    sq_diff_calculator.calculate(feature_matrix, sq_diff_matrix);
+    assert(sq_diff_matrix.shape(0) == 2);
+    assert(sq_diff_matrix.shape(1) == 1);
+
+    double feature_sum = sq_diff_matrix(0,0) + sq_diff_matrix(1,0);
+    double feature_diff = sq_diff_matrix(0,0) - sq_diff_matrix(1,0);
+    feature_diff = std::abs(feature_diff);
+
+    push_back_feature(
+        "sum of squared child-parent diff of " + feature_name,
+        feature_sum);
+    push_back_feature(
+        "diff of squared child-parent diff of " + feature_name,
+        feature_diff);
+}
+
+void DivisionFeatureExtractor::compute_angle_features(
+    ConstTraxelRefVector& traxelref_vec,
+    std::string feature_name)
+{
+    // get the feature matrix
+    FeatureMatrix feature_matrix;
+    TraxelsFeaturesIdentity feature_extractor(feature_name);
+    feature_extractor.extract(traxelref_vec, feature_matrix);
+    // calculate the angle cosines (dot product)
+    ChildParentDiffCalculator diff_calculator;
+    FeatureMatrix diff_matrix;
+    diff_calculator.calculate(feature_matrix, diff_matrix);
+    assert(diff_matrix.shape(0) == 2);
+    EuclideanNormCalculator norm_calculator;
+    FeatureMatrix norm_matrix;
+    norm_calculator.calculate(diff_matrix, norm_matrix);
+    assert(norm_matrix.shape(0) == 2);
+    assert(norm_matrix.shape(1) == 1);
+
+    DotProductCalculator dot_calculator;
+    FeatureMatrix dot_matrix;
+    dot_calculator.calculate(diff_matrix, dot_matrix);
+    assert(dot_matrix.shape(0) == 1);
+    assert(dot_matrix.shape(1) == 1);
+
+    push_back_feature(
+        "angle cosine of " + feature_name,
+        dot_matrix(0, 0) / (norm_matrix(0, 0) * norm_matrix(1, 0)));
+}
+
+void DivisionFeatureExtractor::push_back_feature(
+    std::string feature_name,
+    double feature_value)
+{
+    LOG(logDEBUG4) << "Push back feature " << feature_name << ": " << feature_value;
+    *feature_vector_offset_it_ = feature_value;
+    feature_vector_offset_it_++;
+    *feature_descriptions_offset_it_ = feature_name;
+    feature_descriptions_offset_it_++;
+}
+
+//-----------------------------------------------------------------------------
+// TrackingFeatureExtractor
+//-----------------------------------------------------------------------------
 TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
         const FieldOfView& fov,
         boost::function<bool (const Traxel&)> margin_filter_function):
