@@ -42,26 +42,40 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
     return node;
 }
 
-void HypothesesGraph::add_appearance_label(HypothesesGraph::Node node,label_type label) {
-  add(appearance_label());
+void HypothesesGraph::init_labeling_maps() {
+    add(appearance_label()).add(disappearance_label()).add(division_label()).add(arc_label());
+
+    property_map< appearance_label, HypothesesGraph::base_graph>::type& map1 = get(appearance_label());
+    property_map< disappearance_label, HypothesesGraph::base_graph>::type& map2 = get(disappearance_label());
+    property_map< division_label, HypothesesGraph::base_graph>::type& map3 = get(division_label());
+    for (HypothesesGraph::NodeIt it(*this); it != lemon::INVALID; ++it) {
+        map1.set(it, 0);
+        map2.set(it, 0);
+        map3.set(it, 0);
+    }
+
+    property_map< arc_label, HypothesesGraph::base_graph>::type& map = get(arc_label());
+    for (HypothesesGraph::ArcIt it(*this); it != lemon::INVALID; ++it) {
+        map.set(it, 0);
+    }
+}
+
+void HypothesesGraph::add_appearance_label(HypothesesGraph::Node node,label_type label) {  
   property_map< appearance_label, HypothesesGraph::base_graph>::type& gt_label = get(appearance_label());
   gt_label.set(node,label);
 }
 
-void HypothesesGraph::add_disappearance_label(HypothesesGraph::Node node,label_type label) {
-  add(disappearance_label());
+void HypothesesGraph::add_disappearance_label(HypothesesGraph::Node node,label_type label) {  
   property_map< disappearance_label, HypothesesGraph::base_graph>::type& gt_label = get(disappearance_label());
   gt_label.set(node,label);
 }
 
 void HypothesesGraph::add_division_label(HypothesesGraph::Node node,label_type label) {
-  add(division_label());
   property_map< division_label, HypothesesGraph::base_graph>::type& gt_label = get(division_label());
   gt_label.set(node,label);
 }
 
 void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc,label_type label) {
-  add(arc_label());
   property_map<  arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
   gt_label.set(arc,label);
 }
@@ -784,7 +798,8 @@ void addNodeToTracklet(const HypothesesGraph& traxel_graph, HypothesesGraph& tra
 
 void addNodeToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph,
                     const HypothesesGraph::Node& traxel_node, std::map<HypothesesGraph::Node, HypothesesGraph::Node>& traxel2tracklet,
-                    std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& tracklet2traxel) {
+                    std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& tracklet2traxel,
+                    bool with_ground_truth_labeling=false) {
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = traxel_graph.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = tracklet_graph.get(node_tracklet());
     property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_intern_dist_map = tracklet_graph.get(tracklet_intern_dist());
@@ -799,7 +814,7 @@ void addNodeToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
     std::vector<double> arc_dists;
     tracklet_intern_dist_map.set(tracklet_node, arc_dists);
 
-	if(traxel_graph.getProperties().count("appearance_label") > 0){
+    if(with_ground_truth_labeling){
 		// create appropriate labels in tracklet node
 		tracklet_graph.add_appearance_label(tracklet_node,traxel_graph.get(appearance_label())[traxel_node]);
 		tracklet_graph.add_disappearance_label(tracklet_node,traxel_graph.get(disappearance_label())[traxel_node]);
@@ -810,7 +825,8 @@ void addNodeToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
 }
 
 void addArcsToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph,
-                    const std::vector<HypothesesGraph::Arc>& incoming_arcs, std::map<HypothesesGraph::Node, HypothesesGraph::Node>& traxel2tracklet) {
+                    const std::vector<HypothesesGraph::Arc>& incoming_arcs, std::map<HypothesesGraph::Node, HypothesesGraph::Node>& traxel2tracklet,
+                    bool with_ground_truth_labeling=false) {
     property_map<arc_distance, HypothesesGraph::base_graph>::type& traxel_arc_distances = traxel_graph.get(arc_distance());
     property_map<arc_distance, HypothesesGraph::base_graph>::type& tracklet_arc_distances = tracklet_graph.get(arc_distance());
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_ids = tracklet_graph.get(traxel_arc_id());
@@ -826,7 +842,7 @@ void addArcsToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
         assert(from != to);
 
         HypothesesGraph::Arc tracklet_arc = tracklet_graph.addArc(from, to);
-        if(traxel_graph.getProperties().count("arc_label") > 0){
+        if(with_ground_truth_labeling){
 			tracklet_graph.add_arc_label(tracklet_arc,traxel_graph.get(arc_label())[arc]);
 		}
         tracklet_arc_distances.set(tracklet_arc,traxel_arc_distances[arc]);
@@ -851,22 +867,30 @@ std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTra
     // maps traxel_nodes to tracklet_nodes
     std::map<HypothesesGraph::Node, HypothesesGraph::Node > traxel_node_to_tracklet_node;
 
+    bool with_ground_truth_labeling = (traxel_graph.getProperties().count("appearance_label") > 0);
+    if (with_ground_truth_labeling) {
+        tracklet_graph.add(appearance_label()).add(disappearance_label()).add(division_label()).add(arc_label());
+    }
+
     for(int t = traxel_graph.earliest_timestep(); t <= traxel_graph.latest_timestep(); ++t) {
         for(node_timestep_map_t::ItemIt traxel_node(node_timestep_map, t); traxel_node!=lemon::INVALID; ++traxel_node) {
             LOG(logDEBUG4) << "traxel_node = " << traxel_graph.id(traxel_node);
             vector<HypothesesGraph::Arc> incoming_arcs = getIncomingArcs(traxel_graph, traxel_node);
             if(incoming_arcs.size() != 1) {
-                addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes);
-                addArcsToGraph(traxel_graph, tracklet_graph, incoming_arcs, traxel_node_to_tracklet_node);
+                addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes,
+                               with_ground_truth_labeling);
+                addArcsToGraph(traxel_graph, tracklet_graph, incoming_arcs, traxel_node_to_tracklet_node, with_ground_truth_labeling);
                 LOG(logDEBUG4) << "traxel2tracklet.size(): " << traxel_node_to_tracklet_node.size();
                 continue;
             }
 
             HypothesesGraph::Node ancestor = traxel_graph.source(incoming_arcs[0]);
             if(getOutgoingArcs(traxel_graph, ancestor).size() > 1) {
-                addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes);
+                addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes,
+                               with_ground_truth_labeling);
                 assert(incoming_arcs.size() == 1);
-                addArcsToGraph(traxel_graph, tracklet_graph, incoming_arcs, traxel_node_to_tracklet_node);
+                addArcsToGraph(traxel_graph, tracklet_graph, incoming_arcs, traxel_node_to_tracklet_node,
+                               with_ground_truth_labeling);
                 LOG(logDEBUG4) << "traxel2tracklet.size(): " << traxel_node_to_tracklet_node.size();
                 continue;
             }

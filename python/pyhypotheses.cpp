@@ -191,6 +191,7 @@ void export_hypotheses() {
 
     .def("addTraxel", &HypothesesGraph::add_traxel)
 
+    .def("initLabelingMaps", &HypothesesGraph::init_labeling_maps)
     .def("addArcLabel" , &HypothesesGraph::add_arc_label )
     .def("addAppearanceLabel",&HypothesesGraph::add_appearance_label)
     .def("addDisappearanceLabel",&HypothesesGraph::add_disappearance_label)

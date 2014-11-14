@@ -380,6 +380,8 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;
     PGMLINK_EXPORT node_timestep_map::Value latest_timestep() const;
+
+    PGMLINK_EXPORT void init_labeling_maps();
     
     static void copy(HypothesesGraph& src, HypothesesGraph& dest);
 
