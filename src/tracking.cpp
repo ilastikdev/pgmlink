@@ -535,18 +535,25 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 	LOG(logDEBUG1) << "transition_weight = " << transition_weight;
 	division = NegLnDivision(division_weight);
 	transition = NegLnTransition(transition_weight);
-
+	
 	//border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
 	boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
 	LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+
+	size_t tmin = hypotheses_graph_->earliest_timestep();
+	size_t tmax = hypotheses_graph_->latest_timestep();
 	appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost,
 												border_width,
 												false, // true if relative margin to border
-												fov_);
+												fov_,
+												tmin,
+												tmax);
 	disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
 												border_width,
 												false, // true if relative margin to border
-												fov_);
+												fov_,
+												tmin,
+												tmax);
 
 	cout << "-> init ConservationTracking reasoner" << endl;
 

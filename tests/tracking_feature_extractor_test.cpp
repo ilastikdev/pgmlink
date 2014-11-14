@@ -284,6 +284,133 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     }
 }
 
+BOOST_AUTO_TEST_CASE(DivisionFeatureExtractor_CplexMBest)
+{
+    std::cout << "Constructing HypothesesGraph" << std::endl;
+    std::cout << std::endl;
+
+    typedef HypothesesGraph::ArcIt ArcIt2;
+    typedef HypothesesGraph::Arc Arc;
+    typedef HypothesesGraph::NodeIt NodeIt;
+    typedef HypothesesGraph::Node Node;
+    using lemon::INVALID;
+
+    std::cout << "Adding Traxels to TraxelStore" << std::endl;
+    std::cout << std::endl;
+
+    //  t=1       2       3
+    //   o                 o
+    //    |               |
+    //     ------ o ------
+    //    |               |
+    //   o                 o
+    TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    feature_array com(feature_array::difference_type(3));
+    feature_array divProb(feature_array::difference_type(1));
+    feature_array detProb(feature_array::difference_type(2));
+    feature_array count(feature_array::difference_type(1));
+    feature_array mean(feature_array::difference_type(1));
+    feature_array variance(feature_array::difference_type(1));
+    //detProb[2]=0;
+    Traxel n11(11, 1, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.4;detProb[1]=0.6;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
+    n11.features["RegionCenter"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+    n11.features["Count"] = count; n11.features["Mean"] = mean; n11.features["Variance"] = variance;
+    add(ts, fs, n11);
+
+    Traxel n12(12, 1, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 3; com[1] = 2; com[2] = 3; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
+    n12.features["RegionCenter"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
+    n12.features["Count"] = count; n12.features["Mean"] = mean; n12.features["Variance"] = variance;
+    add(ts, fs, n12);
+
+    // next Timestep
+    Traxel n21(21, 2, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 2; com[1] = 2; com[2] = 3; divProb[0] = 0.5; detProb[0] = 0;detProb[1]=1;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
+    n21.features["RegionCenter"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+    n21.features["Count"] = count; n21.features["Mean"] = mean; n21.features["Variance"] = variance;
+    add(ts, fs, n21);
+
+    // next Timestep
+    Traxel n31(31, 3, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 2; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.6;detProb[1]=0.4;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
+    n31.features["RegionCenter"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
+    n31.features["Count"] = count; n31.features["Mean"] = mean; n31.features["Variance"] = variance;
+    add(ts, fs, n31);
+
+    Traxel n32(32, 3, new RegionCenterLocator); // id, timestep, locator
+    com[0] = 3; com[1] = 1; com[2] = 1; divProb[0] = 0; detProb[0] = 0.3;detProb[1]=0.7;
+    count[0] = 1; mean[0] = 2; variance[0] = 3;
+    n32.features["RegionCenter"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
+    n32.features["Count"] = count; n32.features["Mean"] = mean; n32.features["Variance"] = variance;
+    add(ts, fs, n32);
+
+    std::cout << "Initialize Conservation tracking" << std::endl;
+    std::cout << std::endl;
+
+    vector<double> sigmas(5);
+        sigmas[0]=0;
+        sigmas[1]=0;
+        sigmas[2]=10;
+        sigmas[3]=10;
+        sigmas[4]=10;
+
+    UncertaintyParameter uparam(3,DiverseMbest,sigmas);//2 iterations, diverse, diverse_lambda=10
+
+    FieldOfView fov(0, 0, 0, 0, 3, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+
+    ConsTracking tracking = ConsTracking(
+                1, // max_number_objects
+                false, // detection_by_volume
+                double(1.1), // avg_obj_size
+                20, // max_neighbor_distance
+                true, //with_divisions
+                0.3, // division_threshold
+                "none", // random forest filename
+                fov //field of view
+                );
+
+    EventVectorVectorVector events = tracking(ts,
+             0, // forbidden_cost
+             0.0, // ep_gap
+             false, // with_tracklets
+             10.0, //division_weight
+             10.0, //transition_weight
+             10., // disappearance_cost,
+             10., // appearance_cost
+             false, //with_merger_resolution
+             3, //n_dim
+             5, //transition_parameter
+             0, //border_width for app/disapp costs
+             true, //with_constraints
+             uparam // uncertainty parameters
+             );
+
+    boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
+
+    std::cout << "Division features for solution: 0" << std::endl;
+    set_solution(*hypotheses_graph, 0);
+    // get division traxels to depth 1
+    DivisionTraxels division_extractor;
+    ConstTraxelRefVectors traxelref_vecs = division_extractor(*hypotheses_graph);
+    // get the division features
+    DivisionFeatureExtractor extractor;
+    FeatureMatrix results;
+    extractor.compute_features(traxelref_vecs, results);
+    std::cout << "Division features:\n" << results << std::endl;
+    std::vector<string> descriptions;
+    extractor.get_feature_descriptions(descriptions);
+    for(auto description : descriptions)
+    {
+        std::cout << description << std::endl;
+    }
+}
+
 BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
 {
     std::cout << "Constructing HypothesesGraph" << std::endl;

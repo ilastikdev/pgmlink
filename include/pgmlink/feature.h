@@ -191,8 +191,8 @@ private:
 class SpatialBorderAwareWeight
 {
   public:
-    PGMLINK_EXPORT SpatialBorderAwareWeight( double cost, double margin, bool relative, FieldOfView& fov) 
-    : cost_(cost), margin_(margin), relative_(relative), fov_(fov)
+    PGMLINK_EXPORT SpatialBorderAwareWeight( double cost, double margin, bool relative, FieldOfView& fov, size_t first_timestep,size_t last_timestep) 
+    : cost_(cost), margin_(margin), relative_(relative), fov_(fov),first_timestep_(first_timestep),last_timestep_(last_timestep)
     {
         if (relative && margin > 0.5) {
             throw std::runtime_error("The relative margin may not exceed 0.5.");
@@ -202,6 +202,8 @@ class SpatialBorderAwareWeight
     PGMLINK_EXPORT double operator()( const Traxel& tr ) const;
 
   private:
+    size_t first_timestep_;
+    size_t last_timestep_;
     double cost_;
     double margin_;
     bool relative_;

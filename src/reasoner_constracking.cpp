@@ -849,7 +849,7 @@ double ConservationTracking::get_transition_probability(Traxel& tr1, Traxel& tr2
         // predict and store
         double var;        
         try {
-            assert(tr1.features.find("RegionCenter") != tr1.features.end());
+            assert(tr1.features.find("com") != tr1.features.end());
             assert(callable(transition_classifier_.attr("predictWithCoordinates")));
             PyGILState_STATE pygilstate = PyGILState_Ensure();
             boost::python::object prediction = transition_classifier_.attr("predictWithCoordinates")(tr1.X(), tr1.Y(), tr1.Z(),

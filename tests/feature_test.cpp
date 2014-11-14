@@ -90,7 +90,9 @@ BOOST_AUTO_TEST_CASE( SpatialDistanceToBorder )
 	boost::function<double(const Traxel&)> cost_fn = SpatialBorderAwareWeight(cost,
 																			border_width,
 																			false, //relative margin to border
-																			fov);
+																			fov,
+																			3,
+																			3);
 
 
 	BOOST_CHECK_EQUAL(cost_fn(t1), 50.);
@@ -107,7 +109,9 @@ BOOST_AUTO_TEST_CASE( SpatialDistanceToBorder )
 	cost_fn = SpatialBorderAwareWeight(cost,
 									border_width,
 									true, //relative margin to border
-									fov);
+									fov,
+									3,
+									3);
 
 
 	BOOST_CHECK_EQUAL(cost_fn(t1), 50.);

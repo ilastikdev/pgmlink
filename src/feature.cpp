@@ -406,6 +406,9 @@ double NegLnConstant::operator ()(size_t state) const {
   ////
  double SpatialBorderAwareWeight::operator()( const Traxel& tr ) const {
 	double t = tr.Timestep;
+  if(t == first_timestep_ or t ==last_timestep_){
+    return 0.;
+  }
 	double x = tr.X(), y = tr.Y(), z = tr.Z();
 	double distance_to_border = fov_.spatial_distance_to_border(t,x,y,z,relative_);
 	LOG(logDEBUG4) << "SpatialBorderAwareWeight(): distance to border = " << distance_to_border;
