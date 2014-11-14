@@ -189,13 +189,13 @@ size_t get_active_node(
 		property_map<node_active, HypothesesGraph::base_graph>::type* nodes,
 		property_map<node_active2, HypothesesGraph::base_graph>::type* nodes2,
 		property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector,
-		size_t state,
+        size_t map_type_id,
 		HypothesesGraph::Node node,
 		size_t iterationStep=0){
-	if (state ==0){
+    if (map_type_id ==0){
 		return (*nodes)[node];
 	}
-	else if (state==1){
+    else if (map_type_id==1){
 		return (*nodes2)[node];
 	}
 	return (*nodes_vector)[node][iterationStep];
@@ -204,10 +204,10 @@ size_t get_active_node(
 bool get_active_arc(
 		property_map<arc_active, HypothesesGraph::base_graph>::type* arcs,
 		property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector,
-		size_t state,
+        size_t map_type_id,
 		HypothesesGraph::Arc arc,
 		size_t iterationStep=0){
-	if (state==2){
+    if (map_type_id==2){
 		return (*arcs_vector)[arc][iterationStep];
 	}
 	return (*arcs)[arc];
@@ -216,14 +216,74 @@ bool get_active_arc(
 bool get_active_division(
 		property_map<division_active, HypothesesGraph::base_graph>::type* divs,
 		property_map<division_active_count, HypothesesGraph::base_graph>::type* divs_vector,
-		size_t state,
+        size_t map_type_id,
 		HypothesesGraph::Node node,
 		size_t iterationStep=0){
-	if (state==2){
+    if (map_type_id==2){
 		return (*divs_vector)[node][iterationStep];
 	}
 	return (*divs)[node];
 }
+
+
+double get_uncertainty(
+        property_map<division_active, HypothesesGraph::base_graph>::type*,
+        property_map<division_active_count, HypothesesGraph::base_graph>::type* divs_vector,
+        size_t map_type_id,
+        HypothesesGraph::Node node,
+        size_t iterationStep=0){
+    if (map_type_id==2){
+        size_t res = (*divs_vector)[node][iterationStep];
+        double votes=0.;
+        for (auto it = (*divs_vector)[node].begin(); it != (*divs_vector)[node].end(); ++it ) {
+            if (*it == res) {
+                votes += 1;
+            }
+        }
+        return 1 - votes / (*divs_vector)[node].size();
+    }
+    return 0.;
+}
+
+double get_uncertainty(
+        property_map<arc_active, HypothesesGraph::base_graph>::type*,
+        property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector,
+        size_t map_type_id,
+        HypothesesGraph::Arc arc,
+        size_t iterationStep=0){
+    if (map_type_id==2){
+        size_t res = (*arcs_vector)[arc][iterationStep];
+        double votes=0.;
+        for (auto it = (*arcs_vector)[arc].begin(); it != (*arcs_vector)[arc].end(); ++it ) {
+            if (*it == res) {
+                votes += 1;
+            }
+        }
+        return 1 - votes / (*arcs_vector)[arc].size();
+    }
+    return 0.;
+}
+
+double get_uncertainty(
+        property_map<node_active, HypothesesGraph::base_graph>::type*,
+        property_map<node_active2, HypothesesGraph::base_graph>::type*,
+        property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector,
+        size_t map_type_id,
+        HypothesesGraph::Node node,
+        size_t iterationStep=0){
+    if (map_type_id == 2){
+        size_t res = (*nodes_vector)[node][iterationStep];
+        double votes=0.;
+        for (auto it = (*nodes_vector)[node].begin(); it != (*nodes_vector)[node].end(); ++it ) {
+            if (*it == res) {
+                votes += 1;
+            }
+        }
+        return 1 - votes / (*nodes_vector)[node].size();
+    }
+    return 0.;
+}
+
 
 boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGraph& g, int iterationStep) {
 
@@ -246,10 +306,10 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 	property_map<division_active, HypothesesGraph::base_graph>::type* divisions=0;
 	property_map<division_active_count, HypothesesGraph::base_graph>::type* divisions_vector=0;
 
-	size_t vector_state;
+    size_t map_type_id;
 	bool with_mergers = false;
 	if (g.getProperties().count("node_active_count") > 0){
-		vector_state = 2;
+        map_type_id = 2;
 		arcs_vector=  &g.get(arc_active_count());
 		nodes_vector = &g.get(node_active_count());
 		if (g.getProperties().count("node_active2") > 0) {
@@ -260,17 +320,17 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 		nodes2 = &g.get(node_active2());
 		arcs=  &g.get(arc_active());
 		LOG(logDEBUG1) << "events(): with_mergers = true";
-		vector_state = 1;
+        map_type_id = 1;
 	}
 	else {
-		vector_state = 0;
+        map_type_id = 0;
 		arcs=  &g.get(arc_active());
 		nodes = &g.get(node_active());
 	}
 
 	if (g.getProperties().count("division_active") > 0) {
 		with_division_detection = true;
-		if (vector_state==2) {
+        if (map_type_id==2) {
 			divisions_vector = &g.get(division_active_count());
 		} else {
 			divisions = &g.get(division_active());
@@ -304,7 +364,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 			assert(node_traxel_map[node_at].Timestep == t);
 			LOG(logDEBUG4) <<t<< " "<< node_traxel_map[node_at].Id;
 
-			if(!get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep)){
+            if(!get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep)){
 				continue;
 			}
 
@@ -316,13 +376,13 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 						std::back_insert_iterator<std::vector<unsigned> >(resolver_map[(*origin_map)[node_at][0]]));
 			}
 
-			LOG(logDEBUG3) << "Number of detected objects: " << get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep);
+            LOG(logDEBUG3) << "Number of detected objects: " << get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep);
 
 			// count outgoing arcs
 
 			size_t count = 0;
 			for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a!=lemon::INVALID; ++a) {
-				if (get_active_arc(arcs,arcs_vector,vector_state,a,iterationStep)){
+                if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
 					++count;
 				}
 			}
@@ -349,9 +409,10 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 
 				for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-					if (get_active_arc(arcs,arcs_vector,vector_state,a,iterationStep)){
+                    if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
 						e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
-					}
+                        e.set_energy(get_uncertainty(arcs,arcs_vector,map_type_id,a,iterationStep));
+					}                    
 
 				}
 				(*ret)[t-g.earliest_timestep()+1].push_back(e);
@@ -363,14 +424,15 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 			default: {
 				Event e;
 				if (with_division_detection) {
-					if (count == 2 && get_active_division(divisions,divisions_vector,vector_state,node_at,iterationStep)) {
+                    if (count == 2 && get_active_division(divisions,divisions_vector,map_type_id,node_at,iterationStep)) {
 						e.type = Event::Division;
 						e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 						for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-							if (get_active_arc(arcs,arcs_vector,vector_state,a,iterationStep)){
-								e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+                            if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
+								e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);                                
 							}
 						}
+                        e.set_energy(get_uncertainty(divisions,divisions_vector,map_type_id,node_at,iterationStep));
 						(*ret)[t-g.earliest_timestep()+1].push_back(e);
 
 
@@ -378,12 +440,13 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 					} else {
 
 						for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-							if (get_active_arc(arcs,arcs_vector,vector_state,a,iterationStep)) {
+                            if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)) {
 
 								e.type = Event::Move;
 								e.traxel_ids.clear();
 								e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 								e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+                                e.set_energy(get_uncertainty(arcs,arcs_vector,map_type_id,a,iterationStep));
 								(*ret)[t-g.earliest_timestep()+1].push_back(e);
 								LOG(logDEBUG3) << e;
 							}
@@ -396,10 +459,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 					e.type = Event::Division;
 					e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 					for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-						if (get_active_arc(arcs,arcs_vector,vector_state,a,iterationStep)){
+                        if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
 							e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
 						}
 					}
+                    e.set_energy(get_uncertainty(divisions,divisions_vector,map_type_id,node_at,iterationStep));
 					(*ret)[t-g.earliest_timestep()+1].push_back(e);
 
 					LOG(logDEBUG3) << e;
@@ -425,12 +489,12 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 		if (t+1 <= g.latest_timestep()) {
 			for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t+1); node_at!=lemon::INVALID; ++node_at) {
 				// count incoming arcs
-				if (!get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep)){
+                if (!get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep)){
 					continue;
 				}
 				int count = 0;
 				for(HypothesesGraph::base_graph::InArcIt a(g, node_at); a!=lemon::INVALID; ++a) {
-					if (get_active_arc(arcs,arcs_vector,vector_state,a,iterationStep)) ++count;
+                    if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)) ++count;
 				}
 				LOG(logDEBUG3) << "events(): counted incoming arcs in next timestep: " << count;
 				// no incoming arcs => appearance
@@ -444,11 +508,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 			}
 		}
 		for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
-			if(with_mergers && get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep) > 1) {
+            if(with_mergers && get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep) > 1) {
 				Event e;
 				e.type = Event::Merger;
 				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-				e.traxel_ids.push_back(get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep));
+                e.traxel_ids.push_back(get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep));
 				(*ret)[t-g.earliest_timestep()].push_back(e);
 				LOG(logDEBUG3) << e;
 			}
@@ -457,11 +521,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 
 	LOG(logDEBUG2) << "events(): last timestep: " << g.latest_timestep();
 	for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at!=lemon::INVALID; ++node_at) {
-		if(with_mergers && get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep)> 1) {
+        if(with_mergers && get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep)> 1) {
 			Event e;
 			e.type = Event::Merger;
 			e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-			e.traxel_ids.push_back(get_active_node(nodes,nodes2,nodes_vector,vector_state,node_at,iterationStep));
+            e.traxel_ids.push_back(get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep));
 			(*ret)[g.latest_timestep()-g.earliest_timestep()].push_back(e);
 			LOG(logDEBUG3) << e;
 		}
@@ -1304,7 +1368,7 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
         // (but only if we go through the graph forward in time)
         unsigned int max_nn = options_.max_nearest_neighbors;
         if (options_.consider_divisions && !reverse && max_nn < 2) {
-            double div_prob = getDivisionProbability(traxelmap[curr_node]);
+            double div_prob = getDivisionProbability(traxelmap[curr_node]);            
             if (div_prob > options_.division_threshold) {
                 max_nn = 2;
             }

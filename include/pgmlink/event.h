@@ -23,7 +23,7 @@ class Event
 {
  public:
     PGMLINK_EXPORT Event() 
-    : n_features_(0) 
+    : n_features_(0), energy_(0)
     { 
       type = Void;
     }
@@ -48,6 +48,7 @@ class Event
        If there are no features the energy will be 0 by definition.
     */
     PGMLINK_EXPORT double energy() const;
+    PGMLINK_EXPORT void set_energy(double energy);
     
     PGMLINK_EXPORT unsigned int number_of_features() const { return n_features_; }
     PGMLINK_EXPORT Event& number_of_features( unsigned int );
@@ -69,6 +70,7 @@ class Event
     uint32_t n_features_;
     std::vector<double> weights_;
     std::vector<double> features_;
+    double energy_;
 
   private:
     // serialization interface
@@ -85,6 +87,7 @@ class Event
         ar & n_features_;
         ar & weights_;
         ar & features_;
+        ar & energy_;
     }
   };
 

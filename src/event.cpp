@@ -11,12 +11,19 @@ namespace pgmlink {
   /// class Event
   ///
   double Event::energy() const {
-    assert(weights_.size() == features_.size());
-    double energy = 0;
-    for(size_t i=0; i != weights_.size(); ++i) {
-      energy += weights_[i] * features_[i];
-    }
-    return energy;
+//    assert(weights_.size() == features_.size());
+//    double energy = 0;
+//    for(size_t i=0; i != weights_.size(); ++i) {
+//      energy += weights_[i] * features_[i];
+//    }
+//    return energy;
+
+      // abusing this function for the uncertainty measures after perturbations
+      return energy_;
+  }
+
+  void Event::set_energy(double energy) {
+      energy_ = energy;
   }
 
   Event& Event::number_of_features( unsigned int n ) {
