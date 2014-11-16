@@ -65,7 +65,7 @@ void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn){
     out_file << "ActiveNodes" << std::endl;
     for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n) {
         std::stringstream ss;
-        size_t label = (appearance_labels[n] || disappearance_labels[n]);
+        size_t label = max(appearance_labels[n], disappearance_labels[n]);
         ss << label << " ";
         for(auto it = active_nodes_count[n].begin(); it != active_nodes_count[n].end(); ++it) {
             ss << *it << " ";
