@@ -42,6 +42,63 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
     return node;
 }
 
+void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn){
+    LOG(logINFO) << "write_hypotheses_graph_state()";
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
+        get(arc_active_count());
+    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
+        get(node_active_count());
+    property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
+        get(division_active_count());
+    property_map<appearance_label, HypothesesGraph::base_graph>::type& appearance_labels =
+        get(appearance_label());
+    property_map<disappearance_label, HypothesesGraph::base_graph>::type& disappearance_labels =
+        get(disappearance_label());
+    property_map<division_label, HypothesesGraph::base_graph>::type& division_labels =
+        get(division_label());
+    property_map<arc_label, HypothesesGraph::base_graph>::type& arc_labels =
+        get(arc_label());
+
+    std::ofstream out_file;
+    out_file.open(out_fn,std::ios::app);
+
+    out_file << "ActiveNodes" << std::endl;
+    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n) {
+        std::stringstream ss;
+        size_t label = (appearance_labels[n] || disappearance_labels[n]);
+        ss << label << " ";
+        for(auto it = active_nodes_count[n].begin(); it != active_nodes_count[n].end(); ++it) {
+            ss << *it << " ";
+        }
+        out_file << ss.str() << std::endl;
+    }
+
+    out_file << "DivisionNodes" << std::endl;
+    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n) {
+        std::stringstream ss;
+        size_t label = division_labels[n];
+        ss << label << " ";
+        for(auto it = active_divisions_count[n].begin(); it != active_divisions_count[n].end(); ++it) {
+            ss << *it << " ";
+        }
+        out_file << ss.str() << std::endl;
+    }
+
+    out_file << "ActiveArcs" << std::endl;
+    for (HypothesesGraph::ArcIt a(*this); a != lemon::INVALID; ++a) {
+        std::stringstream ss;
+        size_t label = arc_labels[a];
+        ss << label << " ";
+        for(auto it = active_arcs_count[a].begin(); it != active_arcs_count[a].end(); ++it) {
+            ss << *it << " ";
+        }
+        out_file << ss.str() << std::endl;
+    }
+
+    out_file.close();
+}
+
+
 void HypothesesGraph::init_labeling_maps() {
     add(appearance_label()).add(disappearance_label()).add(division_label()).add(arc_label());
 

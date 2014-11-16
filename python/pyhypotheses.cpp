@@ -199,6 +199,8 @@ void export_hypotheses() {
     .def("set_solution", &features::set_solution)
     .def("set_injected_solution", &features::set_injected_solution)
 
+    .def("write_hypotheses_graph_state", &HypothesesGraph::write_hypotheses_graph_state)
+
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,
 	 return_internal_reference<>())

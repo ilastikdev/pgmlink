@@ -216,7 +216,7 @@ void export_track() {
       .def("HamminglossOfFiles",&ConsTracking::hammingloss_of_files)
       .def("LearnWithFunkey",&ConsTracking::learn_from_funkey_files)
       .def("SetFunkeyExportLabeledGraph",&ConsTracking::set_export_labeled_graph)
-      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
+      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)      
 	;
 
     enum_<Event::EventType>("EventType")

@@ -275,7 +275,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
             conclude(hypotheses);
         }
     }
-
     graph->add(relative_uncertainty());
 
     property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes = graph->get(node_active_count());

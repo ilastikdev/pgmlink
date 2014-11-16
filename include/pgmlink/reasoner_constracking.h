@@ -189,6 +189,7 @@ private:
     double get_transition_probability(Traxel& tr1, Traxel& tr2, size_t state);
     double get_transition_variance(Traxel& tr1, Traxel& tr2);
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
+    void write_hypotheses_graph_state(const HypothesesGraph& g, const std::string out_fn);
 
     // helper
     size_t cplex_id(size_t opengm_id, size_t state);
