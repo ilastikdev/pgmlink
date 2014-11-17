@@ -122,10 +122,11 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
     return export_filename.str();
 }
 
-void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool with_inference){
+void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool with_inference)
+{
 
     reset();
-    if(with_inference)
+    if (with_inference)
         solutions_.clear();
 
     pgm_ = boost::shared_ptr < pgm::OpengmModelDeprecated > (new pgm::OpengmModelDeprecated());
@@ -133,11 +134,14 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
     HypothesesGraph *graph;
 
     // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
-    if (with_tracklets_) {
+    if (with_tracklets_)
+    {
         LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
         tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
         graph = &tracklet_graph_;
-    } else {
+    }
+    else
+    {
         graph = &hypotheses;
     }
 
@@ -148,11 +152,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
     LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
     formulate(*graph);
 
-    MAPGmType* model = pgm_->Model();
+    MAPGmType *model = pgm_->Model();
 
     LOG(logDEBUG) << "ConservationTracking::formulate: add_finite_factors";
 
-    add_finite_factors(*graph,model,false);
+    add_finite_factors(*graph, model, false);
 
     PertGmType perturbed_model = PertGmType(model->space());
     add_finite_factors(*graph, &perturbed_model, false /*perturb*/);
@@ -164,7 +168,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
     LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
     LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
 
-    LOG(logDEBUG) <<"ConservationTracking::perturbedInference: uncertainty parameter print";
+    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
 
     cplex_optimizer::Parameter cplex_param;
     cplex_param.verbose_ = true;
@@ -175,44 +179,53 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
 
     //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
     size_t numberOfSolutions = 1;
-    if (uncertainty_param_.distributionId==MbestCPLEX){
+    if (uncertainty_param_.distributionId == MbestCPLEX)
+    {
         numberOfSolutions = uncertainty_param_.numberOfIterations;
     }
 
-    optimizer_ = new cplex_optimizer(perturbed_model,
+    optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(perturbed_model,
                                      cplex_param,
                                      numberOfSolutions,
                                      get_export_filename(0, features_file_),
                                      constraints_file_,
                                      get_export_filename(0, ground_truth_file_),
-                                     export_from_labeled_graph_);
+                                     export_from_labeled_graph_));
 
-    if(with_inference)
+    if (with_inference)
     {
-        if (with_constraints_) {
+        if (with_constraints_)
+        {
             LOG(logINFO) << "add_constraints";
             add_constraints(*graph);
         }
 
         LOG(logINFO) << "infer MAP";
         infer();
-        LOG(logINFO) << "conclude MAP";
-        conclude(hypotheses);
 
-        if(export_from_labeled_graph_ and not ground_truth_file_.empty()){
+        if (export_from_labeled_graph_ and not ground_truth_file_.empty())
+        {
             LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
             write_labeledgraph_to_file(*graph);
             ground_truth_file_.clear();
         }
 
-        optimizer_->set_export_file_names("","","");
 
-        for (size_t k=1;k<numberOfSolutions;++k){
-            LOG(logINFO) << "conclude "<<k+1<<"-best solution";
-            optimizer_->set_export_file_names("","",get_export_filename(k, ground_truth_file_));
+        LOG(logINFO) << "conclude MAP";
+        conclude(hypotheses);
 
-            opengm::InferenceTermination status = optimizer_->arg(solutions_.back(),k);
-            if (status != opengm::NORMAL) {
+
+
+        optimizer_->set_export_file_names("", "", "");
+
+        for (size_t k = 1; k < numberOfSolutions; ++k)
+        {
+            LOG(logINFO) << "conclude " << k + 1 << "-best solution";
+            optimizer_->set_export_file_names("", "", get_export_filename(k, ground_truth_file_));
+
+            opengm::InferenceTermination status = optimizer_->arg(solutions_.back(), k);
+            if (status != opengm::NORMAL)
+            {
                 throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
             }
             conclude(hypotheses);
@@ -225,22 +238,26 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
     //a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
 
     size_t numberOfIterations = uncertainty_param_.numberOfIterations;
-    if (uncertainty_param_.distributionId==MbestCPLEX){
+    if (uncertainty_param_.distributionId == MbestCPLEX)
+    {
         numberOfIterations = 1;
     }
     size_t num_factors = perturbed_model.numberOfFactors();
     vector<vector<vector<size_t> > >deterministic_offset(num_factors);
 
     //deterministic & non-deterministic perturbation
-    for (size_t iterStep=1; iterStep<numberOfIterations; ++iterStep){
-
+    for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
+    {
         num_factors = perturbed_model.numberOfFactors();
-        if (uncertainty_param_.distributionId==DiverseMbest){
+        if (uncertainty_param_.distributionId == DiverseMbest)
+        {
 
-            for(size_t factorId=0; factorId<num_factors; ++factorId) {
+            for (size_t factorId = 0; factorId < num_factors; ++factorId)
+            {
                 PertGmType::FactorType factor = perturbed_model[factorId];
                 vector<size_t> varIndices;
-                for (PertGmType::FactorType::VariablesIteratorType ind=factor.variableIndicesBegin();ind!=factor.variableIndicesEnd();++ind){
+                for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin(); ind != factor.variableIndicesEnd(); ++ind)
+                {
                     varIndices.push_back(solutions_[iterStep - 1][*ind]);
                 }
                 deterministic_offset[factorId].push_back(varIndices);
@@ -255,17 +272,19 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
         LOG(logINFO) << "Model for perturbed inference has num factors: " << perturbed_model2.numberOfFactors();
 
         LOG(logINFO) << "ConservationTracking::perturbedInference construct perturbed model";
-        optimizer_ = new cplex_optimizer(perturbed_model2,
+
+        optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(perturbed_model2,
                                          cplex_param,
                                          1,
                                          get_export_filename(iterStep, features_file_),
                                          "",
                                          get_export_filename(iterStep, ground_truth_file_),
-                                         false);
+                                         false));
 
-        if(with_inference)
+        if (with_inference)
         {
-            if (with_constraints_) {
+            if (with_constraints_)
+            {
                 add_constraints(*graph);
             }
             LOG(logINFO) << "infer ";
@@ -277,18 +296,21 @@ void ConservationTracking::perturbedInference(HypothesesGraph& hypotheses, bool 
     }
     graph->add(relative_uncertainty());
 
-    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes = graph->get(node_active_count());
-    property_map<relative_uncertainty, HypothesesGraph::base_graph>::type& rel_uncertainty = graph->get(relative_uncertainty());
-    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n) {
-        double count=0;
-        vector<size_t>* active_list = &active_nodes.get_value(n);
-        for (vector<size_t>::iterator is_active = active_list->begin();is_active!=active_list->end();is_active++){
-            if (*is_active!=0){
+    property_map<node_active_count, HypothesesGraph::base_graph>::type &active_nodes = graph->get(node_active_count());
+    property_map<relative_uncertainty, HypothesesGraph::base_graph>::type &rel_uncertainty = graph->get(relative_uncertainty());
+    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n)
+    {
+        double count = 0;
+        vector<size_t> *active_list = &active_nodes.get_value(n);
+        for (vector<size_t>::iterator is_active = active_list->begin(); is_active != active_list->end(); is_active++)
+        {
+            if (*is_active != 0)
+            {
                 ++count;
             }
         }
 
-        rel_uncertainty.set(n,count/uncertainty_param_.numberOfIterations);
+        rel_uncertainty.set(n, count / uncertainty_param_.numberOfIterations);
     }
 }
 
@@ -481,13 +503,13 @@ void ConservationTracking::infer() {
     if (statusExtract != opengm::NORMAL) {
         throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
     }
-}
-
-void ConservationTracking::conclude( HypothesesGraph& g) {
     if(export_from_labeled_graph_ and not  ground_truth_file_.empty()){
         clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
         clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
     }
+}
+
+void ConservationTracking::conclude( HypothesesGraph& g) {
 
     // add 'active' properties to graph
     g.add(node_active2()).add(arc_active()).add(division_active());
@@ -694,10 +716,7 @@ void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTrack
 }
 
 void ConservationTracking::reset() {
-    if (optimizer_ != NULL) {
-        delete optimizer_;
-        optimizer_ = NULL;
-    }
+    optimizer_.reset();
     arc_map_.clear();
     div_node_map_.clear();
     app_node_map_.clear();
@@ -1288,10 +1307,6 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g){
     }
     ground_truth_file.close();
 
-}
-
-size_t ConservationTracking::cplex_id(size_t opengm_id, size_t state) {
-    return optimizer_->lpNodeVi(opengm_id, state);
 }
 
 //set up optimizer from constraints by reading from formulated gm

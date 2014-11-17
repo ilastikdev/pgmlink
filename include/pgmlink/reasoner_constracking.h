@@ -191,11 +191,7 @@ private:
     const marray::Marray<ValueType>  perturbFactor(const factorType* factor,size_t factorId,std::vector<marray::Marray<ValueType> >* detoffset);
     void write_hypotheses_graph_state(const HypothesesGraph& g, const std::string out_fn);
 
-    // helper
-    size_t cplex_id(size_t opengm_id, size_t state);
-    std::map<size_t,label_type> opengmid_variable_label_;
-    std::map<size_t,label_type> opengmid_factor_label_;
-
+    // funky export maps
     std::map<std::pair<size_t,size_t>,size_t > clpex_variable_id_map_;
     std::map<std::pair<size_t,std::pair<size_t,size_t> >,size_t> clpex_factor_id_map_;
     
@@ -210,7 +206,7 @@ private:
     
     boost::shared_ptr<pgm::OpengmModelDeprecated> pgm_;
     //opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel, pgm::OpengmModelDeprecated::ogmAccumulator>* optimizer_;
-	cplex_optimizer* optimizer_;
+	boost::shared_ptr<cplex_optimizer> optimizer_;
 
     std::vector<IlpSolution> solutions_;
 	
