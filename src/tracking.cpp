@@ -710,6 +710,9 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 				out_archive << *events_ptr;
             }
 
+            // cleanup extractor
+            delete extractor;
+
             return *events_ptr;
 		}
 		cout << "-> done resolving mergers" << endl;
