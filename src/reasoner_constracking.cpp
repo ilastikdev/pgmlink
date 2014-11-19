@@ -461,7 +461,7 @@ double ConservationTracking::generateRandomOffset(EnergyType energyIndex, double
                 throw std::runtime_error("sigma is not set correctly");
             }
             rand = random_uniform_();
-            throw std::runtime_error("I don't think this formula is correct; debug when needed; check whether rand>=0");
+            //throw std::runtime_error("I don't think this formula is correct; debug when needed; check whether rand>=0");
             return uncertainty_param_.distributionParam[energyIndex] * log(-log(rand));
 		default: //i.e. MbestCPLEX, DiverseMbest
             LOG(logDEBUG4) << "DiverseMBest/MBestCPLEX: random offset 0";
