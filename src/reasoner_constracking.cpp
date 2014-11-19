@@ -35,9 +35,6 @@ typedef opengm::ModelViewFunction
 	<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
 	ViewFunctionType;
 
-typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-			pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
-
 
 ConservationTracking::~ConservationTracking() {
     	/*if (pgm_ != NULL) {
@@ -820,9 +817,17 @@ bool callable(boost::python::object object)
 {
   return 1 == PyCallable_Check(object.ptr());
 }
+
+size_t countOutgoingArcs(const HypothesesGraph& g, const HypothesesGraph::Node& n) {
+    size_t count = 0;
+    for (HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a) {
+        ++count;
+    }
+    return count;
+}
 }
 
-double ConservationTracking::get_transition_probability(Traxel& tr1, Traxel& tr2, size_t state) {
+double ConservationTracking::get_transition_probability(Traxel& tr1, Traxel& tr2, size_t number_of_outgoing, size_t state) {
 
     LOG(logDEBUG4) << "get_transition_probability()";
 
@@ -852,7 +857,7 @@ double ConservationTracking::get_transition_probability(Traxel& tr1, Traxel& tr2
             assert(callable(transition_classifier_.attr("predictWithCoordinates")));
             PyGILState_STATE pygilstate = PyGILState_Ensure();
             boost::python::object prediction = transition_classifier_.attr("predictWithCoordinates")(tr1.X(), tr1.Y(), tr1.Z(),
-                                                                                      tr2.X(), tr2.Y(), tr2.Z());
+                                                                                      tr2.X(), tr2.Y(), tr2.Z(), number_of_outgoing);
             boost::python::object probs_python = prediction.attr("__getitem__")(0);
             // we are only interested in the probability of the second class, since it is a binary classifier
             prob = boost::python::extract<double>(probs_python.attr("__getitem__")(1));
@@ -1006,10 +1011,10 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 bool first = true;
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map_[n].begin();
                         trax_it != tracklet_map_[n].end(); ++trax_it) {
-                    LOG(logDEBUG4) << "internal arcs traxel " << *trax_it;
+                    LOG(logDEBUG4) << "add transition factors of internal arcs for traxel " << *trax_it;
                     Traxel tr = *trax_it;
                     if (!first) {
-                        e = transition_( get_transition_probability(tr_prev, tr, state) );
+                        e = transition_( get_transition_probability(tr_prev, tr, /*num_outgoing_arcs*/ 1, state) );
                         energy += e;
                         if (perturb){
                             energy += generateRandomOffset(Transition, e, tr_prev, tr);
@@ -1096,7 +1101,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
                 tr2 = traxel_map_[g.target(a)];
             }
 
-            double energy = transition_(get_transition_probability(tr1, tr2, state));
+            double energy = transition_(get_transition_probability(tr1, tr2, countOutgoingArcs(g,g.source(a)), state));
 
             if (perturb) {
                 energy += generateRandomOffset(Transition, energy, tr1, tr2);

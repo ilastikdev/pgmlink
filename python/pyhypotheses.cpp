@@ -34,6 +34,31 @@ node_traxel_m& getNodeTraxelMap(HypothesesGraph* g) {
   return g->get(node_traxel());
 }
 
+size_t count_outgoing_arcs(HypothesesGraph* g, Traxel tr) {
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g->get(node_traxel());
+    property_map<node_timestep, HypothesesGraph::base_graph>::type& node_timestep_map = g->get(node_timestep());
+
+    // Find the traxel in the graph (assuming it is a traxel graph, not a tracklet graph
+    HypothesesGraph::Node n;
+    bool found = false;
+    for(property_map<node_timestep, HypothesesGraph::base_graph>::type::ItemIt node_at(node_timestep_map, tr.Timestep);
+        node_at!=lemon::INVALID; ++node_at) {
+        if(traxel_map[node_at].Timestep == tr.Timestep && traxel_map[node_at].Id == tr.Id) {
+            n = node_at;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        throw std::runtime_error("could not find this Traxel");
+    }
+
+    size_t count = 0;
+    for (HypothesesGraph::OutArcIt a(*g, n); a != lemon::INVALID; ++a) {
+        ++count;
+    }
+    return count;
+}
 
 struct HypothesesGraph_pickle_suite : pickle_suite {
   static std::string getstate( const HypothesesGraph& g ) {
@@ -207,6 +232,8 @@ void export_hypotheses() {
     .def("getNodeTraxelMap", &getNodeTraxelMap,
 	 return_internal_reference<>())
     .def_pickle(HypothesesGraph_pickle_suite())
+
+    .def("countOutgoingArcs", &count_outgoing_arcs)
     ;
 
   def("getEventsOfGraph",&get_events_of_graph);
