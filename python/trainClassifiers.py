@@ -46,7 +46,6 @@ def trainGPClassifier(featureArrays, labels, out_fn, out_path, feature_names):
         h = g.create_group('Features')
         for op, v in feature_names.items():
             h.create_dataset(data=v, name=op)
-        h.create_dataset(name='Identity', data='NumOutgoingArcs')
         g.create_dataset(name='timestamp', data=str(datetime.date.today()))
 
     return gpc
@@ -59,8 +58,6 @@ def computeFeatureStore(traxel_ids, labelImage, raw):
 
     for t in sorted(traxel_ids.keys()):
         for idx in traxel_ids[t]:
-            if idx == 0:
-                continue
             trax = pgmlink.Traxel()
             trax.set_feature_store(fs)
             trax.Id = int(idx)
@@ -70,21 +67,11 @@ def computeFeatureStore(traxel_ids, labelImage, raw):
     # compute features from labelimage / raw data
     for t in sorted(traxel_ids.keys()):
         li_at = labelImage[t,...,0].astype(np.uint32).squeeze()
+        # TODO: relabel with traxel_ids???
         raw_at = raw[t,...,0].astype(np.float32).squeeze()
         print '    extracting features for timestep', t
         print '    ', raw_at.shape, li_at.shape, raw_at.dtype, li_at.dtype
         pgmlink.extract_region_features(raw_at, li_at, fs, t)
-
-    for t in sorted(traxel_ids.keys()):
-        for idx in traxel_ids[t]:
-            if idx == 0:
-                continue
-            trax = ts.get_traxel(int(idx), t)
-            trax.add_feature_array("com", 3)
-            for i in range(3):
-                trax.set_feature_value('com', i, trax.get_feature_value("RegionCenter", i))
-            trax.add_feature_array("divProb", 1)
-            trax.set_feature_value("divProb", 0, 0.)
 
     return ts, fs
 
@@ -97,22 +84,6 @@ def initializeFeatureExtractors(featureNames):
             extractors.append(pgmlink.FeatureExtractor(operator, featname))
     return extractors
 
-def initializeConservationTracking(shape, t0, t1):
-    [xshape, yshape, zshape] = shape
-
-    fov = pgmlink.FieldOfView(t0, 0, 0, 0, t1, 1 * (xshape - 1), 1 * (yshape - 1),
-                            1 * (zshape - 1))
-
-    tracker = pgmlink.ConsTracking(2, # max_num_objects
-                                 False, #bool(options.size_dependent_detection_prob),
-                                 0., # obj_size[0],
-                                 200, # options.mnd,
-                                 True, #not bool(options.without_divisions),
-                                 0.1, # options.division_threshold,
-                                 'none', # rf_fn,
-                                 fov,
-                                 "none")
-    return tracker, fov
 
 def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeatureNames, labelImg_fn,
                             labelImg_path, t_axis, ch_axis, ch, out_fn, out_path, margin=None,
@@ -127,28 +98,17 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
    # label 1 means negative example, label 2 means positive example
    labels = []
 
-   # traxel_ids = {}
-   # for t in label2Segment.keys():
-   #     for label in label2Segment[t].keys():
-   #         #assert len(label2Segment[t][label]) == 1, \
-   #         #      'only single segment examples are allowed; see the joint-tracking trainClassifier script for more'
-   #         traxel_ids.setdefault(t, []).append(label2Segment[t][label][0])
+   traxel_ids = {}
+   for t in label2Segment.keys():
+       for label in label2Segment[t].keys():
+           #assert len(label2Segment[t][label]) == 1, \
+           #      'only single segment examples are allowed; see the joint-tracking trainClassifier script for more'
+           traxel_ids.setdefault(t, []).append(label2Segment[t][label][0])
 
    labelImage = h5py.File(labelImg_fn)[labelImg_path]
    raw = h5py.File(raw_fn)[raw_path]
 
-   # ts, fs = computeFeatureStore(traxel_ids, labelImage, raw)
-
-   # take all traxel_ids
-   traxel_ids = {}
-   for t in range(labelImage.shape[0]):
-       li_at = labelImage[t,...]
-       traxel_ids[t] = np.unique(li_at)
-
    ts, fs = computeFeatureStore(traxel_ids, labelImage, raw)
-   ndim = 3
-   tracker, fov = initializeConservationTracking(labelImage.shape[1:ndim+1], 0, labelImage.shape[0])
-   hypotheses_graph = tracker.buildGraph(ts)
 
    extractors = initializeFeatureExtractors(transitionFeatureNames)
 
@@ -191,18 +151,12 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
          for fe in extractors:
              v = fe.extract(trax1, trax2)
              if np.all(np.array(v) < max_distance):
-                feats_at_idx.extend(list(v))
-
+                feats_at_idx.append(v)
 
          if len(feats_at_idx) == 0:
              continue
 
-         # add number of outgoing arcs as feature
-         n_outgoing = hypotheses_graph.countOutgoingArcs(trax1)
-         print 'n_outgoing =', n_outgoing
-         feats_at_idx.append(n_outgoing)
-
-         feats_at_idx = list(feats_at_idx)
+         feats_at_idx = np.array(feats_at_idx)
 
          if idx < len(positivePairs_at):
             labels.append(2)
@@ -211,7 +165,7 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
 
          featureArrays.append(feats_at_idx)
 
-   featureArrays = np.array(featureArrays, dtype=np.float32)
+   featureArrays = np.array(featureArrays).squeeze()
    labels = np.array(labels)
    print '  training Gaussian process classifier...'
    gpc = trainGPClassifier(featureArrays, labels, out_fn, '/TransitionGPClassifier', transitionFeatureNames)
@@ -225,11 +179,9 @@ def getTransitionClassifier(raw_fn, raw_path, fn, annotationPath, transitionFeat
 if __name__ == '__main__':
    import sys
    argv = sys.argv
-   name = 'drosophila'
-
+   name = 'mitocheck'
    if len(argv) > 1:
       name = argv[1]
-
    if name == 'mitocheck':
       fn = '/home/mschiegg/extern/data/cvpr2015/mitocheck/training/training_transition-classifier.ilp'
       raw_fn = '/home/mschiegg/extern/data/cvpr2015/mitocheck/training/training_raw.h5'
@@ -244,16 +196,19 @@ if __name__ == '__main__':
       t_axis = 0
 
    elif name == 'drosophila':
-      fn = '/media/mschiegg/Intenso/data/cvpr15_data_drosophila/training_transition-classifier.ilp'
-      raw_fn = '/media/mschiegg/Intenso/data/cvpr15_data_drosophila/training_raw.h5'
-      pathRaw = 'exported_data'
-      out_fn = fn
+      data_dir = '/home/phanslov/ma/data/drosophila'
+      fn = '%s/classifier_training.ilp' % data_dir
+      raw_fn = '%s/subset_raw.h5' % data_dir
+      pathRaw = 'volume/data'
+      out_fn = '%s/drosophila_classifiers.h5' % data_dir
       pathTransitions = '/ManualTransitions/Labels/0'
+      pathRegions = '/ManualRegions/Labels/0'
+      pathDivisions = '/ManualDivisions/Labels/0'
 
-      labelImg_fn =  '/media/mschiegg/Intenso/data/cvpr15_data_drosophila/training_labels.h5'
-      pathLabelImg = 'exported_data'
+      segmentImg_fn =  '%s/merged_oversegmentation.h5' % data_dir
       ch_axis = -1
       ch = 0
+      segmentImg_path = 'exported_data'
       t_axis = 0
 
    elif name == 'drosophila_from_conservation':
