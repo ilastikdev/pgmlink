@@ -1017,7 +1017,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         			e = detection_(*trax_it, state);
         			energy += e;                    
         			if (perturb){                        
-                        energy+= generateRandomOffset(Detection, e, *trax_it, state);
+                        energy+= generateRandomOffset(Detection, e, *trax_it, 0, state);
         			}
         		}
         		// add all transition factors of the internal arcs                
@@ -1043,7 +1043,7 @@ void ConservationTracking::add_finite_factors(const HypothesesGraph& g, ModelTyp
         		e = detection_(traxel_map_[n], state);
         		energy=e;                
     			if (perturb){
-                    energy+= generateRandomOffset(Detection, e, traxel_map_[n], state);
+                    energy+= generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
     			}
         	}            
             LOG(logDEBUG2) << "ConservationTracking::add_finite_factors: detection[" << state
