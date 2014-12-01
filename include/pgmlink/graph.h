@@ -66,8 +66,13 @@ namespace pgmlink {
       insert(PropertyTag, typename property_map<PropertyTag, Graph>::type*);
 
     static void copy(PropertyGraph<Graph> &src, PropertyGraph<Graph> &dest);
-    
-  private:
+    template<class NodeMap, class ArcMap>
+    static void copy_subgraph(PropertyGraph<Graph> &src,
+                              PropertyGraph<Graph> &dest,
+                              NodeMap &selected_nodes,
+                              ArcMap &selected_arcs);
+
+    private:
     typedef std::map<std::string, boost::any> properties_map;  
     properties_map properties_;
   };

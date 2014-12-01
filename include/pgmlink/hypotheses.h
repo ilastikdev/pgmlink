@@ -385,7 +385,9 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
     PGMLINK_EXPORT void write_hypotheses_graph_state(const std::string out_fn);
     
     static void copy(HypothesesGraph& src, HypothesesGraph& dest);
-
+    static void copy_subgraph(HypothesesGraph &src, HypothesesGraph &dest,
+                              HypothesesGraph::base_graph::NodeMap<bool> &selected_nodes,
+                              HypothesesGraph::base_graph::ArcMap<bool> &selected_arcs);
   private:
     // boost serialize
     friend class boost::serialization::access;

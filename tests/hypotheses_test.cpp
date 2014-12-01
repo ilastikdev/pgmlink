@@ -912,3 +912,115 @@ BOOST_AUTO_TEST_CASE( HypothesesGraph_Map_Serialization )
 		node_id++;
 	}
 }
+
+BOOST_AUTO_TEST_CASE( HypothesesGraph_SubGraph_Copy )
+{
+    // build the following simple graph, but copy only timesteps 1 and 2
+    //  t=1      2      3       4
+    //  o                       o
+    //    |                    |
+    //      ---- o ---- o ----
+    //    |                    |
+    //  o                       o
+    TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    Traxel n11, n12, n21, n31, n41, n42;
+    feature_array com(feature_array::difference_type(3));
+    feature_array divProb(feature_array::difference_type(1));
+    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    n11.features["com"] = com; n11.features["divProb"] = divProb;
+    add(ts, fs, n11);
+    n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
+    n12.features["com"] = com; n12.features["divProb"] = divProb;
+    add(ts, fs, n12);
+    n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
+    n21.features["com"] = com; n21.features["divProb"] = divProb;
+    add(ts, fs, n21);
+    n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
+    n31.features["com"] = com; n31.features["divProb"] = divProb;
+    add(ts, fs, n31);
+    n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    n41.features["com"] = com; n41.features["divProb"] = divProb;
+    add(ts, fs, n41);
+    n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+    n42.features["com"] = com; n42.features["divProb"] = divProb;
+    add(ts, fs, n42);
+
+    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
+            20,
+            true, // forward_backward
+            true, // consider_divisions
+            0.3
+    );
+    SingleTimestepTraxel_HypothesesBuilder hyp_builder(&ts, builder_opts);
+    HypothesesGraph* graph = hyp_builder.build();
+
+    {
+        // set some property map values
+        HypothesesGraph::NodeIt node(*graph); ++node;
+        HypothesesGraph::ArcIt arc(*graph); ++arc;
+
+        graph->add(arc_active_count());
+        property_map<arc_active_count, HypothesesGraph::base_graph>::type& map_arc_active_cout = graph->get(arc_active_count());
+        std::vector<bool> arc_active_vec; arc_active_vec.push_back(false);arc_active_vec.push_back(true);
+        map_arc_active_cout.set(arc, arc_active_vec);
+
+        graph->add(arc_active());
+        property_map<arc_active, HypothesesGraph::base_graph>::type& map_arc_active = graph->get(arc_active());
+        map_arc_active.set(arc, false);
+
+        graph->add(node_active());
+        property_map<node_active, HypothesesGraph::base_graph>::type& map_node_active = graph->get(node_active());
+        map_node_active.set(node, true);
+
+        graph->add(tracklet_intern_dist());
+        property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& map_node_tracklet_intern_dist = graph->get(tracklet_intern_dist());
+        std::vector<double> tracklet_dist_vec; tracklet_dist_vec.push_back(7.32);
+        map_node_tracklet_intern_dist.set(node, tracklet_dist_vec);
+
+        // add some value that will be discarded
+        ++node; ++node; ++node;
+        map_node_active[node] = true;
+    }
+
+    // define subset
+    HypothesesGraph::NodeMap<bool> selected_nodes(*graph);
+    HypothesesGraph::ArcMap<bool> selected_arcs(*graph);
+
+    HypothesesGraph::node_timestep_map& timestep_map = graph->get(node_timestep());
+    for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n)
+    {
+        selected_nodes[n] = timestep_map[n] < 3;
+    }
+
+    for (HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a)
+    {
+        selected_arcs[a] = timestep_map[graph->source(a)] < 3 && timestep_map[graph->target(a)] < 3;
+    }
+
+    // copy
+    boost::shared_ptr<HypothesesGraph> other = boost::make_shared<HypothesesGraph>();
+    HypothesesGraph::copy_subgraph(*graph, *other, selected_nodes, selected_arcs);
+
+    // verify
+    {
+        HypothesesGraph::NodeIt node(*other); ++node;
+        HypothesesGraph::ArcIt arc(*other); ++arc;
+
+        property_map<arc_active, HypothesesGraph::base_graph>::type& map_arc_active = other->get(arc_active());
+        BOOST_CHECK_EQUAL(map_arc_active[arc], false);
+
+        property_map<node_active, HypothesesGraph::base_graph>::type& map_node_active = other->get(node_active());
+        BOOST_CHECK_EQUAL(map_node_active[node], true);
+
+        BOOST_CHECK(graph->latest_timestep() > other->latest_timestep());
+        BOOST_CHECK_EQUAL(other->latest_timestep(), 2);
+
+        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = other->get(node_traxel());
+        for (HypothesesGraph::NodeIt n(*other); n != lemon::INVALID; ++n)
+        {
+            std::cout << traxel_map[n] << std::endl;
+            BOOST_CHECK(traxel_map[n].Timestep < 3);
+        }
+    }
+}
