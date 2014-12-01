@@ -546,14 +546,12 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 												border_width,
 												false, // true if relative margin to border
 												fov_,
-												tmin,
-												tmax);
+												tmin);// set appearance cost to zero at t = tmin
 	disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
 												border_width,
 												false, // true if relative margin to border
 												fov_,
-												tmin,
-												tmax);
+												tmax);// set disappearance cost to zero at t = tmax
 
 	cout << "-> init ConservationTracking reasoner" << endl;
 
