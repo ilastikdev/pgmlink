@@ -91,7 +91,6 @@ BOOST_AUTO_TEST_CASE( SpatialDistanceToBorder )
 																			border_width,
 																			false, //relative margin to border
 																			fov,
-																			3,
 																			3);
 
 
@@ -110,7 +109,6 @@ BOOST_AUTO_TEST_CASE( SpatialDistanceToBorder )
 									border_width,
 									true, //relative margin to border
 									fov,
-									3,
 									3);
 
 

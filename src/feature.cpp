@@ -406,7 +406,7 @@ double NegLnConstant::operator ()(size_t state) const {
   ////
  double SpatialBorderAwareWeight::operator()( const Traxel& tr ) const {
 	double t = tr.Timestep;
-  if(t == first_timestep_ or t ==last_timestep_){
+  if(t == time_border_){
     return 0.;
   }
 	double x = tr.X(), y = tr.Y(), z = tr.Z();
