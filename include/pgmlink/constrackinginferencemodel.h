@@ -57,7 +57,11 @@ public: // Parameter object
     };
 
 public: // API
+    // constructor
     ConsTrackingInferenceModel(const Parameter& param);
+
+    // set a transition_predictions_map that was cached from a previous inference
+    void use_transition_prediction_cache(ConsTrackingInferenceModel* other);
 
     // build the inference model from the given graph
     void build_from_graph(const HypothesesGraph&);
@@ -106,6 +110,7 @@ protected: // members
     HypothesesGraphNodeMap app_node_map_;
     HypothesesGraphNodeMap dis_node_map_;
     HypothesesGraphArcMap arc_map_;
+    boost::shared_ptr<TransitionPredictionsMap> transition_predictions_;
 
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;

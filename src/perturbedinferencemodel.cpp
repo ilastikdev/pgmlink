@@ -19,20 +19,20 @@ PerturbedInferenceModel::PerturbedInferenceModel(
 double PerturbedInferenceModel::get_transition_variance(Traxel& tr1, Traxel& tr2) {
     double var;
 
-//    if (transition_classifier_.ptr()==boost::python::object().ptr()){
-//        var = perturbation_param_.distributionParam[Transition];
-//        LOG(logDEBUG4) << "using constant transition variance " << var;
-//        if (var < 0) {
-//            throw std::runtime_error("the transition variance must be positive");
-//        }
-//    } else {
-//        TransitionPredictionsMap::const_iterator it = transition_predictions_.find(std::make_pair(tr1, tr2));
-//        if ( it == transition_predictions_.end() ) {
-//            throw std::runtime_error("cannot find prob/var. get_transition_probability must be called first");
-//        }
-//        var = it->second.second;
-//        LOG(logDEBUG4) << "using GPC transition variance " << var;
-//    }
+    if (param_.transition_classifier.ptr()==boost::python::object().ptr()){
+        var = perturbation_param_.distributionParam[Transition];
+        LOG(logDEBUG4) << "using constant transition variance " << var;
+        if (var < 0) {
+            throw std::runtime_error("the transition variance must be positive");
+        }
+    } else {
+        TransitionPredictionsMap::const_iterator it = transition_predictions_->find(std::make_pair(tr1, tr2));
+        if ( it == transition_predictions_->end() ) {
+            throw std::runtime_error("cannot find prob/var. get_transition_probability must be called first");
+        }
+        var = it->second.second;
+        LOG(logDEBUG4) << "using GPC transition variance " << var;
+    }
 
     return var;
 }

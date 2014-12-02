@@ -9,8 +9,25 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param):
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
     number_of_appearance_nodes_(0),
-    number_of_disappearance_nodes_(0)
+    number_of_disappearance_nodes_(0),
+    transition_predictions_(new TransitionPredictionsMap())
 {
+}
+
+void ConsTrackingInferenceModel::use_transition_prediction_cache(ConsTrackingInferenceModel *other)
+{
+    if(other == NULL)
+    {
+        LOG(logWARNING) << "[ConsTrackingInferenceModel] Cannot copy cache from NULL pointer" << std::endl;
+    }
+    else if(!other->transition_predictions_)
+    {
+        LOG(logWARNING) << "[ConsTrackingInferenceModel] Not setting empty cache" << std::endl;
+    }
+    else
+    {
+        transition_predictions_ = other->transition_predictions_;
+    }
 }
 
 void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses) {
@@ -199,10 +216,6 @@ bool ConsTrackingInferenceModel::callable(boost::python::object object)
 }
 
 double ConsTrackingInferenceModel::get_transition_probability(Traxel& tr1, Traxel& tr2, size_t state) {
-    // TODO: add caching again, but at which level?
-    // typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
-    // TransitionPredictionsMap transition_predictions_;
-
     LOG(logDEBUG4) << "get_transition_probability()";
 
     double prob;
@@ -222,6 +235,8 @@ double ConsTrackingInferenceModel::get_transition_probability(Traxel& tr1, Traxe
         return prob;
     }
 
+    TransitionPredictionsMap::const_iterator it = transition_predictions_->find(std::make_pair(tr1, tr2));
+    if ( it == transition_predictions_->end() )
     {
         // predict and store
         double var;
@@ -239,7 +254,7 @@ double ConsTrackingInferenceModel::get_transition_probability(Traxel& tr1, Traxe
         } catch (...) {
             throw std::runtime_error("cannot call the transition classifier from python");
         }
-//        transition_predictions_[std::make_pair(tr1, tr2)] = std::make_pair(prob, var);
+        (*transition_predictions_)[std::make_pair(tr1, tr2)] = std::make_pair(prob, var);
     }
 
     if (state == 0) {

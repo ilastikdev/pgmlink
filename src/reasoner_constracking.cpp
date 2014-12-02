@@ -275,6 +275,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
             perturbed_inference_model->perturb(&deterministic_offset);
         }
 
+        perturbed_inference_model->use_transition_prediction_cache(inference_model.get());
         perturbed_inference_model->build_from_graph(*graph);
 
         optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(perturbed_inference_model->get_model(),
