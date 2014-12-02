@@ -508,9 +508,9 @@ void ConsTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g) {
 
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: entered";
     size_t factorIndex = 0;
-    factorIndex += add_detection_factors(g, factorIndex);
-    factorIndex += add_transition_factors(g, factorIndex);
-    factorIndex += add_division_factors(g, factorIndex);
+    factorIndex = add_detection_factors(g, factorIndex);
+    factorIndex = add_transition_factors(g, factorIndex);
+    factorIndex = add_division_factors(g, factorIndex);
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: finished";
 }
 

@@ -202,11 +202,11 @@ size_t PerturbedInferenceModel::add_div_m_best_perturbation(marray::Marray<doubl
                                                                EnergyType energy_type,
                                                                size_t factorIndex)
 {
-    if (perturbation_param_.distributionId==DiverseMbest){
+    if (perturbation_param_.distributionId == DiverseMbest){
         assert(deterministic_offset_ != NULL);
         std::vector<std::vector<size_t> >& indexlist = (*deterministic_offset_)[factorIndex];
         for (std::vector<std::vector<size_t> >::iterator index = indexlist.begin(); index != indexlist.end(); index++){
-            energies(index->begin())+=perturbation_param_.distributionParam[energy_type];
+            energies(index->begin()) += perturbation_param_.distributionParam[energy_type];
         }
         factorIndex++;
     }
