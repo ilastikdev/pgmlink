@@ -461,7 +461,6 @@ void ConservationTracking::conclude( HypothesesGraph& g, boost::shared_ptr<ConsT
                         active_nodes_count.get_value(n)[iterStep]=solutions_.back()[it->second];
 
                     } else {
-                        std::cout << "active_nodes[n]=" << active_nodes[n] << ", solutions_.back()[it->second]=" << solutions_.back()[it->second] << std::endl;
                         assert(active_nodes[n] == solutions_.back()[it->second]);
                     }
                 }

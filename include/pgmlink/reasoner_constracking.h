@@ -129,7 +129,6 @@ private:
 
     double forbidden_cost_;
     
-    //opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel, pgm::OpengmModelDeprecated::ogmAccumulator>* optimizer_;
 	boost::shared_ptr<cplex_optimizer> optimizer_;
     std::vector<IlpSolution> solutions_;
 
