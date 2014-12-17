@@ -40,55 +40,32 @@ typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
 			pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
 
 
-ConservationTracking::ConservationTracking(
-                         unsigned int max_number_objects,
-                         boost::function<double (const Traxel&, const size_t)> detection,
-                         boost::function<double (const Traxel&, const size_t)> division,
-                         boost::function<double (const double)> transition,
-                         double forbidden_cost,
-                         double ep_gap,
-                         bool with_tracklets,
-                         bool with_divisions,
-                         boost::function<double (const Traxel&)> disappearance_cost_fn,
-                         boost::function<double (const Traxel&)> appearance_cost_fn,
-                         bool with_misdetections_allowed,
-                         bool with_appearance,
-                         bool with_disappearance,
-                         double transition_parameter,
-                         bool with_constraints,
-                         UncertaintyParameter param,
-                         double cplex_timeout,
-                         double division_weight,
-                         double detection_weight,
-                         double transition_weight,
-                         boost::python::object transition_classifier,
-                         bool with_optical_correction
-                         )
-    : max_number_objects_(max_number_objects),
-      detection_(detection),
-      division_(division),
-      transition_(transition),
-      forbidden_cost_(forbidden_cost),
+ConservationTracking::ConservationTracking(const Parameter &param)
+    : max_number_objects_(param.max_number_objects),
+      detection_(param.detection),
+      division_(param.division),
+      transition_(param.transition),
+      forbidden_cost_(param.forbidden_cost),
       optimizer_(NULL),
-      ep_gap_(ep_gap),
-      with_tracklets_(with_tracklets),
-      with_divisions_(with_divisions),
-      disappearance_cost_(disappearance_cost_fn),
-      appearance_cost_(appearance_cost_fn),
-      with_misdetections_allowed_(with_misdetections_allowed),
-      with_appearance_(with_appearance),
-      with_disappearance_(with_disappearance),
-      transition_parameter_(transition_parameter),
-      with_constraints_(with_constraints),
-      uncertainty_param_(param),
-      cplex_timeout_(cplex_timeout),
+      ep_gap_(param.ep_gap),
+      with_tracklets_(param.with_tracklets),
+      with_divisions_(param.with_divisions),
+      disappearance_cost_(param.disappearance_cost_fn),
+      appearance_cost_(param.appearance_cost_fn),
+      with_misdetections_allowed_(param.with_misdetections_allowed),
+      with_appearance_(param.with_appearance),
+      with_disappearance_(param.with_disappearance),
+      transition_parameter_(param.transition_parameter),
+      with_constraints_(param.with_constraints),
+      uncertainty_param_(param.uncertainty_param),
+      cplex_timeout_(param.cplex_timeout),
       export_from_labeled_graph_(false),
       isMAP_(true),
-      division_weight_(division_weight),
-      detection_weight_(detection_weight),
-      transition_weight_(transition_weight),
-      transition_classifier_(transition_classifier),
-      with_optical_correction_(with_optical_correction)
+      division_weight_(param.division_weight),
+      detection_weight_(param.detection_weight),
+      transition_weight_(param.transition_weight),
+      transition_classifier_(param.transition_classifier),
+      with_optical_correction_(param.with_optical_correction)
 {
     cplex_param_.verbose_ = true;
     cplex_param_.integerConstraint_ = true;
@@ -117,9 +94,9 @@ ConservationTracking::ConservationTracking(
 
     perturbed_inference_model_param_.distributionId = uncertainty_param_.distributionId;
     perturbed_inference_model_param_.distributionParam = uncertainty_param_.distributionParam;
-    perturbed_inference_model_param_.detection_weight = detection_weight;
-    perturbed_inference_model_param_.division_weight = division_weight;
-    perturbed_inference_model_param_.transition_weight = transition_weight;
+    perturbed_inference_model_param_.detection_weight = detection_weight_;
+    perturbed_inference_model_param_.division_weight = division_weight_;
+    perturbed_inference_model_param_.transition_weight = transition_weight_;
 }
 
 ConservationTracking::~ConservationTracking() {
@@ -554,6 +531,13 @@ void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTrack
     {
         solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
     }
+}
+
+boost::shared_ptr<ConsTrackingInferenceModel> ConservationTracking::create_inference_model(const HypothesesGraph &g)
+{
+    boost::shared_ptr<ConsTrackingInferenceModel> inference_model = boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_);
+    inference_model->build_from_graph(g);
+    return inference_model;
 }
 
 void ConservationTracking::reset() {

@@ -191,6 +191,8 @@ void export_track() {
       .def("set_cplex_timeout", &ChaingraphTracking::set_cplex_timeout)
     ;
 
+    class_<ConservationTracking::Parameter>("ConservationTrackingParameter");
+
     class_<ConsTracking>("ConsTracking",
                          init<int,bool,double,double,bool,double,string,FieldOfView, string>(
                                             args("max_number_objects",
@@ -216,8 +218,14 @@ void export_track() {
       .def("HamminglossOfFiles",&ConsTracking::hammingloss_of_files)
       .def("LearnWithFunkey",&ConsTracking::learn_from_funkey_files)
       .def("SetFunkeyExportLabeledGraph",&ConsTracking::set_export_labeled_graph)
-      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)      
+      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
+      .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
 	;
+
+    class_<ConservationTracking, boost::noncopyable>("ConservationTracking",
+                                 init<ConservationTracking::Parameter>(args("parameters")))
+            .def("perturbedInference", &ConservationTracking::perturbedInference)
+    ;
 
     enum_<Event::EventType>("EventType")
 	.value("Move", Event::Move)

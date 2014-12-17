@@ -1763,6 +1763,10 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
         graph_copy.nodeMap(src.get(node_traxel()), dest.get(node_traxel()));
     }
 
+    // add node references
+    dest.add(node_origin_reference());
+    graph_copy.nodeCrossRef(dest.get(node_origin_reference()));
+
     graph_copy.run();
 }
 

@@ -741,7 +741,7 @@ void resolve_graph(const HypothesesGraph& src,
 
   // Construct conservation tracking and
   // do inference.
-  ConservationTracking pgm(
+  ConservationTracking::Parameter param(
       1, //max_number_objects_,
       detection, //detection,
       division, // division
@@ -763,6 +763,7 @@ void resolve_graph(const HypothesesGraph& src,
       0.,//detection_weight,
       1.,//transition_weight
       transitionClassifier);
+  ConservationTracking pgm(param);
 
   pgm.perturbedInference(dest, 0);
 

@@ -33,38 +33,93 @@ typedef opengm::LPCplex
 
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType factorType;
 
-typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType; 
-typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;    
-
 class Traxel;
 
 class ConservationTracking : public Reasoner {
+public:
+    class Parameter
+    {
     public:
+        Parameter(
+                unsigned int max_number_objects,
+                boost::function<double (const Traxel&, const size_t)> detection,
+                boost::function<double (const Traxel&, const size_t)> division,
+                boost::function<double (const double)> transition,
+                double forbidden_cost = 0,
+                double ep_gap = 0.01,
+                bool with_tracklets = false,
+                bool with_divisions = true,
+                boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
+                boost::function<double (const Traxel&)> appearance_cost_fn = ConstantFeature(500.0),
+                bool with_misdetections_allowed = true,
+                bool with_appearance = true,
+                bool with_disappearance = true,
+                double transition_parameter = 5,
+                bool with_constraints = true,
+                UncertaintyParameter uncertainty_param = UncertaintyParameter(),
+                double cplex_timeout = 1e75,
+                double division_weight = 10,
+                double detection_weight = 10,
+                double transition_weight = 10,
+                boost::python::object transition_classifier = boost::python::object(),
+                bool with_optical_correction = false):
+            max_number_objects(max_number_objects),
+            detection(detection),
+            division(division),
+            transition(transition),
+            forbidden_cost(forbidden_cost),
+            ep_gap(ep_gap),
+            with_tracklets(with_tracklets),
+            with_divisions(with_divisions),
+            disappearance_cost_fn(disappearance_cost_fn),
+            appearance_cost_fn(appearance_cost_fn),
+            with_misdetections_allowed(with_misdetections_allowed),
+            with_appearance(with_appearance),
+            with_disappearance(with_disappearance),
+            transition_parameter(transition_parameter),
+            with_constraints(with_constraints),
+            uncertainty_param(uncertainty_param),
+            cplex_timeout(cplex_timeout),
+            division_weight(division_weight),
+            detection_weight(detection_weight),
+            transition_weight(transition_weight),
+            transition_classifier(transition_classifier),
+            with_optical_correction(with_optical_correction)
+        {}
+
+        // empty parameter needed for python
+        Parameter(){}
+
+        // settings
+        unsigned int max_number_objects;
+        boost::function<double (const Traxel&, const size_t)> detection;
+        boost::function<double (const Traxel&, const size_t)> division;
+        boost::function<double (const double)> transition;
+        double forbidden_cost;
+        double ep_gap;
+        bool with_tracklets;
+        bool with_divisions;
+        boost::function<double (const Traxel&)> disappearance_cost_fn;
+        boost::function<double (const Traxel&)> appearance_cost_fn;
+        bool with_misdetections_allowed;
+        bool with_appearance;
+        bool with_disappearance;
+        double transition_parameter;
+        bool with_constraints;
+        UncertaintyParameter uncertainty_param;
+        double cplex_timeout;
+        double division_weight;
+        double detection_weight;
+        double transition_weight;
+        boost::python::object transition_classifier;
+        bool with_optical_correction;
+    };
+
+public:
     typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
 
     ConservationTracking(
-                             unsigned int max_number_objects,
-                             boost::function<double (const Traxel&, const size_t)> detection,
-                             boost::function<double (const Traxel&, const size_t)> division,
-                             boost::function<double (const double)> transition,
-                             double forbidden_cost = 0,
-                             double ep_gap = 0.01,
-                             bool with_tracklets = false,
-                             bool with_divisions = true,
-                             boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
-                             boost::function<double (const Traxel&)> appearance_cost_fn = ConstantFeature(500.0),
-                             bool with_misdetections_allowed = true,
-                             bool with_appearance = true,
-                             bool with_disappearance = true,
-                             double transition_parameter = 5,
-                             bool with_constraints = true,
-                             UncertaintyParameter param = UncertaintyParameter(),
-                             double cplex_timeout = 1e75,
-                             double division_weight = 10,
-                             double detection_weight = 10,
-                             double transition_weight = 10,
-                             boost::python::object transition_classifier = boost::python::object(),
-                             bool with_optical_correction = false
+                             const Parameter& param
                              );
     ~ConservationTracking();
 
@@ -79,6 +134,8 @@ class ConservationTracking : public Reasoner {
     /// Return reference to all CPLEX solution vectors
     const std::vector<IlpSolution>& get_ilp_solutions() const;
     void set_ilp_solutions(const std::vector<IlpSolution>&);
+
+    boost::shared_ptr<ConsTrackingInferenceModel> create_inference_model(const HypothesesGraph& g);
 
     //cplex export file names
     std::string features_file_;

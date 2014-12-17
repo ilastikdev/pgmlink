@@ -482,106 +482,30 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
 
-    LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ; 
-    LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ; 
-    LOG(logDEBUG1) <<"forbidden_cost\t"<<      forbidden_cost; 
-    LOG(logDEBUG1) <<"ep_gap\t"<<      ep_gap; 
-    LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_; 
-    LOG(logDEBUG1) <<"with_tracklets\t"<<      with_tracklets; 
-    LOG(logDEBUG1) <<"detection_weight\t"<<      detection_weight; 
-    LOG(logDEBUG1) <<"division_weight\t"<<      division_weight; 
-    LOG(logDEBUG1) <<"transition_weight\t"<<      transition_weight; 
-    LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_; 
-    LOG(logDEBUG1) <<"disappearance_cost\t"<<      disappearance_cost; 
-    LOG(logDEBUG1) <<"appearance_cost\t"<<      appearance_cost; 
-    LOG(logDEBUG1) <<"with_merger_resolution\t"<<      with_merger_resolution; 
-    LOG(logDEBUG1) <<"n_dim\t"<<      n_dim; 
-    LOG(logDEBUG1) <<"transition_parameter\t"<<      transition_parameter; 
-    LOG(logDEBUG1) <<"border_width\t"<<      border_width; 
-    LOG(logDEBUG1) <<"with_constraints\t"<<      with_constraints; 
-    LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
-    uncertaintyParam.print();
-    
 
-	Traxels empty;
-	boost::function<double(const Traxel&, const size_t)> detection, division;
-	boost::function<double(const double)> transition;
-
-	if (use_classifier_prior_) {
-		LOG(logINFO) << "Using classifier prior";
-		detection = NegLnDetection(detection_weight);
-	} else if (use_size_dependent_detection_) {
-		LOG(logINFO) << "Using size dependent prior";
-		detection = NegLnDetection(detection_weight); // weight 
-	} else {
-		LOG(logINFO) << "Using hard prior";
-		// assume a quasi geometric distribution
-		vector<double> prob_vector;
-		double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
-		double sum = 0;
-		for(double state = 0; state < max_number_objects_; ++state) {
-			double prob = p*pow(1-p,state);
-			prob_vector.push_back(prob);
-			sum += prob;
-		}
-		prob_vector.insert(prob_vector.begin(), 1-sum);
-
-		detection = boost::bind<double>(NegLnConstant(detection_weight,prob_vector), _2);
-	}
-
-	
-
-	LOG(logDEBUG1) << "division_weight = " << division_weight;
-	LOG(logDEBUG1) << "transition_weight = " << transition_weight;
-	division = NegLnDivision(division_weight);
-	transition = NegLnTransition(transition_weight);
-	
-	//border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
-	boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
-	LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
-
-	size_t tmin = hypotheses_graph_->earliest_timestep();
-	size_t tmax = hypotheses_graph_->latest_timestep();
-	appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost,
-												border_width,
-												false, // true if relative margin to border
-												fov_,
-												tmin);// set appearance cost to zero at t = tmin
-	disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
-												border_width,
-												false, // true if relative margin to border
-												fov_,
-												tmax);// set disappearance cost to zero at t = tmax
-
-	cout << "-> init ConservationTracking reasoner" << endl;
 
 //	PyEval_InitThreads();
 //	PyGILState_STATE gilstate = PyGILState_Ensure();
 
-	ConservationTracking pgm(
-			max_number_objects_,
-			detection,
-			division,
-			transition,
-			forbidden_cost,
-			ep_gap,
-			with_tracklets,
-			with_divisions_,
-			disappearance_cost_fn,
-			appearance_cost_fn,
-			true, // with_misdetections_allowed
-			true, // with_appearance
-			true, // with_disappearance
-            transition_parameter,
-            with_constraints,
-            uncertaintyParam,
-            cplex_timeout,
-            division_weight,
-			detection_weight,
-            transition_weight,
-            transition_classifier,
-            with_optical_correction_
-	);
+    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+                forbidden_cost,
+                ep_gap,
+                with_tracklets,
+                detection_weight,
+                division_weight,
+                transition_weight,
+                disappearance_cost,
+                appearance_cost,
+                with_merger_resolution,
+                n_dim,
+                transition_parameter,
+                border_width,
+                with_constraints,
+                uncertaintyParam,
+                cplex_timeout,
+                transition_classifier
+                );
+    ConservationTracking pgm(param);
 
 	pgm.features_file_      = features_file_;   
 	pgm.constraints_file_   = constraints_file_;
@@ -641,6 +565,122 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 
     return all_ev;
 
+  }
+
+  ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(double forbidden_cost,
+                                                                                     double ep_gap,
+                                                                                     bool with_tracklets,
+                                                                                     double detection_weight,
+                                                                                     double division_weight,
+                                                                                     double transition_weight,
+                                                                                     double disappearance_cost,
+                                                                                     double appearance_cost,
+                                                                                     bool with_merger_resolution,
+                                                                                     int n_dim,
+                                                                                     double transition_parameter,
+                                                                                     double border_width,
+                                                                                     bool with_constraints,
+                                                                                     UncertaintyParameter uncertaintyParam,
+                                                                                     double cplex_timeout,
+                                                                                     boost::python::api::object transition_classifier)
+  {
+      LOG(logDEBUG1) <<"max_number_objects  \t"<< max_number_objects_  ;
+      LOG(logDEBUG1) <<"size_dependent_detection_prob\t"<<  use_size_dependent_detection_ ;
+      LOG(logDEBUG1) <<"forbidden_cost\t"<<      forbidden_cost;
+      LOG(logDEBUG1) <<"ep_gap\t"<<      ep_gap;
+      LOG(logDEBUG1) <<"avg_obj_size\t"<<      avg_obj_size_;
+      LOG(logDEBUG1) <<"with_tracklets\t"<<      with_tracklets;
+      LOG(logDEBUG1) <<"detection_weight\t"<<      detection_weight;
+      LOG(logDEBUG1) <<"division_weight\t"<<      division_weight;
+      LOG(logDEBUG1) <<"transition_weight\t"<<      transition_weight;
+      LOG(logDEBUG1) <<"with_divisions\t"<<      with_divisions_;
+      LOG(logDEBUG1) <<"disappearance_cost\t"<<      disappearance_cost;
+      LOG(logDEBUG1) <<"appearance_cost\t"<<      appearance_cost;
+      LOG(logDEBUG1) <<"with_merger_resolution\t"<<      with_merger_resolution;
+      LOG(logDEBUG1) <<"n_dim\t"<<      n_dim;
+      LOG(logDEBUG1) <<"transition_parameter\t"<<      transition_parameter;
+      LOG(logDEBUG1) <<"border_width\t"<<      border_width;
+      LOG(logDEBUG1) <<"with_constraints\t"<<      with_constraints;
+      LOG(logDEBUG1) <<"cplex_timeout\t"<<      cplex_timeout;
+      uncertaintyParam.print();
+
+      Traxels empty;
+      boost::function<double(const Traxel&, const size_t)> detection, division;
+      boost::function<double(const double)> transition;
+
+      if (use_classifier_prior_) {
+          LOG(logINFO) << "Using classifier prior";
+          detection = NegLnDetection(detection_weight);
+      } else if (use_size_dependent_detection_) {
+          LOG(logINFO) << "Using size dependent prior";
+          detection = NegLnDetection(detection_weight); // weight
+      } else {
+          LOG(logINFO) << "Using hard prior";
+          // assume a quasi geometric distribution
+          vector<double> prob_vector;
+          double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
+          double sum = 0;
+          for(double state = 0; state < max_number_objects_; ++state) {
+              double prob = p*pow(1-p,state);
+              prob_vector.push_back(prob);
+              sum += prob;
+          }
+          prob_vector.insert(prob_vector.begin(), 1-sum);
+
+          detection = boost::bind<double>(NegLnConstant(detection_weight,prob_vector), _2);
+      }
+
+
+
+      LOG(logDEBUG1) << "division_weight = " << division_weight;
+      LOG(logDEBUG1) << "transition_weight = " << transition_weight;
+      division = NegLnDivision(division_weight);
+      transition = NegLnTransition(transition_weight);
+
+      //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+      boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
+      LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+
+      size_t tmin = hypotheses_graph_->earliest_timestep();
+      size_t tmax = hypotheses_graph_->latest_timestep();
+      appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost,
+                                                  border_width,
+                                                  false, // true if relative margin to border
+                                                  fov_,
+                                                  tmin);// set appearance cost to zero at t = tmin
+      disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
+                                                  border_width,
+                                                  false, // true if relative margin to border
+                                                  fov_,
+                                                  tmax);// set disappearance cost to zero at t = tmax
+
+      cout << "-> init ConservationTracking reasoner" << endl;
+
+      ConservationTracking::Parameter param(
+              max_number_objects_,
+              detection,
+              division,
+              transition,
+              forbidden_cost,
+              ep_gap,
+              with_tracklets,
+              with_divisions_,
+              disappearance_cost_fn,
+              appearance_cost_fn,
+              true, // with_misdetections_allowed
+              true, // with_appearance
+              true, // with_disappearance
+              transition_parameter,
+              with_constraints,
+              uncertaintyParam,
+              cplex_timeout,
+              division_weight,
+              detection_weight,
+              transition_weight,
+              transition_classifier,
+              with_optical_correction_
+      );
+      return param;
   }
 
     EventVectorVector ConsTracking::resolve_mergers(

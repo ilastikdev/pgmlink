@@ -20,7 +20,9 @@ using namespace pgmlink;
 using namespace boost::python;
 
 typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_m;
-
+typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcActiveMap;
+typedef property_map<node_active, HypothesesGraph::base_graph>::type NodeActiveMap;
+typedef property_map<node_origin_reference, HypothesesGraph::base_graph>::type NodeOriginReferenceMap;
 
 std::vector< std::vector<Event> > get_events_of_graph(const HypothesesGraph& g){
   return *events(g,0);
@@ -34,6 +36,27 @@ node_traxel_m& getNodeTraxelMap(HypothesesGraph* g) {
   return g->get(node_traxel());
 }
 
+NodeActiveMap& getNodeActiveMap(HypothesesGraph* g) {
+  return g->get(node_active());
+}
+
+bool get_item_NodeActiveMap(NodeActiveMap& map, const NodeActiveMap::Key& k)
+{
+    return map[k];
+}
+
+ArcActiveMap& getArcActiveMap(HypothesesGraph* g) {
+  return g->get(arc_active());
+}
+
+bool get_item_ArcActiveMap(ArcActiveMap& map, const ArcActiveMap::Key& k)
+{
+    return map[k];
+}
+
+NodeOriginReferenceMap& getNodeOriginReferenceMap(HypothesesGraph* g) {
+  return g->get(node_origin_reference());
+}
 
 struct HypothesesGraph_pickle_suite : pickle_suite {
   static std::string getstate( const HypothesesGraph& g ) {
@@ -117,6 +140,29 @@ struct GraphIterator {
   }
 };
 
+int id1(const HypothesesGraph& g, const HypothesesGraph::Node& n)
+{
+    return g.id(n);
+}
+int id2(const HypothesesGraph& g, const HypothesesGraph::Arc& a)
+{
+    return g.id(a);
+}
+
+size_t num_active_incoming_arcs(const HypothesesGraph& g, const HypothesesGraph::Node& n)
+{
+    ArcActiveMap& arc_active_map = g.get(arc_active());
+    size_t num_active = 0;
+
+    for(HypothesesGraph::InArcIt a(g,n); a != lemon::INVALID; ++a)
+    {
+        if(arc_active_map[a])
+            num_active++;
+    }
+
+    return num_active;
+}
+
 void export_hypotheses() {
   class_<HypothesesGraph::Arc>("Arc");
   class_<HypothesesGraph::Node>("Node");
@@ -137,6 +183,23 @@ void export_hypotheses() {
     .def("values", &IterableValueMap_ValueIterator<node_traxel_m>::values)
     ;
 
+  // node/arc active maps
+  class_< ArcActiveMap, boost::noncopyable >("ArcActiveMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+//    .def("__getitem__", (ArcActiveMap::Reference (ArcActiveMap::*)(const ArcActiveMap::Key&))&ArcActiveMap::operator[])
+//    .def("__getitem__", &ArcActiveMap::operator[])
+    .def("__getitem__", &get_item_ArcActiveMap)
+    .def("__setitem__", &ArcActiveMap::set);
+
+  class_< NodeActiveMap, boost::noncopyable >("NodeActiveMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+//    .def("__getitem__", (NodeActiveMap::Reference (NodeActiveMap::*)(const NodeActiveMap::Key&))&NodeActiveMap::operator[])
+//    .def("__getitem__", &NodeActiveMap::operator[])
+    .def("__getitem__", &get_item_NodeActiveMap)
+    .def("__setitem__", &NodeActiveMap::set);
+
+  // node origin reference map
+  class_< NodeOriginReferenceMap, boost::noncopyable >("NodeOriginReferenceMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", &NodeOriginReferenceMap::operator[], return_internal_reference<>())
+    .def("__setitem__", &NodeOriginReferenceMap::set);
 
   // handle function overloading
   HypothesesGraph::Node (HypothesesGraph::*addnode1)(const int) 
@@ -147,8 +210,8 @@ void export_hypotheses() {
   void (HypothesesGraph::*erase2)(const HypothesesGraph::Arc) = &HypothesesGraph::erase;
   bool (HypothesesGraph::*valid1)(const HypothesesGraph::Node) const = &HypothesesGraph::valid;
   bool (HypothesesGraph::*valid2)(const HypothesesGraph::Arc) const = &HypothesesGraph::valid;
-  int (*id1)(HypothesesGraph::Node) = &HypothesesGraph::id;
-  int (*id2)(HypothesesGraph::Arc) = &HypothesesGraph::id;
+//  int (*id1)(HypothesesGraph::Node) = &HypothesesGraph::id;
+//  int (*id2)(HypothesesGraph::Arc) = &HypothesesGraph::id;
   HypothesesGraph::Node (HypothesesGraph::*baseNode1)(const HypothesesGraph::InArcIt&) const =
     &HypothesesGraph::baseNode;
   HypothesesGraph::Node (HypothesesGraph::*baseNode2)(const HypothesesGraph::OutArcIt&) const =
@@ -176,8 +239,8 @@ void export_hypotheses() {
     .def("changeSource", &HypothesesGraph::changeSource)
     .def("target", &HypothesesGraph::target)
     .def("source", &HypothesesGraph::source)
-    .def("id", id1)
-    .def("id", id2)
+    .def("id", &id1)
+    .def("id", &id2)
     .def("nodeFromId", &HypothesesGraph::nodeFromId)
     .def("arcFromId", &HypothesesGraph::arcFromId)
     .def("maxNodeId", &HypothesesGraph::maxNodeId)
@@ -187,10 +250,7 @@ void export_hypotheses() {
     .def("baseNode", baseNode2)
     .def("runningNode", runningNode2)
     .def("oppositeNode", &HypothesesGraph::oppositeNode)
-
-
     .def("addTraxel", &HypothesesGraph::add_traxel)
-
     .def("initLabelingMaps", &HypothesesGraph::init_labeling_maps)
     .def("addArcLabel" , &HypothesesGraph::add_arc_label )
     .def("addAppearanceLabel",&HypothesesGraph::add_appearance_label)
@@ -198,18 +258,38 @@ void export_hypotheses() {
     .def("addDivisionLabel",&HypothesesGraph::add_division_label)
     .def("set_solution", &features::set_solution)
     .def("set_injected_solution", &features::set_injected_solution)
-
     .def("write_hypotheses_graph_state", &HypothesesGraph::write_hypotheses_graph_state)
+    .def("num_active_incoming_arcs", &num_active_incoming_arcs)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap,
 	 return_internal_reference<>())
     .def("getNodeTraxelMap", &getNodeTraxelMap,
 	 return_internal_reference<>())
+      .def("getNodeActiveMap", &getNodeActiveMap,
+       return_internal_reference<>())
+      .def("getArcActiveMap", &getArcActiveMap,
+       return_internal_reference<>())
+      .def("getNodeOriginReferenceMap", &getNodeOriginReferenceMap,
+       return_internal_reference<>())
     .def_pickle(HypothesesGraph_pickle_suite())
     ;
 
   def("getEventsOfGraph",&get_events_of_graph);
+
+  // selector maps and copy functions for hypotheses graph, need to specify type of operator[] to be the const version or it wont compile
+  typedef HypothesesGraph::base_graph::NodeMap<bool> NodeMask;
+  class_< NodeMask, boost::noncopyable >("NodeMask", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", (NodeMask::ConstReference (NodeMask::*)(const NodeMask::Key&) const)&NodeMask::operator[])
+    .def("__setitem__", &NodeMask::set);
+
+  typedef HypothesesGraph::base_graph::ArcMap<bool> ArcMask;
+  class_< ArcMask, boost::noncopyable >("ArcMask", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", (ArcMask::ConstReference (ArcMask::*)(const ArcMask::Key&) const)&ArcMask::operator[])
+    .def("__setitem__", &ArcMask::set);
+
+  def("copy_hypotheses_graph", &HypothesesGraph::copy, args("source_graph", "dest_graph"));
+  def("copy_hypotheses_subgraph", &HypothesesGraph::copy_subgraph, args("source_graph", "dest_graph", "node_mask", "arc_mask"));
 
   //
   // lemon

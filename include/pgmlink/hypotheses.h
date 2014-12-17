@@ -343,6 +343,16 @@ Value& IterableEditableValueMap<Graph, Key, Value>::get_value(const Key& key) {
   template <typename Graph>
   const std::string property_map<arc_label, Graph>::name = "arc_label";
 
+  // node_timestep
+  struct node_origin_reference {};
+  template <typename Graph>
+    struct property_map<node_origin_reference, Graph> {
+    typedef lemon::IterableValueMap< Graph, typename Graph::Node, typename Graph::Node > type;
+    static const std::string name;
+  };
+  template <typename Graph>
+    const std::string property_map<node_origin_reference,Graph>::name = "node_origin_reference";
+
   class HypothesesGraph 
   : public PropertyGraph<lemon::ListDigraph> 
   {
