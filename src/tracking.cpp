@@ -18,6 +18,7 @@
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_pgm.h"
 #include "pgmlink/reasoner_constracking.h"
+#include "pgmlink/reasoner_dyn_prog_constracking.h"
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
@@ -979,6 +980,66 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
 			loss += 1;
     }
     return loss;
+  }
+
+  EventVectorVectorVector ConsTrackingDynProg::track(double forbidden_cost,
+                                                     double ep_gap,
+                                                     bool with_tracklets,
+                                                     double detection_weight,
+                                                     double division_weight,
+                                                     double transition_weight,
+                                                     double disappearance_cost,
+                                                     double appearance_cost,
+                                                     bool with_merger_resolution,
+                                                     int n_dim,
+                                                     double transition_parameter,
+                                                     double border_width,
+                                                     bool with_constraints,
+                                                     UncertaintyParameter uncertaintyParam,
+                                                     double cplex_timeout,
+                                                     boost::python::api::object transition_classifier)
+  {
+      original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
+      HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+
+      ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+                  forbidden_cost,
+                  ep_gap,
+                  with_tracklets,
+                  detection_weight,
+                  division_weight,
+                  transition_weight,
+                  disappearance_cost,
+                  appearance_cost,
+                  with_merger_resolution,
+                  n_dim,
+                  transition_parameter,
+                  border_width,
+                  with_constraints,
+                  uncertaintyParam,
+                  cplex_timeout,
+                  transition_classifier
+                  );
+
+      DynProgConservationTracking pgm(param);
+      pgm.formulate(*hypotheses_graph_);
+      pgm.infer();
+      pgm.conclude(*hypotheses_graph_);
+
+      cout << "-> constructing unresolved events" << endl;
+
+      EventVectorVectorVector all_ev(1);
+      all_ev[0] = *events(*hypotheses_graph_,0);
+
+      if(event_vector_dump_filename_ != "none")
+      {
+          // store the traxel store and the resulting event vector
+          std::ofstream ofs(event_vector_dump_filename_.c_str());
+          boost::archive::text_oarchive out_archive(ofs);
+          out_archive << all_ev[0];
+      }
+
+      return all_ev;
   }
 
 } // namespace tracking

@@ -207,7 +207,7 @@ namespace pgmlink {
       PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
       PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_resolved_hypotheses_graph();
 
-      PGMLINK_EXPORT EventVectorVectorVector track(double forbidden_cost = 0,
+      PGMLINK_EXPORT virtual EventVectorVectorVector track(double forbidden_cost = 0,
 							    double ep_gap=0.01,
 							    bool with_tracklets=true,
 							    double detection_weight = 10., 
@@ -284,7 +284,7 @@ namespace pgmlink {
       /// Return reference to the ilp solutions
       PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
 
-    private:
+    protected:
       int max_number_objects_;
       double max_dist_;
       bool with_divisions_;
@@ -313,6 +313,49 @@ namespace pgmlink {
 
       bool export_from_labeled_graph_, with_optical_correction_;
 							    
+  };
+
+  class ConsTrackingDynProg : public ConsTracking
+  {
+  public:
+      PGMLINK_EXPORT
+      ConsTrackingDynProg(int max_number_objects=3,
+                                      bool size_dependent_detection_prob = false,
+                                      double avg_obj_size=30.0,
+                                      double max_neighbor_distance = 20,
+                                      bool with_divisions=true,
+                                      double division_threshold = 0.3,
+                                      const std::string& random_forest_filename = "none",
+                                      FieldOfView fov = FieldOfView(),
+                                      const std::string& event_vector_dump_filename = "none"
+                                      ):
+          ConsTracking(max_number_objects,
+                       size_dependent_detection_prob,
+                       avg_obj_size,
+                       max_neighbor_distance,
+                       with_divisions,
+                       division_threshold,
+                       random_forest_filename,
+                       fov,
+                       event_vector_dump_filename)
+      {}
+
+      PGMLINK_EXPORT virtual EventVectorVectorVector track(double forbidden_cost = 0,
+                                double ep_gap=0.01,
+                                bool with_tracklets=true,
+                                double detection_weight = 10.,
+                                double division_weight=10.0,
+                                double transition_weight=10.0,
+                                double disappearance_cost = 0,
+                                double appearance_cost = 0,
+                                bool with_merger_resolution = true,
+                                int n_dim = 3,
+                                double transition_parameter = 5.,
+                                double border_width = 0,
+                                bool with_constraints = true,
+                                UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+                                double cplex_timeout = 1e+75,
+                                boost::python::object TransitionClassifier = boost::python::object());
   };
 }
 

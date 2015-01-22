@@ -55,7 +55,7 @@ find_package( Mlpack REQUIRED )
 find_package( Opengm REQUIRED )
 find_package( Xml2 REQUIRED )
 find_package( PythonInterp REQUIRED )
-
+find_package( Dpct REQUIRED)
 
 if(WIN32)
   # FindHDF5 is broken on Windows
@@ -74,7 +74,7 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include/)
 # include external headers as system includes so we do not have to cope with their warnings
-include_directories(SYSTEM ${PYTHON_INCLUDE_DIR} ${ANN_INCLUDE_DIR} ${Opengm_INCLUDE_DIR} ${CPLEX_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}  ${Xml2_INCLUDE_DIR})
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIR} ${ANN_INCLUDE_DIR} ${Opengm_INCLUDE_DIR} ${CPLEX_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Xml2_INCLUDE_DIR} ${DPCT_INCLUDE_DIR})
 
 # CPLEX switch to be compatible with STL
 ADD_DEFINITIONS(-DIL_STD)
@@ -100,6 +100,7 @@ message(STATUS "  Boost: ${Boost_INCLUDE_DIRS}")
 message(STATUS "  HDF5:  ${HDF5_INCLUDE_DIRS}")
 message(STATUS "  Opengm: ${Opengm_INCLUDE_DIR}")
 message(STATUS "  libxml2:  ${Xml2_INCLUDE_DIR}")
+message(STATUS "  dpct: ${DPCT_INCLUDE_DIR}")
 
 # hide these variables to have a cleaner interface
 mark_as_advanced( Boost_DIR )
@@ -183,7 +184,7 @@ endif(WIN32)
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/include )
 
-target_link_libraries(pgmlink ${PYTHON_LIBRARY} ${ANN_LIBRARIES} ${Boost_LIBRARIES}  ${CPLEX_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES})
+target_link_libraries(pgmlink ${PYTHON_LIBRARY} ${ANN_LIBRARIES} ${Boost_LIBRARIES}  ${CPLEX_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES} ${DPCT_LIBRARIES})
 
 # Install target pgmlink
 install(TARGETS pgmlink
