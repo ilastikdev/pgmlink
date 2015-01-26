@@ -25,7 +25,7 @@ void DynProgConservationTracking::infer()
     LOG(logINFO) << "Starting Tracking...";
     dpct::Magnusson tracker(&inference_graph_, true, true);
     double score = tracker.track(solution_paths_);
-    LOG(logINFO) << "Done Tracking!";
+    LOG(logINFO) << "Done Tracking in " << tracker.getElapsedSeconds() << " secs with score " << score << " !";
 }
 
 // assumes detection, division, appearance and disappearance cost given as NegLnXXX functions
@@ -48,25 +48,29 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
     size_t first_timestep = g.earliest_timestep();
     size_t last_timestep = g.latest_timestep();
 
+    LOG(logINFO) << "Creating DPCT nodes";
+
     // add all nodes
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
-        std::cout << "Adding node in timestep " << timestep_map[n] << " to DPCT" << std::endl;
+        LOG(logDEBUG3) << "Adding node in timestep " << timestep_map[n] << " to DPCT" << std::endl;
         std::vector<double> scoreDeltas;
         for(size_t state = 0; state <= inference_model_param_.max_number_objects; state++)
         {
             scoreDeltas.push_back(-1.0 * inference_model_param_.detection(traxel_map[n], state));
-            std::cout << "\tstate " << state << " has score " << scoreDeltas.back() << std::endl;
+            LOG(logDEBUG3) << "\tstate " << state << " has score " << scoreDeltas.back() << std::endl;
         }
 
         double app_score = -1.0 * inference_model_param_.appearance_cost(traxel_map[n]);
         double dis_score = -1.0 * inference_model_param_.disappearance_cost(traxel_map[n]);
-        std::cout << "\tapp-score " << app_score << std::endl;
-        std::cout << "\tdis-score " << dis_score << std::endl;
+        LOG(logDEBUG3) << "\tapp-score " << app_score << std::endl;
+        LOG(logDEBUG3) << "\tdis-score " << dis_score << std::endl;
 
         dpct::Graph::NodePtr inf_node = inference_graph_.addNode(timestep_map[n] - first_timestep, scoreDeltas, app_score, dis_score, timestep_map[n] == first_timestep, timestep_map[n] == last_timestep, std::make_shared<ConservationTrackingNodeData>(n));
         node_reference_map[n] = inf_node;
     }
+
+    LOG(logINFO) << "Creating DPCT arcs";
 
     // add all transition arcs
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
@@ -81,6 +85,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
 
     if(inference_model_param_.with_divisions)
     {
+        LOG(logINFO) << "Preparing division arcs";
         // allow division where a node has more than one output
         for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
         {
@@ -99,7 +104,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
                 {
                     // division arc score = division score + move score
                     double move_score = getTransitionArcScore(g, a);
-                    std::cout << "Adding possible division from " << tr << " with score: " << move_score << "(move) + " << division_score << "(div)" << std::endl;
+                    LOG(logDEBUG3) << "Adding possible division from " << tr << " with score: " << move_score << "(move) + " << division_score << "(div)" << std::endl;
                     inference_graph_.allowMitosis(node_reference_map[n], node_reference_map[g.target(a)], move_score + division_score);
                 }
             }
@@ -161,7 +166,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
     {
         std::shared_ptr<ConservationTrackingNodeData> nd = std::static_pointer_cast<ConservationTrackingNodeData>(node->getUserData());
         HypothesesGraph::Node n = nd->getRef();
-        std::cout << "increasing use count of " << traxel_map[n] << std::endl;
+        LOG(logDEBUG3) << "increasing use count of " << traxel_map[n] << std::endl;
         active_nodes.set(n, active_nodes[n] + 1);
     };
 
@@ -212,7 +217,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                     nd = std::static_pointer_cast<ConservationTrackingNodeData>(a->getTargetNode()->getUserData());
                     HypothesesGraph::Node child = nd->getRef();
 
-                    std::cout << "activating division for " << traxel_map[parent] << std::endl;
+                    LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;
                     active_divisions.set(parent, true);
                     increase_object_count(a->getTargetNode());
                     first_arc_on_path = false;
@@ -222,7 +227,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                     {
                         if(g.target(oa) == child)
                         {
-                            std::cout << "Found arc to activate for division!" << std::endl;
+                            LOG(logDEBUG3) << "Found arc to activate for division!" << std::endl;
                             active_arcs.set(oa, true);
                             break;
                         }
