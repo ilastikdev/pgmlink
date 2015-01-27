@@ -177,13 +177,20 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
         active_arcs.set(a, true);
     };
 
+    size_t num_paths = 0;
     // for each path, increment the number of cells the nodes and arcs along the path
     for(dpct::TrackingAlgorithm::Path& p : solution_paths_)
     {
+        std::cout << "\rLooking at path " << num_paths++ << std::flush;
         // a path starts at the dummy-source and goes to the dummy-sink. these arcs are of type dummy, and thus skipped
         bool first_arc_on_path = true;
         for(dpct::Arc* a: p)
         {
+            assert(a != nullptr);
+            assert(a->getType() != dpct::Arc::Swap);
+            assert(a->getSourceNode() != nullptr);
+            assert(a->getTargetNode() != nullptr);
+
             switch(a->getType())
             {
                 case dpct::Arc::Move:
@@ -232,7 +239,11 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                             break;
                         }
                     }
-                }  break;
+                } break;
+                case dpct::Arc::Swap:
+                {
+                    throw std::runtime_error("Got a swap arc even though it should have been cleaned up!");
+                } break;
                 default:
                 {
                     // do nothing.
