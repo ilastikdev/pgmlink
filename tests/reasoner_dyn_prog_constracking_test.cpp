@@ -27,7 +27,7 @@
 using namespace pgmlink;
 using namespace std;
 using namespace boost;
-
+/*
 BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger ) {
 
     std::cout << "first test" << std::endl;
@@ -833,129 +833,134 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
     BOOST_CHECK_EQUAL(num_events, 4);
 }
 
+//*/
 
+BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
 
-//BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets ) {
+    std::cout << "Constructing HypothesesGraph" << std::endl;
+    std::cout << std::endl;
 
-//    std::cout << "Constructing HypothesesGraph" << std::endl;
-//    std::cout << std::endl;
+    using lemon::INVALID;
 
-//    using lemon::INVALID;
+    std::cout << "Adding Traxels to TraxelStore" << std::endl;
+    std::cout << std::endl;
 
-//    std::cout << "Adding Traxels to TraxelStore" << std::endl;
-//    std::cout << std::endl;
+    //  t=1      2       3
+    //  1
+    //    |
+    //    |
+    //      ---- 1 ----  1
+    //    |
+    //  2
+    //  1 ----   2 ----- 1
+    //  0 ------ 1 ----- 0
+    TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    Traxel n11, n12, n21, n31, n13, n22, n32;
+    Traxel n14, n24, n34;
+    feature_array com(feature_array::difference_type(3));
+    feature_array divProb(feature_array::difference_type(1));
+    feature_array count(feature_array::difference_type(1));
+    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
+    n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
+    add(ts, fs, n11);
+    n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 3;
+    n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
+    add(ts, fs, n12);
+    n21.Id = 10; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
+    n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
+    add(ts, fs, n21);
+    n31.Id = 11; n31.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
+    n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
+    add(ts, fs, n31);
 
-//    //  t=1      2       3
-//    //  1
-//    //    |
-//    //    |
-//    //      ---- 1 ----  1
-//    //    |
-//    //  2
-//    //  1 ----   2 ----- 1
-//    //  0 ------ 1 ----- 0
-//    TraxelStore ts;
-//    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-//    Traxel n11, n12, n21, n31, n13, n22, n32;
-//    Traxel n14, n24, n34;
-//    feature_array com(feature_array::difference_type(3));
-//    feature_array divProb(feature_array::difference_type(1));
-//    feature_array count(feature_array::difference_type(1));
-//    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1; count[0] = 1;
-//    n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["count"] = count;
-//    add(ts, fs, n11);
-//    n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 3;
-//    n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["count"] = count;
-//    add(ts, fs, n12);
-//    n21.Id = 10; n21.Timestep = 2; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
-//    n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["count"] = count;
-//    add(ts, fs, n21);
-//    n31.Id = 11; n31.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1; count[0] = 1;
-//    n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["count"] = count;
-//    add(ts, fs, n31);
+    n13.Id = 12; n13.Timestep = 1; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
+    n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["count"] = count;
+    add(ts, fs, n13);
+    n22.Id = 13; n22.Timestep = 2; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 3;
+    n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
+    add(ts, fs, n22);
+    n32.Id = 14; n32.Timestep = 3; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
+    n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
+    add(ts, fs, n32);
 
-//    n13.Id = 12; n13.Timestep = 1; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
-//    n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["count"] = count;
-//    add(ts, fs, n13);
-//    n22.Id = 13; n22.Timestep = 2; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 3;
-//    n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["count"] = count;
-//    add(ts, fs, n22);
-//    n32.Id = 14; n32.Timestep = 3; com[0] = 100; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
-//    n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["count"] = count;
-//    add(ts, fs, n32);
+    n14.Id = 15; n14.Timestep = 1; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
+    n14.features["com"] = com; n14.features["divProb"] = divProb; n14.features["count"] = count;
+    add(ts, fs, n14);
+    n24.Id = 16; n24.Timestep = 2; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
+    n24.features["com"] = com; n24.features["divProb"] = divProb; n24.features["count"] = count;
+    add(ts, fs, n24);
+    n34.Id = 17; n34.Timestep = 3; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
+    n34.features["com"] = com; n34.features["divProb"] = divProb; n34.features["count"] = count;
+    add(ts, fs, n34);
 
-//    n14.Id = 15; n14.Timestep = 1; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
-//    n14.features["com"] = com; n14.features["divProb"] = divProb; n14.features["count"] = count;
-//    add(ts, fs, n14);
-//    n24.Id = 16; n24.Timestep = 2; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 1;
-//    n24.features["com"] = com; n24.features["divProb"] = divProb; n24.features["count"] = count;
-//    add(ts, fs, n24);
-//    n34.Id = 17; n34.Timestep = 3; com[0] = 200; com[1] = 100; com[2] = 100; divProb[0] = 0.1; count[0] = 0.1;
-//    n34.features["com"] = com; n34.features["divProb"] = divProb; n34.features["count"] = count;
-//    add(ts, fs, n34);
+    std::cout << "Initialize Conservation tracking" << std::endl;
+    std::cout << std::endl;
 
-//    std::cout << "Initialize Conservation tracking" << std::endl;
-//    std::cout << std::endl;
+    FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+    ConsTrackingDynProg tracking = ConsTrackingDynProg(
+                         2, // max_number_objects
+                         true, // detection_by_volume
+                         double(1.1), // avg_obj_size
+                         20, // max_neighbor_distance
+                         true, //with_divisions
+                         0.3, // division_threshold
+                         "none", // random_forest_filename
+                         fov
+                         );
 
-//    FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-//    ConsTrackingDynProg tracking = ConsTrackingDynProg(
-//                         2, // max_number_objects
-//                         true, // detection_by_volume
-//                         double(1.1), // avg_obj_size
-//                         20, // max_neighbor_distance
-//                         true, //with_divisions
-//                         0.3, // division_threshold
-//                         "none", // random_forest_filename
-//                         fov
-//                         );
+    std::cout << "Run Conservation tracking" << std::endl;
+    std::cout << std::endl;
 
-//    std::cout << "Run Conservation tracking" << std::endl;
-//    std::cout << std::endl;
+    std::vector< std::vector<Event> > events = tracking(ts,
+                                0, // forbidden_cost
+                                0.0, // ep_gap
+                                true, // with_tracklets
+                                10.0, //division_weight
+                                10.0, //transition_weight
+                                1500., // disappearance_cost,
+                                1500., // appearance_cost
+                                false, //with_merger_resolution
+                                3, //n_dim
+                                5, //transition_parameter
+                                0 //border_width for app/disapp costs
+                                )[0];
 
-//    std::vector< std::vector<Event> > events = tracking(ts,
-//                                0, // forbidden_cost
-//                                0.0, // ep_gap
-//                                true, // with_tracklets
-//                                10.0, //division_weight
-//                                10.0, //transition_weight
-//                                1500., // disappearance_cost,
-//                                1500., // appearance_cost
-//                                false, //with_merger_resolution
-//                                3, //n_dim
-//                                5, //transition_parameter
-//                                0 //border_width for app/disapp costs
-//                                )[0];
-
-//    size_t moves = 0;
-//    size_t t = 1;
-//    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
-//        for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
-//            Event e = *it;
-//            std::cout<<e.type;;
-//            if (e.type == Event::Move) {
-//                ++moves;
-//                BOOST_CHECK( (e.traxel_ids[0] == 1 && e.traxel_ids[1] == 10) ||
-//                         (e.traxel_ids[0] == 10 && e.traxel_ids[1] == 11) ||
-//                         (e.traxel_ids[0] == 12 && e.traxel_ids[1] == 13) ||
-//                         (e.traxel_ids[0] == 13 && e.traxel_ids[1] == 14) ||
-//                         (e.traxel_ids[0] == 3 && e.traxel_ids[1] == 10) ||
-//                         (e.traxel_ids[0] == 15 && e.traxel_ids[1] == 16) ||
-//                         (e.traxel_ids[0] == 16 && e.traxel_ids[1] == 17));
-//            }
-//            if (e.type == Event::Disappearance) {
-//                BOOST_CHECK(e.traxel_ids[0] == 3 ||
-//                        e.traxel_ids[0] == 1);
-//            }
-////			if (e.type == Event::Merger) {
-////				BOOST_CHECK(e.traxel_ids[0] == 3 ||
-////							e.traxel_ids[0] == 12 ||
-////							e.traxel_ids[0] == 14);
-////			}
-//        }
-//        ++t;
-//    }
-//    BOOST_CHECK_EQUAL(moves, 6);
-//}
+    size_t moves = 0;
+    size_t t = 1;
+    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
+        for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
+            Event e = *it;
+            std::cout<< e.type << std::endl;
+            if (e.type == Event::Move) {
+                std::cout << "Move from " << e.traxel_ids[0] << " to " << e.traxel_ids[1] << std::endl;
+                ++moves;
+                BOOST_CHECK( (e.traxel_ids[0] == 1 && e.traxel_ids[1] == 10) ||
+                         (e.traxel_ids[0] == 10 && e.traxel_ids[1] == 11) ||
+                         (e.traxel_ids[0] == 12 && e.traxel_ids[1] == 13) ||
+                         (e.traxel_ids[0] == 13 && e.traxel_ids[1] == 14) ||
+                         (e.traxel_ids[0] == 3 && e.traxel_ids[1] == 10) ||
+                         (e.traxel_ids[0] == 15 && e.traxel_ids[1] == 16) ||
+                         (e.traxel_ids[0] == 16 && e.traxel_ids[1] == 17));
+            }
+            else if (e.type == Event::Disappearance) {
+                std::cout << "Disappearance of " << e.traxel_ids[0] << std::endl;
+                BOOST_CHECK(e.traxel_ids[0] == 3 ||
+                        e.traxel_ids[0] == 1);
+            }
+            else if(e.type == Event::Appearance) {
+                std::cout << "Appearance of " << e.traxel_ids[0] << std::endl;
+            }
+//			if (e.type == Event::Merger) {
+//				BOOST_CHECK(e.traxel_ids[0] == 3 ||
+//							e.traxel_ids[0] == 12 ||
+//							e.traxel_ids[0] == 14);
+//			}
+        }
+        ++t;
+    }
+    BOOST_CHECK_EQUAL(moves, 6);
+}
 
 
 //BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 ) {
@@ -1106,7 +1111,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple ) {
 //    BOOST_CHECK_EQUAL(disapps, 0);
 //    BOOST_CHECK_GE(num_events, 3);
 //}
-
+/*
 namespace{
 void constructTraxel(Traxel& n, size_t id, size_t timestep, double pDiv, std::vector<int> center,
         std::vector<int> shift, std::vector<double> pDet) {
@@ -1995,3 +2000,4 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels ) 
 //    BOOST_CHECK_EQUAL(moves, 6);
 //}
 
+//*/
