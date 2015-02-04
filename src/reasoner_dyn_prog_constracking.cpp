@@ -257,7 +257,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
     if (!with_tracklets_)
-        tracklet_graph_.add(tracklet_intern_arc_ids());
+        tracklet_graph_.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
 
     property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map = tracklet_graph_.get(tracklet_intern_arc_ids());
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
@@ -373,7 +373,13 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                     nd = std::static_pointer_cast<ConservationTrackingNodeData>(a->getTargetNode()->getUserData());
                     HypothesesGraph::Node child = nd->getRef();
 
-                    LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;
+                    if(inference_model_param_.with_tracklets)
+                    {
+                        parent = tracklet2traxel_node_map_[parent].back();
+                        child = tracklet2traxel_node_map_[child].front();
+                    }
+
+                    LOG(logINFO) << "activating division for " << traxel_map[parent] << std::endl;
                     active_divisions.set(parent, true);
                     increase_object_count(a->getTargetNode());
                     first_arc_on_path = false;
@@ -383,7 +389,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                     {
                         if(g.target(oa) == child)
                         {
-                            LOG(logDEBUG3) << "Found arc to activate for division!" << std::endl;
+                            LOG(logINFO) << "Found arc to activate for division!" << std::endl;
                             active_arcs.set(oa, true);
                             break;
                         }
