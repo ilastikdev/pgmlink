@@ -379,7 +379,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                         child = tracklet2traxel_node_map_[child].front();
                     }
 
-                    LOG(logINFO) << "activating division for " << traxel_map[parent] << std::endl;
+                    LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;
                     active_divisions.set(parent, true);
                     increase_object_count(a->getTargetNode());
                     first_arc_on_path = false;
@@ -389,7 +389,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                     {
                         if(g.target(oa) == child)
                         {
-                            LOG(logINFO) << "Found arc to activate for division!" << std::endl;
+                            LOG(logDEBUG3) << "Found arc to activate for division!" << std::endl;
                             active_arcs.set(oa, true);
                             break;
                         }
