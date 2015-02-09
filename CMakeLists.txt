@@ -55,7 +55,7 @@ find_package( Mlpack REQUIRED )
 find_package( Opengm REQUIRED )
 find_package( Xml2 REQUIRED )
 find_package( PythonInterp REQUIRED )
-find_package( Dpct REQUIRED)
+find_package( DPCT REQUIRED)
 
 if(WIN32)
   # FindHDF5 is broken on Windows
