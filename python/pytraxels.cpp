@@ -6,6 +6,7 @@
 #include <sstream>
 
 #include "../include/pgmlink/traxels.h"
+#include "../include/pgmlink/field_of_view.h"
 #include <vigra/multi_array.hxx>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -195,6 +196,7 @@ void export_traxels() {
       .def("get_by_timeid", get_by_timeid, return_internal_reference<>())
       .def("size", &TraxelStore::size)
       .def("set_feature_store", &set_feature_store)
+      .def("filter_by_fov", &filter_by_fov)
       .def_pickle(TemplatedPickleSuite< TraxelStore >())
       ;
 
