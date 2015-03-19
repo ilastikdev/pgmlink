@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <memory>
 #include <dpct/magnusson.h>
+#include <dpct/fusionmove.h>
 
 namespace pgmlink
 {
@@ -18,10 +19,46 @@ DynProgConservationTracking::~DynProgConservationTracking()
 
 void DynProgConservationTracking::infer()
 {
-    LOG(logINFO) << "Starting Tracking...";
-    dpct::Magnusson tracker(&inference_graph_, true, true);
-    double score = tracker.track(solution_paths_);
-    LOG(logINFO) << "Done Tracking in " << tracker.getElapsedSeconds() << " secs with score " << score << " !";
+//    LOG(logINFO) << "Starting Tracking...";
+//    dpct::Magnusson tracker(&inference_graph_, true, true);
+//    double score = tracker.track(solution_paths_);
+//    LOG(logINFO) << "Done Tracking in " << tracker.getElapsedSeconds() << " secs with score " << score << " !";
+
+    using namespace dpct;
+
+    // create solution A
+    Graph gA(inference_graph_);
+    Magnusson trackerA(&gA, true, true);
+    TrackingAlgorithm::Solution pathsA;
+    double scoreA = trackerA.track(pathsA);
+    pathsA = trackerA.translateToOriginGraph(pathsA);
+    std::cout << "Solution A with score " << scoreA << " has " << pathsA.size() << " paths in " << trackerA.getElapsedSeconds() << " secs" << std::endl;
+
+    // create solution B (pick second best)
+    Graph gB(inference_graph_);
+    Magnusson trackerB(&gB, true, true);
+    trackerB.setPathStartSelectorFunction(selectSecondBestInArc);
+    TrackingAlgorithm::Solution pathsB;
+    double scoreB = trackerB.track(pathsB);
+    pathsB = trackerB.translateToOriginGraph(pathsB);
+    std::cout << "Solution B with score " << scoreB << " has " << pathsB.size() << " paths in " << trackerB.getElapsedSeconds() << " secs" << std::endl;
+
+    // create graph union
+    FusionMove fm(&inference_graph_);
+    std::shared_ptr<Graph> unionGraph = fm.graphUnion(pathsA, pathsB);
+    unionGraph->contractLoneArcs(false);
+
+    // track on graph union
+    Magnusson trackerFM(unionGraph.get(), false);
+    TrackingAlgorithm::Solution pathsFM;
+    double scoreFM = trackerFM.track(pathsFM);
+    std::cout << "Solution FM with score " << scoreFM << " has " << pathsFM.size() << " paths in " << trackerFM.getElapsedSeconds() << " secs" << std::endl;
+
+    solution_paths_ = trackerFM.translateToOriginGraph(pathsFM);
+
+    std::cout << "Original graph has " << inference_graph_.getNumArcs() << " arcs and " << inference_graph_.getNumNodes() << " nodes.\n";
+    std::cout << "Union graph has " << unionGraph->getNumArcs()
+              << " arcs and " << unionGraph->getNumNodes() << " nodes.\n" << std::endl;
 }
 
 // assumes detection, division, appearance and disappearance cost given as NegLnXXX functions
