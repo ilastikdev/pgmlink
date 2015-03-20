@@ -123,7 +123,7 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
             orig_basename = orig_file_name.substr(0, extension_pos);
         }
 
-        export_filename << orig_basename << "_" << iteration << extension;
+        export_filename << orig_basename << "_" << std::setfill('0') << std::setw(3) << iteration << extension;
     }
 
     return export_filename.str();
