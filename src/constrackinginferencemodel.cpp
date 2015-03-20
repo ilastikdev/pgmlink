@@ -79,6 +79,11 @@ ConsTrackingInferenceModel::HypothesesGraphArcMap &ConsTrackingInferenceModel::g
     return arc_map_;
 }
 
+std::map<HypothesesGraph::Node, size_t>& ConsTrackingInferenceModel::get_detection_factor_node_map()
+{
+    return detection_f_node_map_;
+}
+
 void ConsTrackingInferenceModel::add_appearance_nodes(const HypothesesGraph& g) {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
@@ -400,7 +405,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         sort(vi.begin(),vi.end());
         model_.addFactor(funcId,vi.begin(),vi.end());
 //        if (not perturb)
-//            detection_f_node_map_[n] = model_.numberOfFactors() -1;
+        detection_f_node_map_[n] = model_.numberOfFactors() - 1;
     }
 
     return factorIndex;

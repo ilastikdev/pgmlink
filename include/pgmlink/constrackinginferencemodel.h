@@ -78,6 +78,7 @@ public: // API
     HypothesesGraphNodeMap& get_appearance_node_map();
     HypothesesGraphNodeMap& get_disappearance_node_map();
     HypothesesGraphArcMap& get_arc_map();
+    std::map<HypothesesGraph::Node, size_t>& get_detection_factor_node_map();
 
     // output
     void printResults(const HypothesesGraph &g);
@@ -111,6 +112,8 @@ protected: // members
     HypothesesGraphNodeMap dis_node_map_;
     HypothesesGraphArcMap arc_map_;
     boost::shared_ptr<TransitionPredictionsMap> transition_predictions_;
+    //factor id maps
+    std::map<HypothesesGraph::Node, size_t> detection_f_node_map_;
 
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;

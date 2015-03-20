@@ -627,14 +627,15 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g, 
     }
 
     // fill labels of Factors (only second order factors need to be exported (others accounted for in variable states))
-    
+    std::map<HypothesesGraph::Node, size_t>& detection_f_node_map = inference_model->get_detection_factor_node_map();
+
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
         //detection factor detection_node_map_
-        for (size_t s1 = 0; s1 < inference_model->get_model().numberOfLabels(detection_f_node_map_[n]); ++s1) {
-            for (size_t s2 = 0; s2 < inference_model->get_model().numberOfLabels(detection_f_node_map_[n]); ++s2) {
-                int id = clpex_factor_id_map_[make_pair(detection_f_node_map_[n],make_pair(s1,s2))];
+        for (size_t s1 = 0; s1 < inference_model->get_model().numberOfLabels(detection_f_node_map[n]); ++s1) {
+            for (size_t s2 = 0; s2 < inference_model->get_model().numberOfLabels(detection_f_node_map[n]); ++s2) {
+                int id = clpex_factor_id_map_[make_pair(detection_f_node_map[n],make_pair(s1,s2))];
                 cplexid_label_map[id] = ((g.get(appearance_label())[n]==s1 and g.get(disappearance_label())[n]==s2)?1:0);
-                LOG(logDEBUG4) <<"detection\t"<< cplexid_label_map[id] <<"  "<<id<< "  " <<  detection_f_node_map_[n] << "  " << s1 <<"  " << s2 << endl;
+                LOG(logDEBUG4) <<"detection\t"<< cplexid_label_map[id] <<"  "<<id<< "  " <<  detection_f_node_map[n] << "  " << s1 <<"  " << s2 << endl;
                 cplexid_weight_class_map[id].clear();
                 if (with_tracklets_ and (tracklet_map[n]).size() > 1)
                 {
@@ -659,7 +660,7 @@ void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g, 
         
     ground_truth_file.open (ground_truth_file_,std::ios::app);
         
-    for(std::map<int,size_t>::iterator iterator = cplexid_label_map.begin(); iterator != cplexid_label_map.end(); iterator++) {
+    for(std::map<int,size_t>::iterator iterator = cplexid_label_map.begin(); iterator != cplexid_label_map.end(); ++iterator) {
         ground_truth_file << iterator->second <<"\t\t";
             for (std::vector<std::pair<size_t,double>>::iterator class_weight_pair = cplexid_weight_class_map[iterator->first].begin();
                                                  class_weight_pair != cplexid_weight_class_map[iterator->first].end(); ++class_weight_pair)

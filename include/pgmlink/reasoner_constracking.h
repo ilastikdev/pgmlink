@@ -189,9 +189,6 @@ private:
 	boost::shared_ptr<cplex_optimizer> optimizer_;
     std::vector<IlpSolution> solutions_;
 
-    //factor id maps
-    std::map<HypothesesGraph::Node, size_t> detection_f_node_map_;
-
     double ep_gap_;
     bool with_tracklets_, with_divisions_;
     boost::function<double (const Traxel&)> disappearance_cost_;
