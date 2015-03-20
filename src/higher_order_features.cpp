@@ -1919,6 +1919,9 @@ void SVMOutlierCalculator::train(
   size_t row_count = feature_matrix.shape(1);
   std::vector<SampleType> samples;
   // TODO assert num_samples >> dim ?
+  if(col_count == 0 || row_count == 0)
+      throw std::runtime_error("Cannot train outlier SVM without any samples!");
+
   for (size_t col = 0; col < col_count; col++) {
     FeatureVectorView column = feature_matrix.bind<0>(col);
     SampleType sample(row_count);
