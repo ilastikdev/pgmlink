@@ -1922,12 +1922,15 @@ void SVMOutlierCalculator::train(
   if(col_count == 0 || row_count == 0)
       throw std::runtime_error("Cannot train outlier SVM without any samples!");
 
+  LOG(logINFO) << "Training outlier SVM from " << col_count << " samples";
+
   for (size_t col = 0; col < col_count; col++) {
     FeatureVectorView column = feature_matrix.bind<0>(col);
     SampleType sample(row_count);
     std::copy(column.begin(), column.end(), sample.begin());
     samples.push_back(sample);
   }
+
   KernelType kernel(kernel_width);
   OneClassSVMTrainerType trainer;
   trainer.set_kernel(kernel);

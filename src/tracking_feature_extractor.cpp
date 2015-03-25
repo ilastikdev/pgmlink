@@ -530,6 +530,27 @@ void TrackingFeatureExtractor::save_traxel_ids_to_h5(ConstTraxelRefVectors &trac
     }
 }
 
+void TrackingFeatureExtractor::save_division_traxels_to_h5(ConstTraxelRefVectors &division_traxels)
+{
+    size_t division_id = 0;
+    for(auto div: division_traxels)
+    {
+        if(div.size() < 3)
+        {
+            LOG(logWARNING) << "Cannot output empty/invalid division!";
+            continue;
+        }
+        FeatureMatrix traxels(vigra::Shape2(div.size(), 2));
+
+        for(size_t i = 0; i < div.size(); ++i)
+        {
+            traxels(i,0) = div[i]->Timestep;
+            traxels(i,1) = div[i]->Id;
+        }
+        save_features_to_h5(division_id++, "traxels", traxels, false);
+    }
+}
+
 void TrackingFeatureExtractor::compute_features()
 {
     typedef AppearanceTraxels::AppearanceType AppearanceType;
@@ -561,6 +582,7 @@ void TrackingFeatureExtractor::compute_features()
     ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
 
     save_traxel_ids_to_h5(track_traxels);
+    save_division_traxels_to_h5(div_1_traxels);
 
     compute_sq_diff_features(track_traxels, "RegionCenter");
     compute_sq_diff_features(track_traxels, "Count");
