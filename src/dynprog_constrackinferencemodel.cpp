@@ -1,23 +1,23 @@
-#include "pgmlink/reasoner_dyn_prog_constracking.h"
+#include "pgmlink/dynprog_constrackinginferencemodel.h"
 #include <stdexcept>
 #include <memory>
 #include <dpct/magnusson.h>
-#include <dpct/fusionmove.h>
+//#include <dpct/fusionmove.h>
 
 namespace pgmlink
 {
 
-DynProgConservationTracking::DynProgConservationTracking(const ConservationTracking::Parameter &param):
-    ConservationTracking(param),
+DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(const InferenceModel::Parameter &param):
+    InferenceModel(param),
     inference_graph_(dpct::Graph::Configuration(param.with_appearance, param.with_disappearance, param.with_divisions))
 {
 }
 
-DynProgConservationTracking::~DynProgConservationTracking()
+DynProgConsTrackInferenceModel::~DynProgConsTrackInferenceModel()
 {
 }
 
-void DynProgConservationTracking::infer()
+void DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
     dpct::Magnusson tracker(&inference_graph_, true, true);
@@ -61,35 +61,12 @@ void DynProgConservationTracking::infer()
 //              << " arcs and " << unionGraph->getNumNodes() << " nodes.\n" << std::endl;
 }
 
-// assumes detection, division, appearance and disappearance cost given as NegLnXXX functions
-template<class ArcIterator>
-double DynProgConservationTracking::getTransitionArcScore(const HypothesesGraph& g, ArcIterator a)
-{
-    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-    property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = g.get(node_tracklet());
-
-    Traxel tr1, tr2;
-
-    if (inference_model_param_.with_tracklets)
-    {
-        tr1 = tracklet_map[g.source(a)].back();
-        tr2 = tracklet_map[g.target(a)].front();
-    }
-    else
-    {
-        tr1 = traxel_map[g.source(a)];
-        tr2 = traxel_map[g.target(a)];
-    }
-
-    return inference_model_param_.transition(get_transition_probability(tr1, tr2, 0)) - inference_model_param_.transition(get_transition_probability(tr1, tr2, 1));
-}
-
-void DynProgConservationTracking::formulate(const HypothesesGraph& g)
+void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 {
     const HypothesesGraph *graph;
 
     // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
-    if (with_tracklets_)
+    if (param_.with_tracklets)
     {
         LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
         tracklet2traxel_node_map_ = generateTrackletGraph2(g, tracklet_graph_);
@@ -116,15 +93,15 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
         LOG(logDEBUG3) << "Adding node in timestep " << timestep_map[n] << " to DPCT" << std::endl;
         std::vector<double> scoreDeltas;
 
-        for(size_t state = 0; state <= inference_model_param_.max_number_objects; state++)
+        for(size_t state = 0; state <= param_.max_number_objects; state++)
         {
             double energy = 0.0;
-            if (inference_model_param_.with_tracklets)
+            if (param_.with_tracklets)
             {
                 // add all detection factors of the internal nodes
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin(); trax_it != tracklet_map[n].end(); ++trax_it)
                 {
-                    energy += inference_model_param_.detection(*trax_it, state);
+                    energy += param_.detection(*trax_it, state);
                 }
 
                 // add all transition factors of the internal arcs
@@ -136,7 +113,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
                     Traxel tr = *trax_it;
                     if (!first)
                     {
-                        energy += inference_model_param_.transition( get_transition_probability(tr_prev, tr, state) );
+                        energy += param_.transition( get_transition_probability(tr_prev, tr, state) );
                     }
                     else
                     {
@@ -148,7 +125,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
             else
             {
                 // only look at this single traxel
-                energy = inference_model_param_.detection(traxel_map[n], state);
+                energy = param_.detection(traxel_map[n], state);
             }
 
             scoreDeltas.push_back(-1.0 * energy);
@@ -159,7 +136,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
         // add source and sink links
         int node_begin_time = -1;
         int node_end_time = -1;
-        if (inference_model_param_.with_tracklets)
+        if (param_.with_tracklets)
         {
             node_begin_time = tracklet_map[n].front().Timestep;
             node_end_time = tracklet_map[n].back().Timestep;
@@ -175,7 +152,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
 
         // appearance and disappearance score
         Traxel tr;
-        if(inference_model_param_.with_tracklets)
+        if(param_.with_tracklets)
         {
             tr = tracklet_map[n].front();
         }
@@ -184,13 +161,13 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
             tr = traxel_map[n];
         }
 
-        double app_score = -1.0 * inference_model_param_.appearance_cost(tr);
+        double app_score = -1.0 * param_.appearance_cost(tr);
 
-        if(inference_model_param_.with_tracklets)
+        if(param_.with_tracklets)
         {
             tr = tracklet_map[n].back();
         }
-        double dis_score = -1.0 * inference_model_param_.disappearance_cost(tr);
+        double dis_score = -1.0 * param_.disappearance_cost(tr);
         LOG(logDEBUG3) << "\tapp-score " << app_score << std::endl;
         LOG(logDEBUG3) << "\tdis-score " << dis_score << std::endl;
 
@@ -211,7 +188,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
         dpct::Graph::ArcPtr inf_arc = inference_graph_.addMoveArc(source, target, score, std::make_shared<ConservationTrackingArcData>(a));
     }
 
-    if(inference_model_param_.with_divisions)
+    if(param_.with_divisions)
     {
         LOG(logINFO) << "Preparing division arcs";
         // allow division where a node has more than one output
@@ -226,7 +203,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
             if (number_of_outarcs > 1)
             {
                 Traxel tr;
-                if (inference_model_param_.with_tracklets)
+                if (param_.with_tracklets)
                 {
                     tr = tracklet_map[n].back();
                 }
@@ -234,7 +211,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
                 {
                     tr = traxel_map[n];
                 }
-                double division_score = inference_model_param_.division(tr, 0) - inference_model_param_.division(tr, 1);
+                double division_score = param_.division(tr, 0) - param_.division(tr, 1);
 
                 for (HypothesesGraph::OutArcIt a(*graph, n); a != lemon::INVALID; ++a)
                 {
@@ -251,40 +228,7 @@ void DynProgConservationTracking::formulate(const HypothesesGraph& g)
                  << " arcs on " << inference_graph_.getNumTimesteps() << " timesteps" << std::endl;
 }
 
-// copied from ConsTrackingInferenceModel, but without the python TransitionClassifier
-double DynProgConservationTracking::get_transition_probability(Traxel& tr1, Traxel& tr2, size_t state) {
-    LOG(logDEBUG4) << "get_transition_probability()";
-
-    double prob;
-
-    //read the FeatureMaps from Traxels
-    double distance = 0;
-    if (inference_model_param_.with_optical_correction)
-    {
-        distance = tr1.distance_to_corr(tr2);
-    }
-    else
-    {
-        distance = tr1.distance_to(tr2);
-    }
-    prob = get_transition_prob(distance, state, inference_model_param_.transition_parameter);
-    LOG(logDEBUG4) << "get_transition_probability(): using deterministic function: " << tr1
-                   << " " << tr2 << " [" << state << "] = " << prob << "; distance = " << distance;
-    assert(prob >= 0 && prob <= 1);
-    return prob;
-}
-
-// copied from ConsTrackingInferenceModel
-double DynProgConservationTracking::get_transition_prob(double distance, size_t state, double alpha) {
-    double prob = exp(-distance / alpha);
-    if (state == 0)
-    {
-        return 1 - prob;
-    }
-    return prob;
-}
-
-void DynProgConservationTracking::conclude(HypothesesGraph& g)
+void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g)
 {
     g.add(node_active2()).add(arc_active()).add(division_active());
     property_map<node_active2, HypothesesGraph::base_graph>::type& active_nodes = g.get(node_active2());
@@ -293,7 +237,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
 
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
-    if (!with_tracklets_)
+    if (!param_.with_tracklets)
         tracklet_graph_.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
 
     property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map = tracklet_graph_.get(tracklet_intern_arc_ids());
@@ -310,14 +254,14 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
         active_arcs.set(a, false);
     }
 
-    // small function used to increase number of objects per node
+    // function used to increase number of objects per node
     std::function<void(dpct::Node*)> increase_object_count = [&](dpct::Node* node)
     {
         std::shared_ptr<ConservationTrackingNodeData> nd = std::static_pointer_cast<ConservationTrackingNodeData>(node->getUserData());
         HypothesesGraph::Node n = nd->getRef();
         LOG(logDEBUG3) << "increasing use count of " << traxel_map[n] << std::endl;
 
-        if (inference_model_param_.with_tracklets)
+        if (param_.with_tracklets)
         {
             // set state of tracklet nodes
             std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[n];
@@ -343,12 +287,13 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
         }
     };
 
+    // function used to activate an arc
     std::function<void(dpct::Arc*)> activate_arc = [&](dpct::Arc* arc)
     {
         std::shared_ptr<ConservationTrackingArcData> ad = std::static_pointer_cast<ConservationTrackingArcData>(arc->getUserData());
         HypothesesGraph::Arc a = ad->getRef();
 
-        if(inference_model_param_.with_tracklets)
+        if(param_.with_tracklets)
         {
             active_arcs.set(g.arcFromId((traxel_arc_id_map[a])), true);
         }
@@ -410,7 +355,7 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
                     nd = std::static_pointer_cast<ConservationTrackingNodeData>(a->getTargetNode()->getUserData());
                     HypothesesGraph::Node child = nd->getRef();
 
-                    if(inference_model_param_.with_tracklets)
+                    if(param_.with_tracklets)
                     {
                         parent = tracklet2traxel_node_map_[parent].back();
                         child = tracklet2traxel_node_map_[child].front();
@@ -448,16 +393,5 @@ void DynProgConservationTracking::conclude(HypothesesGraph& g)
         }
     }
 }
-
-void DynProgConservationTracking::conclude(HypothesesGraph &, boost::shared_ptr<ConsTrackingInferenceModel> inference_model)
-{
-    throw std::runtime_error("Not implemented - should not be used");
-}
-
-void DynProgConservationTracking::perturbedInference(HypothesesGraph &, bool with_inference)
-{
-    throw std::runtime_error("Not implemented - should not be used");
-}
-
 
 } // namespace pgmlink

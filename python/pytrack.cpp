@@ -222,34 +222,34 @@ void export_track() {
       .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
 	;
 
-    class_<ConsTrackingDynProg>("ConsTrackingDynProg",
-                         init<int,bool,double,double,bool,double,string,FieldOfView, string>(
-                                            args("max_number_objects",
-                                                 "size_dependent_detection_prob",
-                                                 "avg_obj_size",
-                                                 "max_neighbor_distance",
-                                                 "with_division",
-                                                 "division_threshold",
-                                                 "detection_rf_filename",
-                                                 "fov",
-                                                 "event_vector_dump_filename")))
-      .def("__call__", &pythonConsTracking)
-      .def("buildGraph", &ConsTracking::build_hypo_graph)
-      .def("track", &ConsTracking::track)
-      .def("resolve_mergers", &python_resolve_mergers)
-      .def("detections", &ConsTracking::detections)
-      .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)
-      .def("get_resolved_hypotheses_graph", &ConsTracking::get_resolved_hypotheses_graph)
-      .def("SetFunkeyOutputFiles",&ConsTracking::write_funkey_set_output_files)
-//      .def("writeFunkeyFeatures",&ConsTracking::write_funkey_features)
-//      .def("writeAllFunkeyFeatures",&pywrite_all_funkey_features)
-//      .def("writeFunkeyFiles",&ConsTracking::write_funkey_files)
-//      .def("HamminglossOfFiles",&ConsTracking::hammingloss_of_files)
-//      .def("LearnWithFunkey",&ConsTracking::learn_from_funkey_files)
-//      .def("SetFunkeyExportLabeledGraph",&ConsTracking::set_export_labeled_graph)
-//      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
-//      .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
-    ;
+//    class_<ConsTrackingDynProg>("ConsTrackingDynProg",
+//                         init<int,bool,double,double,bool,double,string,FieldOfView, string>(
+//                                            args("max_number_objects",
+//                                                 "size_dependent_detection_prob",
+//                                                 "avg_obj_size",
+//                                                 "max_neighbor_distance",
+//                                                 "with_division",
+//                                                 "division_threshold",
+//                                                 "detection_rf_filename",
+//                                                 "fov",
+//                                                 "event_vector_dump_filename")))
+//      .def("__call__", &pythonConsTracking)
+//      .def("buildGraph", &ConsTracking::build_hypo_graph)
+//      .def("track", &ConsTracking::track)
+//      .def("resolve_mergers", &python_resolve_mergers)
+//      .def("detections", &ConsTracking::detections)
+//      .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)
+//      .def("get_resolved_hypotheses_graph", &ConsTracking::get_resolved_hypotheses_graph)
+//      .def("SetFunkeyOutputFiles",&ConsTracking::write_funkey_set_output_files)
+////      .def("writeFunkeyFeatures",&ConsTracking::write_funkey_features)
+////      .def("writeAllFunkeyFeatures",&pywrite_all_funkey_features)
+////      .def("writeFunkeyFiles",&ConsTracking::write_funkey_files)
+////      .def("HamminglossOfFiles",&ConsTracking::hammingloss_of_files)
+////      .def("LearnWithFunkey",&ConsTracking::learn_from_funkey_files)
+////      .def("SetFunkeyExportLabeledGraph",&ConsTracking::set_export_labeled_graph)
+////      .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
+////      .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
+//    ;
 
     class_<ConservationTracking, boost::noncopyable>("ConservationTracking",
                                  init<ConservationTracking::Parameter>(args("parameters")))

@@ -1,7 +1,7 @@
 #ifndef REASONER_DYN_PROG_CONSTRACKING_H
 #define REASONER_DYN_PROG_CONSTRACKING_H
 
-#include "reasoner_constracking.h"
+#include "inferencemodel.h"
 #include <dpct/graph.h>
 #include <dpct/trackingalgorithm.h>
 
@@ -26,19 +26,16 @@ private:
 typedef ConservationTrackingUserData<HypothesesGraph::Node> ConservationTrackingNodeData;
 typedef ConservationTrackingUserData<HypothesesGraph::Arc> ConservationTrackingArcData;
 
-class DynProgConservationTracking : public ConservationTracking
+class DynProgConsTrackInferenceModel : public InferenceModel
 {
 public:
-    DynProgConservationTracking(const Parameter& param);
-    ~DynProgConservationTracking();
+    DynProgConsTrackInferenceModel(const Parameter& param);
+    ~DynProgConsTrackInferenceModel();
 
     virtual void infer();
     virtual void conclude(HypothesesGraph&g);
-    virtual void formulate( const HypothesesGraph& );
 
-    // methods derived from ConservationTracking which do not apply here
-    virtual void conclude(HypothesesGraph&, boost::shared_ptr<ConsTrackingInferenceModel> inference_model);
-    virtual void perturbedInference(HypothesesGraph&, bool with_inference = true);
+    virtual void build_from_graph(const HypothesesGraph&);
 
     template<class ArcIterator>
     double getTransitionArcScore(const HypothesesGraph& g, ArcIterator a);
@@ -50,10 +47,28 @@ protected:
     // dpct inference members
     dpct::Graph inference_graph_;
     std::vector<dpct::TrackingAlgorithm::Path> solution_paths_;
-
-    double get_transition_probability(Traxel &tr1, Traxel &tr2, size_t state);
-    double get_transition_prob(double distance, size_t state, double alpha);
 };
+
+template<class ArcIterator>
+double DynProgConsTrackInferenceModel::getTransitionArcScore(const HypothesesGraph& g, ArcIterator a)
+{
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+    property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = g.get(node_tracklet());
+
+    Traxel tr1, tr2;
+    if (param_.with_tracklets)
+    {
+        tr1 = tracklet_map[g.source(a)].back();
+        tr2 = tracklet_map[g.target(a)].front();
+    }
+    else
+    {
+        tr1 = traxel_map[g.source(a)];
+        tr2 = traxel_map[g.target(a)];
+    }
+
+    return param_.transition(get_transition_probability(tr1, tr2, 0)) - param_.transition(get_transition_probability(tr1, tr2, 1));
+}
 
 } // namespace pgmlink
 
