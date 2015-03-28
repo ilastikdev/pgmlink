@@ -55,6 +55,11 @@ public: // API
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&) = 0;
 
+    // write results to hypotheses graph
+    virtual void conclude(HypothesesGraph &g,
+                          HypothesesGraph &tracklet_graph,
+                          std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                          std::vector<size_t> &solution) = 0;
 
 protected: // methods
     double get_transition_prob(double distance,

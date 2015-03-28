@@ -56,10 +56,10 @@ public: // API
     IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
 
     // write results to hypotheses graph
-    void conclude(HypothesesGraph &g,
-                  HypothesesGraph &tracklet_graph,
-                  std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
-                  IlpSolution &solution);
+    virtual void conclude(HypothesesGraph &g,
+                          HypothesesGraph &tracklet_graph,
+                          std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                          IlpSolution &solution);
 
     // output
     void printResults(const HypothesesGraph &g);
