@@ -3,8 +3,6 @@
 
 #include <map>
 #include <boost/function.hpp>
-#include <opengm/inference/inference.hxx>
-#include <opengm/inference/lpcplex.hxx>
 
 #include <boost/python.hpp>
 
@@ -20,18 +18,6 @@
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 
 namespace pgmlink {	
-
-typedef pgm::OpengmModelDeprecated::ogmGraphicalModel MAPGmType;
-		
-
-typedef opengm::LPCplex
-	<	PertGmType,
-			pgm::OpengmModelDeprecated::ogmAccumulator		>
-    cplex_optimizer;
-
-
-
-typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::FactorType factorType;
 
 class Traxel;
 
@@ -118,9 +104,7 @@ public:
 public:
     typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
 
-    ConservationTracking(
-                             const Parameter& param
-                             );
+    ConservationTracking(const Parameter& param);
     ~ConservationTracking();
 
     virtual void infer();
@@ -135,8 +119,6 @@ public:
     const std::vector<IlpSolution>& get_ilp_solutions() const;
     void set_ilp_solutions(const std::vector<IlpSolution>&);
 
-    boost::shared_ptr<ConsTrackingInferenceModel> create_inference_model(const HypothesesGraph& g);
-
     //cplex export file names
     std::string features_file_;
     std::string constraints_file_;
@@ -144,27 +126,10 @@ public:
 
     bool export_from_labeled_graph_;
 
-    void write_labeledgraph_to_file(const HypothesesGraph&, boost::shared_ptr<ConsTrackingInferenceModel> inference_model);
-
     static std::string get_export_filename(size_t iteration, const std::string &orig_file_name);
 protected:
-    // copy and assingment have to be implemented, yet
-
-//    ConservationTracking(const ConservationTracking&):
-//		random_normal_(rng_,boost::normal_distribution<>(0, 1)),
-//		random_uniform_(rng_,boost::uniform_real<>(0, 1))
-//        {}
-//    ConservationTracking& operator=(const ConservationTracking&) { return *this;}
-
     void reset();
-
-    void printResults(const HypothesesGraph &);
-    void write_hypotheses_graph_state(const HypothesesGraph& g, const std::string out_fn);
     void compute_relative_uncertainty(HypothesesGraph *graph);
-
-    // funky export maps
-    std::map<std::pair<size_t,size_t>,size_t > clpex_variable_id_map_;
-    std::map<std::pair<size_t,std::pair<size_t,size_t> >,size_t> clpex_factor_id_map_;
     
     unsigned int max_number_objects_;
 
@@ -174,8 +139,6 @@ protected:
     boost::function<double (const double)> transition_;
 
     double forbidden_cost_;
-    
-	boost::shared_ptr<cplex_optimizer> optimizer_;
     std::vector<IlpSolution> solutions_;
 
     double ep_gap_;
@@ -191,7 +154,6 @@ protected:
     double transition_parameter_;
 
     UncertaintyParameter uncertainty_param_;
-    cplex_optimizer::Parameter cplex_param_;
     ConsTrackingInferenceModel::Parameter inference_model_param_;
     PerturbedInferenceModel::Parameter perturbed_inference_model_param_;
 

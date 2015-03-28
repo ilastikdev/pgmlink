@@ -43,8 +43,9 @@ public: // Parameter object
 public: // API
     PerturbedInferenceModel(
             const ConsTrackingInferenceModel::Parameter& param,
-            const Parameter& perturbation_param
-            );
+            const Parameter& perturbation_param,
+            double ep_gap,
+            double cplex_timeout);
 
     void perturb(DeterministicOffset* det_off);
 

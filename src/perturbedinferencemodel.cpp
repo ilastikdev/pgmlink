@@ -5,8 +5,10 @@ namespace pgmlink
 
 PerturbedInferenceModel::PerturbedInferenceModel(
         const ConsTrackingInferenceModel::Parameter& param,
-        const Parameter &perturbation_param):
-    ConsTrackingInferenceModel(param),
+        const Parameter &perturbation_param,
+        double ep_gap,
+        double cplex_timeout):
+    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout),
     standard_gaussian_distribution(0.0, 1.0),
     rng_(42),
     random_normal_(rng_,boost::normal_distribution<>(0, 1)),

@@ -4,7 +4,9 @@
 namespace pgmlink
 {
 
-ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param):
+ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
+                                                       double ep_gap,
+                                                       double cplex_timeout):
     param_(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
@@ -12,6 +14,10 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param):
     number_of_disappearance_nodes_(0),
     transition_predictions_(new TransitionPredictionsMap())
 {
+    cplex_param_.verbose_ = true;
+    cplex_param_.integerConstraint_ = true;
+    cplex_param_.epGap_ = ep_gap;
+    cplex_param_.timeLimit_ = cplex_timeout;
 }
 
 void ConsTrackingInferenceModel::use_transition_prediction_cache(ConsTrackingInferenceModel *other)
@@ -155,7 +161,8 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g) {
 }
 
 
-void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g){
+void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
+{
     //very verbose print of solution
     property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
             g.get(arc_active_count());
@@ -167,7 +174,9 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g){
     int c=0;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
         c=0;
-        for( std::vector<bool>::const_iterator i = active_arcs_count[a].begin(); i != active_arcs_count[a].end(); ++i){
+        for( std::vector<bool>::const_iterator i = active_arcs_count[a].begin();
+             i != active_arcs_count[a].end();
+             ++i){
             LOG(logDEBUG4) << *i;
             if (*i) {
                 c++;
@@ -179,7 +188,9 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g){
     for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
         it != app_node_map_.end(); ++it) {
         c=0;
-        for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin(); i != active_nodes_count[it->first].end(); ++i){
+        for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin();
+             i != active_nodes_count[it->first].end();
+             ++i){
             LOG(logINFO) << *i;
             if (*i>0){
                 c++;
@@ -191,7 +202,9 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g){
     for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
         it != app_node_map_.end(); ++it) {
         c=0;
-        for( std::vector<bool>::const_iterator i = active_divisions_count[it->first].begin(); i != active_divisions_count[it->first].end(); ++i){
+        for( std::vector<bool>::const_iterator i = active_divisions_count[it->first].begin();
+             i != active_divisions_count[it->first].end();
+             ++i){
             LOG(logDEBUG4) << *i<<" ";
             if (*i>0){
                 c++;
@@ -209,7 +222,11 @@ double ConsTrackingInferenceModel::get_transition_prob(double distance, size_t s
     return prob;
 }
 
-double ConsTrackingInferenceModel::generateRandomOffset(EnergyType energyIndex, double energy, Traxel tr, Traxel tr2, size_t state)
+double ConsTrackingInferenceModel::generateRandomOffset(EnergyType energyIndex,
+                                                        double energy,
+                                                        Traxel tr,
+                                                        Traxel tr2,
+                                                        size_t state)
 {
     // unperturbed inference -> no random offset
     return 0.0;
@@ -249,8 +266,9 @@ double ConsTrackingInferenceModel::get_transition_probability(Traxel& tr1, Traxe
             assert(tr1.features.find("com") != tr1.features.end());
             assert(callable(param_.transition_classifier.attr("predictWithCoordinates")));
             PyGILState_STATE pygilstate = PyGILState_Ensure();
-            boost::python::object prediction = param_.transition_classifier.attr("predictWithCoordinates")(tr1.X(), tr1.Y(), tr1.Z(),
-                                                                                                     tr2.X(), tr2.Y(), tr2.Z());
+            boost::python::object prediction =
+                    param_.transition_classifier.attr("predictWithCoordinates")(tr1.X(), tr1.Y(), tr1.Z(),
+                                                                                tr2.X(), tr2.Y(), tr2.Z());
             boost::python::object probs_python = prediction.attr("__getitem__")(0);
             // we are only interested in the probability of the second class, since it is a binary classifier
             prob = boost::python::extract<double>(probs_python.attr("__getitem__")(1));
@@ -265,7 +283,8 @@ double ConsTrackingInferenceModel::get_transition_probability(Traxel& tr1, Traxe
     if (state == 0) {
         prob = 1-prob;
     }
-    LOG(logDEBUG4) << "get_transition_probability(): using Gaussian process classifier: p[" << state << "] = " << prob ;
+    LOG(logDEBUG4) << "get_transition_probability(): using Gaussian process classifier: p["
+                   << state << "] = " << prob ;
     return prob;
 }
 
@@ -299,7 +318,8 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         double energy,e;
         if (app_node_map_.count(n) > 0) {
             vi.push_back(app_node_map_[n]);
-            if (node_begin_time <= g.earliest_timestep()) {  // "<" holds if there are only tracklets in the first frame
+            // "<" holds if there are only tracklets in the first frame
+            if (node_begin_time <= g.earliest_timestep()) {
                 // pay no appearance costs in the first timestep
                 cost.push_back(0.);
             } else {
@@ -317,7 +337,8 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
 
         if (dis_node_map_.count(n) > 0) {
             vi.push_back(dis_node_map_[n]);
-            if (node_end_time < g.latest_timestep()) { // "<" holds if there are only tracklets in the last frame
+            // "<" holds if there are only tracklets in the last frame
+            if (node_end_time < g.latest_timestep()) {
                 if (param_.with_tracklets) {
                     energy = param_.disappearance_cost(tracklet_map_[n].back());
                 } else {
@@ -334,7 +355,8 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         // convert vector to array
         std::vector<size_t> coords(num_vars, 0); // number of variables
         // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
-        //pgm::OpengmExplicitFactor<double> table(vi.begin(), vi.end(), param_.forbidden_cost, (param_.max_number_objects + 1));
+        //pgm::OpengmExplicitFactor<double> table(vi.begin(), vi.end(),
+        // param_.forbidden_cost, (param_.max_number_objects + 1));
         std::vector<size_t> shape(num_vars,(param_.max_number_objects+1));
         marray::Marray<double> energies(shape.begin(),shape.end(),param_.forbidden_cost);
 
@@ -562,7 +584,9 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
             }
             size_t appearance_node = app_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node, division_node, transition_nodes));
+            constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node,
+                                                                                    division_node,
+                                                                                    transition_nodes));
         }
 
         ////
@@ -575,7 +599,8 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
             }
             size_t disappearance_node = dis_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes, disappearance_node));
+            constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes,
+                                                                                    disappearance_node));
         }
 
         ////
@@ -583,11 +608,225 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
         ////
         if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
         {
-            constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n], (size_t)app_node_map_[n]));
+            constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n],
+                                                                                     (size_t)app_node_map_[n]));
         }
     }
 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
+}
+
+ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer(size_t numberOfSolutions,
+                                                                          const std::string &feature_filename,
+                                                                          const std::string &constraints_filename,
+                                                                          const std::string &ground_truth_filename,
+                                                                          bool with_inference,
+                                                                          bool export_from_labeled_graph)
+{
+    optimizer_ = boost::shared_ptr<cplex_optimizer>(
+            new cplex_optimizer(get_model(),
+                                cplex_param_,
+                                numberOfSolutions,
+                                feature_filename,
+                                constraints_filename,
+                                ground_truth_filename,
+                                export_from_labeled_graph));
+    if(!with_inference)
+        return IlpSolution();
+
+    if(param_.with_constraints)
+    {
+        LOG(logINFO) << "add_constraints";
+        add_constraints(*optimizer_);
+    }
+    else
+    {
+        //opengm::hdf5::save(optimizer_->graphicalModel(), "./conservationTracking.h5", "conservationTracking");
+        throw std::runtime_error("GraphicalModel::infer(): inference with soft constraints is not implemented yet. "
+                                         "The conservation tracking factor graph has been saved to file");
+    }
+
+    opengm::InferenceTermination status = optimizer_->infer();
+    if (status != opengm::NORMAL) {
+        throw std::runtime_error("GraphicalModel::infer(): optimizer terminated abnormally");
+    }
+
+    IlpSolution solution;
+    opengm::InferenceTermination statusExtract = optimizer_->arg(solution);
+    if (statusExtract != opengm::NORMAL) {
+        throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
+    }
+    if(export_from_labeled_graph and not  ground_truth_filename.empty()){
+        clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
+        clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
+    }
+
+    return solution;
+}
+
+ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extractSolution(size_t k,
+                                                        const std::string &ground_truth_filename)
+{
+    IlpSolution solution;
+    optimizer_->set_export_file_names("", "", ground_truth_filename);
+    opengm::InferenceTermination status = optimizer_->arg(solution, k);
+
+    if (status != opengm::NORMAL)
+    {
+        throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
+    }
+
+    return solution;
+}
+
+void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGraph &g,
+                                                            const std::string &ground_truth_filename)
+{
+    using namespace std;
+
+    cout << "write_labeledgraph_to_file" << endl;
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+    // if(with_tracklets_)
+    // {
+    // property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
+    property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = g.get(node_tracklet());
+    // }
+
+
+    //write this map to label file
+    map<int,label_type> cplexid_label_map;
+    map<int,stringstream> cplexid_label_info_map;
+    map<size_t,std::vector<std::pair<size_t,double> > > cplexid_weight_class_map;
+
+    // fill labels of Variables
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
+        //appearance
+        for (size_t state = 0;
+             state < get_model().numberOfLabels(get_appearance_node_map()[n]);
+             ++state) {
+            int id = clpex_variable_id_map_[make_pair(get_appearance_node_map()[n],state)];
+            cplexid_label_map[id] = ((g.get(appearance_label())[n]==state)?1:0);
+            LOG(logDEBUG4) <<"app\t"<< cplexid_label_map[id] << "  " << id << "  "
+                           <<  get_appearance_node_map()[n] << "  " << state;
+            // cplexid_label_info_map[id] <<  "# appearance id:" << id << " state:"
+            // << g.get(appearance_label())[n] << "/" << state << "  node:" << get_appearance_node_map()[n]
+            // << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+            cplexid_weight_class_map[id].clear();
+            cplexid_weight_class_map[id].push_back(std::make_pair(0,1.));
+        }
+        //disappearance
+        for (size_t state = 0;
+             state < get_model().numberOfLabels(get_disappearance_node_map()[n]);
+             ++state) {
+            int id = clpex_variable_id_map_[make_pair(get_disappearance_node_map()[n],state)];
+            cplexid_label_map[id] = ((g.get(disappearance_label())[n]==state)?1:0);
+            LOG(logDEBUG4) <<"dis\t"<< cplexid_label_map[id] << "  " << id << "  "
+                           <<  get_disappearance_node_map()[n] << "  " << state;
+            // cplexid_label_info_map[id] <<  "# disappearance id:" << id << " state:"
+            // << g.get(disappearance_label())[n] << "/" << state << "  node:"
+            // << get_disappearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:"
+            // << traxel_map[n].Timestep ;
+            cplexid_weight_class_map[id].clear();
+            cplexid_weight_class_map[id].push_back(std::make_pair(1,1.));
+        }
+        //division
+        if(param_.with_divisions and get_division_node_map().count(n) != 0){
+
+            for (size_t state = 0;
+                 state < get_model().numberOfLabels(get_division_node_map()[n]);
+                 ++state) {
+                int id = clpex_variable_id_map_[make_pair(get_division_node_map()[n],state)];
+                cplexid_label_map[id] = ((g.get(division_label())[n]==state)?1:0);
+                LOG(logDEBUG4) <<"div\t"<< cplexid_label_map[id] << "  " << id << "  "
+                               << get_division_node_map()[n] << "  " << state <<"   ";// << number_of_division_nodes_;
+                // cplexid_label_info_map[id] <<  "# division id:" << id << " state:"
+                // << g.get(division_label())[n] << "/" << state << "  node:" << div_node_map_[n]  << "traxel id:"
+                // <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
+                cplexid_weight_class_map[id].clear();
+                cplexid_weight_class_map[id].push_back(std::make_pair(2,1.));
+            }
+        }
+    }
+    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
+        //move
+        for (size_t state = 0; state < get_model().numberOfLabels(get_arc_map()[a]); ++state) {
+            int id = clpex_variable_id_map_[make_pair(get_arc_map()[a],state)];
+            cplexid_label_map[id] = ((g.get(arc_label())[a]==state)?1:0);
+            LOG(logDEBUG4) <<"arc\t"<< cplexid_label_map[id] << "  " <<id << "  " <<  get_arc_map()[a] << "  " << state;
+            // cplexid_label_info_map[id] <<  "# move id:" << id << " state:" << g.get(arc_label())[a] << "/"
+            // << state << "  node:" << get_arc_map()[a]  << "traxel id:"
+            // <<  traxel_map[g.source(a)].Id << "-->" << traxel_map[g.target(a)].Id << "  ts:"
+            // << traxel_map[g.target(a)].Timestep ;
+
+            cplexid_weight_class_map[id].clear();
+            if (param_.with_tracklets and (tracklet_map[g.source(a)]).size() > 1)
+            {
+                cplexid_weight_class_map[id].push_back(std::make_pair(3,(tracklet_map[g.source(a)]).size()-1));
+                cplexid_weight_class_map[id].push_back(std::make_pair(4,(tracklet_map[g.source(a)]).size()));
+            }
+            else
+            {
+                if (param_.with_tracklets) {
+                    assert((tracklet_map[g.source(a)]).size() == 1);
+                }
+                cplexid_weight_class_map[id].push_back(std::make_pair(3,1.));
+            }
+        }
+    }
+
+    // fill labels of Factors (only second order factors need to be exported (others accounted for in variable states))
+    std::map<HypothesesGraph::Node, size_t>& detection_f_node_map = get_detection_factor_node_map();
+
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
+        //detection factor detection_node_map_
+        for (size_t s1 = 0; s1 < get_model().numberOfLabels(detection_f_node_map[n]); ++s1) {
+            for (size_t s2 = 0; s2 < get_model().numberOfLabels(detection_f_node_map[n]); ++s2) {
+                int id = clpex_factor_id_map_[make_pair(detection_f_node_map[n],make_pair(s1,s2))];
+                cplexid_label_map[id] = ((g.get(appearance_label())[n]==s1 and g.get(disappearance_label())[n]==s2)?1:0);
+                LOG(logDEBUG4) <<"detection\t"<< cplexid_label_map[id] <<"  "<<id<< "  "
+                               <<  detection_f_node_map[n] << "  " << s1 <<"  " << s2 << endl;
+                cplexid_weight_class_map[id].clear();
+                if (param_.with_tracklets and (tracklet_map[n]).size() > 1)
+                {
+                    cplexid_weight_class_map[id].push_back(std::make_pair(3,(tracklet_map[n]).size()-1));
+                    cplexid_weight_class_map[id].push_back(std::make_pair(4,(tracklet_map[n]).size()));
+                }
+                else{
+                    if (param_.with_tracklets) {
+                        assert((tracklet_map[n]).size() == 1);
+                    }
+                    cplexid_weight_class_map[id].push_back(std::make_pair(4,1.));
+                }
+                // cplexid_label_info_map[id] <<  "# factor id:" << id << " state:" << g.get(appearance_label())[n]
+                // <<","<<g.get(disappearance_label())[n]<< "/" << s1 << "," << s2 << "  node:"
+                // << get_appearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:"
+                // << traxel_map[n].Timestep ;
+            }
+        }
+    }
+
+
+
+    //write labels to file
+    std::ofstream ground_truth_file;
+
+    ground_truth_file.open (ground_truth_filename,std::ios::app);
+
+    for(std::map<int,size_t>::iterator iterator = cplexid_label_map.begin(); iterator != cplexid_label_map.end(); ++iterator)
+    {
+        ground_truth_file << iterator->second <<"\t\t";
+        for (std::vector<std::pair<size_t,double>>::iterator class_weight_pair = cplexid_weight_class_map[iterator->first].begin();
+             class_weight_pair != cplexid_weight_class_map[iterator->first].end();
+             ++class_weight_pair)
+        {
+            ground_truth_file << "#c"<< class_weight_pair->first << ":" << class_weight_pair->second << " ";
+        }
+        ground_truth_file<<"\tc#\tcplexid:" << iterator->first
+        // << cplexid_label_info_map[iterator->first].str()
+        << endl;
+    }
+    ground_truth_file.close();
+
 }
 
 } // namespace pgmlink

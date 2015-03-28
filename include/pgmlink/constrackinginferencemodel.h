@@ -2,7 +2,10 @@
 #define CONSTRACKINGINFERENCEMODEL_H
 
 #include <boost/function.hpp>
+
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
+#include <opengm/inference/inference.hxx>
+#include <opengm/inference/lpcplex.hxx>
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
@@ -27,7 +30,9 @@ public: // typedefs
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
+    typedef std::vector<LabelType> IlpSolution;
     typedef PertGmType GraphicalModelType;
+    typedef opengm::LPCplex<PertGmType, pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizer;
     typedef std::map<HypothesesGraph::Node, size_t> HypothesesGraphNodeMap;
     typedef std::map<HypothesesGraph::Arc, size_t> HypothesesGraphArcMap;
     typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
@@ -58,7 +63,7 @@ public: // Parameter object
 
 public: // API
     // constructor
-    ConsTrackingInferenceModel(const Parameter& param);
+    ConsTrackingInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout);
 
     // set a transition_predictions_map that was cached from a previous inference
     void use_transition_prediction_cache(ConsTrackingInferenceModel* other);
@@ -73,6 +78,16 @@ public: // API
     // extract the model
     GraphicalModelType& get_model();
 
+    // run inference
+    IlpSolution infer(size_t numberOfSolutions,
+                      const std::string& feature_filename,
+                      const std::string& constraints_filename,
+                      const std::string& ground_truth_filename,
+                      bool with_inference,
+                      bool export_from_labeled_graph);
+
+    IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
+
     // retrieve node and arc maps
     HypothesesGraphNodeMap& get_division_node_map();
     HypothesesGraphNodeMap& get_appearance_node_map();
@@ -82,6 +97,8 @@ public: // API
 
     // output
     void printResults(const HypothesesGraph &g);
+    void write_labeledgraph_to_file(const HypothesesGraph & g,
+                                    const std::string &ground_truth_filename);
 
 protected: // methods
     void add_appearance_nodes( const HypothesesGraph& );
@@ -105,7 +122,6 @@ protected: // methods
 protected: // members
     Parameter param_;
     GraphicalModelType model_;
-    pgm::ConstraintPool constraint_pool_;
 
     HypothesesGraphNodeMap div_node_map_;
     HypothesesGraphNodeMap app_node_map_;
@@ -115,10 +131,19 @@ protected: // members
     //factor id maps
     std::map<HypothesesGraph::Node, size_t> detection_f_node_map_;
 
+    // optimizer
+    cplex_optimizer::Parameter cplex_param_;
+    boost::shared_ptr<cplex_optimizer> optimizer_;
+    pgm::ConstraintPool constraint_pool_;
+
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;
     unsigned int number_of_appearance_nodes_, number_of_disappearance_nodes_;
     std::map< size_t, std::vector<size_t> > nodes_per_timestep_;
+
+    // funky export maps
+    std::map<std::pair<size_t,size_t>,size_t > clpex_variable_id_map_;
+    std::map<std::pair<size_t,std::pair<size_t,size_t> >,size_t> clpex_factor_id_map_;
 };
 
 template<class INF>

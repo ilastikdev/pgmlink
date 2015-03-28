@@ -46,7 +46,6 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       division_(param.division),
       transition_(param.transition),
       forbidden_cost_(param.forbidden_cost),
-      optimizer_(NULL),
       ep_gap_(param.ep_gap),
       with_tracklets_(param.with_tracklets),
       with_divisions_(param.with_divisions),
@@ -67,11 +66,6 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       transition_classifier_(param.transition_classifier),
       with_optical_correction_(param.with_optical_correction)
 {
-    cplex_param_.verbose_ = true;
-    cplex_param_.integerConstraint_ = true;
-    cplex_param_.epGap_ = ep_gap_;
-    cplex_param_.timeLimit_ = cplex_timeout_;
-
     inference_model_param_.max_number_objects = max_number_objects_;
 
     inference_model_param_.with_constraints = with_constraints_;
@@ -131,7 +125,6 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
 
 void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool with_inference)
 {
-    reset();
     if (with_inference)
         solutions_.clear();
 
@@ -165,49 +158,36 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         numberOfSolutions = uncertainty_param_.numberOfIterations;
     }
 
-    boost::shared_ptr<ConsTrackingInferenceModel> inference_model = boost::shared_ptr<ConsTrackingInferenceModel>(new ConsTrackingInferenceModel(inference_model_param_));
+    boost::shared_ptr<ConsTrackingInferenceModel> inference_model = boost::shared_ptr<ConsTrackingInferenceModel>(
+            new ConsTrackingInferenceModel(inference_model_param_, ep_gap_, cplex_timeout_));
     inference_model->build_from_graph(*graph);
-    optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(inference_model->get_model(),
-                                     cplex_param_,
-                                     numberOfSolutions,
-                                     get_export_filename(0, features_file_),
-                                     constraints_file_,
-                                     get_export_filename(0, ground_truth_file_),
-                                     export_from_labeled_graph_));
+
+    IlpSolution sol = inference_model->infer(numberOfSolutions,
+                                             get_export_filename(0, features_file_),
+                                             constraints_file_,
+                                             get_export_filename(0, ground_truth_file_),
+                                             with_inference,
+                                             export_from_labeled_graph_);
 
     if (with_inference)
     {
-        if (with_constraints_)
-        {
-            LOG(logINFO) << "add_constraints";
-            inference_model->add_constraints(*optimizer_);
-        }
-
-        LOG(logINFO) << "infer MAP";
-        infer();
+        solutions_.push_back(sol);
 
         if (export_from_labeled_graph_ and not ground_truth_file_.empty())
         {
             LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
-            write_labeledgraph_to_file(*graph, inference_model);
+            inference_model->write_labeledgraph_to_file(*graph, ground_truth_file_);
             ground_truth_file_.clear();
         }
 
         LOG(logINFO) << "conclude MAP";
         conclude(hypotheses, inference_model);
 
-        optimizer_->set_export_file_names("", "", "");
-
         for (size_t k = 1; k < numberOfSolutions; ++k)
         {
             LOG(logINFO) << "conclude " << k + 1 << "-best solution";
-            optimizer_->set_export_file_names("", "", get_export_filename(k, ground_truth_file_));
+            solutions_.push_back(inference_model->extractSolution(k, get_export_filename(k, ground_truth_file_)));
 
-            opengm::InferenceTermination status = optimizer_->arg(solutions_.back(), k);
-            if (status != opengm::NORMAL)
-            {
-                throw runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
-            }
             conclude(hypotheses, inference_model);
         }
     }
@@ -233,8 +213,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
     //deterministic & non-deterministic perturbation
     for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
     {
-        perturbed_inference_model = boost::shared_ptr<PerturbedInferenceModel>(new PerturbedInferenceModel(inference_model_param_,
-                                                                                                           perturbed_inference_model_param_));
+        perturbed_inference_model = boost::shared_ptr<PerturbedInferenceModel>(
+                new PerturbedInferenceModel(inference_model_param_,
+                                            perturbed_inference_model_param_,
+                                            ep_gap_, cplex_timeout_));
 
         // Push away from the solution of the last iteration
         if (uncertainty_param_.distributionId == DiverseMbest)
@@ -243,7 +225,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
             {
                 PertGmType::FactorType factor = inference_model->get_model()[factorId];
                 vector<size_t> varIndices;
-                for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin(); ind != factor.variableIndicesEnd(); ++ind)
+                for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin();
+                     ind != factor.variableIndicesEnd();
+                     ++ind)
                 {
                     varIndices.push_back(solutions_[iterStep - 1][*ind]);
                 }
@@ -255,23 +239,16 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         perturbed_inference_model->use_transition_prediction_cache(inference_model.get());
         perturbed_inference_model->build_from_graph(*graph);
 
-        optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(perturbed_inference_model->get_model(),
-                                         cplex_param_,
-                                         1,
-                                         get_export_filename(iterStep, features_file_),
-                                         "",
-                                         get_export_filename(iterStep, ground_truth_file_),
-                                         false));
+        IlpSolution sol = perturbed_inference_model->infer(1,
+                                                           get_export_filename(iterStep, features_file_),
+                                                           "",
+                                                           get_export_filename(iterStep, ground_truth_file_),
+                                                           with_inference,
+                                                           false);
 
         if (with_inference)
         {
-            if (with_constraints_)
-            {
-                perturbed_inference_model->add_constraints(*optimizer_);
-            }
-            LOG(logINFO) << "infer ";
-            infer();
-
+            solutions_.push_back(sol);
             LOG(logINFO) << "conclude";
             conclude(hypotheses, perturbed_inference_model);
         }
@@ -302,25 +279,9 @@ void ConservationTracking::compute_relative_uncertainty(HypothesesGraph* graph)
     }
 }
 
-void ConservationTracking::infer() {
-	if (!with_constraints_) {
-		//opengm::hdf5::save(optimizer_->graphicalModel(), "./conservationTracking.h5", "conservationTracking");
-		throw std::runtime_error("GraphicalModel::infer(): inference with soft constraints is not implemented yet. The conservation tracking factor graph has been saved to file");
-	}
-    opengm::InferenceTermination status = optimizer_->infer();
-    if (status != opengm::NORMAL) {
-        throw std::runtime_error("GraphicalModel::infer(): optimizer terminated abnormally");
-    }
-
-    solutions_.push_back(IlpSolution());
-    opengm::InferenceTermination statusExtract = optimizer_->arg(solutions_.back());
-    if (statusExtract != opengm::NORMAL) {
-        throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
-    }
-    if(export_from_labeled_graph_ and not  ground_truth_file_.empty()){
-        clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
-        clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
-    }
+void ConservationTracking::infer()
+{
+    throw std::runtime_error("Not implemented");
 }
 
 void ConservationTracking::conclude(HypothesesGraph &)
@@ -373,9 +334,9 @@ void ConservationTracking::conclude( HypothesesGraph& g, boost::shared_ptr<ConsT
 
     //initialize node counts by 0
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-            active_nodes_count.get_value(n).push_back(0);
-            active_divisions_count.get_value(n).push_back(0);
-            }
+        active_nodes_count.get_value(n).push_back(0);
+        active_divisions_count.get_value(n).push_back(0);
+    }
 
 
     //initialize arc counts by 0
@@ -433,7 +394,6 @@ void ConservationTracking::conclude( HypothesesGraph& g, boost::shared_ptr<ConsT
                     HypothesesGraph::Node n = *tr_n_it;
 
                     if (active_nodes[n] == 0) {
-
                         active_nodes.set(n, solutions_.back()[it->second]);
                         active_nodes_count.get_value(n)[iterStep]=solutions_.back()[it->second];
 
@@ -533,15 +493,7 @@ void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTrack
     }
 }
 
-boost::shared_ptr<ConsTrackingInferenceModel> ConservationTracking::create_inference_model(const HypothesesGraph &g)
-{
-    boost::shared_ptr<ConsTrackingInferenceModel> inference_model = boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_);
-    inference_model->build_from_graph(g);
-    return inference_model;
-}
-
 void ConservationTracking::reset() {
-    optimizer_.reset();
 //    solutions_.clear();
 }
 
@@ -551,128 +503,6 @@ boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
             dictionary[iter->first] = iter->second;
         }
     return dictionary;
-}
-
-void ConservationTracking::write_labeledgraph_to_file(const HypothesesGraph& g, boost::shared_ptr<ConsTrackingInferenceModel> inference_model){
-
-    cout << "write_labeledgraph_to_file" << endl;
-    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-    // if(with_tracklets_)
-    // {
-        // property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
-        property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = g.get(node_tracklet());
-    // }
-        
-
-    //write this map to label file
-    map<int,label_type> cplexid_label_map;
-    map<int,stringstream> cplexid_label_info_map;
-    map<size_t,std::vector<std::pair<size_t,double> > > cplexid_weight_class_map;
-
-    // fill labels of Variables
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-        //appearance
-        for (size_t state = 0; state < inference_model->get_model().numberOfLabels(inference_model->get_appearance_node_map()[n]); ++state) {
-            int id = clpex_variable_id_map_[make_pair(inference_model->get_appearance_node_map()[n],state)];
-            cplexid_label_map[id] = ((g.get(appearance_label())[n]==state)?1:0);
-            LOG(logDEBUG4) <<"app\t"<< cplexid_label_map[id] << "  " << id << "  " <<  inference_model->get_appearance_node_map()[n] << "  " << state;
-            // cplexid_label_info_map[id] <<  "# appearance id:" << id << " state:" << g.get(appearance_label())[n] << "/" << state << "  node:" << inference_model->get_appearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-            cplexid_weight_class_map[id].clear();
-            cplexid_weight_class_map[id].push_back(std::make_pair(0,1.));
-        }
-        //disappearance
-        for (size_t state = 0; state < inference_model->get_model().numberOfLabels(inference_model->get_disappearance_node_map()[n]); ++state) {
-            int id = clpex_variable_id_map_[make_pair(inference_model->get_disappearance_node_map()[n],state)];
-            cplexid_label_map[id] = ((g.get(disappearance_label())[n]==state)?1:0);
-            LOG(logDEBUG4) <<"dis\t"<< cplexid_label_map[id] << "  " << id << "  " <<  inference_model->get_disappearance_node_map()[n] << "  " << state;
-            // cplexid_label_info_map[id] <<  "# disappearance id:" << id << " state:" << g.get(disappearance_label())[n] << "/" << state << "  node:" << inference_model->get_disappearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-            cplexid_weight_class_map[id].clear();
-            cplexid_weight_class_map[id].push_back(std::make_pair(1,1.));
-        }
-        //division
-        if(with_divisions_ and inference_model->get_division_node_map().count(n) != 0){
-                
-            for (size_t state = 0; state < inference_model->get_model().numberOfLabels(inference_model->get_division_node_map()[n]); ++state) {
-                int id = clpex_variable_id_map_[make_pair(inference_model->get_division_node_map()[n],state)];
-                cplexid_label_map[id] = ((g.get(division_label())[n]==state)?1:0);
-                LOG(logDEBUG4) <<"div\t"<< cplexid_label_map[id] << "  " << id << "  " << inference_model->get_division_node_map()[n] << "  " << state <<"   ";// << number_of_division_nodes_;
-                // cplexid_label_info_map[id] <<  "# division id:" << id << " state:" << g.get(division_label())[n] << "/" << state << "  node:" << div_node_map_[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-                cplexid_weight_class_map[id].clear();
-                cplexid_weight_class_map[id].push_back(std::make_pair(2,1.));
-            }
-        }
-    }
-    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
-        //move
-        for (size_t state = 0; state < inference_model->get_model().numberOfLabels(inference_model->get_arc_map()[a]); ++state) {
-            int id = clpex_variable_id_map_[make_pair(inference_model->get_arc_map()[a],state)];
-            cplexid_label_map[id] = ((g.get(arc_label())[a]==state)?1:0);
-            LOG(logDEBUG4) <<"arc\t"<< cplexid_label_map[id] << "  " <<id << "  " <<  inference_model->get_arc_map()[a] << "  " << state;
-            // cplexid_label_info_map[id] <<  "# move id:" << id << " state:" << g.get(arc_label())[a] << "/" << state << "  node:" << inference_model->get_arc_map()[a]  << "traxel id:" <<  traxel_map[g.source(a)].Id << "-->" << traxel_map[g.target(a)].Id << "  ts:" << traxel_map[g.target(a)].Timestep ;
-
-            cplexid_weight_class_map[id].clear();
-            if (with_tracklets_ and (tracklet_map[g.source(a)]).size() > 1)
-            {
-                cplexid_weight_class_map[id].push_back(std::make_pair(3,(tracklet_map[g.source(a)]).size()-1));
-                cplexid_weight_class_map[id].push_back(std::make_pair(4,(tracklet_map[g.source(a)]).size()));
-            }
-            else
-            {
-                if (with_tracklets_) {
-                    assert((tracklet_map[g.source(a)]).size() == 1);
-                }
-                cplexid_weight_class_map[id].push_back(std::make_pair(3,1.));
-            }
-        }
-    }
-
-    // fill labels of Factors (only second order factors need to be exported (others accounted for in variable states))
-    std::map<HypothesesGraph::Node, size_t>& detection_f_node_map = inference_model->get_detection_factor_node_map();
-
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-        //detection factor detection_node_map_
-        for (size_t s1 = 0; s1 < inference_model->get_model().numberOfLabels(detection_f_node_map[n]); ++s1) {
-            for (size_t s2 = 0; s2 < inference_model->get_model().numberOfLabels(detection_f_node_map[n]); ++s2) {
-                int id = clpex_factor_id_map_[make_pair(detection_f_node_map[n],make_pair(s1,s2))];
-                cplexid_label_map[id] = ((g.get(appearance_label())[n]==s1 and g.get(disappearance_label())[n]==s2)?1:0);
-                LOG(logDEBUG4) <<"detection\t"<< cplexid_label_map[id] <<"  "<<id<< "  " <<  detection_f_node_map[n] << "  " << s1 <<"  " << s2 << endl;
-                cplexid_weight_class_map[id].clear();
-                if (with_tracklets_ and (tracklet_map[n]).size() > 1)
-                {
-                    cplexid_weight_class_map[id].push_back(std::make_pair(3,(tracklet_map[n]).size()-1));
-                    cplexid_weight_class_map[id].push_back(std::make_pair(4,(tracklet_map[n]).size()));
-                }
-                else{
-                    if (with_tracklets_) {
-                    assert((tracklet_map[n]).size() == 1);
-                    }
-                    cplexid_weight_class_map[id].push_back(std::make_pair(4,1.));
-                }
-                // cplexid_label_info_map[id] <<  "# factor id:" << id << " state:" << g.get(appearance_label())[n] <<","<<g.get(disappearance_label())[n]<< "/" << s1 << "," << s2 << "  node:" << inference_model->get_appearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
-            }
-        }
-    }
-
-    
-
-    //write labels to file
-    std::ofstream ground_truth_file;
-        
-    ground_truth_file.open (ground_truth_file_,std::ios::app);
-        
-    for(std::map<int,size_t>::iterator iterator = cplexid_label_map.begin(); iterator != cplexid_label_map.end(); ++iterator) {
-        ground_truth_file << iterator->second <<"\t\t";
-            for (std::vector<std::pair<size_t,double>>::iterator class_weight_pair = cplexid_weight_class_map[iterator->first].begin();
-                                                 class_weight_pair != cplexid_weight_class_map[iterator->first].end(); ++class_weight_pair)
-            {
-                ground_truth_file << "#c"<< class_weight_pair->first << ":" << class_weight_pair->second << " ";
-            }
-            ground_truth_file<<"\tc#\tcplexid:" << iterator->first
-            // << cplexid_label_info_map[iterator->first].str()
-            << endl;
-    }
-    ground_truth_file.close();
-
 }
 
 } /* namespace pgmlink */
