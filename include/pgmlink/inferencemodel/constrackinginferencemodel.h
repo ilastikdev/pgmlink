@@ -55,12 +55,11 @@ public: // API
 
     IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
 
-    // retrieve node and arc maps
-    HypothesesGraphNodeMap& get_division_node_map();
-    HypothesesGraphNodeMap& get_appearance_node_map();
-    HypothesesGraphNodeMap& get_disappearance_node_map();
-    HypothesesGraphArcMap& get_arc_map();
-    std::map<HypothesesGraph::Node, size_t>& get_detection_factor_node_map();
+    // write results to hypotheses graph
+    void conclude(HypothesesGraph &g,
+                  HypothesesGraph &tracklet_graph,
+                  std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                  IlpSolution &solution);
 
     // output
     void printResults(const HypothesesGraph &g);
@@ -79,6 +78,13 @@ protected: // methods
     size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
 
     void add_constraints_to_pool(const HypothesesGraph& );
+
+    // retrieve node and arc maps
+    HypothesesGraphNodeMap& get_division_node_map();
+    HypothesesGraphNodeMap& get_appearance_node_map();
+    HypothesesGraphNodeMap& get_disappearance_node_map();
+    HypothesesGraphArcMap& get_arc_map();
+    std::map<HypothesesGraph::Node, size_t>& get_detection_factor_node_map();
 
     // add constraints to the model or the optimizer, depending on whether INF supports hard constraints
     template<class INF>

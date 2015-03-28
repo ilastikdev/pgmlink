@@ -109,7 +109,6 @@ public:
 
     virtual void infer();
     virtual void conclude(HypothesesGraph&);
-    virtual void conclude(HypothesesGraph&, boost::shared_ptr<ConsTrackingInferenceModel> inference_model);
     virtual void formulate( const HypothesesGraph& );
     virtual void perturbedInference(HypothesesGraph&, bool with_inference = true);
     

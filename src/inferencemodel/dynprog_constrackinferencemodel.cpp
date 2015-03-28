@@ -63,19 +63,7 @@ void DynProgConsTrackInferenceModel::infer()
 
 void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 {
-    const HypothesesGraph *graph;
-
-    // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
-    if (param_.with_tracklets)
-    {
-        LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
-        tracklet2traxel_node_map_ = generateTrackletGraph2(g, tracklet_graph_);
-        graph = &tracklet_graph_;
-    }
-    else
-    {
-        graph = &g;
-    }
+    const HypothesesGraph *graph = &g;
 
     std::map<HypothesesGraph::Node, dpct::Graph::NodePtr> node_reference_map;
     HypothesesGraph::node_timestep_map& timestep_map = graph->get(node_timestep());
@@ -228,7 +216,10 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                  << " arcs on " << inference_graph_.getNumTimesteps() << " timesteps" << std::endl;
 }
 
-void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g)
+void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
+                                              HypothesesGraph &tracklet_graph,
+                                              std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                                              std::vector<size_t> &solution)
 {
     g.add(node_active2()).add(arc_active()).add(division_active());
     property_map<node_active2, HypothesesGraph::base_graph>::type& active_nodes = g.get(node_active2());
@@ -238,10 +229,10 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g)
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
     if (!param_.with_tracklets)
-        tracklet_graph_.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
+        tracklet_graph.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
 
-    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map = tracklet_graph_.get(tracklet_intern_arc_ids());
-    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph_.get(traxel_arc_id());
+    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map = tracklet_graph.get(tracklet_intern_arc_ids());
+    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph.get(traxel_arc_id());
 
     // initialize nodes and divisions to 0
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
@@ -264,7 +255,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g)
         if (param_.with_tracklets)
         {
             // set state of tracklet nodes
-            std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[n];
+            std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map[n];
 
             for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin(); tr_n_it != traxel_nodes.end(); ++tr_n_it)
             {
@@ -357,8 +348,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g)
 
                     if(param_.with_tracklets)
                     {
-                        parent = tracklet2traxel_node_map_[parent].back();
-                        child = tracklet2traxel_node_map_[child].front();
+                        parent = tracklet2traxel_node_map[parent].back();
+                        child = tracklet2traxel_node_map[child].front();
                     }
 
                     LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;

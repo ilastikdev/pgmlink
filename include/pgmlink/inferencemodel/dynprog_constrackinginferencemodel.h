@@ -33,17 +33,16 @@ public:
     ~DynProgConsTrackInferenceModel();
 
     virtual void infer();
-    virtual void conclude(HypothesesGraph&g);
+    virtual void conclude(HypothesesGraph&g,
+                          HypothesesGraph &tracklet_graph,
+                          std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                          std::vector<size_t>& solution);
 
     virtual void build_from_graph(const HypothesesGraph&);
 
     template<class ArcIterator>
     double getTransitionArcScore(const HypothesesGraph& g, ArcIterator a);
 protected:
-    // tracklet graph stuff
-    HypothesesGraph tracklet_graph_;
-    std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
-
     // dpct inference members
     dpct::Graph inference_graph_;
     std::vector<dpct::TrackingAlgorithm::Path> solution_paths_;

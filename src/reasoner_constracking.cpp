@@ -181,14 +181,14 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         }
 
         LOG(logINFO) << "conclude MAP";
-        conclude(hypotheses, inference_model);
+        inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
 
         for (size_t k = 1; k < numberOfSolutions; ++k)
         {
             LOG(logINFO) << "conclude " << k + 1 << "-best solution";
             solutions_.push_back(inference_model->extractSolution(k, get_export_filename(k, ground_truth_file_)));
 
-            conclude(hypotheses, inference_model);
+            inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
         }
     }
 
@@ -250,7 +250,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         {
             solutions_.push_back(sol);
             LOG(logINFO) << "conclude";
-            conclude(hypotheses, perturbed_inference_model);
+            perturbed_inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
         }
     }
 
@@ -287,183 +287,6 @@ void ConservationTracking::infer()
 void ConservationTracking::conclude(HypothesesGraph &)
 {
     throw std::runtime_error("Not implemented");
-}
-
-void ConservationTracking::conclude( HypothesesGraph& g, boost::shared_ptr<ConsTrackingInferenceModel> inference_model) {
-
-    // add 'active' properties to graph
-    g.add(node_active2()).add(arc_active()).add(division_active());
-
-    property_map<node_active2, HypothesesGraph::base_graph>::type& active_nodes =
-            g.get(node_active2());
-    property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = g.get(arc_active());
-    property_map<division_active, HypothesesGraph::base_graph>::type& division_nodes =
-            g.get(division_active());
-
-    // add counting properties for analysis of perturbed models
-    g.add(arc_active_count()).add(node_active_count()).add(division_active_count());
-
-    property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
-        g.get(arc_active_count());
-    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
-        g.get(node_active_count());
-    property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
-        g.get(division_active_count());
-
-    if (!with_tracklets_) {
-        tracklet_graph_.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
-    }
-    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map =
-            tracklet_graph_.get(tracklet_intern_arc_ids());
-    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map =
-            tracklet_graph_.get(traxel_arc_id());
-
-    int iterStep = active_nodes_count[inference_model->get_appearance_node_map().begin()->first].size();
-    bool isMAP = (iterStep==0);
-
-    if (isMAP){
-        //initialize vectors for storing optimizer results
-        for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
-        active_arcs_count.set(a,std::vector<bool>());
-        }
-        for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-            active_nodes_count.set(n,std::vector<long unsigned int>());
-            active_divisions_count.set(n, std::vector<bool>());
-        }
-    }
-
-    //initialize node counts by 0
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
-        active_nodes_count.get_value(n).push_back(0);
-        active_divisions_count.get_value(n).push_back(0);
-    }
-
-
-    //initialize arc counts by 0
-    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
-        active_arcs.set(a, false);
-        active_arcs_count.get_value(a).push_back(0);
-    }
-    // write state after inference into 'active'-property maps
-    // the node is also active if its appearance node is active
-    for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = inference_model->get_appearance_node_map().begin();
-            it != inference_model->get_appearance_node_map().end(); ++it) {
-        if (with_tracklets_) {
-            // set state of tracklet nodes
-            std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it->first];
-
-            for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
-                    tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-                HypothesesGraph::Node n = *tr_n_it;
-                active_nodes.set(n, solutions_.back()[it->second]);
-                active_nodes_count.get_value(n)[iterStep]=solutions_.back()[it->second];
-                //TODO: active_nodes_vector
-            }
-
-            // set state of tracklet internal arcs
-            std::vector<int> arc_ids = tracklet_arc_id_map[it->first];
-            for (std::vector<int>::const_iterator arc_id_it = arc_ids.begin();
-                    arc_id_it != arc_ids.end(); ++arc_id_it) {
-                HypothesesGraph::Arc a = g.arcFromId(*arc_id_it);
-                assert(active_arcs[a] == false);
-                if (solutions_.back()[it->second] > 0) {
-
-                    active_arcs.set(a, true);
-                    active_arcs_count.get_value(a)[iterStep]=true;
-
-                    assert(active_nodes[g.source(a)] == solutions_.back()[it->second]
-                            && "tracklet internal arcs must have the same flow as their connected nodes");
-                    assert(active_nodes[g.target(a)] == solutions_.back()[it->second]
-                            && "tracklet internal arcs must have the same flow as their connected nodes");
-                }
-            }
-        } else {
-            active_nodes.set(it->first, solutions_.back()[it->second]);
-            active_nodes_count.get_value(it->first)[iterStep]=solutions_.back()[it->second];
-        }
-    }
-    // the node is also active if its disappearance node is active
-    for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = inference_model->get_disappearance_node_map().begin();
-            it != inference_model->get_disappearance_node_map().end(); ++it) {
-        if (solutions_.back()[it->second] > 0) {
-            if (with_tracklets_) {
-                // set state of tracklet nodes
-                std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map_[it->first];
-                for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it =
-                        traxel_nodes.begin(); tr_n_it != traxel_nodes.end(); ++tr_n_it) {
-                    HypothesesGraph::Node n = *tr_n_it;
-
-                    if (active_nodes[n] == 0) {
-                        active_nodes.set(n, solutions_.back()[it->second]);
-                        active_nodes_count.get_value(n)[iterStep]=solutions_.back()[it->second];
-
-                    } else {
-                        assert(active_nodes[n] == solutions_.back()[it->second]);
-                    }
-                }
-                // set state of tracklet internal arcs
-                std::vector<int> arc_ids = tracklet_arc_id_map[it->first];
-                for (std::vector<int>::const_iterator arc_id_it = arc_ids.begin();
-                        arc_id_it != arc_ids.end(); ++arc_id_it) {
-                    HypothesesGraph::Arc a = g.arcFromId(*arc_id_it);
-                    if (solutions_.back()[it->second] > 0) {
-
-                        active_arcs.set(a, true);
-                        active_arcs_count.get_value(a)[iterStep]=true;
-
-                        assert(active_nodes[g.source(a)] == solutions_.back()[it->second]
-                                && "tracklet internal arcs must have the same flow as their connected nodes");
-                        assert(active_nodes[g.target(a)] == solutions_.back()[it->second]
-                                && "tracklet internal arcs must have the same flow as their connected nodes");
-                    }
-                }
-            } else {
-
-                if (active_nodes[it->first] == 0) {
-                    active_nodes.set(it->first, solutions_.back()[it->second]);
-                    active_nodes_count.get_value(it->first)[iterStep]=solutions_.back()[it->second];
-
-                } else{
-                    assert(active_nodes[it->first] == solutions_.back()[it->second]);
-                }
-            }
-        }
-    }
-
-    for (std::map<HypothesesGraph::Arc, size_t>::const_iterator it = inference_model->get_arc_map().begin();
-            it != inference_model->get_arc_map().end(); ++it) {
-        if (solutions_.back()[it->second] >= 1) {
-            if (with_tracklets_) {
-                active_arcs.set(g.arcFromId((traxel_arc_id_map[it->first])), true);
-                active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[it->first])))[iterStep]=true;
-            } else {
-                active_arcs.set(it->first, true);
-                active_arcs_count.get_value(it->first)[iterStep]=true;
-            }
-        }
-    }
-    // write division node map
-    if (with_divisions_) {
-        for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = inference_model->get_division_node_map().begin();
-                        it != inference_model->get_division_node_map().end(); ++it) {
-                    division_nodes.set(it->first, false);
-                }
-        for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = inference_model->get_division_node_map().begin();
-                it != inference_model->get_division_node_map().end(); ++it) {
-
-            if (solutions_.back()[it->second] >= 1) {
-                if (with_tracklets_) {
-                    // set division property for the last node in the tracklet
-                    HypothesesGraph::Node n = tracklet2traxel_node_map_[it->first].back();
-                    division_nodes.set(n, true);
-                    active_divisions_count.get_value(n)[iterStep]=true;
-                } else {
-                    division_nodes.set(it->first, true);
-                    active_divisions_count.get_value(it->first)[iterStep]=true;
-                }
-            }
-        }
-    }
 }
 
 void ConservationTracking::formulate(const HypothesesGraph &)
