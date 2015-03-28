@@ -165,7 +165,7 @@ if(WIN32)
   add_compiler_export_flags() # enable dynamic symbol export/import for shared libs (on Windows)
 endif()
 
-file(GLOB LIB_SOURCES src/*.cpp src/feature_calculator/*.cpp)
+file(GLOB LIB_SOURCES src/*.cpp src/feature_calculator/*.cpp src/inferencemodel/*.cpp)
 file(GLOB_RECURSE HEADERS include/*.h*)
 
 add_library(pgmlink SHARED ${LIB_SOURCES} ${HEADERS})

@@ -1,4 +1,4 @@
-#include "pgmlink/perturbedinferencemodel.h"
+#include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
 namespace pgmlink
 {

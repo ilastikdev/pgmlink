@@ -13,7 +13,7 @@
 #include <iostream>
 #include <opengm/datastructures/marray/marray.hxx>
 #include "constrackinginferencemodel.h"
-#include "uncertaintyParameter.h"
+#include "pgmlink/uncertaintyParameter.h"
 
 namespace pgmlink
 {

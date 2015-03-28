@@ -1,4 +1,4 @@
-#include "pgmlink/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include <boost/python.hpp>
 
 namespace pgmlink

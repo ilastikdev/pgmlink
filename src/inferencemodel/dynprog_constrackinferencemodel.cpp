@@ -1,4 +1,4 @@
-#include "pgmlink/dynprog_constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
 #include <stdexcept>
 #include <memory>
 #include <dpct/magnusson.h>

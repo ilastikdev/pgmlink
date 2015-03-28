@@ -15,8 +15,8 @@
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/traxels.h"
-#include "pgmlink/constrackinginferencemodel.h"
-#include "pgmlink/perturbedinferencemodel.h"
+#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
 //added for view-support
 #include "opengm/opengm.hxx"

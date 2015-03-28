@@ -11,8 +11,8 @@
 #include "pgmlink/reasoner.h"
 #include "pgmlink/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
-#include "pgmlink/constrackinginferencemodel.h"
-#include "pgmlink/perturbedinferencemodel.h"
+#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
 #include <opengm/opengm.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
