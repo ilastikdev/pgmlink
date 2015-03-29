@@ -17,7 +17,7 @@ DynProgConsTrackInferenceModel::~DynProgConsTrackInferenceModel()
 {
 }
 
-void DynProgConsTrackInferenceModel::infer()
+std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
     dpct::Magnusson tracker(&inference_graph_, true, true);
@@ -59,6 +59,7 @@ void DynProgConsTrackInferenceModel::infer()
 //    std::cout << "Original graph has " << inference_graph_.getNumArcs() << " arcs and " << inference_graph_.getNumNodes() << " nodes.\n";
 //    std::cout << "Union graph has " << unionGraph->getNumArcs()
 //              << " arcs and " << unionGraph->getNumNodes() << " nodes.\n" << std::endl;
+    return std::vector<size_t>();
 }
 
 void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)

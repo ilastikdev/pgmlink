@@ -17,6 +17,7 @@
 #include "pgmlink/traxels.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
 
 //added for view-support
 #include "opengm/opengm.hxx"
@@ -64,7 +65,8 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       detection_weight_(param.detection_weight),
       transition_weight_(param.transition_weight),
       transition_classifier_(param.transition_classifier),
-      with_optical_correction_(param.with_optical_correction)
+      with_optical_correction_(param.with_optical_correction),
+      solver_(CplexSolver)
 {
     inference_model_param_.max_number_objects = max_number_objects_;
 
@@ -158,25 +160,43 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         numberOfSolutions = uncertainty_param_.numberOfIterations;
     }
 
-    boost::shared_ptr<ConsTrackingInferenceModel> inference_model = boost::shared_ptr<ConsTrackingInferenceModel>(
-            new ConsTrackingInferenceModel(inference_model_param_, ep_gap_, cplex_timeout_));
+    // instanciate inference model
+    boost::shared_ptr<InferenceModel> inference_model;
+    if(solver_ == CplexSolver)
+    {
+        inference_model = boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
+                                                                         ep_gap_,
+                                                                         cplex_timeout_);
+    }
+    else if(solver_ == DynProgSolver)
+    {
+        inference_model = boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+    }
+
+    // build inference model
     inference_model->build_from_graph(*graph);
 
-    IlpSolution sol = inference_model->infer(numberOfSolutions,
-                                             get_export_filename(0, features_file_),
-                                             constraints_file_,
-                                             get_export_filename(0, ground_truth_file_),
-                                             with_inference,
-                                             export_from_labeled_graph_);
+    // run inference
+    if(solver_ == CplexSolver)
+    {
+        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
+                    numberOfSolutions,
+                    get_export_filename(0, features_file_),
+                    constraints_file_,
+                    get_export_filename(0, ground_truth_file_),
+                    with_inference,
+                    export_from_labeled_graph_);
+    }
 
     if (with_inference)
     {
-        solutions_.push_back(sol);
+        solutions_.push_back(inference_model->infer());
 
-        if (export_from_labeled_graph_ and not ground_truth_file_.empty())
+        if (solver_ == CplexSolver && export_from_labeled_graph_ && !ground_truth_file_.empty())
         {
             LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
-            inference_model->write_labeledgraph_to_file(*graph, ground_truth_file_);
+            boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->
+                    write_labeledgraph_to_file(*graph, ground_truth_file_);
             ground_truth_file_.clear();
         }
 
@@ -185,8 +205,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
 
         for (size_t k = 1; k < numberOfSolutions; ++k)
         {
+            assert(solver_ == CplexSolver);
             LOG(logINFO) << "conclude " << k + 1 << "-best solution";
-            solutions_.push_back(inference_model->extractSolution(k, get_export_filename(k, ground_truth_file_)));
+            solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
+                                     inference_model)->extractSolution(k, get_export_filename(k, ground_truth_file_)));
 
             inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
         }
@@ -196,61 +218,65 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
     //technical assumption: the number & order of factors remains the same for the perturbed models
     //performance assumption: the number of pertubations is rather low, so iterating over
     //a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
-
     size_t numberOfIterations = uncertainty_param_.numberOfIterations;
     if (uncertainty_param_.distributionId == MbestCPLEX)
     {
         numberOfIterations = 1;
     }
 
-    // get number of factors and then we can dispose of the inference model
-    size_t num_factors = inference_model->get_model().numberOfFactors();
-    boost::shared_ptr<PerturbedInferenceModel> perturbed_inference_model;
-
-    // offsets for DivMBest
-    vector<vector<vector<size_t> > >deterministic_offset(num_factors);
-
-    //deterministic & non-deterministic perturbation
-    for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
+    if(solver_ == CplexSolver)
     {
-        perturbed_inference_model = boost::shared_ptr<PerturbedInferenceModel>(
-                new PerturbedInferenceModel(inference_model_param_,
-                                            perturbed_inference_model_param_,
-                                            ep_gap_, cplex_timeout_));
+        // get number of factors and then we can dispose of the inference model
+        size_t num_factors = boost::static_pointer_cast<ConsTrackingInferenceModel>(
+                    inference_model)->get_model().numberOfFactors();
+        boost::shared_ptr<PerturbedInferenceModel> perturbed_inference_model;
 
-        // Push away from the solution of the last iteration
-        if (uncertainty_param_.distributionId == DiverseMbest)
+        // offsets for DivMBest
+        vector<vector<vector<size_t> > >deterministic_offset(num_factors);
+
+        //deterministic & non-deterministic perturbation
+        for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
         {
-            for (size_t factorId = 0; factorId < num_factors; ++factorId)
+            perturbed_inference_model = boost::shared_ptr<PerturbedInferenceModel>(
+                    new PerturbedInferenceModel(inference_model_param_,
+                                                perturbed_inference_model_param_,
+                                                ep_gap_, cplex_timeout_));
+
+            // Push away from the solution of the last iteration
+            if (uncertainty_param_.distributionId == DiverseMbest)
             {
-                PertGmType::FactorType factor = inference_model->get_model()[factorId];
-                vector<size_t> varIndices;
-                for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin();
-                     ind != factor.variableIndicesEnd();
-                     ++ind)
+                for (size_t factorId = 0; factorId < num_factors; ++factorId)
                 {
-                    varIndices.push_back(solutions_[iterStep - 1][*ind]);
+                    PertGmType::FactorType factor = boost::static_pointer_cast<ConsTrackingInferenceModel>(
+                                inference_model)->get_model()[factorId];
+                    vector<size_t> varIndices;
+                    for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin();
+                         ind != factor.variableIndicesEnd();
+                         ++ind)
+                    {
+                        varIndices.push_back(solutions_[iterStep - 1][*ind]);
+                    }
+                    deterministic_offset[factorId].push_back(varIndices);
                 }
-                deterministic_offset[factorId].push_back(varIndices);
+                perturbed_inference_model->perturb(&deterministic_offset);
             }
-            perturbed_inference_model->perturb(&deterministic_offset);
-        }
 
-        perturbed_inference_model->use_transition_prediction_cache(inference_model.get());
-        perturbed_inference_model->build_from_graph(*graph);
+            perturbed_inference_model->use_transition_prediction_cache(inference_model.get());
+            perturbed_inference_model->build_from_graph(*graph);
 
-        IlpSolution sol = perturbed_inference_model->infer(1,
-                                                           get_export_filename(iterStep, features_file_),
-                                                           "",
-                                                           get_export_filename(iterStep, ground_truth_file_),
-                                                           with_inference,
-                                                           false);
+            perturbed_inference_model->set_inference_params(1,
+                                                            get_export_filename(iterStep, features_file_),
+                                                            "",
+                                                            get_export_filename(iterStep, ground_truth_file_),
+                                                            with_inference,
+                                                            false);
 
-        if (with_inference)
-        {
-            solutions_.push_back(sol);
-            LOG(logINFO) << "conclude";
-            perturbed_inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
+            if (with_inference)
+            {
+                solutions_.push_back(perturbed_inference_model->infer());
+                LOG(logINFO) << "conclude";
+                perturbed_inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
+            }
         }
     }
 

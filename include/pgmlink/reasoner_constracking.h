@@ -101,6 +101,12 @@ public:
         bool with_optical_correction;
     };
 
+    enum Solver
+    {
+        CplexSolver,
+        DynProgSolver
+    };
+
 public:
     typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
 
@@ -158,6 +164,7 @@ protected:
 
     double cplex_timeout_;
     bool isMAP_;
+    Solver solver_;
     
     double division_weight_; // these cannot be read from the division/detection variable since
     double detection_weight_;// those were converted to boost::function objects in tracking

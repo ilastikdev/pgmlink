@@ -46,7 +46,8 @@ public: // API
     GraphicalModelType& get_model();
 
     // run inference
-    IlpSolution infer(size_t numberOfSolutions,
+    virtual IlpSolution infer();
+    void set_inference_params(size_t numberOfSolutions,
                       const std::string& feature_filename,
                       const std::string& constraints_filename,
                       const std::string& ground_truth_filename,
@@ -111,6 +112,8 @@ protected: // members
     std::map< size_t, std::vector<size_t> > nodes_per_timestep_;
 
     // funky export maps
+    bool export_from_labeled_graph_;
+    std::string ground_truth_filename_;
     std::map<std::pair<size_t,size_t>,size_t > clpex_variable_id_map_;
     std::map<std::pair<size_t,std::pair<size_t,size_t> >,size_t> clpex_factor_id_map_;
 };

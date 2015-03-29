@@ -11,7 +11,9 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
     number_of_appearance_nodes_(0),
-    number_of_disappearance_nodes_(0)
+    number_of_disappearance_nodes_(0),
+    export_from_labeled_graph_(false),
+    ground_truth_filename_("")
 {
     cplex_param_.verbose_ = true;
     cplex_param_.integerConstraint_ = true;
@@ -517,24 +519,27 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
 
-ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer(size_t numberOfSolutions,
+void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
                                                                           const std::string &feature_filename,
                                                                           const std::string &constraints_filename,
                                                                           const std::string &ground_truth_filename,
                                                                           bool with_inference,
                                                                           bool export_from_labeled_graph)
 {
-    optimizer_ = boost::shared_ptr<cplex_optimizer>(
-            new cplex_optimizer(get_model(),
-                                cplex_param_,
-                                numberOfSolutions,
-                                feature_filename,
-                                constraints_filename,
-                                ground_truth_filename,
-                                export_from_labeled_graph));
-    if(!with_inference)
-        return IlpSolution();
+    optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
+                                                                        cplex_param_,
+                                                                        numberOfSolutions,
+                                                                        feature_filename,
+                                                                        constraints_filename,
+                                                                        ground_truth_filename,
+                                                                        export_from_labeled_graph));
+    export_from_labeled_graph_ = export_from_labeled_graph;
+    ground_truth_filename_ = ground_truth_filename;
+}
 
+
+ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
+{
     if(param_.with_constraints)
     {
         LOG(logINFO) << "add_constraints";
@@ -557,7 +562,8 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer(size_t
     if (statusExtract != opengm::NORMAL) {
         throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
     }
-    if(export_from_labeled_graph and not  ground_truth_filename.empty()){
+
+    if(export_from_labeled_graph_ and not  ground_truth_filename_.empty()){
         clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
         clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
     }

@@ -32,7 +32,7 @@ public:
     DynProgConsTrackInferenceModel(const Parameter& param);
     ~DynProgConsTrackInferenceModel();
 
-    virtual void infer();
+    virtual std::vector<size_t> infer();
     virtual void conclude(HypothesesGraph&g,
                           HypothesesGraph &tracklet_graph,
                           std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,

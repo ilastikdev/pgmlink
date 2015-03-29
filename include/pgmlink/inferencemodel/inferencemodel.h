@@ -61,6 +61,8 @@ public: // API
                           std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
                           std::vector<size_t> &solution) = 0;
 
+    virtual std::vector<size_t> infer() = 0;
+
 protected: // methods
     double get_transition_prob(double distance,
                                size_t state,
