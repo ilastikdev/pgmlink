@@ -8,8 +8,10 @@
 #include <iostream>
 #include <numeric>
 
-namespace pgmlink {
-namespace features{
+namespace pgmlink
+{
+namespace features
+{
 
 template<typename T>
 void set_feature(FeatureMap& feature_map, const std::string& name, T value)
@@ -19,7 +21,7 @@ void set_feature(FeatureMap& feature_map, const std::string& name, T value)
 }
 
 template<>
-void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVector<double,2> value)
+void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVector<double, 2> value)
 {
     feature_map[name].clear();
     feature_map[name].push_back(feature_type(value[0]));
@@ -27,7 +29,7 @@ void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVe
 }
 
 template<>
-void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVector<double,3> value)
+void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVector<double, 3> value)
 {
     feature_map[name].clear();
     feature_map[name].push_back(feature_type(value[0]));
@@ -37,9 +39,9 @@ void set_feature(FeatureMap &feature_map, const std::string &name, vigra::TinyVe
 
 template<int N, typename T1, typename T2>
 void set_feature_with_offset(FeatureMap &feature_map,
-                 const std::string &name,
-                 vigra::TinyVector<T1,N> value,
-                 vigra::TinyVector<T2,N> offset)
+                             const std::string &name,
+                             vigra::TinyVector<T1, N> value,
+                             vigra::TinyVector<T2, N> offset)
 {
     feature_map[name].clear();
     for(int i = 0; i < N; i++)
@@ -79,25 +81,25 @@ void extract_region_features_roi(const vigra::MultiArrayView<N, DataType>& data,
 
     typedef AccumulatorChainArray<vigra::CoupledArrays<N, DataType, LabelType>,
             Select< // what statistics to compute (same as in joint seg & track, but without quantiles atm)
-                RegionCenter,
-                Count,
-                Variance,
-                Sum,
-                Mean,
-                RegionRadii,
-                Central< PowerSum<2> >,
-                Central< PowerSum<3> >,
-                Central< PowerSum<4> >,
-                Kurtosis,
-                Maximum,
-                Minimum,
-                RegionAxes,
-                Skewness,
-                Weighted<PowerSum<0> >,
-                Coord< Minimum >,
-                Coord< Maximum >,
-                DataArg<1>,
-                LabelArg<2> // where to look for data and region labels
+            RegionCenter,
+            Count,
+            Variance,
+            Sum,
+            Mean,
+            RegionRadii,
+            Central< PowerSum<2> >,
+            Central< PowerSum<3> >,
+            Central< PowerSum<4> >,
+            Kurtosis,
+            Maximum,
+            Minimum,
+            RegionAxes,
+            Skewness,
+            Weighted<PowerSum<0> >,
+            Coord< Minimum >,
+            Coord< Maximum >,
+            DataArg<1>,
+            LabelArg<2> // where to look for data and region labels
             > >
             FeatureAccumulator;
     FeatureAccumulator a;
@@ -110,7 +112,9 @@ void extract_region_features_roi(const vigra::MultiArrayView<N, DataType>& data,
     for(LabelType label : label_indices)
     {
         if(label == 0) // ignore background
+        {
             continue;
+        }
 
         // get respective feature map from FeatureStore
         pgmlink::FeatureMap& feature_map = fs->get_traxel_features(timestep, label + traxel_index_offset);
@@ -143,9 +147,9 @@ void extract_region_features_roi(const vigra::MultiArrayView<N, DataType>& data,
 ///
 template<int N, typename DataType, typename LabelType>
 int extract_region_features(const vigra::MultiArrayView<N, DataType>& data,
-                             const vigra::MultiArrayView<N, LabelType>& labels,
-                             boost::shared_ptr<pgmlink::FeatureStore> fs,
-                             unsigned int timestep)
+                            const vigra::MultiArrayView<N, LabelType>& labels,
+                            boost::shared_ptr<pgmlink::FeatureStore> fs,
+                            unsigned int timestep)
 {
     // create list of all labels we want to extract features for
     LabelType label_min, label_max;

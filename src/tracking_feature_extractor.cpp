@@ -3,8 +3,10 @@
 
 #include <cmath> /* for std::abs */
 
-namespace pgmlink {
-namespace features {
+namespace pgmlink
+{
+namespace features
+{
 
 MinMaxMeanVarCalculator::MinMaxMeanVarCalculator()
 {
@@ -34,8 +36,8 @@ void MinMaxMeanVarCalculator::add_value(const double& value)
 void MinMaxMeanVarCalculator::add_values(const FeatureMatrix& values)
 {
     for(FeatureMatrix::const_iterator it = values.begin();
-        it != values.end();
-        it++)
+            it != values.end();
+            it++)
     {
         add_value(*it);
     }
@@ -51,21 +53,37 @@ void MinMaxMeanVarCalculator::set_max(const double& value)
     max = value;
 }
 
-size_t MinMaxMeanVarCalculator::get_count() const { return n; }
+size_t MinMaxMeanVarCalculator::get_count() const
+{
+    return n;
+}
 
-double MinMaxMeanVarCalculator::get_mean() const { return mean; }
+double MinMaxMeanVarCalculator::get_mean() const
+{
+    return mean;
+}
 
 double MinMaxMeanVarCalculator::get_var() const
 {
     if (n)
+    {
         return sum_squared_diff / n;
+    }
     else
+    {
         return 0.0;
+    }
 }
 
-double MinMaxMeanVarCalculator::get_min() const { return min; }
+double MinMaxMeanVarCalculator::get_min() const
+{
+    return min;
+}
 
-double MinMaxMeanVarCalculator::get_max() const { return max; }
+double MinMaxMeanVarCalculator::get_max() const
+{
+    return max;
+}
 
 TrackFeatureExtractor::TrackFeatureExtractor()
 {}
@@ -74,9 +92,9 @@ size_t TrackFeatureExtractor::get_feature_vector_length() const
 {
     // TODO: UUUUGLY!
     return 3 * 4 // compute_sq_id_features (Count, Mean, Variance)
-        + 4 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
-        + 4 * 4 // compute_sq_accel_features (com, Count, Mean, Variance)
-        + 1 * 2; // compute_angle_features (com)
+           + 4 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
+           + 4 * 4 // compute_sq_accel_features (com, Count, Mean, Variance)
+           + 1 * 2; // compute_angle_features (com)
 }
 
 void TrackFeatureExtractor::get_feature_descriptions(
@@ -95,7 +113,9 @@ void TrackFeatureExtractor::compute_features(
 {
     assert(return_vector.shape(0) == get_feature_vector_length());
     if (feature_descriptions_.size() == 0)
+    {
         feature_descriptions_.resize(get_feature_vector_length());
+    }
     feature_descriptions_offset_it_ = feature_descriptions_.begin();
     feature_vector_offset_it_ = return_vector.begin();
     compute_sq_id_features(traxelref_vec, "Count");
@@ -247,8 +267,8 @@ size_t DivisionFeatureExtractor::get_feature_vector_length() const
 {
     // TODO: still ugly
     return 3 * 3 // compute_sq_id_features (Count, Mean, Variance)
-        + 2 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
-        + 1 * 1; // compute_angle_features (com)
+           + 2 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
+           + 1 * 1; // compute_angle_features (com)
 }
 
 void DivisionFeatureExtractor::get_feature_descriptions(
@@ -267,7 +287,9 @@ void DivisionFeatureExtractor::compute_features(
 {
     assert(return_vector.shape(0) == get_feature_vector_length());
     if (feature_descriptions_.size() == 0)
+    {
         feature_descriptions_.resize(get_feature_vector_length());
+    }
     feature_descriptions_offset_it_ = feature_descriptions_.begin();
     feature_vector_offset_it_ = return_vector.begin();
     compute_id_features(traxelref_vec, "Count");
@@ -306,11 +328,11 @@ void DivisionFeatureExtractor::compute_id_features(
     // the feature matrix does not have to have a feature dimension of one
     // but it's asserted anyway to indicate possible causes of bugs
     assert(feature_matrix.shape(1) == 1);
-    double child_feature_sum = feature_matrix(1,0) + feature_matrix(2,0);
-    double child_feature_diff = feature_matrix(1,0) - feature_matrix(2,0);
+    double child_feature_sum = feature_matrix(1, 0) + feature_matrix(2, 0);
+    double child_feature_diff = feature_matrix(1, 0) - feature_matrix(2, 0);
     child_feature_diff = std::abs(child_feature_diff);
 
-    push_back_feature("parent " + feature_name, feature_matrix(0,0));
+    push_back_feature("parent " + feature_name, feature_matrix(0, 0));
     push_back_feature("child sum " + feature_name, child_feature_sum);
     push_back_feature("child diff " + feature_name, child_feature_diff);
 }
@@ -324,17 +346,17 @@ void DivisionFeatureExtractor::compute_sq_diff_features(
     TraxelsFeaturesIdentity feature_extractor(feature_name);
     feature_extractor.extract(traxelref_vec, feature_matrix);
     // calculate the squared differences
-    TCompositionCalculator<
-        ChildParentDiffCalculator,
-        SquaredNormCalculator<0>
+    TCompositionCalculator <
+    ChildParentDiffCalculator,
+    SquaredNormCalculator<0>
     > sq_diff_calculator;
     FeatureMatrix sq_diff_matrix;
     sq_diff_calculator.calculate(feature_matrix, sq_diff_matrix);
     assert(sq_diff_matrix.shape(0) == 2);
     assert(sq_diff_matrix.shape(1) == 1);
 
-    double feature_sum = sq_diff_matrix(0,0) + sq_diff_matrix(1,0);
-    double feature_diff = sq_diff_matrix(0,0) - sq_diff_matrix(1,0);
+    double feature_sum = sq_diff_matrix(0, 0) + sq_diff_matrix(1, 0);
+    double feature_diff = sq_diff_matrix(0, 0) - sq_diff_matrix(1, 0);
     feature_diff = std::abs(feature_diff);
 
     push_back_feature(
@@ -501,9 +523,13 @@ void TrackingFeatureExtractor::save_features_to_h5(size_t track_id, const std::s
     {
         std::stringstream dataset_name;
         if(tracks)
+        {
             dataset_name << "tracks/";
+        }
         else
+        {
             dataset_name << "divisions/";
+        }
         dataset_name << track_id << "/" << feature_name;
         vigra::writeHDF5(track_feature_output_file_.c_str(), dataset_name.str().c_str(), matrix);
     }
@@ -523,8 +549,8 @@ void TrackingFeatureExtractor::save_traxel_ids_to_h5(ConstTraxelRefVectors &trac
 
         for(size_t i = 0; i < track.size(); ++i)
         {
-            traxels(i,0) = track[i]->Timestep;
-            traxels(i,1) = track[i]->Id;
+            traxels(i, 0) = track[i]->Timestep;
+            traxels(i, 1) = track[i]->Id;
         }
         save_features_to_h5(track_id++, "traxels", traxels);
     }
@@ -533,7 +559,7 @@ void TrackingFeatureExtractor::save_traxel_ids_to_h5(ConstTraxelRefVectors &trac
 void TrackingFeatureExtractor::save_division_traxels_to_h5(ConstTraxelRefVectors &division_traxels)
 {
     size_t division_id = 0;
-    for(auto div: division_traxels)
+    for(auto div : division_traxels)
     {
         if(div.size() < 3)
         {
@@ -544,8 +570,8 @@ void TrackingFeatureExtractor::save_division_traxels_to_h5(ConstTraxelRefVectors
 
         for(size_t i = 0; i < div.size(); ++i)
         {
-            traxels(i,0) = div[i]->Timestep;
-            traxels(i,1) = div[i]->Id;
+            traxels(i, 0) = div[i]->Timestep;
+            traxels(i, 1) = div[i]->Id;
         }
         save_features_to_h5(division_id++, "traxels", traxels, false);
     }
@@ -651,12 +677,16 @@ void TrackingFeatureExtractor::append_feature_vector_to_file(const std::string& 
                 std::getline(feature_vector_file, line);
                 std::string::size_type comment_start = line.find('#');
                 if(comment_start != std::string::npos)
+                {
                     line = line.substr(comment_start);
+                }
                 boost::algorithm::trim(line);
 
                 // skip lines without features
                 if(line.size() == 0)
+                {
                     continue;
+                }
 
                 // read features
                 std::stringstream linestream(line);
@@ -709,7 +739,9 @@ void TrackingFeatureExtractor::compute_sq_diff_features(
     {
         // only compute velocities if track is longer than 1 element
         if(track.size() < 2)
+        {
             continue;
+        }
 
         // extract features
         FeatureMatrix feature_matrix;
@@ -722,7 +754,7 @@ void TrackingFeatureExtractor::compute_sq_diff_features(
 
         // add values to min/max/mean/var calculator
         sq_diff_mmmv.add_values(sq_diff_matrix);
-        save_features_to_h5(track_id++, "sq_diff_"+feature_name, sq_diff_matrix);
+        save_features_to_h5(track_id++, "sq_diff_" + feature_name, sq_diff_matrix);
     }
     push_back_feature("squared difference of " + feature_name, sq_diff_mmmv);
 }
@@ -740,7 +772,9 @@ void TrackingFeatureExtractor::compute_sq_accel_features(
     {
         // only compute accelerations if track is longer than 2 elements
         if(track.size() < 3)
+        {
             continue;
+        }
 
         // extract features
         FeatureMatrix feature_matrix;
@@ -753,7 +787,7 @@ void TrackingFeatureExtractor::compute_sq_accel_features(
 
         // add values to min/max/mean/var calculator
         sq_accel_mmmv.add_values(sq_accel_matrix);
-        save_features_to_h5(track_id++, "sq_accel_"+feature_name, sq_accel_matrix);
+        save_features_to_h5(track_id++, "sq_accel_" + feature_name, sq_accel_matrix);
     }
     push_back_feature("squared acceleration of " + feature_name, sq_accel_mmmv);
 }
@@ -771,7 +805,9 @@ void TrackingFeatureExtractor::compute_angle_features(
     {
         // only compute angles in track if track is longer than 2 elements
         if(track.size() < 3)
+        {
             continue;
+        }
 
         // extract features
         FeatureMatrix feature_matrix;
@@ -783,7 +819,7 @@ void TrackingFeatureExtractor::compute_angle_features(
         angle_cos_calc_ptr_->calculate(feature_matrix, angles);
 
         angle_mmmv.add_values(angles);
-        save_features_to_h5(track_id++, "angles_"+feature_name, angles);
+        save_features_to_h5(track_id++, "angles_" + feature_name, angles);
     }
     push_back_feature(
         "Mean of all angle cosines of feature " + feature_name,
@@ -803,8 +839,8 @@ void TrackingFeatureExtractor::compute_track_length_features(
     for (auto track : track_traxels)
     {
         track_length_mmmv.add_value(static_cast<double>(track.size()));
-        FeatureMatrix m(vigra::Shape2(1,1));
-        m(0,0) = track.size();
+        FeatureMatrix m(vigra::Shape2(1, 1));
+        m(0, 0) = track.size();
         save_features_to_h5(track_id++, "track_length", m);
     }
     push_back_feature("track length", track_length_mmmv);
@@ -830,7 +866,7 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
         {
             mvn_outlier_calc_ptr_->calculate(feature_matrix, temp);
             id_out_mmmv.add_value(temp(0, 0));
-            save_features_to_h5(track_id++, "outlier_id_"+feature_name, temp);
+            save_features_to_h5(track_id++, "outlier_id_" + feature_name, temp);
         }
     }
     push_back_feature("track outlier share of " + feature_name, id_out_mmmv);
@@ -860,7 +896,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
         {
             mvn_outlier_calc_ptr_->calculate(diff_matrix, temp);
             diff_out_mmmv.add_value(temp(0, 0));
-            save_features_to_h5(track_id++, "diff_outlier_"+feature_name, temp);
+            save_features_to_h5(track_id++, "diff_outlier_" + feature_name, temp);
         }
     }
     push_back_feature(
@@ -918,7 +954,7 @@ void TrackingFeatureExtractor::compute_division_sq_diff_features(
         child_parent_diff_calc_ptr_->calculate(feature_matrix, temp);
         sq_norm_calc_ptr_->calculate(temp, sq_diff_matrix);
         sq_diff_mmmv.add_values(sq_diff_matrix);
-        save_features_to_h5(division_id++, "sq_diff_"+feature_name, sq_diff_matrix, false);
+        save_features_to_h5(division_id++, "sq_diff_" + feature_name, sq_diff_matrix, false);
     }
     push_back_feature(
         "squared child-parent " + feature_name + " difference",
@@ -952,11 +988,13 @@ void TrackingFeatureExtractor::compute_division_sq_diff_outlier(
         for (size_t col = 0; col < division_count; col++)
         {
             if (score_matrix(col, 0) > 3.0 * 3.0)
+            {
                 outlier += 1.0;
-            FeatureMatrix score(vigra::Shape2(1,1), score_matrix(col, 0));
+            }
+            FeatureMatrix score(vigra::Shape2(1, 1), score_matrix(col, 0));
             save_features_to_h5(
                 col,
-                "sq_diff_"+feature_name+"_outlier_score",
+                "sq_diff_" + feature_name + "_outlier_score",
                 score,
                 false);
         }
@@ -987,7 +1025,7 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
         child_decel_calc_ptr_->calculate(feature_matrix, child_decel_mat);
 
         child_decel_mmmv.add_values(child_decel_mat);
-        save_features_to_h5(division_id++, "child_decel_"+feature_name, child_decel_mat, false);
+        save_features_to_h5(division_id++, "child_decel_" + feature_name, child_decel_mat, false);
     }
     push_back_feature("child " + feature_name + " deceleration", child_decel_mmmv);
 }
@@ -1016,11 +1054,13 @@ void TrackingFeatureExtractor::compute_child_deceleration_outlier(
         for (size_t col = 0; col < division_count; col++)
         {
             if (score_matrix(col, 0) > 3.0 * 3.0)
+            {
                 outlier += 1.0;
-            FeatureMatrix score(vigra::Shape2(1,1), score_matrix(col, 0));
+            }
+            FeatureMatrix score(vigra::Shape2(1, 1), score_matrix(col, 0));
             save_features_to_h5(
                 col,
-                "child_decel_"+feature_name+"_outlier_score",
+                "child_decel_" + feature_name + "_outlier_score",
                 score,
                 false);
         }
@@ -1074,27 +1114,27 @@ void TrackingFeatureExtractor::compute_border_distances(
         if (position.shape(1) == 3)
         {
             border_dist = fov_.spatial_distance_to_border(
-                0.0,
-                static_cast<double>(position(0,0)),
-                static_cast<double>(position(0,1)),
-                static_cast<double>(position(0,2)),
-                false
-            );
+                              0.0,
+                              static_cast<double>(position(0, 0)),
+                              static_cast<double>(position(0, 1)),
+                              static_cast<double>(position(0, 2)),
+                              false
+                          );
         }
         else if (position.shape(1) == 2)
         {
             border_dist = fov_.spatial_distance_to_border(
-                0.0,
-                static_cast<double>(position(0,0)),
-                static_cast<double>(position(0,1)),
-                0.0,
-                false
-            );
+                              0.0,
+                              static_cast<double>(position(0, 0)),
+                              static_cast<double>(position(0, 1)),
+                              0.0,
+                              false
+                          );
         }
         else
         {
             LOG(logDEBUG) << "In TrackingFeatureExtractor::"
-                << "compute_appearance_border_distances:";
+                          << "compute_appearance_border_distances:";
             LOG(logDEBUG) << "data is neither 2d nor 3d";
         }
         border_dist_mmmv.add_value(border_dist);
@@ -1121,9 +1161,9 @@ void TrackingFeatureExtractor::push_back_feature(
 }
 
 BorderDistanceFilter::BorderDistanceFilter(
-        const FieldOfView& field_of_view,
-        double t_margin,
-        double spatial_margin)
+    const FieldOfView& field_of_view,
+    double t_margin,
+    double spatial_margin)
 {
     std::vector<double> lower_bound = field_of_view.lower_bound();
     std::vector<double> upper_bound = field_of_view.upper_bound();
@@ -1163,7 +1203,7 @@ bool BorderDistanceFilter::is_out_of_margin(const Traxel& traxel) const
     if (com_it == feature_map.end())
     {
         LOG(logDEBUG) << "in BorderDistanceFilter::is_out_of_margin(): "
-            << "feature map of traxel has no key \"com\"";
+                      << "feature map of traxel has no key \"com\"";
         LOG(logDEBUG) << "return \"false\"";
     }
     else
@@ -1181,7 +1221,7 @@ bool BorderDistanceFilter::is_out_of_margin(const Traxel& traxel) const
         else
         {
             LOG(logDEBUG) << "in BorderDistanceFilter::is_out_of_margin(): "
-                << "dimension is neither 2d+t nor 3d+t";
+                          << "dimension is neither 2d+t nor 3d+t";
             LOG(logDEBUG) << "return \"false\"";
         }
     }

@@ -30,7 +30,8 @@ public: // Typedefs
     typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;
 
 public: // Parameter object
-    class Parameter{
+    class Parameter
+    {
     public:
         DistrId distributionId;
         std::vector<double> distributionParam;
@@ -42,10 +43,10 @@ public: // Parameter object
 
 public: // API
     PerturbedInferenceModel(
-            const ConsTrackingInferenceModel::Parameter& param,
-            const Parameter& perturbation_param,
-            double ep_gap,
-            double cplex_timeout);
+        const ConsTrackingInferenceModel::Parameter& param,
+        const Parameter& perturbation_param,
+        double ep_gap,
+        double cplex_timeout);
 
     void perturb(DeterministicOffset* det_off);
 

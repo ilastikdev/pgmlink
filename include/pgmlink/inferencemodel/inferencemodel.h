@@ -10,7 +10,7 @@
 
 namespace pgmlink
 {
-enum EnergyType {Appearance=0, Disappearance=1, Detection=2, Transition=3, Division=4 };
+enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
 
 /**
  * @brief The InferenceModel class is the base for several inference methods using the conservation
@@ -20,7 +20,8 @@ enum EnergyType {Appearance=0, Disappearance=1, Detection=2, Transition=3, Divis
 class InferenceModel
 {
 public: // Parameter object
-    class Parameter{
+    class Parameter
+    {
     public:
         size_t max_number_objects;
 
@@ -68,16 +69,16 @@ protected: // methods
                                size_t state,
                                double alpha);
     virtual double get_transition_probability(Traxel &tr1,
-                                              Traxel &tr2,
-                                              size_t state);
+            Traxel &tr2,
+            size_t state);
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,
                                         Traxel tr = 0,
                                         Traxel tr2 = 0,
                                         size_t state = 0);
     virtual size_t add_div_m_best_perturbation(marray::Marray<double> &energies,
-                                               EnergyType energy_type,
-                                               size_t factorIndex);
+            EnergyType energy_type,
+            size_t factorIndex);
     bool callable(boost::python::object object);
 
 protected: // members

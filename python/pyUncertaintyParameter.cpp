@@ -10,18 +10,19 @@
 using namespace pgmlink;
 using namespace boost::python;
 
-void export_uncertaintyParameter() {
-	enum_<DistrId>("DistrId")
-	    	.value("GaussianPertubation", GaussianPertubation)
-	    	.value("PerturbAndMAP", PerturbAndMAP)
-	    	.value("DiverseMbest", DiverseMbest)
-	    	.value("MbestCPLEX", MbestCPLEX)
-	    	.value("ClassifierUncertainty",ClassifierUncertainty)
-	        ;
+void export_uncertaintyParameter()
+{
+    enum_<DistrId>("DistrId")
+    .value("GaussianPertubation", GaussianPertubation)
+    .value("PerturbAndMAP", PerturbAndMAP)
+    .value("DiverseMbest", DiverseMbest)
+    .value("MbestCPLEX", MbestCPLEX)
+    .value("ClassifierUncertainty", ClassifierUncertainty)
+    ;
 
-	class_< UncertaintyParameter >("UncertaintyParameter")
-	    .def(init<int,DistrId,std::vector<double> >(
-        args("number_of_iterations","distribution_id","distribution_parameters")))
-	    ;
+    class_< UncertaintyParameter >("UncertaintyParameter")
+    .def(init<int, DistrId, std::vector<double> >(
+             args("number_of_iterations", "distribution_id", "distribution_parameters")))
+    ;
 
 }

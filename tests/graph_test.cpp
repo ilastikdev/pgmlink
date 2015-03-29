@@ -17,32 +17,36 @@ using namespace std;
 using namespace boost;
 
 
-namespace pgmlink {
+namespace pgmlink
+{
 // graph property for testing purposes
 struct node_testprop {};
 template <typename Graph>
-struct property_map<node_testprop, Graph> {
-  typedef lemon::IterableValueMap< Graph, typename Graph::Node, int > type;
-  static const std::string name;
+struct property_map<node_testprop, Graph>
+{
+    typedef lemon::IterableValueMap< Graph, typename Graph::Node, int > type;
+    static const std::string name;
 };
 template <typename Graph>
-const std::string property_map<node_testprop,Graph>::name = "node_testprop";
+const std::string property_map<node_testprop, Graph>::name = "node_testprop";
 }
 
-BOOST_AUTO_TEST_CASE( PropertyGraph_add_get ) {
-  typedef PropertyGraph<lemon::ListDigraph> prop_graph;
-  prop_graph g;
-  prop_graph::base_graph::Node n = g.addNode();
-  g.add(node_testprop());
-  property_map<node_testprop,prop_graph::base_graph>::type& m 
-    = g.get(node_testprop());
-  m.set(n, 72);
-  property_map<node_testprop,prop_graph::base_graph>::type& other_m 
-    = g.get(node_testprop());
-  BOOST_CHECK_EQUAL(other_m[n], 72);
+BOOST_AUTO_TEST_CASE( PropertyGraph_add_get )
+{
+    typedef PropertyGraph<lemon::ListDigraph> prop_graph;
+    prop_graph g;
+    prop_graph::base_graph::Node n = g.addNode();
+    g.add(node_testprop());
+    property_map<node_testprop, prop_graph::base_graph>::type& m
+        = g.get(node_testprop());
+    m.set(n, 72);
+    property_map<node_testprop, prop_graph::base_graph>::type& other_m
+        = g.get(node_testprop());
+    BOOST_CHECK_EQUAL(other_m[n], 72);
 }
 
-BOOST_AUTO_TEST_CASE( PropertyGraph_addNode ) {
+BOOST_AUTO_TEST_CASE( PropertyGraph_addNode )
+{
     PropertyGraph<lemon::ListDigraph> graph;
     graph.addNode();
 }

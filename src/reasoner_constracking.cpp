@@ -3,7 +3,7 @@
 #include <cassert>
 #include <stdexcept>
 #include <string.h>
-#include <sstream> 
+#include <sstream>
 #include <memory.h>
 #include <opengm/inference/lpcplex.hxx>
 #include <opengm/datastructures/marray/marray.hxx>
@@ -31,14 +31,15 @@
 
 using namespace std;
 
-namespace pgmlink {
+namespace pgmlink
+{
 
 typedef opengm::ModelViewFunction
-	<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
-	ViewFunctionType;
+<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
+ViewFunctionType;
 
 typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-			pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
+        pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
 
 
 ConservationTracking::ConservationTracking(const Parameter &param)
@@ -95,10 +96,12 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     perturbed_inference_model_param_.transition_weight = transition_weight_;
 }
 
-ConservationTracking::~ConservationTracking() {
+ConservationTracking::~ConservationTracking()
+{
 }
 
-double ConservationTracking::forbidden_cost() const {
+double ConservationTracking::forbidden_cost() const
+{
     return forbidden_cost_;
 }
 
@@ -128,7 +131,9 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
 void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool with_inference)
 {
     if (with_inference)
+    {
         solutions_.clear();
+    }
 
     HypothesesGraph *graph;
 
@@ -165,8 +170,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
     if(solver_ == CplexSolver)
     {
         inference_model = boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
-                                                                         ep_gap_,
-                                                                         cplex_timeout_);
+                          ep_gap_,
+                          cplex_timeout_);
     }
     else if(solver_ == DynProgSolver)
     {
@@ -180,12 +185,12 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
     if(solver_ == CplexSolver)
     {
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
-                    numberOfSolutions,
-                    get_export_filename(0, features_file_),
-                    constraints_file_,
-                    get_export_filename(0, ground_truth_file_),
-                    with_inference,
-                    export_from_labeled_graph_);
+            numberOfSolutions,
+            get_export_filename(0, features_file_),
+            constraints_file_,
+            get_export_filename(0, ground_truth_file_),
+            with_inference,
+            export_from_labeled_graph_);
     }
 
     if (with_inference)
@@ -196,7 +201,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         {
             LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
             boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->
-                    write_labeledgraph_to_file(*graph, ground_truth_file_);
+            write_labeledgraph_to_file(*graph, ground_truth_file_);
             ground_truth_file_.clear();
         }
 
@@ -228,7 +233,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
     {
         // get number of factors and then we can dispose of the inference model
         size_t num_factors = boost::static_pointer_cast<ConsTrackingInferenceModel>(
-                    inference_model)->get_model().numberOfFactors();
+                                 inference_model)->get_model().numberOfFactors();
         boost::shared_ptr<PerturbedInferenceModel> perturbed_inference_model;
 
         // offsets for DivMBest
@@ -238,9 +243,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
         for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
         {
             perturbed_inference_model = boost::shared_ptr<PerturbedInferenceModel>(
-                    new PerturbedInferenceModel(inference_model_param_,
-                                                perturbed_inference_model_param_,
-                                                ep_gap_, cplex_timeout_));
+                                            new PerturbedInferenceModel(inference_model_param_,
+                                                    perturbed_inference_model_param_,
+                                                    ep_gap_, cplex_timeout_));
 
             // Push away from the solution of the last iteration
             if (uncertainty_param_.distributionId == DiverseMbest)
@@ -248,11 +253,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
                 for (size_t factorId = 0; factorId < num_factors; ++factorId)
                 {
                     PertGmType::FactorType factor = boost::static_pointer_cast<ConsTrackingInferenceModel>(
-                                inference_model)->get_model()[factorId];
+                                                        inference_model)->get_model()[factorId];
                     vector<size_t> varIndices;
                     for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin();
-                         ind != factor.variableIndicesEnd();
-                         ++ind)
+                            ind != factor.variableIndicesEnd();
+                            ++ind)
                     {
                         varIndices.push_back(solutions_[iterStep - 1][*ind]);
                     }
@@ -265,11 +270,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
             perturbed_inference_model->build_from_graph(*graph);
 
             perturbed_inference_model->set_inference_params(1,
-                                                            get_export_filename(iterStep, features_file_),
-                                                            "",
-                                                            get_export_filename(iterStep, ground_truth_file_),
-                                                            with_inference,
-                                                            false);
+                    get_export_filename(iterStep, features_file_),
+                    "",
+                    get_export_filename(iterStep, ground_truth_file_),
+                    with_inference,
+                    false);
 
             if (with_inference)
             {
@@ -335,22 +340,25 @@ void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTrack
 
     solutions_.clear();
     for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = solutions.begin();
-        sol_it != solutions.end();
-        ++sol_it)
+            sol_it != solutions.end();
+            ++sol_it)
     {
         solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
     }
 }
 
-void ConservationTracking::reset() {
+void ConservationTracking::reset()
+{
 //    solutions_.clear();
 }
 
-boost::python::dict convertFeatureMapToPyDict(FeatureMap map){
+boost::python::dict convertFeatureMapToPyDict(FeatureMap map)
+{
     boost::python::dict dictionary;
-    for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter) {
-            dictionary[iter->first] = iter->second;
-        }
+    for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter)
+    {
+        dictionary[iter->first] = iter->second;
+    }
     return dictionary;
 }
 

@@ -17,38 +17,40 @@
 #include <opengm/opengm.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 
-namespace pgmlink {	
+namespace pgmlink
+{
 
 class Traxel;
 
-class ConservationTracking : public Reasoner {
+class ConservationTracking : public Reasoner
+{
 public:
     class Parameter
     {
     public:
         Parameter(
-                unsigned int max_number_objects,
-                boost::function<double (const Traxel&, const size_t)> detection,
-                boost::function<double (const Traxel&, const size_t)> division,
-                boost::function<double (const double)> transition,
-                double forbidden_cost = 0,
-                double ep_gap = 0.01,
-                bool with_tracklets = false,
-                bool with_divisions = true,
-                boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
-                boost::function<double (const Traxel&)> appearance_cost_fn = ConstantFeature(500.0),
-                bool with_misdetections_allowed = true,
-                bool with_appearance = true,
-                bool with_disappearance = true,
-                double transition_parameter = 5,
-                bool with_constraints = true,
-                UncertaintyParameter uncertainty_param = UncertaintyParameter(),
-                double cplex_timeout = 1e75,
-                double division_weight = 10,
-                double detection_weight = 10,
-                double transition_weight = 10,
-                boost::python::object transition_classifier = boost::python::object(),
-                bool with_optical_correction = false):
+            unsigned int max_number_objects,
+            boost::function<double (const Traxel&, const size_t)> detection,
+            boost::function<double (const Traxel&, const size_t)> division,
+            boost::function<double (const double)> transition,
+            double forbidden_cost = 0,
+            double ep_gap = 0.01,
+            bool with_tracklets = false,
+            bool with_divisions = true,
+            boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
+            boost::function<double (const Traxel&)> appearance_cost_fn = ConstantFeature(500.0),
+            bool with_misdetections_allowed = true,
+            bool with_appearance = true,
+            bool with_disappearance = true,
+            double transition_parameter = 5,
+            bool with_constraints = true,
+            UncertaintyParameter uncertainty_param = UncertaintyParameter(),
+            double cplex_timeout = 1e75,
+            double division_weight = 10,
+            double detection_weight = 10,
+            double transition_weight = 10,
+            boost::python::object transition_classifier = boost::python::object(),
+            bool with_optical_correction = false):
             max_number_objects(max_number_objects),
             detection(detection),
             division(division),
@@ -74,7 +76,7 @@ public:
         {}
 
         // empty parameter needed for python
-        Parameter(){}
+        Parameter() {}
 
         // settings
         unsigned int max_number_objects;
@@ -117,9 +119,9 @@ public:
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
     virtual void perturbedInference(HypothesesGraph&, bool with_inference = true);
-    
+
     double forbidden_cost() const;
-    
+
     /// Return reference to all CPLEX solution vectors
     const std::vector<IlpSolution>& get_ilp_solutions() const;
     void set_ilp_solutions(const std::vector<IlpSolution>&);
@@ -135,7 +137,7 @@ public:
 protected:
     void reset();
     void compute_relative_uncertainty(HypothesesGraph *graph);
-    
+
     unsigned int max_number_objects_;
 
     // energy functions
@@ -165,7 +167,7 @@ protected:
     double cplex_timeout_;
     bool isMAP_;
     Solver solver_;
-    
+
     double division_weight_; // these cannot be read from the division/detection variable since
     double detection_weight_;// those were converted to boost::function objects in tracking
     double transition_weight_;
@@ -174,7 +176,7 @@ protected:
 
     bool with_optical_correction_;
 
-	HypothesesGraph tracklet_graph_;
+    HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
 };
 
@@ -183,13 +185,13 @@ protected:
 /******************/
 /* Implementation */
 /******************/
- 
+
 // template< typename table_t, typename const_iter >
 //   void ConservationTracking::add_factor( const table_t& table, const_iter first_idx, const_iter last_idx ){
 //   OpengmModelDeprecated::FunctionIdentifier id=pgm_->Model()->addFunction(table);
 //   pgm_->Model()->addFactor(id, first_idx, last_idx);
 // }
- 
+
 } /* namespace pgmlink */
 #endif /* MRF_REASONER_H */
-  
+

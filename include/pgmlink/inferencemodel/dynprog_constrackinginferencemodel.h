@@ -16,8 +16,14 @@ public:
         ref_(t)
     {}
 
-    virtual std::string toString() const { return std::string(); }
-    T getRef() { return ref_; }
+    virtual std::string toString() const
+    {
+        return std::string();
+    }
+    T getRef()
+    {
+        return ref_;
+    }
 
 private:
     T ref_;

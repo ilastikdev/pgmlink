@@ -9,22 +9,25 @@
 #include "pgmlink/feature_calculator/base.h"
 #include "pgmlink/feature_extraction.h"
 
-namespace pgmlink {
+namespace pgmlink
+{
 
-namespace feature_extraction {
+namespace feature_extraction
+{
 
 ////
 //// class ElementWiseSquaredDistanceCalculator
 ////
-class ElementWiseSquaredDistanceCalculator : public FeatureCalculator {
- public:
-  virtual ~ElementWiseSquaredDistanceCalculator();
-  virtual feature_array calculate(const feature_array& f1, const feature_array& f2) const;
+class ElementWiseSquaredDistanceCalculator : public FeatureCalculator
+{
+public:
+    virtual ~ElementWiseSquaredDistanceCalculator();
+    virtual feature_array calculate(const feature_array& f1, const feature_array& f2) const;
 
-  virtual const std::string& name() const;
+    virtual const std::string& name() const;
 
- private:
-  static const std::string name_;
+private:
+    static const std::string name_;
 };
 
 

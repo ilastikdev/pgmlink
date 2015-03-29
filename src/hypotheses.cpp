@@ -20,11 +20,13 @@
 
 using namespace std;
 
-namespace pgmlink {
+namespace pgmlink
+{
 ////
 //// class HypothesesGraph
 ////
-HypothesesGraph::Node HypothesesGraph::add_node(node_timestep_map::Value timestep) {
+HypothesesGraph::Node HypothesesGraph::add_node(node_timestep_map::Value timestep)
+{
     node_timestep_map& timestep_m = get(node_timestep());
 
     HypothesesGraph::Node node = addNode();
@@ -33,18 +35,21 @@ HypothesesGraph::Node HypothesesGraph::add_node(node_timestep_map::Value timeste
     return node;
 }
 
-HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::Value> timesteps) {
+HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::Value> timesteps)
+{
     node_timestep_map& timestep_m = get(node_timestep());
 
     HypothesesGraph::Node node = addNode();
-    for (std::vector<node_timestep_map::Value>::const_iterator it = timesteps.begin(); it!=timesteps.end(); ++it) {
+    for (std::vector<node_timestep_map::Value>::const_iterator it = timesteps.begin(); it != timesteps.end(); ++it)
+    {
         timestep_m.set(node, *it);
         timesteps_.insert( *it );
     }
     return node;
 }
 
-void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn){
+void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn)
+{
     LOG(logINFO) << "write_hypotheses_graph_state()";
     property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
         get(arc_active_count());
@@ -62,36 +67,42 @@ void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn){
         get(arc_label());
 
     std::ofstream out_file;
-    out_file.open(out_fn,std::ios::app);
+    out_file.open(out_fn, std::ios::app);
 
     out_file << "ActiveNodes" << std::endl;
-    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n) {
+    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n)
+    {
         std::stringstream ss;
         size_t label = max(appearance_labels[n], disappearance_labels[n]);
         ss << label << " ";
-        for(auto it = active_nodes_count[n].begin(); it != active_nodes_count[n].end(); ++it) {
+        for(auto it = active_nodes_count[n].begin(); it != active_nodes_count[n].end(); ++it)
+        {
             ss << *it << " ";
         }
         out_file << ss.str() << std::endl;
     }
 
     out_file << "DivisionNodes" << std::endl;
-    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n) {
+    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n)
+    {
         std::stringstream ss;
         size_t label = division_labels[n];
         ss << label << " ";
-        for(auto it = active_divisions_count[n].begin(); it != active_divisions_count[n].end(); ++it) {
+        for(auto it = active_divisions_count[n].begin(); it != active_divisions_count[n].end(); ++it)
+        {
             ss << *it << " ";
         }
         out_file << ss.str() << std::endl;
     }
 
     out_file << "ActiveArcs" << std::endl;
-    for (HypothesesGraph::ArcIt a(*this); a != lemon::INVALID; ++a) {
+    for (HypothesesGraph::ArcIt a(*this); a != lemon::INVALID; ++a)
+    {
         std::stringstream ss;
         size_t label = arc_labels[a];
         ss << label << " ";
-        for(auto it = active_arcs_count[a].begin(); it != active_arcs_count[a].end(); ++it) {
+        for(auto it = active_arcs_count[a].begin(); it != active_arcs_count[a].end(); ++it)
+        {
             ss << *it << " ";
         }
         out_file << ss.str() << std::endl;
@@ -101,143 +112,170 @@ void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn){
 }
 
 
-void HypothesesGraph::init_labeling_maps() {
+void HypothesesGraph::init_labeling_maps()
+{
     add(appearance_label()).add(disappearance_label()).add(division_label()).add(arc_label());
 
     property_map< appearance_label, HypothesesGraph::base_graph>::type& map1 = get(appearance_label());
     property_map< disappearance_label, HypothesesGraph::base_graph>::type& map2 = get(disappearance_label());
     property_map< division_label, HypothesesGraph::base_graph>::type& map3 = get(division_label());
-    for (HypothesesGraph::NodeIt it(*this); it != lemon::INVALID; ++it) {
+    for (HypothesesGraph::NodeIt it(*this); it != lemon::INVALID; ++it)
+    {
         map1.set(it, 0);
         map2.set(it, 0);
         map3.set(it, 0);
     }
 
     property_map< arc_label, HypothesesGraph::base_graph>::type& map = get(arc_label());
-    for (HypothesesGraph::ArcIt it(*this); it != lemon::INVALID; ++it) {
+    for (HypothesesGraph::ArcIt it(*this); it != lemon::INVALID; ++it)
+    {
         map.set(it, 0);
     }
 }
 
-void HypothesesGraph::add_appearance_label(HypothesesGraph::Node node,label_type label) {  
-  property_map< appearance_label, HypothesesGraph::base_graph>::type& gt_label = get(appearance_label());
-  gt_label.set(node,label);
+void HypothesesGraph::add_appearance_label(HypothesesGraph::Node node, label_type label)
+{
+    property_map< appearance_label, HypothesesGraph::base_graph>::type& gt_label = get(appearance_label());
+    gt_label.set(node, label);
 }
 
-void HypothesesGraph::add_disappearance_label(HypothesesGraph::Node node,label_type label) {  
-  property_map< disappearance_label, HypothesesGraph::base_graph>::type& gt_label = get(disappearance_label());
-  gt_label.set(node,label);
+void HypothesesGraph::add_disappearance_label(HypothesesGraph::Node node, label_type label)
+{
+    property_map< disappearance_label, HypothesesGraph::base_graph>::type& gt_label = get(disappearance_label());
+    gt_label.set(node, label);
 }
 
-void HypothesesGraph::add_division_label(HypothesesGraph::Node node,label_type label) {
-  property_map< division_label, HypothesesGraph::base_graph>::type& gt_label = get(division_label());
-  gt_label.set(node,label);
+void HypothesesGraph::add_division_label(HypothesesGraph::Node node, label_type label)
+{
+    property_map< division_label, HypothesesGraph::base_graph>::type& gt_label = get(division_label());
+    gt_label.set(node, label);
 }
 
-void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc,label_type label) {
-  property_map<  arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
-  gt_label.set(arc,label);
+void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc, label_type label)
+{
+    property_map<  arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());
+    gt_label.set(arc, label);
 }
 
-HypothesesGraph::Node HypothesesGraph::add_traxel(Traxel ts){
-  LOG(logDEBUG4) << "add traxel(id="<<ts.Id<<") at t="<< ts.Timestep;
-  HypothesesGraph::Node node = add_node(ts.Timestep);
-  get(node_traxel()).set(node,ts);
-  return node;
+HypothesesGraph::Node HypothesesGraph::add_traxel(Traxel ts)
+{
+    LOG(logDEBUG4) << "add traxel(id=" << ts.Id << ") at t=" << ts.Timestep;
+    HypothesesGraph::Node node = add_node(ts.Timestep);
+    get(node_traxel()).set(node, ts);
+    return node;
 }
 
-  const std::set<HypothesesGraph::node_timestep_map::Value>& HypothesesGraph::timesteps() const {
+const std::set<HypothesesGraph::node_timestep_map::Value>& HypothesesGraph::timesteps() const
+{
     return timesteps_;
 }
 
-HypothesesGraph::node_timestep_map::Value HypothesesGraph::earliest_timestep() const {
+HypothesesGraph::node_timestep_map::Value HypothesesGraph::earliest_timestep() const
+{
     return *(timesteps_.begin());
 }
 
-HypothesesGraph::node_timestep_map::Value HypothesesGraph::latest_timestep() const {
+HypothesesGraph::node_timestep_map::Value HypothesesGraph::latest_timestep() const
+{
     return *(timesteps_.rbegin());
 }
 
 
 
-HypothesesGraph& prune_inactive(HypothesesGraph& g) {
-	  LOG(logDEBUG) << "prune_inactive(): entered";
-	  property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = g.get(arc_active());
+HypothesesGraph& prune_inactive(HypothesesGraph& g)
+{
+    LOG(logDEBUG) << "prune_inactive(): entered";
+    property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = g.get(arc_active());
 
-	  property_map<node_active, HypothesesGraph::base_graph>::type* active_nodes = 0;
+    property_map<node_active, HypothesesGraph::base_graph>::type* active_nodes = 0;
     property_map<node_active2, HypothesesGraph::base_graph>::type* active2_nodes = 0;
     bool active2_used = false;
-    if (g.getProperties().count("node_active") > 0) {
-		  active_nodes = &g.get(node_active());
-    } else {
-		  assert(g.getProperties().count("node_active2") > 0);
-		  active2_nodes = &g.get(node_active2());
-		  active2_used = true;
+    if (g.getProperties().count("node_active") > 0)
+    {
+        active_nodes = &g.get(node_active());
+    }
+    else
+    {
+        assert(g.getProperties().count("node_active2") > 0);
+        active2_nodes = &g.get(node_active2());
+        active2_used = true;
     }
 
-	  // prune inactive arcs
-	  LOG(logDEBUG) << "prune_inactive: prune inactive arcs";
-	  typedef property_map<arc_active, HypothesesGraph::base_graph>::type::FalseIt inactive_arc_it;
+    // prune inactive arcs
+    LOG(logDEBUG) << "prune_inactive: prune inactive arcs";
+    typedef property_map<arc_active, HypothesesGraph::base_graph>::type::FalseIt inactive_arc_it;
 
-	  // we first collect and then erase (iterator will be invalid after erase; therefore a two-step
-	  // procedure)
+    // we first collect and then erase (iterator will be invalid after erase; therefore a two-step
+    // procedure)
 
-	  // collect inactive arcs
-	  vector<HypothesesGraph::Arc> arcs_to_prune;
+    // collect inactive arcs
+    vector<HypothesesGraph::Arc> arcs_to_prune;
 
-	  for(inactive_arc_it it(active_arcs); it!=lemon::INVALID; ++it) {
-		  arcs_to_prune.push_back(it);
-		  assert(g.valid(it));
-		  LOG(logDEBUG1) << "prune_inactive: arc to be pruned: " << g.id(it);
-	  }
+    for(inactive_arc_it it(active_arcs); it != lemon::INVALID; ++it)
+    {
+        arcs_to_prune.push_back(it);
+        assert(g.valid(it));
+        LOG(logDEBUG1) << "prune_inactive: arc to be pruned: " << g.id(it);
+    }
 
-	  std::sort(arcs_to_prune.begin(), arcs_to_prune.end());
-	  std::reverse(arcs_to_prune.begin(), arcs_to_prune.end());
+    std::sort(arcs_to_prune.begin(), arcs_to_prune.end());
+    std::reverse(arcs_to_prune.begin(), arcs_to_prune.end());
 
-	  // prune inactive arcs
-	  for(vector<HypothesesGraph::Arc>::const_iterator it = arcs_to_prune.begin(); it!= arcs_to_prune.end(); ++it) {
-		  if (g.valid(*it)) {
-			  LOG(logDEBUG1) << "prune_inactive: pruned arc: " << g.id(*it);
-			  g.erase(*it);
-		  }
-		  assert(!g.valid(*it));
-	  }
+    // prune inactive arcs
+    for(vector<HypothesesGraph::Arc>::const_iterator it = arcs_to_prune.begin(); it != arcs_to_prune.end(); ++it)
+    {
+        if (g.valid(*it))
+        {
+            LOG(logDEBUG1) << "prune_inactive: pruned arc: " << g.id(*it);
+            g.erase(*it);
+        }
+        assert(!g.valid(*it));
+    }
 
-	  // prune inactive nodes
-	  LOG(logDEBUG) << "prune_inactive: prune inactive nodes";
-	  // collect inactive nodes
-	  vector<HypothesesGraph::Node> nodes_to_prune;
+    // prune inactive nodes
+    LOG(logDEBUG) << "prune_inactive: prune inactive nodes";
+    // collect inactive nodes
+    vector<HypothesesGraph::Node> nodes_to_prune;
 
-	  if (active2_used) {
-		  for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it) {
-			  if (!(*active2_nodes)[it]) {
-				  nodes_to_prune.push_back(it);
-				  assert(g.valid(it));
-			  }
-		  }
-	  } else {
-		  typedef property_map<node_active, HypothesesGraph::base_graph>::type::FalseIt inactive_node_it;
-		  for (inactive_node_it it(*active_nodes); it != lemon::INVALID; ++it) {
-			  nodes_to_prune.push_back(it);
-			  assert(g.valid(it));
-		  }
-	  }
+    if (active2_used)
+    {
+        for (HypothesesGraph::NodeIt it(g); it != lemon::INVALID; ++it)
+        {
+            if (!(*active2_nodes)[it])
+            {
+                nodes_to_prune.push_back(it);
+                assert(g.valid(it));
+            }
+        }
+    }
+    else
+    {
+        typedef property_map<node_active, HypothesesGraph::base_graph>::type::FalseIt inactive_node_it;
+        for (inactive_node_it it(*active_nodes); it != lemon::INVALID; ++it)
+        {
+            nodes_to_prune.push_back(it);
+            assert(g.valid(it));
+        }
+    }
 
-	  property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-	  // prune inactive nodes
-	  for(vector<HypothesesGraph::Node>::const_iterator it = nodes_to_prune.begin(); it!= nodes_to_prune.end(); ++it) {
-		  LOG(logDEBUG3) << "prune_inactive: prune node: " << g.id(*it) << ", Traxel = " << traxel_map[*it];
-		  for(HypothesesGraph::OutArcIt arcit(g,*it); arcit != lemon::INVALID; ++arcit) {
-			  assert(active_arcs[arcit] == false && "arc may not be active");
-		  }
-		  for(HypothesesGraph::InArcIt arcit(g,*it); arcit != lemon::INVALID; ++arcit) {
-			  assert(active_arcs[arcit] == false && "arc may not be active");
-		  }
-		  g.erase(*it);
-		  assert(!g.valid(*it));
-	  }
-	  LOG (logDEBUG) << "prune_inactive(): done";
-	  return g;
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+    // prune inactive nodes
+    for(vector<HypothesesGraph::Node>::const_iterator it = nodes_to_prune.begin(); it != nodes_to_prune.end(); ++it)
+    {
+        LOG(logDEBUG3) << "prune_inactive: prune node: " << g.id(*it) << ", Traxel = " << traxel_map[*it];
+        for(HypothesesGraph::OutArcIt arcit(g, *it); arcit != lemon::INVALID; ++arcit)
+        {
+            assert(active_arcs[arcit] == false && "arc may not be active");
+        }
+        for(HypothesesGraph::InArcIt arcit(g, *it); arcit != lemon::INVALID; ++arcit)
+        {
+            assert(active_arcs[arcit] == false && "arc may not be active");
+        }
+        g.erase(*it);
+        assert(!g.valid(*it));
+    }
+    LOG (logDEBUG) << "prune_inactive(): done";
+    return g;
 }
 
 
@@ -245,57 +283,68 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g) {
 // We don't want to have ifs everywhere,
 // so we decided to write these three magnificent convenience functions
 size_t get_active_node(
-		property_map<node_active, HypothesesGraph::base_graph>::type* nodes,
-		property_map<node_active2, HypothesesGraph::base_graph>::type* nodes2,
-		property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector,
-        size_t map_type_id,
-		HypothesesGraph::Node node,
-		size_t iterationStep=0){
-    if (map_type_id ==0){
-		return (*nodes)[node];
-	}
-    else if (map_type_id==1){
-		return (*nodes2)[node];
-	}
-	return (*nodes_vector)[node][iterationStep];
+    property_map<node_active, HypothesesGraph::base_graph>::type* nodes,
+    property_map<node_active2, HypothesesGraph::base_graph>::type* nodes2,
+    property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector,
+    size_t map_type_id,
+    HypothesesGraph::Node node,
+    size_t iterationStep = 0)
+{
+    if (map_type_id == 0)
+    {
+        return (*nodes)[node];
+    }
+    else if (map_type_id == 1)
+    {
+        return (*nodes2)[node];
+    }
+    return (*nodes_vector)[node][iterationStep];
 }
 
 bool get_active_arc(
-		property_map<arc_active, HypothesesGraph::base_graph>::type* arcs,
-		property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector,
-        size_t map_type_id,
-		HypothesesGraph::Arc arc,
-		size_t iterationStep=0){
-    if (map_type_id==2){
-		return (*arcs_vector)[arc][iterationStep];
-	}
-	return (*arcs)[arc];
+    property_map<arc_active, HypothesesGraph::base_graph>::type* arcs,
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector,
+    size_t map_type_id,
+    HypothesesGraph::Arc arc,
+    size_t iterationStep = 0)
+{
+    if (map_type_id == 2)
+    {
+        return (*arcs_vector)[arc][iterationStep];
+    }
+    return (*arcs)[arc];
 }
 
 bool get_active_division(
-		property_map<division_active, HypothesesGraph::base_graph>::type* divs,
-		property_map<division_active_count, HypothesesGraph::base_graph>::type* divs_vector,
-        size_t map_type_id,
-		HypothesesGraph::Node node,
-		size_t iterationStep=0){
-    if (map_type_id==2){
-		return (*divs_vector)[node][iterationStep];
-	}
-	return (*divs)[node];
+    property_map<division_active, HypothesesGraph::base_graph>::type* divs,
+    property_map<division_active_count, HypothesesGraph::base_graph>::type* divs_vector,
+    size_t map_type_id,
+    HypothesesGraph::Node node,
+    size_t iterationStep = 0)
+{
+    if (map_type_id == 2)
+    {
+        return (*divs_vector)[node][iterationStep];
+    }
+    return (*divs)[node];
 }
 
 
 double get_uncertainty(
-        property_map<division_active, HypothesesGraph::base_graph>::type*,
-        property_map<division_active_count, HypothesesGraph::base_graph>::type* divs_vector,
-        size_t map_type_id,
-        HypothesesGraph::Node node,
-        size_t iterationStep=0){
-    if (map_type_id==2){
+    property_map<division_active, HypothesesGraph::base_graph>::type*,
+    property_map<division_active_count, HypothesesGraph::base_graph>::type* divs_vector,
+    size_t map_type_id,
+    HypothesesGraph::Node node,
+    size_t iterationStep = 0)
+{
+    if (map_type_id == 2)
+    {
         size_t res = (*divs_vector)[node][iterationStep];
-        double votes=0.;
-        for (auto it = (*divs_vector)[node].begin(); it != (*divs_vector)[node].end(); ++it ) {
-            if (*it == res) {
+        double votes = 0.;
+        for (auto it = (*divs_vector)[node].begin(); it != (*divs_vector)[node].end(); ++it )
+        {
+            if (*it == res)
+            {
                 votes += 1;
             }
         }
@@ -305,16 +354,20 @@ double get_uncertainty(
 }
 
 double get_uncertainty(
-        property_map<arc_active, HypothesesGraph::base_graph>::type*,
-        property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector,
-        size_t map_type_id,
-        HypothesesGraph::Arc arc,
-        size_t iterationStep=0){
-    if (map_type_id==2){
+    property_map<arc_active, HypothesesGraph::base_graph>::type*,
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector,
+    size_t map_type_id,
+    HypothesesGraph::Arc arc,
+    size_t iterationStep = 0)
+{
+    if (map_type_id == 2)
+    {
         size_t res = (*arcs_vector)[arc][iterationStep];
-        double votes=0.;
-        for (auto it = (*arcs_vector)[arc].begin(); it != (*arcs_vector)[arc].end(); ++it ) {
-            if (*it == res) {
+        double votes = 0.;
+        for (auto it = (*arcs_vector)[arc].begin(); it != (*arcs_vector)[arc].end(); ++it )
+        {
+            if (*it == res)
+            {
                 votes += 1;
             }
         }
@@ -324,17 +377,21 @@ double get_uncertainty(
 }
 
 double get_uncertainty(
-        property_map<node_active, HypothesesGraph::base_graph>::type*,
-        property_map<node_active2, HypothesesGraph::base_graph>::type*,
-        property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector,
-        size_t map_type_id,
-        HypothesesGraph::Node node,
-        size_t iterationStep=0){
-    if (map_type_id == 2){
+    property_map<node_active, HypothesesGraph::base_graph>::type*,
+    property_map<node_active2, HypothesesGraph::base_graph>::type*,
+    property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector,
+    size_t map_type_id,
+    HypothesesGraph::Node node,
+    size_t iterationStep = 0)
+{
+    if (map_type_id == 2)
+    {
         size_t res = (*nodes_vector)[node][iterationStep];
-        double votes=0.;
-        for (auto it = (*nodes_vector)[node].begin(); it != (*nodes_vector)[node].end(); ++it ) {
-            if (*it == res) {
+        double votes = 0.;
+        for (auto it = (*nodes_vector)[node].begin(); it != (*nodes_vector)[node].end(); ++it )
+        {
+            if (*it == res)
+            {
                 votes += 1;
             }
         }
@@ -344,253 +401,304 @@ double get_uncertainty(
 }
 
 
-boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGraph& g, int iterationStep) {
+boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGraph& g, int iterationStep)
+{
 
-	LOG(logDEBUG) << "events(): entered";
-	boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
-	typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
-	node_timestep_map_t& node_timestep_map = g.get(node_timestep());
-	typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
-	node_traxel_map_t& node_traxel_map = g.get(node_traxel());
+    LOG(logDEBUG) << "events(): entered";
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    node_timestep_map_t& node_timestep_map = g.get(node_timestep());
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
+    node_traxel_map_t& node_traxel_map = g.get(node_traxel());
 
-	property_map<node_active, HypothesesGraph::base_graph>::type* nodes=0;
-	property_map<node_active2, HypothesesGraph::base_graph>::type* nodes2=0;
-	property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector=0;
+    property_map<node_active, HypothesesGraph::base_graph>::type* nodes = 0;
+    property_map<node_active2, HypothesesGraph::base_graph>::type* nodes2 = 0;
+    property_map<node_active_count, HypothesesGraph::base_graph>::type* nodes_vector = 0;
 
 
-	property_map<arc_active, HypothesesGraph::base_graph>::type* arcs=0;
-	property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector=0;
+    property_map<arc_active, HypothesesGraph::base_graph>::type* arcs = 0;
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type* arcs_vector = 0;
 
-	bool with_division_detection = false;
-	property_map<division_active, HypothesesGraph::base_graph>::type* divisions=0;
-	property_map<division_active_count, HypothesesGraph::base_graph>::type* divisions_vector=0;
+    bool with_division_detection = false;
+    property_map<division_active, HypothesesGraph::base_graph>::type* divisions = 0;
+    property_map<division_active_count, HypothesesGraph::base_graph>::type* divisions_vector = 0;
 
     size_t map_type_id;
-	bool with_mergers = false;
-	if (g.getProperties().count("node_active_count") > 0){
+    bool with_mergers = false;
+    if (g.getProperties().count("node_active_count") > 0)
+    {
         map_type_id = 2;
-		arcs_vector=  &g.get(arc_active_count());
-		nodes_vector = &g.get(node_active_count());
-		if (g.getProperties().count("node_active2") > 0) {
-			with_mergers = true;}
-	}
-	else if (g.getProperties().count("node_active2") > 0) {
-		with_mergers = true;
-		nodes2 = &g.get(node_active2());
-		arcs=  &g.get(arc_active());
-		LOG(logDEBUG1) << "events(): with_mergers = true";
+        arcs_vector =  &g.get(arc_active_count());
+        nodes_vector = &g.get(node_active_count());
+        if (g.getProperties().count("node_active2") > 0)
+        {
+            with_mergers = true;
+        }
+    }
+    else if (g.getProperties().count("node_active2") > 0)
+    {
+        with_mergers = true;
+        nodes2 = &g.get(node_active2());
+        arcs =  &g.get(arc_active());
+        LOG(logDEBUG1) << "events(): with_mergers = true";
         map_type_id = 1;
-	}
-	else {
+    }
+    else
+    {
         map_type_id = 0;
-		arcs=  &g.get(arc_active());
-		nodes = &g.get(node_active());
-	}
+        arcs =  &g.get(arc_active());
+        nodes = &g.get(node_active());
+    }
 
-	if (g.getProperties().count("division_active") > 0) {
-		with_division_detection = true;
-        if (map_type_id==2) {
-			divisions_vector = &g.get(division_active_count());
-		} else {
-			divisions = &g.get(division_active());
-		}
-	}
+    if (g.getProperties().count("division_active") > 0)
+    {
+        with_division_detection = true;
+        if (map_type_id == 2)
+        {
+            divisions_vector = &g.get(division_active_count());
+        }
+        else
+        {
+            divisions = &g.get(division_active());
+        }
+    }
 
-	bool with_origin = false;
-	property_map<node_originated_from, HypothesesGraph::base_graph>::type* origin_map;
-	if (g.getProperties().count("node_originated_from") > 0) {
-		origin_map = &g.get(node_originated_from());
-		with_origin = true;
-		LOG(logDEBUG1) << "events(): with_origin enabled";
-	}
+    bool with_origin = false;
+    property_map<node_originated_from, HypothesesGraph::base_graph>::type* origin_map;
+    if (g.getProperties().count("node_originated_from") > 0)
+    {
+        origin_map = &g.get(node_originated_from());
+        with_origin = true;
+        LOG(logDEBUG1) << "events(): with_origin enabled";
+    }
 
-	// for every timestep
-	LOG(logDEBUG1) << "events(): earliest_timestep: " << g.earliest_timestep();
-	LOG(logDEBUG1) << "events(): latest_timestep: " << g.latest_timestep();
+    // for every timestep
+    LOG(logDEBUG1) << "events(): earliest_timestep: " << g.earliest_timestep();
+    LOG(logDEBUG1) << "events(): latest_timestep: " << g.latest_timestep();
 
-	// add an empty first timestep
-	ret->push_back(vector<Event>());
+    // add an empty first timestep
+    ret->push_back(vector<Event>());
 
-	for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t) {
-		LOG(logDEBUG2) << "events(): processing timestep: " << t;
-		ret->push_back(vector<Event>());
+    for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
+    {
+        LOG(logDEBUG2) << "events(): processing timestep: " << t;
+        ret->push_back(vector<Event>());
 
-		map<unsigned int, vector<unsigned int> > resolver_map;
+        map<unsigned int, vector<unsigned int> > resolver_map;
 
-		// for every node: destiny
-		LOG(logDEBUG2) << "events(): for every node: destiny";
-		for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
-			assert(node_traxel_map[node_at].Timestep == t);
-			LOG(logDEBUG4) <<t<< " "<< node_traxel_map[node_at].Id;
+        // for every node: destiny
+        LOG(logDEBUG2) << "events(): for every node: destiny";
+        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
+        {
+            assert(node_traxel_map[node_at].Timestep == t);
+            LOG(logDEBUG4) << t << " " << node_traxel_map[node_at].Id;
 
-            if(!get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep)){
-				continue;
-			}
+            if(!get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep))
+            {
+                continue;
+            }
 
-			if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep()) {
-				LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << (*origin_map)[node_at][0];
-				resolver_map[(*origin_map)[node_at][0]].push_back(node_traxel_map[node_at].Id);
-				const std::vector<float>& tmp_feat = (node_traxel_map[node_at].features.find("com"))->second; //node_traxel_map[node_at].features["com"];
-				std::copy(tmp_feat.begin(), tmp_feat.end(),
-						std::back_insert_iterator<std::vector<unsigned> >(resolver_map[(*origin_map)[node_at][0]]));
-			}
+            if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep())
+            {
+                LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << (*origin_map)[node_at][0];
+                resolver_map[(*origin_map)[node_at][0]].push_back(node_traxel_map[node_at].Id);
+                const std::vector<float>& tmp_feat = (node_traxel_map[node_at].features.find("com"))->second; //node_traxel_map[node_at].features["com"];
+                std::copy(tmp_feat.begin(), tmp_feat.end(),
+                          std::back_insert_iterator<std::vector<unsigned> >(resolver_map[(*origin_map)[node_at][0]]));
+            }
 
-            LOG(logDEBUG3) << "Number of detected objects: " << get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep);
+            LOG(logDEBUG3) << "Number of detected objects: " << get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep);
 
-			// count outgoing arcs
+            // count outgoing arcs
 
-			size_t count = 0;
-			for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a!=lemon::INVALID; ++a) {
-                if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
-					++count;
-				}
-			}
+            size_t count = 0;
+            for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a)
+            {
+                if (get_active_arc(arcs, arcs_vector, map_type_id, a, iterationStep))
+                {
+                    ++count;
+                }
+            }
 
-			LOG(logDEBUG3) << "events(): counted outgoing arcs: " << count;
+            LOG(logDEBUG3) << "events(): counted outgoing arcs: " << count;
 
-			// construct suitable Event object
-			switch(count) {
-			// Disappearance
-			case 0: {
-				if (t<g.latest_timestep()) {
-					Event e;
-					e.type = Event::Disappearance;
-					e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-					(*ret)[t-g.earliest_timestep()+1].push_back(e);
-					LOG(logDEBUG3) << e;
-				}
-				break;
-			}
-			// Move
-			case 1: {
-				Event e;
-				e.type = Event::Move;
-				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+            // construct suitable Event object
+            switch(count)
+            {
+                // Disappearance
+                case 0:
+                {
+                    if (t < g.latest_timestep())
+                    {
+                        Event e;
+                        e.type = Event::Disappearance;
+                        e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+                        (*ret)[t - g.earliest_timestep() + 1].push_back(e);
+                        LOG(logDEBUG3) << e;
+                    }
+                    break;
+                }
+                // Move
+                case 1:
+                {
+                    Event e;
+                    e.type = Event::Move;
+                    e.traxel_ids.push_back(node_traxel_map[node_at].Id);
 
-				for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-                    if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
-						e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
-                        e.set_energy(get_uncertainty(arcs,arcs_vector,map_type_id,a,iterationStep));
-					}                    
+                    for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a)
+                    {
+                        if (get_active_arc(arcs, arcs_vector, map_type_id, a, iterationStep))
+                        {
+                            e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+                            e.set_energy(get_uncertainty(arcs, arcs_vector, map_type_id, a, iterationStep));
+                        }
 
-				}
-				(*ret)[t-g.earliest_timestep()+1].push_back(e);
+                    }
+                    (*ret)[t - g.earliest_timestep() + 1].push_back(e);
 
-				LOG(logDEBUG3) << e;
-				break;
-			}
-			// Division or Splitting
-			default: {
-				Event e;
-				if (with_division_detection) {
-                    if (count == 2 && get_active_division(divisions,divisions_vector,map_type_id,node_at,iterationStep)) {
-						e.type = Event::Division;
-						e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-						for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-                            if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
-								e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);                                
-							}
-						}
-                        e.set_energy(get_uncertainty(divisions,divisions_vector,map_type_id,node_at,iterationStep));
-						(*ret)[t-g.earliest_timestep()+1].push_back(e);
-
-
-						LOG(logDEBUG3) << e;
-					} else {
-
-						for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-                            if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)) {
-
-								e.type = Event::Move;
-								e.traxel_ids.clear();
-								e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-								e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
-                                e.set_energy(get_uncertainty(arcs,arcs_vector,map_type_id,a,iterationStep));
-								(*ret)[t-g.earliest_timestep()+1].push_back(e);
-								LOG(logDEBUG3) << e;
-							}
-						}
-					}
-				} else { // for backward compatibility
-					if (count != 2) {
-						throw runtime_error("events(): encountered node dividing in three or more nodes in graph");
-					}
-					e.type = Event::Division;
-					e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-					for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a) {
-                        if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)){
-							e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
-						}
-					}
-                    e.set_energy(get_uncertainty(divisions,divisions_vector,map_type_id,node_at,iterationStep));
-					(*ret)[t-g.earliest_timestep()+1].push_back(e);
-
-					LOG(logDEBUG3) << e;
-				}
-				break;
-			}
-			}
-		}
-		for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it) {
-			Event e;
-			e.type = Event::ResolvedTo;
-			e.traxel_ids.push_back(map_it->first);
-			for (std::vector<unsigned int>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it) {
-				e.traxel_ids.push_back(*it);
-			}
-			(*ret)[t-g.earliest_timestep()-1].push_back(e);
-			LOG(logDEBUG1) << e;
-		}
+                    LOG(logDEBUG3) << e;
+                    break;
+                }
+                // Division or Splitting
+                default:
+                {
+                    Event e;
+                    if (with_division_detection)
+                    {
+                        if (count == 2 && get_active_division(divisions, divisions_vector, map_type_id, node_at, iterationStep))
+                        {
+                            e.type = Event::Division;
+                            e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+                            for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a)
+                            {
+                                if (get_active_arc(arcs, arcs_vector, map_type_id, a, iterationStep))
+                                {
+                                    e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+                                }
+                            }
+                            e.set_energy(get_uncertainty(divisions, divisions_vector, map_type_id, node_at, iterationStep));
+                            (*ret)[t - g.earliest_timestep() + 1].push_back(e);
 
 
-		// appearances and mergers in next timestep
-		LOG(logDEBUG2) << "events(): appearances in next timestep";
-		if (t+1 <= g.latest_timestep()) {
-			for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t+1); node_at!=lemon::INVALID; ++node_at) {
-				// count incoming arcs
-                if (!get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep)){
-					continue;
-				}
-				int count = 0;
-				for(HypothesesGraph::base_graph::InArcIt a(g, node_at); a!=lemon::INVALID; ++a) {
-                    if (get_active_arc(arcs,arcs_vector,map_type_id,a,iterationStep)) ++count;
-				}
-				LOG(logDEBUG3) << "events(): counted incoming arcs in next timestep: " << count;
-				// no incoming arcs => appearance
-				if(count == 0 && t + 1 > g.earliest_timestep()) {
-					Event e;
-					e.type = Event::Appearance;
-					e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-					(*ret)[t-g.earliest_timestep()+1].push_back(e);
-					LOG(logDEBUG3) << e;
-				}
-			}
-		}
-		for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
-            if(with_mergers && get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep) > 1) {
-				Event e;
-				e.type = Event::Merger;
-				e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-                e.traxel_ids.push_back(get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep));
-				(*ret)[t-g.earliest_timestep()].push_back(e);
-				LOG(logDEBUG3) << e;
-			}
-		}
-	}
+                            LOG(logDEBUG3) << e;
+                        }
+                        else
+                        {
 
-	LOG(logDEBUG2) << "events(): last timestep: " << g.latest_timestep();
-	for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at!=lemon::INVALID; ++node_at) {
-        if(with_mergers && get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep)> 1) {
-			Event e;
-			e.type = Event::Merger;
-			e.traxel_ids.push_back(node_traxel_map[node_at].Id);
-            e.traxel_ids.push_back(get_active_node(nodes,nodes2,nodes_vector,map_type_id,node_at,iterationStep));
-			(*ret)[g.latest_timestep()-g.earliest_timestep()].push_back(e);
-			LOG(logDEBUG3) << e;
-		}
-	}
-	LOG(logDEBUG2) << "events(): done.";
-	return ret;
+                            for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a)
+                            {
+                                if (get_active_arc(arcs, arcs_vector, map_type_id, a, iterationStep))
+                                {
+
+                                    e.type = Event::Move;
+                                    e.traxel_ids.clear();
+                                    e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+                                    e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+                                    e.set_energy(get_uncertainty(arcs, arcs_vector, map_type_id, a, iterationStep));
+                                    (*ret)[t - g.earliest_timestep() + 1].push_back(e);
+                                    LOG(logDEBUG3) << e;
+                                }
+                            }
+                        }
+                    }
+                    else     // for backward compatibility
+                    {
+                        if (count != 2)
+                        {
+                            throw runtime_error("events(): encountered node dividing in three or more nodes in graph");
+                        }
+                        e.type = Event::Division;
+                        e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+                        for(HypothesesGraph::base_graph::OutArcIt a(g, node_at); a != lemon::INVALID; ++a)
+                        {
+                            if (get_active_arc(arcs, arcs_vector, map_type_id, a, iterationStep))
+                            {
+                                e.traxel_ids.push_back(node_traxel_map[g.target(a)].Id);
+                            }
+                        }
+                        e.set_energy(get_uncertainty(divisions, divisions_vector, map_type_id, node_at, iterationStep));
+                        (*ret)[t - g.earliest_timestep() + 1].push_back(e);
+
+                        LOG(logDEBUG3) << e;
+                    }
+                    break;
+                }
+            }
+        }
+        for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it)
+        {
+            Event e;
+            e.type = Event::ResolvedTo;
+            e.traxel_ids.push_back(map_it->first);
+            for (std::vector<unsigned int>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it)
+            {
+                e.traxel_ids.push_back(*it);
+            }
+            (*ret)[t - g.earliest_timestep() - 1].push_back(e);
+            LOG(logDEBUG1) << e;
+        }
+
+
+        // appearances and mergers in next timestep
+        LOG(logDEBUG2) << "events(): appearances in next timestep";
+        if (t + 1 <= g.latest_timestep())
+        {
+            for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t + 1); node_at != lemon::INVALID; ++node_at)
+            {
+                // count incoming arcs
+                if (!get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep))
+                {
+                    continue;
+                }
+                int count = 0;
+                for(HypothesesGraph::base_graph::InArcIt a(g, node_at); a != lemon::INVALID; ++a)
+                {
+                    if (get_active_arc(arcs, arcs_vector, map_type_id, a, iterationStep))
+                    {
+                        ++count;
+                    }
+                }
+                LOG(logDEBUG3) << "events(): counted incoming arcs in next timestep: " << count;
+                // no incoming arcs => appearance
+                if(count == 0 && t + 1 > g.earliest_timestep())
+                {
+                    Event e;
+                    e.type = Event::Appearance;
+                    e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+                    (*ret)[t - g.earliest_timestep() + 1].push_back(e);
+                    LOG(logDEBUG3) << e;
+                }
+            }
+        }
+        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
+        {
+            if(with_mergers && get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep) > 1)
+            {
+                Event e;
+                e.type = Event::Merger;
+                e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+                e.traxel_ids.push_back(get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep));
+                (*ret)[t - g.earliest_timestep()].push_back(e);
+                LOG(logDEBUG3) << e;
+            }
+        }
+    }
+
+    LOG(logDEBUG2) << "events(): last timestep: " << g.latest_timestep();
+    for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at != lemon::INVALID; ++node_at)
+    {
+        if(with_mergers && get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep) > 1)
+        {
+            Event e;
+            e.type = Event::Merger;
+            e.traxel_ids.push_back(node_traxel_map[node_at].Id);
+            e.traxel_ids.push_back(get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep));
+            (*ret)[g.latest_timestep() - g.earliest_timestep()].push_back(e);
+            LOG(logDEBUG3) << e;
+        }
+    }
+    LOG(logDEBUG2) << "events(): done.";
+    return ret;
 }
 
 template<typename T>
@@ -598,12 +706,15 @@ std::ostream& operator<<(std::ostream& stream, const std::vector<T>& values)
 {
     stream << "(";
     for(T t : values)
+    {
         stream << t << ", ";
+    }
     stream << ")";
     return stream;
 }
 
-boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(const HypothesesGraph& g) {
+boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(const HypothesesGraph& g)
+{
 
     boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
@@ -618,36 +729,44 @@ boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(co
     // add an empty first timestep
     ret->push_back(vector<Event>());
 
-    for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t) {
+    for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
+    {
         LOG(logDEBUG2) << "events(): processing timestep: " << t;
         ret->push_back(vector<Event>());
-        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
+        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
+        {
             assert(node_traxel_map[node_at].Timestep == t);
-            if (origin_map[node_at].size()) {
-                for(HypothesesGraph::InArcIt in_it(g, node_at); in_it != lemon::INVALID; ++in_it) {
+            if (origin_map[node_at].size())
+            {
+                for(HypothesesGraph::InArcIt in_it(g, node_at); in_it != lemon::INVALID; ++in_it)
+                {
                     HypothesesGraph::Node src_node = g.source(in_it);
-                    if (origin_map[src_node].size()) {
+                    if (origin_map[src_node].size())
+                    {
                         break;
                     }
                     Event e;
                     e.type = Event::MultiFrameMove;
                     Traxel trax = node_traxel_map[src_node];
                     e.traxel_ids.push_back(trax.Id);
-                    int t_local = t+1;
+                    int t_local = t + 1;
                     HypothesesGraph::Node n = node_at;
-                    while (t_local <= g.latest_timestep()) {
+                    while (t_local <= g.latest_timestep())
+                    {
                         HypothesesGraph::OutArcIt merge_it(g, n);
-                        if (merge_it == lemon::INVALID) {
+                        if (merge_it == lemon::INVALID)
+                        {
                             break;
                         }
                         n = g.target(merge_it);
                         assert(t_local == node_timestep_map[n]);
-                        if (!origin_map[n].size()) {
+                        if (!origin_map[n].size())
+                        {
                             trax = node_traxel_map[n];
                             assert(t_local == trax.Timestep);
                             e.traxel_ids.push_back(trax.Id);
-                            e.traxel_ids.push_back(t-1-g.earliest_timestep());
-                            multi_frame_move_map[t_local-g.earliest_timestep()].push_back(e);
+                            e.traxel_ids.push_back(t - 1 - g.earliest_timestep());
+                            multi_frame_move_map[t_local - g.earliest_timestep()].push_back(e);
                             break;
                         }
                         ++t_local;
@@ -659,10 +778,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(co
     }
 
     std::map<int, std::vector<Event> >::iterator map_it = multi_frame_move_map.begin();
-    for (; map_it != multi_frame_move_map.end(); ++map_it) {
+    for (; map_it != multi_frame_move_map.end(); ++map_it)
+    {
         (*ret)[map_it->first] = map_it->second;
     }
-    
+
     return ret;
 } /* multi_frame_move_events */
 
@@ -677,10 +797,12 @@ boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph&
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
     node_traxel_map_t& node_traxel_map = g.get(node_traxel());
 
-    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t) {
+    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
+    {
         LOG(logDEBUG2) << "events(): processing timestep: " << t;
         ret->push_back(vector<Event>());
-        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
+        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
+        {
             if(merger_resolved_map[node_at].size() > 0)
             {
                 std::vector<unsigned int> new_traxel_ids = merger_resolved_map[node_at];
@@ -705,13 +827,15 @@ boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph&
     return ret;
 }
 
-boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2) {
+boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2)
+{
 
-	assert(ev1.size() == ev2.size());
+    assert(ev1.size() == ev2.size());
     boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
     std::vector<std::vector<Event> >::const_iterator it1 = ev1.begin();
     std::vector<std::vector<Event> >::const_iterator it2 = ev2.begin();
-    for (; it1 != ev1.end(); ++it1, ++it2) {
+    for (; it1 != ev1.end(); ++it1, ++it2)
+    {
         ret->push_back(vector<Event>());
         std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret->rbegin()));
         std::copy(it1->begin(), it1->end(), push_back_inserter);
@@ -725,7 +849,8 @@ boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const 
 //
 // a traxel graph (containing nodes of traxels) with some active arcs is converted into a tracklet graph
 // where all nodes connected by active paths are summarized in a single tracklet node
-void generateTrackletGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph) {
+void generateTrackletGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph)
+{
 
     // go through the traxels graph, add each node which doesn't have an active incoming arc, and
     // follow the active outgoing path to add those nodes to the tracklet
@@ -734,7 +859,8 @@ void generateTrackletGraph(const HypothesesGraph& traxel_graph, HypothesesGraph&
 
     property_map<node_tracklet, HypothesesGraph::base_graph>::type* traxels_tracklet_map;
     bool traxel_nodes_are_tracklets = false;
-    if (traxel_graph.getProperties().count("node_tracklet") > 0) {
+    if (traxel_graph.getProperties().count("node_tracklet") > 0)
+    {
         traxel_nodes_are_tracklets = true;
         traxels_tracklet_map = &traxel_graph.get(node_tracklet());
     }
@@ -753,33 +879,42 @@ void generateTrackletGraph(const HypothesesGraph& traxel_graph, HypothesesGraph&
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > node_link_map;
 
     // add nodes
-    for(int t = traxel_graph.earliest_timestep(); t <= traxel_graph.latest_timestep(); ++t) {
-        for(node_timestep_map_t::ItemIt traxel_node(node_timestep_map, t); traxel_node!=lemon::INVALID; ++traxel_node) {
+    for(int t = traxel_graph.earliest_timestep(); t <= traxel_graph.latest_timestep(); ++t)
+    {
+        for(node_timestep_map_t::ItemIt traxel_node(node_timestep_map, t); traxel_node != lemon::INVALID; ++traxel_node)
+        {
             bool has_active_incoming = false;
             std::vector<HypothesesGraph::Arc> tracklet_incoming_arcs;
-            for(HypothesesGraph::InArcIt a(traxel_graph, traxel_node); a != lemon::INVALID; ++a) {
+            for(HypothesesGraph::InArcIt a(traxel_graph, traxel_node); a != lemon::INVALID; ++a)
+            {
                 tracklet_incoming_arcs.push_back(a);
-                if (active_arcs[a]) {
+                if (active_arcs[a])
+                {
                     has_active_incoming = true;
                     break;
                 }
             }
 
-            if (has_active_incoming) {
+            if (has_active_incoming)
+            {
                 // if the traxel node has an active incoming arc, it has already been added to some tracklet
                 continue;
             }
             std::vector<int> timesteps;
             std::vector<Traxel> tracklet;
             std::vector<Traxel> traxels;
-            if (!traxel_nodes_are_tracklets) {
+            if (!traxel_nodes_are_tracklets)
+            {
                 traxels.push_back(traxel_map[traxel_node]);
-            } else {
+            }
+            else
+            {
                 traxels.insert(traxels.begin(), (*traxels_tracklet_map)[traxel_node].begin(),
                                (*traxels_tracklet_map)[traxel_node].end());
             }
 
-            for (std::vector<Traxel>::const_iterator tr = traxels.begin(); tr != traxels.end(); ++tr) {
+            for (std::vector<Traxel>::const_iterator tr = traxels.begin(); tr != traxels.end(); ++tr)
+            {
                 timesteps.push_back(tr->Timestep);
                 tracklet.push_back(*tr);
             }
@@ -788,35 +923,45 @@ void generateTrackletGraph(const HypothesesGraph& traxel_graph, HypothesesGraph&
             std::vector<HypothesesGraph::Arc> tn_outarcs;
 
             // follow the active outgoing path to add those nodes to the tracklet
-            while (true) {
+            while (true)
+            {
                 bool active_outgoing = false;
                 tn_outarcs.clear();
 
-                for(HypothesesGraph::OutArcIt a(traxel_graph, tn); a != lemon::INVALID; ++a) {
+                for(HypothesesGraph::OutArcIt a(traxel_graph, tn); a != lemon::INVALID; ++a)
+                {
                     tn_outarcs.push_back(a);
 
-                    if (active_arcs[a]) {
+                    if (active_arcs[a])
+                    {
                         assert(!active_outgoing); // "found more than one active outgoing arc"
                         tn_next = traxel_graph.target(a);
 
                         traxels.clear();
-                        if (!traxel_nodes_are_tracklets) {
+                        if (!traxel_nodes_are_tracklets)
+                        {
                             traxels.push_back(traxel_map[tn_next]);
-                        } else {
+                        }
+                        else
+                        {
                             traxels.insert(traxels.begin(), (*traxels_tracklet_map)[tn_next].begin(),
                                            (*traxels_tracklet_map)[tn_next].end());
                         }
 
-                        for (std::vector<Traxel>::const_iterator tr = traxels.begin(); tr != traxels.end(); ++tr) {
+                        for (std::vector<Traxel>::const_iterator tr = traxels.begin(); tr != traxels.end(); ++tr)
+                        {
                             timesteps.push_back(tr->Timestep);
                             tracklet.push_back(*tr);
                         }
                         active_outgoing = true;
                     }
                 }
-                if (active_outgoing) {
+                if (active_outgoing)
+                {
                     tn = tn_next;
-                } else { // no active outgoing arc found -- tracklet ends
+                }
+                else     // no active outgoing arc found -- tracklet ends
+                {
                     break;
                 }
             }
@@ -825,52 +970,67 @@ void generateTrackletGraph(const HypothesesGraph& traxel_graph, HypothesesGraph&
             tracklet_map.set(curr_tracklet_node, tracklet);
 
             // store the outgoing arcs of the traxel node
-            if (tn_outarcs.size() > 0) {
-                for(std::vector<HypothesesGraph::Arc>::const_iterator arc_it = tn_outarcs.begin(); arc_it!=tn_outarcs.end(); ++arc_it) {
+            if (tn_outarcs.size() > 0)
+            {
+                for(std::vector<HypothesesGraph::Arc>::const_iterator arc_it = tn_outarcs.begin(); arc_it != tn_outarcs.end(); ++arc_it)
+                {
                     HypothesesGraph::Node traxel_node_to = traxel_graph.target(*arc_it);
-                    if (node_link_map.find(traxel_node_to) == node_link_map.end()) {
+                    if (node_link_map.find(traxel_node_to) == node_link_map.end())
+                    {
                         node_link_map.insert(
-                                    std::pair<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > (
-                                        traxel_node_to, std::vector<HypothesesGraph::Node>() ) );
+                            std::pair<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > (
+                                traxel_node_to, std::vector<HypothesesGraph::Node>() ) );
                     }
                     node_link_map[traxel_node_to].push_back(curr_tracklet_node);
                 }
             }
 
             // set the incoming arcs of the tracklet (traxel_node is the first node in the tracklet)
-            if (!traxel_nodes_are_tracklets) {
-                assert(traxel_map[traxel_node].Id==tracklet[0].Id);
-                assert(traxel_map[traxel_node].Timestep==tracklet[0].Timestep);
-            } else {
-                assert((*traxels_tracklet_map)[traxel_node][0].Id==tracklet[0].Id);
-                assert((*traxels_tracklet_map)[traxel_node][0].Timestep==tracklet[0].Timestep);
+            if (!traxel_nodes_are_tracklets)
+            {
+                assert(traxel_map[traxel_node].Id == tracklet[0].Id);
+                assert(traxel_map[traxel_node].Timestep == tracklet[0].Timestep);
+            }
+            else
+            {
+                assert((*traxels_tracklet_map)[traxel_node][0].Id == tracklet[0].Id);
+                assert((*traxels_tracklet_map)[traxel_node][0].Timestep == tracklet[0].Timestep);
             }
             std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >::const_iterator traxel_to_it = node_link_map.find(traxel_node);
 
-            if (traxel_to_it == node_link_map.end()) {
+            if (traxel_to_it == node_link_map.end())
+            {
                 LOG(logDEBUG3) << "There is no incoming arc for traxel_node " << traxel_graph.id(traxel_node);
-            } else {
+            }
+            else
+            {
                 for(std::vector<HypothesesGraph::Node>::const_iterator tracklet_from_it = (*traxel_to_it).second.begin();
-                    tracklet_from_it != (*traxel_to_it).second.end(); ++tracklet_from_it) {
-                    tracklet_graph.addArc(*tracklet_from_it,curr_tracklet_node);
+                        tracklet_from_it != (*traxel_to_it).second.end(); ++tracklet_from_it)
+                {
+                    tracklet_graph.addArc(*tracklet_from_it, curr_tracklet_node);
                 }
             }
         }
     }
 }
 
-namespace {
-std::vector<HypothesesGraph::Arc> getOutgoingArcs(const HypothesesGraph& graph, const HypothesesGraph::Node& n) {
+namespace
+{
+std::vector<HypothesesGraph::Arc> getOutgoingArcs(const HypothesesGraph& graph, const HypothesesGraph::Node& n)
+{
     std::vector<HypothesesGraph::Arc> result;
-    for(HypothesesGraph::OutArcIt a(graph, n); a != lemon::INVALID; ++a) {
+    for(HypothesesGraph::OutArcIt a(graph, n); a != lemon::INVALID; ++a)
+    {
         result.push_back(a);
     }
     return result;
 }
 
-std::vector<HypothesesGraph::Arc> getIncomingArcs(const HypothesesGraph& graph, const HypothesesGraph::Node& n) {
+std::vector<HypothesesGraph::Arc> getIncomingArcs(const HypothesesGraph& graph, const HypothesesGraph::Node& n)
+{
     std::vector<HypothesesGraph::Arc> result;
-    for(HypothesesGraph::InArcIt a(graph, n); a != lemon::INVALID; ++a) {
+    for(HypothesesGraph::InArcIt a(graph, n); a != lemon::INVALID; ++a)
+    {
         result.push_back(a);
     }
     return result;
@@ -879,7 +1039,8 @@ std::vector<HypothesesGraph::Arc> getIncomingArcs(const HypothesesGraph& graph, 
 void addNodeToTracklet(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph,
                        const HypothesesGraph::Node& traxel_node, const HypothesesGraph::Node& ancestor_traxel_node,
                        std::map<HypothesesGraph::Node, HypothesesGraph::Node>& traxel2tracklet, double traxel_arc_dist,
-                       std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& tracklet2traxel, const int arc_id) {
+                       std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& tracklet2traxel, const int arc_id)
+{
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = traxel_graph.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = tracklet_graph.get(node_tracklet());
     property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_arc_dist_map = tracklet_graph.get(tracklet_intern_dist());
@@ -896,12 +1057,13 @@ void addNodeToTracklet(const HypothesesGraph& traxel_graph, HypothesesGraph& tra
     traxel2tracklet[traxel_node] = tracklet_node;
 
 
-  	if(traxel_graph.getProperties().count("appearance_label") > 0){
-		// create appropriate labels in tracklet node
-			tracklet_graph.add_appearance_label(tracklet_node,traxel_graph.get(appearance_label())[traxel_node]);
-			tracklet_graph.add_disappearance_label(tracklet_node,traxel_graph.get(disappearance_label())[traxel_node]);
-			tracklet_graph.add_division_label(tracklet_node,traxel_graph.get(division_label())[traxel_node]);
-	}
+    if(traxel_graph.getProperties().count("appearance_label") > 0)
+    {
+        // create appropriate labels in tracklet node
+        tracklet_graph.add_appearance_label(tracklet_node, traxel_graph.get(appearance_label())[traxel_node]);
+        tracklet_graph.add_disappearance_label(tracklet_node, traxel_graph.get(disappearance_label())[traxel_node]);
+        tracklet_graph.add_division_label(tracklet_node, traxel_graph.get(division_label())[traxel_node]);
+    }
     //	size_t timestep = tr.Timestep;
     //	timestep_map[tracklet_node].add(timestep);
     //	tracklet_graph.timesteps_.insert(timestep);
@@ -909,7 +1071,7 @@ void addNodeToTracklet(const HypothesesGraph& traxel_graph, HypothesesGraph& tra
     // add internal arc
     std::vector<double> arc_dists = tracklet_arc_dist_map[tracklet_node];
     arc_dists.push_back(traxel_arc_dist);
-    tracklet_arc_dist_map.set(tracklet_node,arc_dists);
+    tracklet_arc_dist_map.set(tracklet_node, arc_dists);
 
     tracklet2traxel[tracklet_node].push_back(traxel_node);
 
@@ -922,7 +1084,8 @@ void addNodeToTracklet(const HypothesesGraph& traxel_graph, HypothesesGraph& tra
 void addNodeToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph,
                     const HypothesesGraph::Node& traxel_node, std::map<HypothesesGraph::Node, HypothesesGraph::Node>& traxel2tracklet,
                     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& tracklet2traxel,
-                    bool with_ground_truth_labeling=false) {
+                    bool with_ground_truth_labeling = false)
+{
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = traxel_graph.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = tracklet_graph.get(node_tracklet());
     property_map<tracklet_intern_dist, HypothesesGraph::base_graph>::type& tracklet_intern_dist_map = tracklet_graph.get(tracklet_intern_dist());
@@ -937,24 +1100,27 @@ void addNodeToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
     std::vector<double> arc_dists;
     tracklet_intern_dist_map.set(tracklet_node, arc_dists);
 
-    if(with_ground_truth_labeling){
-		// create appropriate labels in tracklet node
-		tracklet_graph.add_appearance_label(tracklet_node,traxel_graph.get(appearance_label())[traxel_node]);
-		tracklet_graph.add_disappearance_label(tracklet_node,traxel_graph.get(disappearance_label())[traxel_node]);
-		tracklet_graph.add_division_label(tracklet_node,traxel_graph.get(division_label())[traxel_node]);
-	}
+    if(with_ground_truth_labeling)
+    {
+        // create appropriate labels in tracklet node
+        tracklet_graph.add_appearance_label(tracklet_node, traxel_graph.get(appearance_label())[traxel_node]);
+        tracklet_graph.add_disappearance_label(tracklet_node, traxel_graph.get(disappearance_label())[traxel_node]);
+        tracklet_graph.add_division_label(tracklet_node, traxel_graph.get(division_label())[traxel_node]);
+    }
 
     tracklet2traxel[tracklet_node].push_back(traxel_node);
 }
 
 void addArcsToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph,
                     const std::vector<HypothesesGraph::Arc>& incoming_arcs, std::map<HypothesesGraph::Node, HypothesesGraph::Node>& traxel2tracklet,
-                    bool with_ground_truth_labeling=false) {
+                    bool with_ground_truth_labeling = false)
+{
     property_map<arc_distance, HypothesesGraph::base_graph>::type& traxel_arc_distances = traxel_graph.get(arc_distance());
     property_map<arc_distance, HypothesesGraph::base_graph>::type& tracklet_arc_distances = tracklet_graph.get(arc_distance());
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_ids = tracklet_graph.get(traxel_arc_id());
 
-    for(std::vector<HypothesesGraph::Arc>::const_iterator a = incoming_arcs.begin(); a!=incoming_arcs.end(); ++a) {
+    for(std::vector<HypothesesGraph::Arc>::const_iterator a = incoming_arcs.begin(); a != incoming_arcs.end(); ++a)
+    {
         HypothesesGraph::Arc arc = *a;
         LOG(logDEBUG4) << "traxel arc source " << traxel_graph.id(traxel_graph.source(arc));
         LOG(logDEBUG4) << "traxel arc target " << traxel_graph.id(traxel_graph.target(arc));
@@ -965,17 +1131,19 @@ void addArcsToGraph(const HypothesesGraph& traxel_graph, HypothesesGraph& trackl
         assert(from != to);
 
         HypothesesGraph::Arc tracklet_arc = tracklet_graph.addArc(from, to);
-        if(with_ground_truth_labeling){
-			tracklet_graph.add_arc_label(tracklet_arc,traxel_graph.get(arc_label())[arc]);
-		}
-        tracklet_arc_distances.set(tracklet_arc,traxel_arc_distances[arc]);
+        if(with_ground_truth_labeling)
+        {
+            tracklet_graph.add_arc_label(tracklet_arc, traxel_graph.get(arc_label())[arc]);
+        }
+        tracklet_arc_distances.set(tracklet_arc, traxel_arc_distances[arc]);
         traxel_arc_ids.set(tracklet_arc, (int) traxel_graph.id(arc));
     }
 }
 
 } // anonymous namespace
 
-std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTrackletGraph2(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph) {
+std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTrackletGraph2(const HypothesesGraph& traxel_graph, HypothesesGraph& tracklet_graph)
+{
     property_map<arc_distance, HypothesesGraph::base_graph>::type& traxel_arc_dist_map = traxel_graph.get(arc_distance());
 
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
@@ -991,15 +1159,19 @@ std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTra
     std::map<HypothesesGraph::Node, HypothesesGraph::Node > traxel_node_to_tracklet_node;
 
     bool with_ground_truth_labeling = (traxel_graph.getProperties().count("appearance_label") > 0);
-    if (with_ground_truth_labeling) {
+    if (with_ground_truth_labeling)
+    {
         tracklet_graph.add(appearance_label()).add(disappearance_label()).add(division_label()).add(arc_label());
     }
 
-    for(int t = traxel_graph.earliest_timestep(); t <= traxel_graph.latest_timestep(); ++t) {
-        for(node_timestep_map_t::ItemIt traxel_node(node_timestep_map, t); traxel_node!=lemon::INVALID; ++traxel_node) {
+    for(int t = traxel_graph.earliest_timestep(); t <= traxel_graph.latest_timestep(); ++t)
+    {
+        for(node_timestep_map_t::ItemIt traxel_node(node_timestep_map, t); traxel_node != lemon::INVALID; ++traxel_node)
+        {
             LOG(logDEBUG4) << "traxel_node = " << traxel_graph.id(traxel_node);
             vector<HypothesesGraph::Arc> incoming_arcs = getIncomingArcs(traxel_graph, traxel_node);
-            if(incoming_arcs.size() != 1) {
+            if(incoming_arcs.size() != 1)
+            {
                 addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes,
                                with_ground_truth_labeling);
                 addArcsToGraph(traxel_graph, tracklet_graph, incoming_arcs, traxel_node_to_tracklet_node, with_ground_truth_labeling);
@@ -1008,7 +1180,8 @@ std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTra
             }
 
             HypothesesGraph::Node ancestor = traxel_graph.source(incoming_arcs[0]);
-            if(getOutgoingArcs(traxel_graph, ancestor).size() > 1) {
+            if(getOutgoingArcs(traxel_graph, ancestor).size() > 1)
+            {
                 addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes,
                                with_ground_truth_labeling);
                 assert(incoming_arcs.size() == 1);
@@ -1034,7 +1207,8 @@ std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTra
 //
 // state_of_nodes()
 //
-boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph& g) {
+boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph& g)
+{
     LOG(logDEBUG) << "detections(): entered";
     boost::shared_ptr<vector< map<unsigned int, bool> > > ret(new vector< map<unsigned int, bool> >);
 
@@ -1046,26 +1220,34 @@ boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(c
     property_map<node_active, HypothesesGraph::base_graph>::type* node_active_map;
     property_map<node_active2, HypothesesGraph::base_graph>::type* node_active2_map;
     bool active2_used = false;
-    if (g.getProperties().count("node_active") > 0) {
+    if (g.getProperties().count("node_active") > 0)
+    {
         node_active_map = &g.get(node_active());
-    } else if (g.getProperties().count("node_active2") > 0) {
+    }
+    else if (g.getProperties().count("node_active2") > 0)
+    {
         node_active2_map = &g.get(node_active2());
         active2_used = true;
     }
 
     // for every timestep
-    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t) {
+    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
+    {
         ret->push_back(map<unsigned int, bool>());
-        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at!=lemon::INVALID; ++node_at) {
+        for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
+        {
             assert(node_traxel_map[node_at].Timestep == t);
             unsigned int id = node_traxel_map[node_at].Id;
             bool active = false;
-            if (active2_used) {
+            if (active2_used)
+            {
                 active = ((*node_active2_map)[node_at] > 0);
-            } else {
+            }
+            else
+            {
                 active = (*node_active_map)[node_at];
             }
-            (*ret)[t-g.earliest_timestep()][id] = active;
+            (*ret)[t - g.earliest_timestep()][id] = active;
         }
     }
 
@@ -1077,106 +1259,158 @@ boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(c
 // write_lgf()
 //
 
-namespace {
+namespace
+{
 template <typename T>
-struct TypeToStrConverter {
-	std::string operator()(const T& t) {
-		stringstream ss;
-		boost::archive::text_oarchive oa(ss);
-		oa & t;
-		return ss.str();
-	}
+struct TypeToStrConverter
+{
+    std::string operator()(const T& t)
+    {
+        stringstream ss;
+        boost::archive::text_oarchive oa(ss);
+        oa & t;
+        return ss.str();
+    }
 };
 }
-  void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string, bool>& config ) {
-    lemon::DigraphWriter<HypothesesGraph> writer( g, os );    
+void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string, bool>& config )
+{
+    lemon::DigraphWriter<HypothesesGraph> writer( g, os );
 
     if(config["node_timestep"])
+    {
         writer.nodeMap("node_timestep", g.get(node_timestep()));
+    }
 
     if(config["node_active"])
+    {
         writer.nodeMap("node_active", g.get(node_active()));
+    }
 
     if(config["node_active2"])
+    {
         writer.nodeMap("node_active2", g.get(node_active2()));
+    }
 
     if(config["node_active_count"])
+    {
         writer.nodeMap("node_active_count", g.get(node_active_count()), TypeToStrConverter<vector<long unsigned int> >());
+    }
 
     if(config["node_offered"])
+    {
         writer.nodeMap("node_offered", g.get(node_offered()));
+    }
 
     if(config["split_from"])
+    {
         writer.nodeMap("split_from", g.get(split_from()));
+    }
 
     if(config["division_active"])
+    {
         writer.nodeMap("division_active", g.get(division_active()));
+    }
 
     if(config["merger_resolved_to"])
+    {
         writer.nodeMap("merger_resolved_to", g.get(merger_resolved_to()), TypeToStrConverter<vector<unsigned int> >());
+    }
 
     if(config["node_originated_from"])
+    {
         writer.nodeMap("node_originated_from", g.get(node_originated_from()), TypeToStrConverter<vector<unsigned int> >());
+    }
 
     if(config["node_resolution_candidate"])
+    {
         writer.nodeMap("node_resolution_candidate", g.get(node_resolution_candidate()));
+    }
 
     if(config["arc_distance"])
+    {
         writer.arcMap("arc_distance", g.get(arc_distance()));
+    }
 
     if(config["traxel_arc_id"])
+    {
         writer.arcMap("traxel_arc_id", g.get(traxel_arc_id()));
+    }
 
     if(config["arc_vol_ratio"])
+    {
         writer.arcMap("arc_vol_ratio", g.get(arc_vol_ratio()));
+    }
 
     if(config["arc_from_timestep"])
+    {
         writer.arcMap("arc_from_timestep", g.get(arc_from_timestep()));
+    }
 
     if(config["arc_to_timestep"])
+    {
         writer.arcMap("arc_to_timestep", g.get(arc_to_timestep()));
+    }
 
     if(config["arc_active"])
+    {
         writer.arcMap("arc_active", g.get(arc_active()));
+    }
 
     if(config["arc_resolution_candidate"])
+    {
         writer.arcMap("arc_resolution_candidate", g.get(arc_resolution_candidate()));
+    }
 
     if(config["tracklet_intern_dist"])
+    {
         writer.nodeMap("tracklet_intern_dist", g.get(tracklet_intern_dist()), TypeToStrConverter<vector<double> >());
+    }
 
     if(config["tracklet_intern_arc_ids"])
+    {
         writer.nodeMap("tracklet_intern_arc_ids", g.get(tracklet_intern_arc_ids()), TypeToStrConverter<vector<int> >());
+    }
 
     if(config["arc_active_count"])
+    {
         writer.arcMap("arc_active_count", g.get(arc_active_count()), TypeToStrConverter<vector<bool> >());
+    }
 
     if(config["node_traxel"])
-    	writer.nodeMap("node_traxel", g.get(node_traxel()), TypeToStrConverter<Traxel>());
+    {
+        writer.nodeMap("node_traxel", g.get(node_traxel()), TypeToStrConverter<Traxel>());
+    }
 
     if(config["node_tracklet"])
+    {
         writer.nodeMap("node_tracklet", g.get(node_tracklet()), TypeToStrConverter<vector<Traxel>>());
+    }
 
     writer.run();
-  }
-  //
-  // read_lgf()
-  //
-  namespace {
-  template <typename T>
-  struct StrToTypeConverter {
-	  T operator()(const string& s) {
-		  stringstream ss(s);
-		  boost::archive::text_iarchive ia(ss);
-		  T t;
-		  ia & t;
-		  return t;
-	  }
-  };
-  }
+}
+//
+// read_lgf()
+//
+namespace
+{
+template <typename T>
+struct StrToTypeConverter
+{
+    T operator()(const string& s)
+    {
+        stringstream ss(s);
+        boost::archive::text_iarchive ia(ss);
+        T t;
+        ia & t;
+        return t;
+    }
+};
+}
 
-  void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>& config) {
-	  lemon::DigraphReader<HypothesesGraph> reader( g, is );
+void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>& config)
+{
+    lemon::DigraphReader<HypothesesGraph> reader( g, is );
 
     if(config["node_timestep"])
     {
@@ -1294,14 +1528,14 @@ struct TypeToStrConverter {
 
     if(config["arc_active_count"])
     {
-    	g.add(arc_active_count());
-    	reader.arcMap("arc_active_count", g.get(arc_active_count()), StrToTypeConverter<vector<bool> >());
+        g.add(arc_active_count());
+        reader.arcMap("arc_active_count", g.get(arc_active_count()), StrToTypeConverter<vector<bool> >());
     }
 
     if(config["node_traxel"])
     {
-    	g.add(node_traxel());
-    	reader.nodeMap("node_traxel", g.get(node_traxel()), StrToTypeConverter<Traxel>());
+        g.add(node_traxel());
+        reader.nodeMap("node_traxel", g.get(node_traxel()), StrToTypeConverter<Traxel>());
     }
 
     if(config["node_tracklet"])
@@ -1311,14 +1545,15 @@ struct TypeToStrConverter {
     }
 
     reader.run();
-  }
+}
 
 
 
 ////
 //// class HypothesesBuilder
 ////
-HypothesesGraph* HypothesesBuilder::build() const {
+HypothesesGraph* HypothesesBuilder::build() const
+{
     // construct an empty HypothesesGraph with all desired additional
     // properties added
     HypothesesGraph* graph = construct();
@@ -1331,10 +1566,13 @@ HypothesesGraph* HypothesesBuilder::build() const {
 }
 
 
-namespace {
-double getDivisionProbability(const Traxel& tr) {
+namespace
+{
+double getDivisionProbability(const Traxel& tr)
+{
     FeatureMap::const_iterator it = tr.features.find("divProb");
-    if (it == tr.features.end()) {
+    if (it == tr.features.end())
+    {
         throw runtime_error("getDivisionProbability(): divProb feature not in traxel");
     }
     return it->second[0];
@@ -1344,18 +1582,21 @@ double getDivisionProbability(const Traxel& tr) {
 ////
 //// class SingleTimestepTraxel_HypothesesBuilder
 ////
-HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::construct() const {
+HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::construct() const
+{
     HypothesesGraph* graph = new HypothesesGraph();
     // store traxels inside the graph data structure
     graph->add(node_traxel());
     return graph;
 }
 
-HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_nodes(HypothesesGraph* graph) const {
+HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_nodes(HypothesesGraph* graph) const
+{
     LOG(logDEBUG) << "SingleTimestepTraxel_HypothesesBuilder::add_nodes(): entered";
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_m = graph->get(node_traxel());
 
-    for(TraxelStoreByTimestep::const_iterator it = ts_->begin(); it!= ts_->end(); ++it) {
+    for(TraxelStoreByTimestep::const_iterator it = ts_->begin(); it != ts_->end(); ++it)
+    {
         HypothesesGraph::Node node = graph->add_node(it->Timestep);
         traxel_m.set(node, *it);
     }
@@ -1364,22 +1605,26 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_nodes(HypothesesGra
 }
 
 HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges(
-        HypothesesGraph* graph) const {
+    HypothesesGraph* graph) const
+{
     LOG(logDEBUG) << "SingleTimestepTraxel_HypothesesBuilder::add_edges(): entered";
     typedef HypothesesGraph::node_timestep_map::Value timestep_t;
     const set<timestep_t>& timesteps = graph->timesteps();
     // iterate over all timesteps except the last
     for (set<timestep_t>::const_iterator t = timesteps.begin();
-         t != (--timesteps.end()); ++t) {
+            t != (--timesteps.end()); ++t)
+    {
         add_edges_at(graph, *t);
     }
 
     // if the forward_backward option is enabled, go again through the graph, this time
     // reversely and add the nearest neighbors if not already present
-    if (options_.forward_backward) {
+    if (options_.forward_backward)
+    {
         // reversely iterate over all timesteps except the first
         for (set<timestep_t>::const_reverse_iterator t = timesteps.rbegin();
-             t != (--timesteps.rend()); ++t) {
+                t != (--timesteps.rend()); ++t)
+        {
             add_edges_at(graph, *t, true);
         }
     }
@@ -1388,7 +1633,8 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges(
 }
 
 HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(HypothesesGraph* graph,
-                                                                      int timestep, bool reverse) const {
+        int timestep, bool reverse) const
+{
     const HypothesesGraph::node_timestep_map& timemap = graph->get(
                 node_timestep());
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type traxelmap_t;
@@ -1397,7 +1643,8 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
     const TraxelStoreByTimestep& traxels_by_timestep = ts_->get<by_timestep>();
 
     int to_timestep = timestep + 1;
-    if (reverse) {
+    if (reverse)
+    {
         // iterating through the graph backward in time
         to_timestep = timestep - 1;
     }
@@ -1405,11 +1652,12 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
     //// find k nearest neighbors in next timestep
     // init nearest neighbor search
     pair<TraxelStoreByTimestep::const_iterator,
-            TraxelStoreByTimestep::const_iterator> traxels_at =
-            traxels_by_timestep.equal_range(to_timestep);
+         TraxelStoreByTimestep::const_iterator> traxels_at =
+             traxels_by_timestep.equal_range(to_timestep);
 
     for (TraxelStoreByTimestep::const_iterator it = traxels_at.first;
-         it != traxels_at.second; ++it) {
+            it != traxels_at.second; ++it)
+    {
         assert(it->Timestep == to_timestep);
     }
 
@@ -1418,7 +1666,8 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
 
     // establish transition edges between a current node and appropriate nodes in next timestep
     for (HypothesesGraph::node_timestep_map::ItemIt curr_node(timemap,
-                                                              timestep); curr_node != lemon::INVALID; ++curr_node) {
+            timestep); curr_node != lemon::INVALID; ++curr_node)
+    {
         assert(timemap[curr_node] == timestep);
         assert(traxelmap[curr_node].Timestep == timestep);
 
@@ -1426,9 +1675,11 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
         // make sure that each potentially dividing cell has 2 nearest neighbors
         // (but only if we go through the graph forward in time)
         unsigned int max_nn = options_.max_nearest_neighbors;
-        if (options_.consider_divisions && !reverse && max_nn < 2) {
-            double div_prob = getDivisionProbability(traxelmap[curr_node]);            
-            if (div_prob > options_.division_threshold) {
+        if (options_.consider_divisions && !reverse && max_nn < 2)
+        {
+            double div_prob = getDivisionProbability(traxelmap[curr_node]);
+            if (div_prob > options_.division_threshold)
+            {
                 max_nn = 2;
             }
         }
@@ -1440,28 +1691,33 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
 
         //// connect current node with k nearest neighbor nodes
         for (map<unsigned int, double>::const_iterator neighbor =
-             nearest_neighbors.begin(); neighbor != nearest_neighbors.end();
-             ++neighbor) {
+                    nearest_neighbors.begin(); neighbor != nearest_neighbors.end();
+                ++neighbor)
+        {
             // connect with one of the neighbor nodes
             TraxelStoreByTimeid::iterator neighbor_traxel =
-                    traxels_by_timeid.find(
-                        boost::make_tuple(to_timestep, neighbor->first));
+                traxels_by_timeid.find(
+                    boost::make_tuple(to_timestep, neighbor->first));
             assert(neighbor_traxel->Timestep == to_timestep);
             assert(neighbor_traxel->Timestep != traxelmap[curr_node].Timestep);
             traxelmap_t::ItemIt neighbor_node(traxelmap, *neighbor_traxel);
             assert(curr_node != neighbor_node);
-            if (!reverse) {
+            if (!reverse)
+            {
                 // if we go through the graph forward in time, add an arc from curr_node to neighbor_node
                 LOG(logDEBUG4) << "added arc from traxel " << traxelmap[curr_node].Id << " to " <<
-                                  traxelmap[neighbor_node].Id;
+                               traxelmap[neighbor_node].Id;
                 graph->addArc(curr_node, neighbor_node);
-            } else {
+            }
+            else
+            {
                 // if we go through the graph backward in time, add an arc from neighbor_node to curr_node
                 // if not already present
-                if (lemon::findArc(*graph,neighbor_node,curr_node) == lemon::INVALID) {
+                if (lemon::findArc(*graph, neighbor_node, curr_node) == lemon::INVALID)
+                {
                     graph->addArc(neighbor_node, curr_node);
                     LOG(logDEBUG4) << "added backward arc from traxel " << traxelmap[neighbor_node].Id << " to " <<
-                                      traxelmap[curr_node].Id;
+                                   traxelmap[curr_node].Id;
                 }
             }
         }
@@ -1615,9 +1871,9 @@ void PropertyGraph<lemon::ListDigraph>::copy(PropertyGraph<lemon::ListDigraph>& 
 template<class Graph>
 template<class NodeMap, class ArcMap>
 void PropertyGraph<Graph>::copy_subgraph(PropertyGraph<Graph> &src,
-                          PropertyGraph<Graph> &dest,
-                          NodeMap &selected_nodes,
-                          ArcMap &selected_arcs)
+        PropertyGraph<Graph> &dest,
+        NodeMap &selected_nodes,
+        ArcMap &selected_arcs)
 {
     throw std::runtime_error("Only implemented for base_graph == ListDigraph");
 }
@@ -1625,9 +1881,9 @@ void PropertyGraph<Graph>::copy_subgraph(PropertyGraph<Graph> &src,
 template<>
 template<>
 void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListDigraph>& src,
-                                                      PropertyGraph<lemon::ListDigraph>& dest,
-                                                      PropertyGraph<lemon::ListDigraph>::base_graph::NodeMap<bool>& selected_nodes,
-                                                      PropertyGraph<lemon::ListDigraph>::base_graph::ArcMap<bool>& selected_arcs)
+        PropertyGraph<lemon::ListDigraph>& dest,
+        PropertyGraph<lemon::ListDigraph>::base_graph::NodeMap<bool>& selected_nodes,
+        PropertyGraph<lemon::ListDigraph>::base_graph::ArcMap<bool>& selected_arcs)
 {
     // build a subgraph of the src-graph and then copy it to dest
     typedef lemon::SubDigraph<PropertyGraph::base_graph,

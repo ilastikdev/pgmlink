@@ -218,9 +218,9 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 }
 
 void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
-                                              HypothesesGraph &tracklet_graph,
-                                              std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
-                                              std::vector<size_t> &solution)
+        HypothesesGraph &tracklet_graph,
+        std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+        std::vector<size_t> &solution)
 {
     g.add(node_active2()).add(arc_active()).add(division_active());
     property_map<node_active2, HypothesesGraph::base_graph>::type& active_nodes = g.get(node_active2());
@@ -230,24 +230,28 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
     if (!param_.with_tracklets)
+    {
         tracklet_graph.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
+    }
 
     property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map = tracklet_graph.get(tracklet_intern_arc_ids());
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph.get(traxel_arc_id());
 
     // initialize nodes and divisions to 0
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n) {
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
         active_nodes.set(n, 0);
         active_divisions.set(n, false);
     }
 
     //initialize arc counts by 0
-    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a) {
+    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+    {
         active_arcs.set(a, false);
     }
 
     // function used to increase number of objects per node
-    std::function<void(dpct::Node*)> increase_object_count = [&](dpct::Node* node)
+    std::function<void(dpct::Node*)> increase_object_count = [&](dpct::Node * node)
     {
         std::shared_ptr<ConservationTrackingNodeData> nd = std::static_pointer_cast<ConservationTrackingNodeData>(node->getUserData());
         HypothesesGraph::Node n = nd->getRef();
@@ -280,7 +284,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     };
 
     // function used to activate an arc
-    std::function<void(dpct::Arc*)> activate_arc = [&](dpct::Arc* arc)
+    std::function<void(dpct::Arc*)> activate_arc = [&](dpct::Arc * arc)
     {
         std::shared_ptr<ConservationTrackingArcData> ad = std::static_pointer_cast<ConservationTrackingArcData>(arc->getUserData());
         HypothesesGraph::Arc a = ad->getRef();
@@ -302,7 +306,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         std::cout << "\rLooking at path " << num_paths++  << " of length " << p.size() << std::flush;
         // a path starts at the dummy-source and goes to the dummy-sink. these arcs are of type dummy, and thus skipped
         bool first_arc_on_path = true;
-        for(dpct::Arc* a: p)
+        for(dpct::Arc* a : p)
         {
             assert(a != nullptr);
             assert(a->getType() != dpct::Arc::Swap);
@@ -323,13 +327,15 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
 
                     // set arc to active
                     activate_arc(a);
-                } break;
+                }
+                break;
                 case dpct::Arc::Appearance:
                 {
                     // the node that appeared is set active here, so detections without further path are active as well
                     increase_object_count(a->getTargetNode());
                     first_arc_on_path = false;
-                } break;
+                }
+                break;
                 case dpct::Arc::Disappearance:
                 {
                     if(first_arc_on_path)
@@ -338,7 +344,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                     }
                     first_arc_on_path = false;
                     // nothing to do, last node on path was already set active by previous move or appearance
-                }  break;
+                }
+                break;
                 case dpct::Arc::Division:
                 {
                     // set as active division
@@ -368,11 +375,13 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                             break;
                         }
                     }
-                } break;
+                }
+                break;
                 case dpct::Arc::Swap:
                 {
                     throw std::runtime_error("Got a swap arc even though it should have been cleaned up!");
-                } break;
+                }
+                break;
                 case dpct::Arc::Dummy:
                 {
                     // do nothing
@@ -380,7 +389,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                 default:
                 {
                     throw std::runtime_error("Unkown arc type");
-                } break;
+                }
+                break;
             }
         }
     }

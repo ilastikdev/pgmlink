@@ -12,62 +12,63 @@
 // pgmlink headers
 #include "pgmlink/pgmlink_export.h"
 
-namespace pgmlink {
+namespace pgmlink
+{
 
-  typedef std::vector<std::string> feature_list;
+typedef std::vector<std::string> feature_list;
 
-  template <typename NodeFilter, typename ArcFilter>
-  struct SubHypothesesGraph
-  {
+template <typename NodeFilter, typename ArcFilter>
+struct SubHypothesesGraph
+{
     typedef typename lemon::SubDigraph<HypothesesGraph::base_graph,
-                                       typename property_map<NodeFilter, HypothesesGraph::base_graph>::type,
-                                       typename property_map<ArcFilter, HypothesesGraph::base_graph>::type > type;
-  };
+            typename property_map<NodeFilter, HypothesesGraph::base_graph>::type,
+            typename property_map<ArcFilter, HypothesesGraph::base_graph>::type > type;
+};
 
-  struct MapTypeValue {};
-  struct MapTypeBool {};
+struct MapTypeValue {};
+struct MapTypeBool {};
 
-  typedef SubHypothesesGraph<node_resolution_candidate, arc_resolution_candidate>::type SubResolver;
+typedef SubHypothesesGraph<node_resolution_candidate, arc_resolution_candidate>::type SubResolver;
 
-  class KMeans;
+class KMeans;
 
-  class GMM;
-  
-  class GMMInitalizeArma;
+class GMM;
 
-  template <typename T, typename U>
-  void feature_array_to_arma_mat(const std::vector<T>& in,
-				                 arma::Mat<U>& out);
+class GMMInitalizeArma;
 
-  template <typename T>
-  void get_centers(const arma::Mat<T>& data,
-		           const arma::Col<size_t> labels,
-		           arma::Mat<T>& centers,
-		           int k);
+template <typename T, typename U>
+void feature_array_to_arma_mat(const std::vector<T>& in,
+                               arma::Mat<U>& out);
 
-  class FeatureExtractorBase;
+template <typename T>
+void get_centers(const arma::Mat<T>& data,
+                 const arma::Col<size_t> labels,
+                 arma::Mat<T>& centers,
+                 int k);
 
-  class FeatureExtractorMCOMsFromPCOMs;
+class FeatureExtractorBase;
 
-  class FeatureExtractorMCOMsFromMCOMs;
+class FeatureExtractorMCOMsFromPCOMs;
 
-  class FeatureHandlerBase;
+class FeatureExtractorMCOMsFromMCOMs;
 
-  class FeatureHandlerFromTraxels;
+class FeatureHandlerBase;
 
-  class DistanceBase;
+class FeatureHandlerFromTraxels;
 
-  class DistanceFromCOMs;
+class DistanceBase;
 
-  class ResolveAmbiguousArcsBase;
+class DistanceFromCOMs;
 
-  class ResolveAmbiguousArcsGreedy;
+class ResolveAmbiguousArcsBase;
 
-  class ResolveAmbiguousArcsPgm;
+class ResolveAmbiguousArcsGreedy;
 
-  class ReasonerMaxOneArc;
+class ResolveAmbiguousArcsPgm;
 
-  class MergerResolver;
+class ReasonerMaxOneArc;
+
+class MergerResolver;
 
 }
 

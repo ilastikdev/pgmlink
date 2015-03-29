@@ -68,8 +68,10 @@ diffusion_calculator.calculate(positions, return_value);
 // dlib
 #include <dlib/svm.h> /* for svm in SVMOutlierCalculator*/
 
-namespace pgmlink {
-namespace features {
+namespace pgmlink
+{
+namespace features
+{
 
 /*=============================================================================
  type definitions
@@ -122,22 +124,23 @@ features will be calculated.
 Interesting subsets of traxels might be the traxels in one track, or the traxels
 involved in a cell division.
 */
-class TraxelsOfInterest {
- public:
-  TraxelsOfInterest() {};
-  virtual ~TraxelsOfInterest() {};
-  virtual const std::string& name() const = 0;
-  /**
-  \brief Extract the traxels of interest of the hypotheses graph.
+class TraxelsOfInterest
+{
+public:
+    TraxelsOfInterest() {};
+    virtual ~TraxelsOfInterest() {};
+    virtual const std::string& name() const = 0;
+    /**
+    \brief Extract the traxels of interest of the hypotheses graph.
 
-  \param[in] graph Hypotheses graph with its MAP-solution written into the
-    property maps <TT>node_active</TT> and <TT>arc_active</TT>.
-  \return vector of vectors of traxel references: ((t1, t2, t3), (t1, t3), ...).
-    They are stored as std::vector<std::vector<const *pgmlink::Traxel> >
-  */
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const HypothesesGraph& graph
-  ) = 0;
+    \param[in] graph Hypotheses graph with its MAP-solution written into the
+      property maps <TT>node_active</TT> and <TT>arc_active</TT>.
+    \return vector of vectors of traxel references: ((t1, t2, t3), (t1, t3), ...).
+      They are stored as std::vector<std::vector<const *pgmlink::Traxel> >
+    */
+    virtual const std::vector<ConstTraxelRefVector>& operator()(
+        const HypothesesGraph& graph
+    ) = 0;
 };
 
 ////
@@ -147,26 +150,27 @@ class TraxelsOfInterest {
 \brief virtual class for extracting the interesting features of the traxels.
 
 */
-class TraxelsFeatureExtractor {
- public:
-  TraxelsFeatureExtractor() {};
-  virtual ~TraxelsFeatureExtractor() {};
-  virtual const std::string& name() const = 0;
-  /**
-  \brief extracts any features from the traxelvector given as the argument
-  
-  \param[in] traxelrefs Vector of references to traxels of which the features
-    should be extracted.
-  \param[out] feature_matrix two dimensional matrix that contains the extracted
-    features
-  */
-  virtual void extract(
-    const ConstTraxelRefVector& traxelrefs,
-    FeatureMatrix& feature_matrix
-  ) const = 0;
-  virtual FeatureMatrix extract(
-    const ConstTraxelRefVector& traxelrefs
-  ) const;
+class TraxelsFeatureExtractor
+{
+public:
+    TraxelsFeatureExtractor() {};
+    virtual ~TraxelsFeatureExtractor() {};
+    virtual const std::string& name() const = 0;
+    /**
+    \brief extracts any features from the traxelvector given as the argument
+
+    \param[in] traxelrefs Vector of references to traxels of which the features
+      should be extracted.
+    \param[out] feature_matrix two dimensional matrix that contains the extracted
+      features
+    */
+    virtual void extract(
+        const ConstTraxelRefVector& traxelrefs,
+        FeatureMatrix& feature_matrix
+    ) const = 0;
+    virtual FeatureMatrix extract(
+        const ConstTraxelRefVector& traxelrefs
+    ) const;
 };
 
 ////
@@ -178,24 +182,25 @@ class TraxelsFeatureExtractor {
 The calculations of the higher order features are implemented as child classes
 of this virtual class.
 */
-class TraxelsFeatureCalculator {
- public:
-  TraxelsFeatureCalculator() {};
-  virtual ~ TraxelsFeatureCalculator() {};
-  virtual const std::string& name() const = 0;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const = 0;
-  virtual FeatureMatrix calculate(
-    const FeatureMatrix& feature_matrix
-  ) const;
-  // TODO documentation of member function
-  virtual void calculate_for_all(
-    const ConstTraxelRefVectors& traxelrefs,
-    FeatureMatrix& return_matrix,
-    boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
-  ) const;
+class TraxelsFeatureCalculator
+{
+public:
+    TraxelsFeatureCalculator() {};
+    virtual ~ TraxelsFeatureCalculator() {};
+    virtual const std::string& name() const = 0;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const = 0;
+    virtual FeatureMatrix calculate(
+        const FeatureMatrix& feature_matrix
+    ) const;
+    // TODO documentation of member function
+    virtual void calculate_for_all(
+        const ConstTraxelRefVectors& traxelrefs,
+        FeatureMatrix& return_matrix,
+        boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ref
+    ) const;
 };
 
 /*=============================================================================
@@ -218,58 +223,59 @@ class TraxelsFeatureCalculator {
                           TraxelsFeatureCalculator
 matrix of traxel features ----------------------> nxm matrix of traxel features
 \endcode
-The GraphFeatureCalculator uses the TraxelsFeatureExtractor and 
-TraxelsFeatureCalculator given in the constructor to calculate the features 
+The GraphFeatureCalculator uses the TraxelsFeatureExtractor and
+TraxelsFeatureCalculator given in the constructor to calculate the features
 for of every subset returned by the TraxelsOfInterest class in the constructor.
 The return_matrix is a row vector of all calculated feature matrix entries.
 */
-class GraphFeatureCalculator {
- public:
-  /**
-  \brief takes shared pointers to the TraxelsOfInterest, TraxelsFeatureExtractor
-    and TraxelsFeatureCalculator that should be used in the calculation workflow
-  
-  Example usage:
-  \code
-  boost::shared_ptr<TraxelsOfInterest> track_extractor_ptr(
-    new TrackExtractor
-  );
-  boost::shared_ptr<TraxelsFeatureExtractor> position_identity_ptr(
-    new TraxelsFeaturesIdentity("com")
-  );
-  boost::shared_ptr<TraxelsFeatureCalculator> diffusion_calculator_ptr(
-    new DiffusionCalculator
-  );
+class GraphFeatureCalculator
+{
+public:
+    /**
+    \brief takes shared pointers to the TraxelsOfInterest, TraxelsFeatureExtractor
+      and TraxelsFeatureCalculator that should be used in the calculation workflow
 
-  GraphFeatureCalculator diffusion_coefficients(
-    track_extractor_ptr,
-    position_identity_ptr,
-    diffusion_calculator_ptr
-  );
-  
-  FeatureMatrix return_matrix;
-  diffusion_coefficients.calculate(graph, return_matrix);
-  // the return matrix is now a row vector of all diffusion coefficients of all
-  // tracks in the hypotheses graph.
-  \endcode
-  */
-  GraphFeatureCalculator(
-    boost::shared_ptr<TraxelsOfInterest> subsets_extractor_ptr,
-    boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ptr,
-    boost::shared_ptr<TraxelsFeatureCalculator> feature_calculator_ptr
-  ) : 
-    subsets_extractor_ptr_(subsets_extractor_ptr),
-    feature_extractor_ptr_(feature_extractor_ptr),
-    feature_calculator_ptr_(feature_calculator_ptr) {};
-  virtual ~GraphFeatureCalculator() {}
-  virtual void calculate(
-    const HypothesesGraph& graph,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  boost::shared_ptr<TraxelsOfInterest> subsets_extractor_ptr_;
-  boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ptr_;
-  boost::shared_ptr<TraxelsFeatureCalculator> feature_calculator_ptr_;
+    Example usage:
+    \code
+    boost::shared_ptr<TraxelsOfInterest> track_extractor_ptr(
+      new TrackExtractor
+    );
+    boost::shared_ptr<TraxelsFeatureExtractor> position_identity_ptr(
+      new TraxelsFeaturesIdentity("com")
+    );
+    boost::shared_ptr<TraxelsFeatureCalculator> diffusion_calculator_ptr(
+      new DiffusionCalculator
+    );
+
+    GraphFeatureCalculator diffusion_coefficients(
+      track_extractor_ptr,
+      position_identity_ptr,
+      diffusion_calculator_ptr
+    );
+
+    FeatureMatrix return_matrix;
+    diffusion_coefficients.calculate(graph, return_matrix);
+    // the return matrix is now a row vector of all diffusion coefficients of all
+    // tracks in the hypotheses graph.
+    \endcode
+    */
+    GraphFeatureCalculator(
+        boost::shared_ptr<TraxelsOfInterest> subsets_extractor_ptr,
+        boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ptr,
+        boost::shared_ptr<TraxelsFeatureCalculator> feature_calculator_ptr
+    ) :
+        subsets_extractor_ptr_(subsets_extractor_ptr),
+        feature_extractor_ptr_(feature_extractor_ptr),
+        feature_calculator_ptr_(feature_calculator_ptr) {};
+    virtual ~GraphFeatureCalculator() {}
+    virtual void calculate(
+        const HypothesesGraph& graph,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    boost::shared_ptr<TraxelsOfInterest> subsets_extractor_ptr_;
+    boost::shared_ptr<TraxelsFeatureExtractor> feature_extractor_ptr_;
+    boost::shared_ptr<TraxelsFeatureCalculator> feature_calculator_ptr_;
 };
 
 ////
@@ -279,33 +285,34 @@ class GraphFeatureCalculator {
 \brief extract the features of the traxels with the feature names given in the
   constructor, e.g. "size"
 
-In the traxels there are the property maps stored which map a string to a 
+In the traxels there are the property maps stored which map a string to a
 vector. This class extracts with the extract method the vectors with the feature
 names given in the constructor as a matrix. The columns are the extracted
 feature vectors for the traxels.
 */
-class TraxelsFeaturesIdentity : public TraxelsFeatureExtractor {
- public:
-  /**
-  \brief Takes the feature name that should be extracted in the extract method.
+class TraxelsFeaturesIdentity : public TraxelsFeatureExtractor
+{
+public:
+    /**
+    \brief Takes the feature name that should be extracted in the extract method.
 
-  The extract method the extracts this feature vector of the feature map.
-  */
-  TraxelsFeaturesIdentity(const std::string& feature_name);
-  /**
-  \brief Takes many feature names that should be extracted in the extract
-    method.
-  */
-  TraxelsFeaturesIdentity(const std::vector<std::string>& feature_names);
-  virtual ~TraxelsFeaturesIdentity() {};
-  virtual const std::string& name() const;
-  virtual void extract(
-    const ConstTraxelRefVector& traxelrefs,
-    FeatureMatrix& feature_matrix
-  ) const;
- protected:
-  static const std::string name_;
-  std::vector<std::string> feature_names_;
+    The extract method the extracts this feature vector of the feature map.
+    */
+    TraxelsFeaturesIdentity(const std::string& feature_name);
+    /**
+    \brief Takes many feature names that should be extracted in the extract
+      method.
+    */
+    TraxelsFeaturesIdentity(const std::vector<std::string>& feature_names);
+    virtual ~TraxelsFeaturesIdentity() {};
+    virtual const std::string& name() const;
+    virtual void extract(
+        const ConstTraxelRefVector& traxelrefs,
+        FeatureMatrix& feature_matrix
+    ) const;
+protected:
+    static const std::string name_;
+    std::vector<std::string> feature_names_;
 }; // class TraxelsFeaturesIdentity
 
 ////
@@ -327,19 +334,20 @@ The tracks in the following example are:
  n5 - n6 - n7 - n8
 \endcode
 */
-class TrackTraxels : public TraxelsOfInterest {
- public:
-  TrackTraxels(bool require_div_start=false, bool require_div_end=false);
-  virtual ~TrackTraxels() {};
-  virtual const std::string& name() const;
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const HypothesesGraph& graph
-  );
- protected:
-  bool require_div_start_;
-  bool require_div_end_;
-  static const std::string name_;
-  std::vector<ConstTraxelRefVector> ret_;
+class TrackTraxels : public TraxelsOfInterest
+{
+public:
+    TrackTraxels(bool require_div_start = false, bool require_div_end = false);
+    virtual ~TrackTraxels() {};
+    virtual const std::string& name() const;
+    virtual const std::vector<ConstTraxelRefVector>& operator()(
+        const HypothesesGraph& graph
+    );
+protected:
+    bool require_div_start_;
+    bool require_div_end_;
+    static const std::string name_;
+    std::vector<ConstTraxelRefVector> ret_;
 };
 
 ////
@@ -363,42 +371,43 @@ n1 - n0
 The numbers indicate their position in the return vector as well. The dividing
 cell is always in the 0th position.
 */
-class DivisionTraxels : public TraxelsOfInterest {
- public:
-  DivisionTraxels(size_t depth = 1) : depth_(depth) {};
-  virtual ~DivisionTraxels() {};
-  virtual const std::string& name() const;
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const HypothesesGraph& graph
-  );
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const HypothesesGraph& graph,
-    size_t depth
-  );
- protected:
-  const std::vector<ConstTraxelRefVector>& from_tracklet_graph(
-    const HypothesesGraph& graph,
-    size_t depth
-  );
-  const std::vector<ConstTraxelRefVector>& from_traxel_graph(
-    const HypothesesGraph& graph,
-    size_t depth
-  );
-  bool get_children_to_depth(
-    const HypothesesGraph::Node& node,
-    const HypothesesGraph& graph,
-    size_t depth,
-    ConstTraxelRefVector& traxelrefs
-  );
-  bool get_parents_to_depth(
-    const HypothesesGraph::Node& node,
-    const HypothesesGraph& graph,
-    size_t depth,
-    ConstTraxelRefVector& traxelrefs
-  );
-  static const std::string name_;
-  std::vector<ConstTraxelRefVector> ret_;
-  size_t depth_;
+class DivisionTraxels : public TraxelsOfInterest
+{
+public:
+    DivisionTraxels(size_t depth = 1) : depth_(depth) {};
+    virtual ~DivisionTraxels() {};
+    virtual const std::string& name() const;
+    virtual const std::vector<ConstTraxelRefVector>& operator()(
+        const HypothesesGraph& graph
+    );
+    virtual const std::vector<ConstTraxelRefVector>& operator()(
+        const HypothesesGraph& graph,
+        size_t depth
+    );
+protected:
+    const std::vector<ConstTraxelRefVector>& from_tracklet_graph(
+        const HypothesesGraph& graph,
+        size_t depth
+    );
+    const std::vector<ConstTraxelRefVector>& from_traxel_graph(
+        const HypothesesGraph& graph,
+        size_t depth
+    );
+    bool get_children_to_depth(
+        const HypothesesGraph::Node& node,
+        const HypothesesGraph& graph,
+        size_t depth,
+        ConstTraxelRefVector& traxelrefs
+    );
+    bool get_parents_to_depth(
+        const HypothesesGraph::Node& node,
+        const HypothesesGraph& graph,
+        size_t depth,
+        ConstTraxelRefVector& traxelrefs
+    );
+    static const std::string name_;
+    std::vector<ConstTraxelRefVector> ret_;
+    size_t depth_;
 };
 
 ////
@@ -407,25 +416,26 @@ class DivisionTraxels : public TraxelsOfInterest {
 /**
 \brief TODO
 */
-class AppearanceTraxels : public TraxelsOfInterest {
- public:
-  typedef boost::function<bool (const Traxel&)> FilterFunctionType;
-  enum AppearanceType {Appearance, Disappearance};
+class AppearanceTraxels : public TraxelsOfInterest
+{
+public:
+    typedef boost::function<bool (const Traxel&)> FilterFunctionType;
+    enum AppearanceType {Appearance, Disappearance};
 
-  AppearanceTraxels(
-    const AppearanceType appearance = AppearanceType::Appearance,
-    FilterFunctionType traxel_filter_function = NULL
-  );
-  virtual ~AppearanceTraxels() {};
-  virtual const std::string& name() const;
-  virtual const std::vector<ConstTraxelRefVector>& operator()(
-    const HypothesesGraph& graph
-  );
- protected:
-  static const std::string name_;
-  std::vector<ConstTraxelRefVector> ret_;
-  AppearanceType appearance_;
-  FilterFunctionType filter_function_;
+    AppearanceTraxels(
+        const AppearanceType appearance = AppearanceType::Appearance,
+        FilterFunctionType traxel_filter_function = NULL
+    );
+    virtual ~AppearanceTraxels() {};
+    virtual const std::string& name() const;
+    virtual const std::vector<ConstTraxelRefVector>& operator()(
+        const HypothesesGraph& graph
+    );
+protected:
+    static const std::string name_;
+    std::vector<ConstTraxelRefVector> ret_;
+    AppearanceType appearance_;
+    FilterFunctionType filter_function_;
 };
 
 ////
@@ -434,24 +444,25 @@ class AppearanceTraxels : public TraxelsOfInterest {
 /**
 \brief Composition of two TraxelsFeatureCalculator
 */
-class CompositionCalculator : public TraxelsFeatureCalculator {
- public:
-  CompositionCalculator(
-    boost::shared_ptr<TraxelsFeatureCalculator> first_calculator_ptr,
-    boost::shared_ptr<TraxelsFeatureCalculator> second_calculator_ptr
-  ) :
-    first_calculator_ptr_(first_calculator_ptr),
-    second_calculator_ptr_(second_calculator_ptr) {};
-  virtual ~CompositionCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
-  boost::shared_ptr<TraxelsFeatureCalculator> first_calculator_ptr_;
-  boost::shared_ptr<TraxelsFeatureCalculator> second_calculator_ptr_;
+class CompositionCalculator : public TraxelsFeatureCalculator
+{
+public:
+    CompositionCalculator(
+        boost::shared_ptr<TraxelsFeatureCalculator> first_calculator_ptr,
+        boost::shared_ptr<TraxelsFeatureCalculator> second_calculator_ptr
+    ) :
+        first_calculator_ptr_(first_calculator_ptr),
+        second_calculator_ptr_(second_calculator_ptr) {};
+    virtual ~CompositionCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
+    boost::shared_ptr<TraxelsFeatureCalculator> first_calculator_ptr_;
+    boost::shared_ptr<TraxelsFeatureCalculator> second_calculator_ptr_;
 };
 
 ////
@@ -461,37 +472,40 @@ class CompositionCalculator : public TraxelsFeatureCalculator {
 \brief templated version of the CompositionCalculator
 */
 template<typename FC1, typename FC2>
-class TCompositionCalculator : public TraxelsFeatureCalculator {
- public:
-  TCompositionCalculator() {};
-  virtual ~TCompositionCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
-  FC1 first_calculator_;
-  FC2 second_calculator_;
+class TCompositionCalculator : public TraxelsFeatureCalculator
+{
+public:
+    TCompositionCalculator() {};
+    virtual ~TCompositionCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
+    FC1 first_calculator_;
+    FC2 second_calculator_;
 };
 
 template<typename FC1, typename FC2>
 const std::string TCompositionCalculator<FC1, FC2>::name_ = "CompositionCalculator";
 
 template<typename FC1, typename FC2>
-const std::string& TCompositionCalculator<FC1, FC2>::name() const {
-  return name_;
+const std::string& TCompositionCalculator<FC1, FC2>::name() const
+{
+    return name_;
 }
 
 template<typename FC1, typename FC2>
 void TCompositionCalculator<FC1, FC2>::calculate(
-  const FeatureMatrix& feature_matrix,
-  FeatureMatrix& return_matrix
-) const {
-  FeatureMatrix temp;
-  first_calculator_.calculate(feature_matrix, temp);
-  second_calculator_.calculate(temp, return_matrix);
+    const FeatureMatrix& feature_matrix,
+    FeatureMatrix& return_matrix
+) const
+{
+    FeatureMatrix temp;
+    first_calculator_.calculate(feature_matrix, temp);
+    second_calculator_.calculate(temp, return_matrix);
 }
 
 ////
@@ -522,22 +536,23 @@ If there are fewer column vectors in the input matrix than the order of the
 feature calculator, this calculator returns a 1x1 matrix with a 0 in the (0,0)
 position.
 */
-class TraxelsFCFromFC : public TraxelsFeatureCalculator {
- public:
-  TraxelsFCFromFC(
-    boost::shared_ptr<FeatureCalculator> feature_calculator_ptr,
-    size_t order
-  ) : feature_calculator_ptr_(feature_calculator_ptr), order_(order) {};
-  virtual ~TraxelsFCFromFC() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_vector
-  ) const;
- protected:
-  boost::shared_ptr<FeatureCalculator> feature_calculator_ptr_;
-  size_t order_;
-  static const std::string name_;
+class TraxelsFCFromFC : public TraxelsFeatureCalculator
+{
+public:
+    TraxelsFCFromFC(
+        boost::shared_ptr<FeatureCalculator> feature_calculator_ptr,
+        size_t order
+    ) : feature_calculator_ptr_(feature_calculator_ptr), order_(order) {};
+    virtual ~TraxelsFCFromFC() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_vector
+    ) const;
+protected:
+    boost::shared_ptr<FeatureCalculator> feature_calculator_ptr_;
+    size_t order_;
+    static const std::string name_;
 };
 
 ////
@@ -554,100 +569,106 @@ class TraxelsFCFromFC : public TraxelsFeatureCalculator {
 - N=-1: The sum is taken over all elements of the matrix, returns a 1x1 matrix.
 */
 template<int N>
-class SumCalculator : public TraxelsFeatureCalculator {
- public:
-  SumCalculator() {};
-  virtual ~SumCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_vector
-  ) const;
- protected:
-  static const std::string name_;
+class SumCalculator : public TraxelsFeatureCalculator
+{
+public:
+    SumCalculator() {};
+    virtual ~SumCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_vector
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
 //// class DiffCalculator
 ////
-class DiffCalculator : public TraxelsFeatureCalculator {
- public:
-  DiffCalculator() {};
-  virtual ~DiffCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class DiffCalculator : public TraxelsFeatureCalculator
+{
+public:
+    DiffCalculator() {};
+    virtual ~DiffCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
 //// class CurveCalculator
 ////
-class CurveCalculator : public TraxelsFeatureCalculator {
- public:
-  CurveCalculator() {};
-  virtual ~CurveCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class CurveCalculator : public TraxelsFeatureCalculator
+{
+public:
+    CurveCalculator() {};
+    virtual ~CurveCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
 //// class MinCalculator
 ////
 template<int N>
-class MinCalculator : public TraxelsFeatureCalculator {
- public:
-  MinCalculator() {};
-  virtual ~MinCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class MinCalculator : public TraxelsFeatureCalculator
+{
+public:
+    MinCalculator() {};
+    virtual ~MinCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
 //// class MaxCalculator
 ////
 template<int N>
-class MaxCalculator : public TraxelsFeatureCalculator {
- public:
-  MaxCalculator() {};
-  virtual ~MaxCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class MaxCalculator : public TraxelsFeatureCalculator
+{
+public:
+    MaxCalculator() {};
+    virtual ~MaxCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
 //// class MeanCalculator
 ////
 template<int N>
-class MeanCalculator : public TraxelsFeatureCalculator {
- public:
-  MeanCalculator() {};
-  virtual ~MeanCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class MeanCalculator : public TraxelsFeatureCalculator
+{
+public:
+    MeanCalculator() {};
+    virtual ~MeanCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
@@ -656,50 +677,53 @@ class MeanCalculator : public TraxelsFeatureCalculator {
 /**
 \brief calculates the deviation of the column vectors to the mean column vector
 */
-class DeviationCalculator : public TraxelsFeatureCalculator {
- public:
-  DeviationCalculator() {};
-  virtual ~DeviationCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  MeanCalculator<0> mean_calculator_;
-  static const std::string name_;
+class DeviationCalculator : public TraxelsFeatureCalculator
+{
+public:
+    DeviationCalculator() {};
+    virtual ~DeviationCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    MeanCalculator<0> mean_calculator_;
+    static const std::string name_;
 };
 
 /**
 \brief the square of each element
 */
-class SquareCalculator : public TraxelsFeatureCalculator {
- public:
-  SquareCalculator() {};
-  virtual ~SquareCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class SquareCalculator : public TraxelsFeatureCalculator
+{
+public:
+    SquareCalculator() {};
+    virtual ~SquareCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 /**
 \brief the square root of each element
 */
-class SquareRootCalculator : public TraxelsFeatureCalculator {
- public:
-  SquareRootCalculator() {};
-  virtual ~SquareRootCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class SquareRootCalculator : public TraxelsFeatureCalculator
+{
+public:
+    SquareRootCalculator() {};
+    virtual ~SquareRootCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
@@ -714,55 +738,56 @@ class SquareRootCalculator : public TraxelsFeatureCalculator {
 - N=1 Calculates the squared norm of each row vector
 */
 template<int N>
-class SquaredNormCalculator : public TraxelsFeatureCalculator {
- public:
-  SquaredNormCalculator() {};
-  virtual ~SquaredNormCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class SquaredNormCalculator : public TraxelsFeatureCalculator
+{
+public:
+    SquaredNormCalculator() {};
+    virtual ~SquaredNormCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 /**
 \brief calculates the euclidean norm for each column vector
 */
-typedef TCompositionCalculator<
-  SquaredNormCalculator<0>,
-  SquareRootCalculator
-> EuclideanNormCalculator;
+typedef TCompositionCalculator <
+SquaredNormCalculator<0>,
+                      SquareRootCalculator
+                      > EuclideanNormCalculator;
 
 
 /**
 \brief calculates the variance for each row.
 */
-typedef TCompositionCalculator<
-  TCompositionCalculator<
-    DeviationCalculator,
-    SquareCalculator
-  >,
-  MeanCalculator<0>
+typedef TCompositionCalculator <
+TCompositionCalculator <
+DeviationCalculator,
+SquareCalculator
+>,
+MeanCalculator<0>
 > VarianceCalculator;
 
 /**
 \brief calculates the squared norm of the difference of neighbouring column
   vectors
 */
-typedef TCompositionCalculator<
-  DiffCalculator,
-  SquaredNormCalculator<0>
+typedef TCompositionCalculator <
+DiffCalculator,
+SquaredNormCalculator<0>
 > SquaredDiffCalculator;
 
 /**
 \brief calculates the squared norm of the difference of neighbouring column
   vectors
 */
-typedef TCompositionCalculator<
-  CurveCalculator,
-  SquaredNormCalculator<0>
+typedef TCompositionCalculator <
+CurveCalculator,
+SquaredNormCalculator<0>
 > SquaredCurveCalculator;
 
 ////
@@ -777,25 +802,26 @@ Returns \f$D = \langle \vec{v}^2 \rangle - {\langle \vec{v} \rangle}^2\f$, where
 therefore variance of the mean move distance if the column vectors are the cell
 positions.
 */
-typedef TCompositionCalculator<
-  SquaredDiffCalculator,
-  MeanCalculator<0>
+typedef TCompositionCalculator <
+SquaredDiffCalculator,
+MeanCalculator<0>
 > DiffusionCalculator;
 
 ////
 //// class DotProductCalculator
 ////
-class DotProductCalculator : public TraxelsFeatureCalculator {
- public:
-  DotProductCalculator() {};
-  virtual ~DotProductCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class DotProductCalculator : public TraxelsFeatureCalculator
+{
+public:
+    DotProductCalculator() {};
+    virtual ~DotProductCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
@@ -822,41 +848,43 @@ The 2-norm is taken as the norm.
        \
 \endcode
 */
-class AngleCosineCalculator : public TraxelsFeatureCalculator {
- public:
-  AngleCosineCalculator() {};
-  virtual ~AngleCosineCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  DiffCalculator diff_calculator_;
-  EuclideanNormCalculator norm_calculator_;
-  DotProductCalculator dot_product_calculator_;
-  static const std::string name_;
+class AngleCosineCalculator : public TraxelsFeatureCalculator
+{
+public:
+    AngleCosineCalculator() {};
+    virtual ~AngleCosineCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    DiffCalculator diff_calculator_;
+    EuclideanNormCalculator norm_calculator_;
+    DotProductCalculator dot_product_calculator_;
+    static const std::string name_;
 };
 
 ////
 //// class ChildParentDiffCalculator
 ////
-class ChildParentDiffCalculator : public TraxelsFeatureCalculator {
- public:
-  ChildParentDiffCalculator() {};
-  virtual ~ChildParentDiffCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix,
-    size_t depth
-  ) const;
- protected:
-  static const std::string name_;
+class ChildParentDiffCalculator : public TraxelsFeatureCalculator
+{
+public:
+    ChildParentDiffCalculator() {};
+    virtual ~ChildParentDiffCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix,
+        size_t depth
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
@@ -876,22 +904,23 @@ t1--t0
        t4--t5
 \endcode
 */
-class ChildDeceleration : public TraxelsFeatureCalculator {
- public:
-  ChildDeceleration() {};
-  virtual ~ChildDeceleration() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix,
-    size_t depth
-  ) const;
- protected:
-  static const std::string name_;
+class ChildDeceleration : public TraxelsFeatureCalculator
+{
+public:
+    ChildDeceleration() {};
+    virtual ~ChildDeceleration() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix,
+        size_t depth
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
@@ -905,17 +934,18 @@ class ChildDeceleration : public TraxelsFeatureCalculator {
   matrix is returned
 */
 template<bool INV>
-class CovarianceCalculator : public TraxelsFeatureCalculator {
- public:
-  CovarianceCalculator() {};
-  virtual ~CovarianceCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
- protected:
-  static const std::string name_;
+class CovarianceCalculator : public TraxelsFeatureCalculator
+{
+public:
+    CovarianceCalculator() {};
+    virtual ~CovarianceCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    static const std::string name_;
 };
 
 ////
@@ -946,24 +976,25 @@ With no distance matrix given:
 Where \f$\vec{\mu}\f$ denotes the mean vector of all column vectors.
 \f$\Sigma^{-1}\f$ is the inverse of the covariance matrix of the row vectors.
 */
-class SquaredMahalanobisCalculator : public TraxelsFeatureCalculator {
- public:
-  SquaredMahalanobisCalculator() {};
-  virtual ~SquaredMahalanobisCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix,
-    const FeatureMatrix& inv_covariance_matrix
-  ) const;
- protected:
-  DeviationCalculator deviation_calculator_;
-  CovarianceCalculator<true> inv_covariance_calculator_;
-  static const std::string name_;
+class SquaredMahalanobisCalculator : public TraxelsFeatureCalculator
+{
+public:
+    SquaredMahalanobisCalculator() {};
+    virtual ~SquaredMahalanobisCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix,
+        const FeatureMatrix& inv_covariance_matrix
+    ) const;
+protected:
+    DeviationCalculator deviation_calculator_;
+    CovarianceCalculator<true> inv_covariance_calculator_;
+    static const std::string name_;
 };
 
 ////
@@ -984,85 +1015,89 @@ to the count of column vectors in the matrix.
 Definition of outlier:
 \f[\sigma < (\vec{x}-\vec{\mu})^T \Sigma^{-1} (\vec{x}-\vec{\mu})\f]
 */
-class MVNOutlierCalculator : public TraxelsFeatureCalculator {
- public:
-  MVNOutlierCalculator() {};
-  virtual ~MVNOutlierCalculator() {};
-  virtual const std::string& name() const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix,
-    const FeatureScalar& sigma_threshold
-  ) const;
- protected:
-  SquaredMahalanobisCalculator mahalanobis_calculator_;
-  static const std::string name_;
+class MVNOutlierCalculator : public TraxelsFeatureCalculator
+{
+public:
+    MVNOutlierCalculator() {};
+    virtual ~MVNOutlierCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix,
+        const FeatureScalar& sigma_threshold
+    ) const;
+protected:
+    SquaredMahalanobisCalculator mahalanobis_calculator_;
+    static const std::string name_;
 };
 
 ////
 //// class SVMOutlierCalculator
 ////
-class SVMOutlierCalculator : public TraxelsFeatureCalculator {
- public:
-  typedef dlib::matrix<FeatureScalar, 0, 1> SampleType;
-  typedef dlib::radial_basis_kernel<SampleType> KernelType;
-  typedef dlib::decision_function<KernelType> DecisionFunctionType;
-  typedef dlib::svm_one_class_trainer<KernelType> OneClassSVMTrainerType;
+class SVMOutlierCalculator : public TraxelsFeatureCalculator
+{
+public:
+    typedef dlib::matrix<FeatureScalar, 0, 1> SampleType;
+    typedef dlib::radial_basis_kernel<SampleType> KernelType;
+    typedef dlib::decision_function<KernelType> DecisionFunctionType;
+    typedef dlib::svm_one_class_trainer<KernelType> OneClassSVMTrainerType;
 
-  SVMOutlierCalculator() : is_trained_(false) {};
-  virtual ~SVMOutlierCalculator() {};
-  virtual const std::string& name() const;
-  void train(
-    const FeatureMatrix& feature_matrix,
-    const FeatureScalar& kernel_width = 1.0
-  );
-  virtual void calculate(
-    const FeatureMatrix& feature_matrix,
-    FeatureMatrix& return_matrix
-  ) const;
-  bool is_trained() const;
- protected:
-  DecisionFunctionType decision_function_;
-  bool is_trained_;
-  static const std::string name_;
- private:
-  friend class boost::serialization::access;
-  template<class Archive>
-  void save(Archive& archive, const unsigned int /*version*/) const;
-  template<class Archive>
-  void load(Archive& archive, const unsigned int /*version*/);
-  BOOST_SERIALIZATION_SPLIT_MEMBER()
+    SVMOutlierCalculator() : is_trained_(false) {};
+    virtual ~SVMOutlierCalculator() {};
+    virtual const std::string& name() const;
+    void train(
+        const FeatureMatrix& feature_matrix,
+        const FeatureScalar& kernel_width = 1.0
+    );
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+    bool is_trained() const;
+protected:
+    DecisionFunctionType decision_function_;
+    bool is_trained_;
+    static const std::string name_;
+private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void save(Archive& archive, const unsigned int /*version*/) const;
+    template<class Archive>
+    void load(Archive& archive, const unsigned int /*version*/);
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
 };
 
 template<class Archive>
 void SVMOutlierCalculator::save(
-  Archive& archive,
-  const unsigned int /*version*/
-) const {
-  std::stringstream sstream;
-  dlib::serialize(decision_function_, sstream);
-  std::string str = sstream.str();
+    Archive& archive,
+    const unsigned int /*version*/
+) const
+{
+    std::stringstream sstream;
+    dlib::serialize(decision_function_, sstream);
+    std::string str = sstream.str();
 
-  archive & is_trained_;
-  archive & str;
+    archive & is_trained_;
+    archive & str;
 };
 
 template<class Archive>
 void SVMOutlierCalculator::load(
-  Archive& archive,
-  const unsigned int /*version*/
-) {
-  std::string str;
+    Archive& archive,
+    const unsigned int /*version*/
+)
+{
+    std::string str;
 
-  archive & is_trained_;
-  archive & str;
+    archive & is_trained_;
+    archive & str;
 
-  std::stringstream sstream(str);
-  dlib::deserialize(decision_function_, sstream);
+    std::stringstream sstream(str);
+    dlib::deserialize(decision_function_, sstream);
 }
 
 } // end namespace features

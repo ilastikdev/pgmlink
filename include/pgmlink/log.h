@@ -159,7 +159,8 @@ inline FILE*& pgmlink::Output2FILE::getRedirect()
 inline void pgmlink::Output2FILE::output(const std::string& msg)
 {
     FILE* pStream = getRedirect();
-    if (!pStream) {
+    if (!pStream)
+    {
         return;
     }
     fprintf(pStream, "%s", msg.c_str());
@@ -260,7 +261,8 @@ std::ostringstream& pgmlink::Log<T>::get(LogLevel level)
 {
     // check for valid logging level
     LogLevel ll = level;
-    if ( ll <= logNO_LOGGING || ll > getReportingLevel() ) {
+    if ( ll <= logNO_LOGGING || ll > getReportingLevel() )
+    {
         pgmlink::Log<T>().get(pgmlink::logWARNING) << "Log<T>::get(): Invalid logging level '" << ll << "'. Using INFO level as default.";
         ll = logINFO;
     }
@@ -299,7 +301,8 @@ pgmlink::LogLevel& pgmlink::Log<T>::getReportingLevel()
 template <typename T>
 std::string pgmlink::Log<T>::toString(LogLevel level)
 {
-    if (level > getReportingLevel() || level < logNO_LOGGING) {
+    if (level > getReportingLevel() || level < logNO_LOGGING)
+    {
         pgmlink::Log<T>().get(pgmlink::logWARNING) << "Log<T>::toString(): Unknown logging level '" << level << "'. Using INFO level as default.";
         return "INFO";
     }
@@ -315,23 +318,41 @@ template <typename T>
 pgmlink::LogLevel pgmlink::Log<T>::fromString(const std::string& level)
 {
     if (level == "DEBUG4")
+    {
         return pgmlink::logDEBUG4;
+    }
     if (level == "DEBUG3")
+    {
         return pgmlink::logDEBUG3;
+    }
     if (level == "DEBUG2")
+    {
         return pgmlink::logDEBUG2;
+    }
     if (level == "DEBUG1")
+    {
         return pgmlink::logDEBUG1;
+    }
     if (level == "DEBUG")
+    {
         return pgmlink::logDEBUG;
+    }
     if (level == "INFO")
+    {
         return pgmlink::logINFO;
+    }
     if (level == "WARNING")
+    {
         return pgmlink::logWARNING;
+    }
     if (level == "ERROR")
+    {
         return pgmlink::logERROR;
+    }
     if (level == "NO_LOGGING")
+    {
         return pgmlink::logNO_LOGGING;
+    }
 
     // else
     pgmlink::Log<T>().get(pgmlink::logWARNING) << "Log<T>::fromString(): Unknown logging level '" << level << "'. Using INFO level as default.";
@@ -400,11 +421,12 @@ class FILELOG_DECLSPEC FILELog : public Log<Output2FILE> {};
 // We have to do the following yaketiyak, because the standard <ctime> is not thread safe.
 // (It is using static internal buffers in some functions like ctime() .)
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-    } // Temporarily close pgmlink namespace to include the external Windows headers.
+} // Temporarily close pgmlink namespace to include the external Windows headers.
 #include <vigra/windows.h>
 
 // Reopen the pgmlink namespace.
-namespace pgmlink {
+namespace pgmlink
+{
 inline std::string nowTime()
 {
     const int MAX_LEN = 200;
@@ -418,7 +440,8 @@ inline std::string nowTime()
                 "HH':'mm':'ss",         // format
                 buffer,                 // ptr to output buffer
                 MAX_LEN)                // size of output buffer
-            == 0) {
+            == 0)
+    {
         return "Error in nowTime()";
     }
 
@@ -435,25 +458,29 @@ inline std::string nowTime()
 #include <sys/time.h>
 
 // Reopen namespace pgmlink.
-namespace pgmlink {
+namespace pgmlink
+{
 inline std::string nowTime()
 {
     // get time
     time_t t;
     t = time(NULL);
-    if ( t == static_cast<std::time_t>(-1) ) {
+    if ( t == static_cast<std::time_t>(-1) )
+    {
         return "Error_in_nowTime().time";
     }
 
     // convert time to local time
     tm r;
-    if (localtime_r(&t, &r) == NULL) {
+    if (localtime_r(&t, &r) == NULL)
+    {
         return "Error_in_nowTime().localtime_r";
     }
 
     // convert localtime to a string
     char buffer[101];
-    if (strftime(buffer, sizeof(buffer), "%X", &r) == 0) {
+    if (strftime(buffer, sizeof(buffer), "%X", &r) == 0)
+    {
         return "Error_in_nowTime().strftime";
     }
 

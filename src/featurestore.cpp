@@ -4,7 +4,8 @@
 
 #include <iostream>
 
-namespace pgmlink {
+namespace pgmlink
+{
 
 FeatureStore::FeatureStore()
 {
@@ -13,17 +14,17 @@ FeatureStore::FeatureStore()
 
 FeatureMap &FeatureStore::get_traxel_features(int timestep, unsigned int id)
 {
-    return traxel_feature_map_[std::vector<std::pair<int,unsigned int>>(1,std::make_pair(timestep, id))];
+    return traxel_feature_map_[std::vector<std::pair<int, unsigned int>>(1, std::make_pair(timestep, id))];
 }
 
 FeatureMap &FeatureStore::get_traxel_features(const Traxel &traxel)
 {
-    return traxel_feature_map_[std::vector<std::pair<int,unsigned int>>(1,std::make_pair(traxel.Timestep, traxel.Id))];
+    return traxel_feature_map_[std::vector<std::pair<int, unsigned int>>(1, std::make_pair(traxel.Timestep, traxel.Id))];
 }
 
 FeatureMap &FeatureStore::get_traxel_features(const Traxel &traxel_a, const Traxel &traxel_b)
 {
-    std::vector<std::pair<int,unsigned int>> ret;
+    std::vector<std::pair<int, unsigned int>> ret;
     ret.push_back(std::make_pair(traxel_a.Timestep, traxel_a.Id));
     ret.push_back(std::make_pair(traxel_b.Timestep, traxel_b.Id));
     return traxel_feature_map_[ret];
@@ -31,7 +32,7 @@ FeatureMap &FeatureStore::get_traxel_features(const Traxel &traxel_a, const Trax
 
 FeatureMap &FeatureStore::get_traxel_features(const Traxel &traxel_a, const Traxel &traxel_b, const Traxel &traxel_c)
 {
-    std::vector<std::pair<int,unsigned int>> ret;
+    std::vector<std::pair<int, unsigned int>> ret;
     ret.push_back(std::make_pair(traxel_a.Timestep, traxel_a.Id));
     ret.push_back(std::make_pair(traxel_b.Timestep, traxel_b.Id));
     ret.push_back(std::make_pair(traxel_c.Timestep, traxel_c.Id));

@@ -17,9 +17,13 @@ void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& co
     // here we separate the outgoing constraints with division node from those without,
     // such that the template specializations work
     if(constraint.division_node >= 0)
+    {
         outgoing_constraints_.push_back(constraint);
+    }
     else
+    {
         outgoing_no_div_constraints_.push_back(constraint);
+    }
 }
 
 template<>
@@ -32,14 +36,14 @@ void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& c
 // specialization for IncomingConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::IncomingConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::IncomingConstraint>& constraints
-)
+     ConstraintPoolCplexOptimizer,
+     IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::IncomingConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::IncomingConstraint>& constraints
+     )
 {
     LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for Incoming";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
@@ -48,7 +52,9 @@ ConstraintPool::IncomingConstraint>
 
         // nothing to do if no incoming
         if(constraint.transition_nodes.size() == 0)
+        {
             continue;
+        }
 
         // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
         std::vector<size_t> cplex_idxs;
@@ -83,14 +89,14 @@ ConstraintPool::IncomingConstraint>
 // specialization for OutgoingConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::OutgoingConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::OutgoingConstraint>& constraints
-)
+     ConstraintPoolCplexOptimizer,
+     OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::OutgoingConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+     )
 {
     LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for Outgoing";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
@@ -99,7 +105,9 @@ ConstraintPool::OutgoingConstraint>
 
         // nothing to do if no outgoing
         if(constraint.transition_nodes.size() == 0)
+        {
             continue;
+        }
 
         std::vector<size_t> cplex_idxs, cplex_idxs2;
         std::vector<int> coeffs, coeffs2;
@@ -124,7 +132,7 @@ ConstraintPool::OutgoingConstraint>
                     constraint_name << "outgoing: 0 <= App_i[" << a_state << "] + Y_ij[" << t_state << "] <= 1; ";
                     constraint_name << "g.id(n) = " << *outgoing_it << ", g.id(a) = " << constraint.appearance_node;
                     optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
-                            0, 1, constraint_name.str().c_str());
+                                            0, 1, constraint_name.str().c_str());
                     LOG(logDEBUG3) << constraint_name.str();
                 }
             }
@@ -174,7 +182,7 @@ ConstraintPool::OutgoingConstraint>
             constraint_name << ") = D_i + App_i added for nodes: App_i=" << constraint.appearance_node
                             << ", D_i = " << constraint.division_node;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                    constraint_name.str().c_str());
+                                    constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
 
@@ -194,9 +202,9 @@ ConstraintPool::OutgoingConstraint>
             constraint_name.str(std::string()); // clear the name
             constraint_name << "couple division and detection: ";
             constraint_name << " D_i=1 => App_i =1 added for n = "
-                    << constraint.appearance_node << ", d = " << constraint.division_node;
+                            << constraint.appearance_node << ", d = " << constraint.division_node;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1, 0,
-                    constraint_name.str().c_str());
+                                    constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
 
             // couple divsion and transition: D_1 = 1 => sum_k(Y_ik) = 2
@@ -221,11 +229,11 @@ ConstraintPool::OutgoingConstraint>
                     constraint_name.str(std::string()); // clear the name
                     constraint_name << "couple division and transition: ";
                     constraint_name << " D_i=1 => Y_i[nu]=0 added for "
-                            << "d = " << constraint.division_node << ", y = " << *outgoing_it << ", nu = "
-                            << state;
+                                    << "d = " << constraint.division_node << ", y = " << *outgoing_it << ", nu = "
+                                    << state;
 
                     optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
-                            0, 1, constraint_name.str().c_str());
+                                            0, 1, constraint_name.str().c_str());
                     LOG(logDEBUG3) << constraint_name.str();
 
                 }
@@ -238,9 +246,9 @@ ConstraintPool::OutgoingConstraint>
             constraint_name.str(std::string()); // clear the name
             constraint_name << "couple division and transitions: ";
             constraint_name  << " D_i = 1 => sum_k(Y_ik) = 2 added for "
-                    << "d = " << constraint.division_node;
+                             << "d = " << constraint.division_node;
             optimizer.addConstraint(cplex_idxs2.begin(), cplex_idxs2.end(), coeffs2.begin(),
-                    -int(model.numberOfLabels(constraint.appearance_node)-1), 0, constraint_name.str().c_str());
+                                    -int(model.numberOfLabels(constraint.appearance_node) - 1), 0, constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
     }
@@ -248,35 +256,35 @@ ConstraintPool::OutgoingConstraint>
 
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::OutgoingConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::OutgoingConstraint>& constraints
-)
+     ConstraintPoolCplexOptimizer,
+     OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::OutgoingConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+     )
 {
     // for the CPLEX specialization we do the same for with and without divisions
     add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-                                    ConstraintPoolCplexOptimizer,
-                                    OutgoingConstraintFunction<ValueType,IndexType,LabelType>,
-                                    OutgoingConstraint>
-            (model, optimizer, constraints);
+                                   ConstraintPoolCplexOptimizer,
+                                   OutgoingConstraintFunction<ValueType, IndexType, LabelType>,
+                                   OutgoingConstraint>
+                                   (model, optimizer, constraints);
 }
 
 //------------------------------------------------------------------------
 // specialization for DetectionConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::DetectionConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::DetectionConstraint>& constraints
-)
+     ConstraintPoolCplexOptimizer,
+     DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::DetectionConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::DetectionConstraint>& constraints
+     )
 {
     LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for Detection";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
@@ -307,10 +315,10 @@ ConstraintPool::DetectionConstraint>
             constraint_name.str(std::string()); // clear the name
             constraint_name << "disappearance/appearance coupling: ";
             constraint_name << " A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1 added for nodes "
-                    << constraint.appearance_node << ", " << constraint.disappearance_node;
+                            << constraint.appearance_node << ", " << constraint.disappearance_node;
             constraint_name << " for state: " << state;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
-                    0, constraint_name.str().c_str());
+                                    0, constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
 
@@ -336,11 +344,12 @@ ConstraintPool::DetectionConstraint>
                             << constraint.appearance_node << ", " << constraint.disappearance_node;
             constraint_name << " for state: " << state;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
-                    0, constraint_name.str().c_str());
+                                    0, constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
 
-        if (!with_misdetections_) {
+        if (!with_misdetections_)
+        {
             cplex_idxs.clear();
             coeffs.clear();
 
@@ -359,11 +368,12 @@ ConstraintPool::DetectionConstraint>
             constraint_name << "disappearance/appearance coupling: ";
             constraint_name << " A_i[0] + V_i[0] = 0 added for nodes " << constraint.appearance_node << ", " << constraint.disappearance_node;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                    constraint_name.str().c_str());
+                                    constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
 
-        if (!with_disappearance_) {
+        if (!with_disappearance_)
+        {
             cplex_idxs.clear();
             coeffs.clear();
             cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
@@ -373,13 +383,14 @@ ConstraintPool::DetectionConstraint>
             constraint_name.str(std::string()); // clear the name
             constraint_name << "disappearance/appearance coupling: ";
             constraint_name << " V_i[0] = 0 added for n = "
-                    << constraint.disappearance_node;
+                            << constraint.disappearance_node;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
-                    0, constraint_name.str().c_str());
+                                    0, constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
 
-        if (!with_appearance_) {
+        if (!with_appearance_)
+        {
             cplex_idxs.clear();
             coeffs.clear();
             cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
@@ -389,9 +400,9 @@ ConstraintPool::DetectionConstraint>
             constraint_name.str(std::string()); // clear the name
             constraint_name << "disappearance/appearance coupling: ";
             constraint_name << " A_i[0] = 0 added for n = "
-                    << constraint.appearance_node;
+                            << constraint.appearance_node;
             optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
-                    0, constraint_name.str().c_str());
+                                    0, constraint_name.str().c_str());
             LOG(logDEBUG3) << constraint_name.str();
         }
     }
@@ -413,7 +424,9 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 
     // if division node id < 0, don't add it and use OutgoingNoDivConstraintFunction
     if(constraint.division_node >= 0)
+    {
         indices.push_back(constraint.division_node);
+    }
 
     indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
 }

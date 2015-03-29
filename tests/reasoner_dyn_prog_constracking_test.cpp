@@ -28,7 +28,8 @@
 //using namespace std;
 //using namespace boost;
 
-BOOST_AUTO_TEST_CASE( dummy ) {
+BOOST_AUTO_TEST_CASE( dummy )
+{
     return;
 }
 
@@ -1950,7 +1951,7 @@ BOOST_AUTO_TEST_CASE( dummy ) {
 //      para = std::vector<double>(5,1.);
 //      para[i] = 10;
 //      cout << para[0] << "  " << para[1]  << "  " << para[2]  << "  " <<para[3]<< "  " <<para[4] << std::endl;
-                   
+
 //      events = tracking.track(0,
 //                              0.5,
 //                              true,

@@ -19,7 +19,7 @@ namespace pgm
 //typedef OpengmModelDeprecated::ogmGraphicalModel ConstraintPoolOpengmModel;
 //typedef opengm::LPCplex<ConstraintPoolConstraintPoolOpengmModel,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
 typedef PertGmType ConstraintPoolOpengmModel;
-typedef opengm::LPCplex<pgmlink::PertGmType,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
+typedef opengm::LPCplex<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
 
 //------------------------------------------------------------------------
 // ConstraintPool
@@ -70,7 +70,9 @@ public:
     void force_softconstraint(bool enable)
     {
         if(enable)
+        {
             LOG(logWARNING) << "[ConstraintPool]: Forcing soft constraint not yet implemented";
+        }
         force_softconstraint_ = enable;
     }
 
@@ -98,7 +100,7 @@ public:
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int);
-        IncomingConstraint(){}
+        IncomingConstraint() {}
     };
 
     class OutgoingConstraint
@@ -203,10 +205,10 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 {
     // TODO: handle force_softconstraint_
 
-    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
-    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
-    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
-    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType,IndexType,LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
+    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType, IndexType, LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
+    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
+    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
+    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
 }
 
 template<class GM, class INF>
@@ -220,7 +222,9 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     for(auto constraint : incoming_constraints_)
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+        {
             continue;
+        }
 
         size_t disappearance_node = index_mapping[constraint.disappearance_node];
         std::vector<size_t> transition_nodes;
@@ -234,7 +238,9 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     for(auto constraint : outgoing_constraints_)
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+        {
             continue;
+        }
 
         size_t appearance_node = index_mapping[constraint.appearance_node];
         size_t division_node = index_mapping[constraint.division_node];
@@ -249,7 +255,9 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     for(auto constraint : outgoing_no_div_constraints_)
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+        {
             continue;
+        }
 
         size_t appearance_node = index_mapping[constraint.appearance_node];
         std::vector<size_t> transition_nodes;
@@ -263,17 +271,19 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     for(auto constraint : detection_constraints_)
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+        {
             continue;
+        }
 
         size_t appearance_node = index_mapping[constraint.appearance_node];
         size_t disappearance_node = index_mapping[constraint.disappearance_node];
         remapped_detection_constraints.push_back(DetectionConstraint(disappearance_node, appearance_node));
     }
 
-    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType,IndexType,LabelType>, IncomingConstraint>(model, inf, remapped_incoming_constraints);
-    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_constraints);
-    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType,IndexType,LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
-    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType,IndexType,LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
+    add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType, IndexType, LabelType>, IncomingConstraint>(model, inf, remapped_incoming_constraints);
+    add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_constraints);
+    add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
+    add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
@@ -287,7 +297,9 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
         std::vector<IndexType> indices;
         constraint_indices(indices, constraint);
         if(indices.size() < 2)
+        {
             continue;
+        }
 
         std::vector<IndexType> shape;
         for(std::vector<IndexType>::iterator idx = indices.begin(); idx != indices.end(); ++idx)
@@ -313,51 +325,51 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
 // specialization for IncomingConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::IncomingConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::IncomingConstraint>& constraints
-);
+     ConstraintPoolCplexOptimizer,
+     IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::IncomingConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::IncomingConstraint>& constraints
+     );
 
 //------------------------------------------------------------------------
 // specialization for OutgoingConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::OutgoingConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::OutgoingConstraint>& constraints
-);
+     ConstraintPoolCplexOptimizer,
+     OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::OutgoingConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+     );
 
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::OutgoingConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::OutgoingConstraint>& constraints
-);
+     ConstraintPoolCplexOptimizer,
+     OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::OutgoingConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+     );
 
 //------------------------------------------------------------------------
 // specialization for DetectionConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-ConstraintPoolCplexOptimizer,
-DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-ConstraintPool::DetectionConstraint>
-(
-        ConstraintPoolOpengmModel& model,
-        ConstraintPoolCplexOptimizer& optimizer,
-        const std::vector<ConstraintPool::DetectionConstraint>& constraints
-);
+     ConstraintPoolCplexOptimizer,
+     DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::DetectionConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::DetectionConstraint>& constraints
+     );
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>

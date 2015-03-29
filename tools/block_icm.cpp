@@ -21,9 +21,13 @@ std::vector<size_t> map_factor_indices(std::map<size_t, size_t>& index_mapping, 
     for(size_t i = 0; i < model[factor_id].numberOfVariables(); i++)
     {
         if(index_mapping.find(model[factor_id].variableIndex(i)) == index_mapping.end())
+        {
             return std::vector<size_t>();
+        }
         else
+        {
             new_indices.push_back(index_mapping[model[factor_id].variableIndex(i)]);
+        }
     }
 
     return new_indices;
@@ -49,7 +53,8 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
         {
             pgmlink::pgm::OpengmModelDeprecated::FunctionIdentifier sub_id;
 
-            switch(model[factor_id].functionType()) {
+            switch(model[factor_id].functionType())
+            {
                 case 0:
                     sub_id = submodel.addFunction(model[factor_id].function<0>());
                     break;
@@ -85,7 +90,7 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
         cp.add_constraints_to_problem(submodel, inf, index_mapping);
 
         // set a starting point for the optimizer, based on prior solutions to these variables
-        std::vector<size_t> starting_point(nodes.size(),0);
+        std::vector<size_t> starting_point(nodes.size(), 0);
         for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
         {
             starting_point[index_mapping[*node_it]] = solution[*node_it];
@@ -95,14 +100,16 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
         // infer
         opengm::InferenceTermination status = inf.infer();
 
-        if (status != opengm::NORMAL) {
+        if (status != opengm::NORMAL)
+        {
             throw std::runtime_error("CPLEX optimizer terminated abnormally");
         }
 
         // extract and print solution
         status = inf.arg(subsolution);
 
-        if (status != opengm::NORMAL) {
+        if (status != opengm::NORMAL)
+        {
             throw std::runtime_error("Could not extract solution from CPLEX");
         }
     }
@@ -112,7 +119,7 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
         cp.add_constraints_to_problem(submodel, inf, index_mapping);
 
         // set a starting point for the optimizer, based on prior solutions to these variables
-        std::vector<size_t> starting_point(nodes.size(),0);
+        std::vector<size_t> starting_point(nodes.size(), 0);
         for(auto node_it = nodes.begin(); node_it != nodes.end(); ++node_it)
         {
             starting_point[index_mapping[*node_it]] = solution[*node_it];
@@ -122,14 +129,16 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
         // infer
         opengm::InferenceTermination status = inf.infer();
 
-        if (status != opengm::NORMAL) {
+        if (status != opengm::NORMAL)
+        {
             throw std::runtime_error("CPLEX optimizer terminated abnormally");
         }
 
         // extract and print solution
         status = inf.arg(subsolution);
 
-        if (status != opengm::NORMAL) {
+        if (status != opengm::NORMAL)
+        {
             throw std::runtime_error("Could not extract solution from CPLEX");
         }
     }
@@ -154,7 +163,9 @@ int main(int argc, char** argv)
 
     double big_m = 10000000.0;
     if(argc == 6)
+    {
         big_m = atof(argv[5]);
+    }
 
     // load model and constraints from disk
     GraphicalModel model;
@@ -224,7 +235,9 @@ int main(int argc, char** argv)
                 }
             }
             else
+            {
                 differences[*node_it] = 0;
+            }
         }
 
         // map solution back

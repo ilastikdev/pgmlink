@@ -24,19 +24,19 @@ BOOST_AUTO_TEST_CASE(IncomingFunctionTest)
 
     IncomingConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end());
     constraint_func.set_forbidden_energy(200.0);
-    std::vector<size_t> labeling = {1,2,3};
+    std::vector<size_t> labeling = {1, 2, 3};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,2,1};
+    labeling = {1, 2, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
-    labeling = {1,0,1};
+    labeling = {1, 0, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,1,2};
+    labeling = {1, 1, 2};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,1,0};
+    labeling = {1, 1, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 }
 
@@ -47,25 +47,25 @@ BOOST_AUTO_TEST_CASE(OutgoingFunctionTest)
 
     OutgoingConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end());
     constraint_func.set_forbidden_energy(200.0);
-    std::vector<size_t> labeling = {3,0,2,1};
+    std::vector<size_t> labeling = {3, 0, 2, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,0,2,1};
+    labeling = {1, 0, 2, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
-    labeling = {1,1,1,1};
+    labeling = {1, 1, 1, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,1,2,0};
+    labeling = {1, 1, 2, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {2,1,1,2}; // division not allowed when A > 1!
+    labeling = {2, 1, 1, 2}; // division not allowed when A > 1!
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
     // test parameter effect
     constraint_func.set_with_divisions(false);
 
-    labeling = {1,1,1,1};
+    labeling = {1, 1, 1, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 }
 
@@ -76,52 +76,52 @@ BOOST_AUTO_TEST_CASE(DetectionFunctionTest)
 
     DetectionConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end());
     constraint_func.set_forbidden_energy(200.0);
-    std::vector<size_t> labeling = {1,1};
+    std::vector<size_t> labeling = {1, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,2};
+    labeling = {1, 2};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
-    labeling = {1,0};
+    labeling = {1, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {0,2};
+    labeling = {0, 2};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {2,1};
+    labeling = {2, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
-    labeling = {0,0};
+    labeling = {0, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
     // test the parameter effect
     constraint_func.set_with_appearance(false);
-    labeling = {0,2};
+    labeling = {0, 2};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
-    labeling = {1,0};
+    labeling = {1, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
     constraint_func.set_with_appearance(true);
     constraint_func.set_with_disappearance(false);
-    labeling = {0,2};
+    labeling = {0, 2};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 
-    labeling = {1,0};
+    labeling = {1, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
     constraint_func.set_with_disappearance(true);
     constraint_func.set_with_misdetections(false);
-    labeling = {0,0};
+    labeling = {0, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 200.0);
 
-    labeling = {1,0};
+    labeling = {1, 0};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
 }
 
 BOOST_AUTO_TEST_CASE(ConstraintPool_Size_Test)
 {
-    std::vector<size_t> dummy_vars = {1,2,3};
+    std::vector<size_t> dummy_vars = {1, 2, 3};
 
     ConstraintPool cp;
     cp.add_constraint(ConstraintPool::IncomingConstraint(dummy_vars, 4));
@@ -130,14 +130,14 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Size_Test)
 
     BOOST_CHECK_EQUAL(cp.get_num_constraints(), 3);
 
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(1,2, dummy_vars));
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(1,2, dummy_vars));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(1, 2, dummy_vars));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(1, 2, dummy_vars));
 
     BOOST_CHECK_EQUAL(cp.get_num_constraints(), 5);
 
-    cp.add_constraint(ConstraintPool::DetectionConstraint(1,2));
-    cp.add_constraint(ConstraintPool::DetectionConstraint(1,3));
-    cp.add_constraint(ConstraintPool::DetectionConstraint(8,2));
+    cp.add_constraint(ConstraintPool::DetectionConstraint(1, 2));
+    cp.add_constraint(ConstraintPool::DetectionConstraint(1, 3));
+    cp.add_constraint(ConstraintPool::DetectionConstraint(8, 2));
 
     BOOST_CHECK_EQUAL(cp.get_num_constraints(), 8);
 }
@@ -149,11 +149,11 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Incoming_Factor_Test)
     model.addVariable(3);
     model.addVariable(3);
 
-    std::vector<size_t> labeling = {1,1,1};
+    std::vector<size_t> labeling = {1, 1, 1};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
     ConstraintPool cp(200.0);
-    std::vector<size_t> indices = {0,1};
+    std::vector<size_t> indices = {0, 1};
     cp.add_constraint(ConstraintPool::IncomingConstraint(indices, 2));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
@@ -181,11 +181,11 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_Test)
     model.addVariable(3); // T
     model.addVariable(3); // T
 
-    std::vector<size_t> labeling = {1,1,1,1};
+    std::vector<size_t> labeling = {1, 1, 1, 1};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
     ConstraintPool cp(200.0);
-    std::vector<size_t> indices = {2,3};
+    std::vector<size_t> indices = {2, 3};
     cp.add_constraint(ConstraintPool::OutgoingConstraint(0, 1, indices));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
@@ -216,11 +216,11 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Outgoing_Factor_No_Division_Node_Test)
     model.addVariable(3); // T
     model.addVariable(3); // T
 
-    std::vector<size_t> labeling = {1,1,1};
+    std::vector<size_t> labeling = {1, 1, 1};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
     ConstraintPool cp(200.0);
-    std::vector<size_t> indices = {1,2};
+    std::vector<size_t> indices = {1, 2};
     cp.add_constraint(ConstraintPool::OutgoingConstraint(0, -1, indices));
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf(model);
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Detection_Factor_Test)
     model.addVariable(3); // A
     model.addVariable(3); // V
 
-    std::vector<size_t> labeling = {1,2};
+    std::vector<size_t> labeling = {1, 2};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
     ConstraintPool cp(200.0);
@@ -292,13 +292,13 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Serialization_Test)
     std::string filename(tmpnam(NULL));
     opengm::hdf5::save(model, filename, "tmp");
 
-    std::vector<size_t> labeling = {1,1,1,1,1,1,1};
+    std::vector<size_t> labeling = {1, 1, 1, 1, 1, 1, 1};
     BOOST_CHECK_EQUAL(model.evaluate(labeling.begin()), 0.0);
 
     ConstraintPool cp(200.0);
     cp.add_constraint(ConstraintPool::DetectionConstraint(2, 3));
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(3, 4, {5,6}));
-    cp.add_constraint(ConstraintPool::IncomingConstraint({0,1}, 2));
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(3, 4, {5, 6}));
+    cp.add_constraint(ConstraintPool::IncomingConstraint({0, 1}, 2));
 
     // save constraint pool to temp file
     std::string cp_filename(tmpnam(NULL));
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Serialization_Test)
         ia & cp2;
     }
 
-    labeling = {1,1,1,1,1,1,1};
+    labeling = {1, 1, 1, 1, 1, 1, 1};
     BOOST_CHECK_EQUAL(model2.evaluate(labeling.begin()), 0.0);
 
     opengm::ICM<OpengmModelDeprecated::ogmGraphicalModel, OpengmModelDeprecated::ogmAccumulator> inf2(model2);

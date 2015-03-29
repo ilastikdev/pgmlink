@@ -10,7 +10,8 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/shared_ptr.hpp>
 
-namespace pgmlink {
+namespace pgmlink
+{
 
 class Traxel;
 
@@ -21,11 +22,12 @@ class Traxel;
 typedef float feature_type;
 typedef std::vector<feature_type> feature_array;
 typedef std::vector<feature_array> feature_arrays;
-typedef std::map<std::string,feature_array> FeatureMap;
+typedef std::map<std::string, feature_array> FeatureMap;
 //
 // FeatureStore
 //
-class FeatureStore {
+class FeatureStore
+{
 public:
     FeatureStore();
 
@@ -63,7 +65,8 @@ private:
 };
 
 template< typename Archive >
-void FeatureStore::serialize( Archive& ar, const unsigned int /*version*/ ) {
+void FeatureStore::serialize( Archive& ar, const unsigned int /*version*/ )
+{
     ar & traxel_feature_map_;
 }
 

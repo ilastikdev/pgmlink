@@ -7,19 +7,21 @@
 #ifndef REASONER_H
 #define REASONER_H
 
-namespace pgmlink {
+namespace pgmlink
+{
 
 class HypothesesGraph;
 
-class Reasoner {
-    public:
+class Reasoner
+{
+public:
     /**
      * Setup interal model for given graph.
      */
     virtual void formulate( const HypothesesGraph& ) = 0;
 
     /**
-     * Solve internal model. 
+     * Solve internal model.
      */
     virtual void infer() = 0;
 
@@ -30,7 +32,7 @@ class Reasoner {
      * (think of storing just the annotations in an empty property graph).
      */
     virtual void conclude( HypothesesGraph& ) = 0;
- };
+};
 
 } /* namespace pgmlink */
 

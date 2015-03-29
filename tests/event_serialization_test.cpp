@@ -36,56 +36,92 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
     Traxel n11, n12, n21, n31, n41, n42;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
-    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-    n11.features["com"] = com; n11.features["divProb"] = divProb;
-    add(ts,fs, n11);
-    n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
-    n12.features["com"] = com; n12.features["divProb"] = divProb;
-    add(ts,fs, n12);
-    n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
-    n21.features["com"] = com; n21.features["divProb"] = divProb;
-    add(ts,fs, n21);
-    n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
-    n31.features["com"] = com; n31.features["divProb"] = divProb;
-    add(ts,fs, n31);
-    n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-    n41.features["com"] = com; n41.features["divProb"] = divProb;
-    add(ts,fs, n41);
-    n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-    n42.features["com"] = com; n42.features["divProb"] = divProb;
-    add(ts,fs, n42);
+    n11.Id = 1;
+    n11.Timestep = 1;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    n11.features["com"] = com;
+    n11.features["divProb"] = divProb;
+    add(ts, fs, n11);
+    n12.Id = 3;
+    n12.Timestep = 1;
+    com[0] = 2;
+    com[1] = 2;
+    com[2] = 2;
+    divProb[0] = 0.1;
+    n12.features["com"] = com;
+    n12.features["divProb"] = divProb;
+    add(ts, fs, n12);
+    n21.Id = 10;
+    n21.Timestep = 2;
+    com[0] = 1;
+    com[1] = 1;
+    com[2] = 1;
+    divProb[0] = 0.1;
+    n21.features["com"] = com;
+    n21.features["divProb"] = divProb;
+    add(ts, fs, n21);
+    n31.Id = 11;
+    n31.Timestep = 3;
+    com[0] = 1;
+    com[1] = 1;
+    com[2] = 1;
+    divProb[0] = 0.1;
+    n31.features["com"] = com;
+    n31.features["divProb"] = divProb;
+    add(ts, fs, n31);
+    n41.Id = 12;
+    n41.Timestep = 4;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    n41.features["com"] = com;
+    n41.features["divProb"] = divProb;
+    add(ts, fs, n41);
+    n42.Id = 13;
+    n42.Timestep = 4;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    n42.features["com"] = com;
+    n42.features["divProb"] = divProb;
+    add(ts, fs, n42);
 
-    std::cout << "Initialize Conservation tracking" << std::endl;    
+    std::cout << "Initialize Conservation tracking" << std::endl;
 
     FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
     ConsTracking tracking = ConsTracking(
-          2, // max_number_objects
-          false, // detection_by_volume
-          double(1.1), // avg_obj_size
-          20, // max_neighbor_distance
-          true, //with_divisions
-          0.3, // division_threshold
-          "none", // random_forest_filename
-          fov,
-          "none" // event_vector_dump_filename
-             );
+                                2, // max_number_objects
+                                false, // detection_by_volume
+                                double(1.1), // avg_obj_size
+                                20, // max_neighbor_distance
+                                true, //with_divisions
+                                0.3, // division_threshold
+                                "none", // random_forest_filename
+                                fov,
+                                "none" // event_vector_dump_filename
+                            );
 
 
     std::cout << "run conservation tracking" << std::endl;
 
     EventVectorVectorVector events = tracking(ts,
-                            0, // forbidden_cost
-                            0.0, // ep_gap
-                            false, // with_tracklets
-                            10.0, //division_weight
-                            10.0, //transition_weight
-                            1500., // disappearance_cost,
-                            1500., // appearance_cost
-                            false, //with_merger_resolution
-                            3, //n_dim
-                            5, //transition_parameter
-                            0, //border_width for app/disapp costs
-                            true); // with_constraints
+                                     0, // forbidden_cost
+                                     0.0, // ep_gap
+                                     false, // with_tracklets
+                                     10.0, //division_weight
+                                     10.0, //transition_weight
+                                     1500., // disappearance_cost,
+                                     1500., // appearance_cost
+                                     false, //with_merger_resolution
+                                     3, //n_dim
+                                     5, //transition_parameter
+                                     0, //border_width for app/disapp costs
+                                     true); // with_constraints
 
     std::cout << "serialize events" << std::endl;
 
@@ -133,23 +169,59 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
     Traxel n11, n12, n21, n31, n41, n42;
     feature_array com(feature_array::difference_type(3));
     feature_array divProb(feature_array::difference_type(1));
-    n11.Id = 1; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-    n11.features["com"] = com; n11.features["divProb"] = divProb;
-    add(ts,fs, n11);
-    n12.Id = 3; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
-    n12.features["com"] = com; n12.features["divProb"] = divProb;
+    n11.Id = 1;
+    n11.Timestep = 1;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    n11.features["com"] = com;
+    n11.features["divProb"] = divProb;
+    add(ts, fs, n11);
+    n12.Id = 3;
+    n12.Timestep = 1;
+    com[0] = 2;
+    com[1] = 2;
+    com[2] = 2;
+    divProb[0] = 0.1;
+    n12.features["com"] = com;
+    n12.features["divProb"] = divProb;
     add(ts, fs, n12);
-    n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
-    n21.features["com"] = com; n21.features["divProb"] = divProb;
+    n21.Id = 10;
+    n21.Timestep = 2;
+    com[0] = 1;
+    com[1] = 1;
+    com[2] = 1;
+    divProb[0] = 0.1;
+    n21.features["com"] = com;
+    n21.features["divProb"] = divProb;
     add(ts, fs, n21);
-    n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.1;
-    n31.features["com"] = com; n31.features["divProb"] = divProb;
+    n31.Id = 11;
+    n31.Timestep = 3;
+    com[0] = 1;
+    com[1] = 1;
+    com[2] = 1;
+    divProb[0] = 0.1;
+    n31.features["com"] = com;
+    n31.features["divProb"] = divProb;
     add(ts, fs, n31);
-    n41.Id = 12; n41.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-    n41.features["com"] = com; n41.features["divProb"] = divProb;
+    n41.Id = 12;
+    n41.Timestep = 4;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    n41.features["com"] = com;
+    n41.features["divProb"] = divProb;
     add(ts, fs, n41);
-    n42.Id = 13; n42.Timestep = 4; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-    n42.features["com"] = com; n42.features["divProb"] = divProb;
+    n42.Id = 13;
+    n42.Timestep = 4;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    n42.features["com"] = com;
+    n42.features["divProb"] = divProb;
     add(ts, fs, n42);
 
     TraxelStore ts_loaded;
@@ -184,8 +256,8 @@ BOOST_AUTO_TEST_CASE( Traxelstore_Serialization_Test )
     TraxelStore::iterator it_loaded = ts_loaded.begin();
 
     for(TraxelStore::iterator it = ts.begin();
-        it != ts.end();
-        it++)
+            it != ts.end();
+            it++)
     {
         BOOST_CHECK(it_loaded != ts_loaded.end());
 

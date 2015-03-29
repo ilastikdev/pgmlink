@@ -48,11 +48,11 @@ public: // API
     // run inference
     virtual IlpSolution infer();
     void set_inference_params(size_t numberOfSolutions,
-                      const std::string& feature_filename,
-                      const std::string& constraints_filename,
-                      const std::string& ground_truth_filename,
-                      bool with_inference,
-                      bool export_from_labeled_graph);
+                              const std::string& feature_filename,
+                              const std::string& constraints_filename,
+                              const std::string& ground_truth_filename,
+                              bool with_inference,
+                              bool export_from_labeled_graph);
 
     IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
 
@@ -114,8 +114,8 @@ protected: // members
     // funky export maps
     bool export_from_labeled_graph_;
     std::string ground_truth_filename_;
-    std::map<std::pair<size_t,size_t>,size_t > clpex_variable_id_map_;
-    std::map<std::pair<size_t,std::pair<size_t,size_t> >,size_t> clpex_factor_id_map_;
+    std::map<std::pair<size_t, size_t>, size_t > clpex_variable_id_map_;
+    std::map<std::pair<size_t, std::pair<size_t, size_t> >, size_t> clpex_factor_id_map_;
 };
 
 template<class INF>

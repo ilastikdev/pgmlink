@@ -4,8 +4,10 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/higher_order_features.h"
 
-namespace pgmlink {
-namespace features {
+namespace pgmlink
+{
+namespace features
+{
 class MinMaxMeanVarCalculator
 {
 public:
@@ -107,12 +109,12 @@ public:
 
     /// Create the extractor given a hypotheses graph
     TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
-        const FieldOfView &fov);
+                             const FieldOfView &fov);
 
     /// Create the extractor given a hypotheses graph with filter function
     TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
-        const FieldOfView &fov,
-        boost::function<bool (const Traxel&)> margin_filter_function);
+                             const FieldOfView &fov,
+                             boost::function<bool (const Traxel&)> margin_filter_function);
 
     /// Train the svms with the given hypotheses graph assuming that the arc and
     /// node active map contain a correct labeling
@@ -148,7 +150,7 @@ private:
         std::string feature_name,
         const MinMaxMeanVarCalculator& mmmv_calculator);
 
-    void save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix, bool tracks=true);
+    void save_features_to_h5(size_t track_id, const std::string& feature_name, FeatureMatrix &matrix, bool tracks = true);
     void save_traxel_ids_to_h5(ConstTraxelRefVectors& track_traxels);
     void save_division_traxels_to_h5(ConstTraxelRefVectors &division_traxels);
 
@@ -195,7 +197,8 @@ private:
     std::string track_feature_output_file_;
 };
 
-class BorderDistanceFilter {
+class BorderDistanceFilter
+{
 public:
     BorderDistanceFilter(
         const FieldOfView& field_of_view,

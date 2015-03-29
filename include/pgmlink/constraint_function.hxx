@@ -6,8 +6,10 @@
 #include <opengm/functions/function_properties_base.hxx>
 #include <vector>
 
-namespace pgmlink {
-namespace pgm {
+namespace pgmlink
+{
+namespace pgm
+{
 
 //------------------------------------------------------------------------
 // ConstraintFunction
@@ -29,7 +31,7 @@ public:
     typedef T ValueType;
     typedef L LabelType;
     typedef I IndexType;
-    typedef typename opengm::FunctionBase<ConstraintFunction<T,I,L>, T, I, L> FunctionBaseType;
+    typedef typename opengm::FunctionBase<ConstraintFunction<T, I, L>, T, I, L> FunctionBaseType;
 
     template<class SHAPE_ITERATOR>
     ConstraintFunction(SHAPE_ITERATOR shape_begin,
@@ -38,7 +40,7 @@ public:
         shape_(shape_begin, shape_end)
     {}
 
-    ConstraintFunction(){}
+    ConstraintFunction() {}
 
     /// operator is called to evaluate a certain labeling
     /// only compute the result when needed!
@@ -47,7 +49,9 @@ public:
     {
         std::vector<L> configuration;
         for(size_t i = 0; i < this->dimension(); i++)
+        {
             configuration.push_back(labels[i]);
+        }
 
         return get_energy_of_configuration(configuration);
     }
@@ -96,16 +100,16 @@ protected:
 /// followed by the disappearance node (V).
 /// It must then hold that sum(T_1 .. T_n) = V
 template<class T, class I, class L>
-class IncomingConstraintFunction: public ConstraintFunction<T,I,L>
+class IncomingConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
     IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+        ConstraintFunction<T, I, L>(shape_begin, shape_end)
     {}
 
-    IncomingConstraintFunction(){}
+    IncomingConstraintFunction() {}
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -123,9 +127,13 @@ protected:
         }
 
         if(sum == num_disappearing_objects)
+        {
             return 0.0;
+        }
         else
+        {
             return this->forbidden_energy_;
+        }
     }
 };
 
@@ -137,17 +145,17 @@ protected:
 /// (T_1 .. T_n).
 /// It must hold that sum(T_1 .. T_n) = A + D
 template<class T, class I, class L>
-class OutgoingConstraintFunction: public ConstraintFunction<T,I,L>
+class OutgoingConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
     OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T,I,L>(shape_begin, shape_end),
+        ConstraintFunction<T, I, L>(shape_begin, shape_end),
         with_divisions_(true)
     {}
 
-    OutgoingConstraintFunction(){}
+    OutgoingConstraintFunction() {}
 
     void set_with_divisions(bool enable)
     {
@@ -173,9 +181,13 @@ protected:
         if((sum == num_appearing_objects + division) &&
                 (division != 1 || num_appearing_objects == 1) &&
                 (division == 0 || with_divisions_))
+        {
             return 0.0;
+        }
         else
+        {
             return this->forbidden_energy_;
+        }
     }
 
 protected:
@@ -190,16 +202,16 @@ protected:
 /// (T_1 .. T_n).
 /// It must hold that sum(T_1 .. T_n) = A
 template<class T, class I, class L>
-class OutgoingNoDivConstraintFunction: public ConstraintFunction<T,I,L>
+class OutgoingNoDivConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
     OutgoingNoDivConstraintFunction(SHAPE_ITERATOR shape_begin,
-                               SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T,I,L>(shape_begin, shape_end)
+                                    SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end)
     {}
 
-    OutgoingNoDivConstraintFunction(){}
+    OutgoingNoDivConstraintFunction() {}
 
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
@@ -217,9 +229,13 @@ protected:
         }
 
         if(sum == num_appearing_objects)
+        {
             return 0.0;
+        }
         else
+        {
             return this->forbidden_energy_;
+        }
     }
 };
 
@@ -228,19 +244,19 @@ protected:
 //------------------------------------------------------------------------
 /// expects a configuration of size 2, containing an appearance and a disappearance node
 template<class T, class I, class L>
-class DetectionConstraintFunction: public ConstraintFunction<T,I,L>
+class DetectionConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
     DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
-                               SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T,I,L>(shape_begin, shape_end),
+                                SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end),
         with_appearance_(true),
         with_disappearance_(true),
         with_misdetections_(true)
     {}
 
-    DetectionConstraintFunction(){}
+    DetectionConstraintFunction() {}
 
     void set_with_misdetections(bool enable)
     {
@@ -270,9 +286,13 @@ protected:
                 (num_appearing_objects == 0 && with_disappearance_) ||
                 (num_disappearing_objects == 0 && with_appearance_)) &&
                 (num_appearing_objects > 0 || num_disappearing_objects > 0 || with_misdetections_))
+        {
             return 0.0;
+        }
         else
+        {
             return this->forbidden_energy_;
+        }
     }
 
 protected:
@@ -307,38 +327,48 @@ using pgmlink::pgm::DetectionConstraintFunction;
 /// \cond HIDDEN_SYMBOLS
 /// FunctionRegistration
 template<class T, class I, class L>
-struct FunctionRegistration< IncomingConstraintFunction<T, I, L> >{
-   enum ID {
-      Id=opengm::FUNCTION_TYPE_ID_OFFSET
-   };
+struct FunctionRegistration< IncomingConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
 };
 
 template<class T, class I, class L>
-struct FunctionRegistration< OutgoingConstraintFunction<T, I, L> >{
-   enum ID {
-      Id=opengm::FUNCTION_TYPE_ID_OFFSET
-   };
+struct FunctionRegistration< OutgoingConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
 };
 
 template<class T, class I, class L>
-struct FunctionRegistration< OutgoingNoDivConstraintFunction<T, I, L> >{
-   enum ID {
-      Id=opengm::FUNCTION_TYPE_ID_OFFSET
-   };
+struct FunctionRegistration< OutgoingNoDivConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
 };
 
 template<class T, class I, class L>
-struct FunctionRegistration< DetectionConstraintFunction<T, I, L> >{
-   enum ID {
-      Id=opengm::FUNCTION_TYPE_ID_OFFSET
-   };
+struct FunctionRegistration< DetectionConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
 };
 
 template<>
-struct FunctionRegistration< marray::Marray<double> >{
-   enum ID {
-      Id=opengm::FUNCTION_TYPE_ID_OFFSET
-   };
+struct FunctionRegistration< marray::Marray<double> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
 };
 
 //------------------------------------------------------------------------
@@ -360,28 +390,28 @@ public:
 template<class T, class I, class L>
 inline size_t FunctionSerialization<IncomingConstraintFunction<T, I, L> >::indexSequenceSize
 (
-   const IncomingConstraintFunction<T, I, L> & src
+    const IncomingConstraintFunction<T, I, L> & src
 )
 {
-   return src.dimension() +1;
+    return src.dimension() + 1;
 }
 
 template<class T, class I, class L>
 inline size_t FunctionSerialization<IncomingConstraintFunction<T, I, L> >::valueSequenceSize
 (
-   const IncomingConstraintFunction<T, I, L> & src
+    const IncomingConstraintFunction<T, I, L> & src
 )
 {
-   return src.size();
+    return src.size();
 }
 
 template<class T, class I, class L>
 template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
 void FunctionSerialization< IncomingConstraintFunction<T, I, L> >::serialize
 (
-   const IncomingConstraintFunction<T, I, L> & src,
-   INDEX_OUTPUT_ITERATOR indexOutIterator,
-   VALUE_OUTPUT_ITERATOR valueOutIterator
+    const IncomingConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
 )
 {
     //TODO implement me
@@ -393,9 +423,9 @@ template<class T, class I, class L>
 template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
 void FunctionSerialization<IncomingConstraintFunction<T, I, L> >::deserialize
 (
-   INDEX_INPUT_ITERATOR indexOutIterator,
-   VALUE_INPUT_ITERATOR valueOutIterator,
-   IncomingConstraintFunction<T, I, L> & dst
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    IncomingConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me
@@ -421,28 +451,28 @@ public:
 template<class T, class I, class L>
 inline size_t FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::indexSequenceSize
 (
-   const OutgoingConstraintFunction<T, I, L> & src
+    const OutgoingConstraintFunction<T, I, L> & src
 )
 {
-   return src.dimension() +1;
+    return src.dimension() + 1;
 }
 
 template<class T, class I, class L>
 inline size_t FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::valueSequenceSize
 (
-   const OutgoingConstraintFunction<T, I, L> & src
+    const OutgoingConstraintFunction<T, I, L> & src
 )
 {
-   return src.size();
+    return src.size();
 }
 
 template<class T, class I, class L>
 template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
 void FunctionSerialization< OutgoingConstraintFunction<T, I, L> >::serialize
 (
-   const OutgoingConstraintFunction<T, I, L> & src,
-   INDEX_OUTPUT_ITERATOR indexOutIterator,
-   VALUE_OUTPUT_ITERATOR valueOutIterator
+    const OutgoingConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
 )
 {
     //TODO implement me
@@ -454,9 +484,9 @@ template<class T, class I, class L>
 template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
 void FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::deserialize
 (
-   INDEX_INPUT_ITERATOR indexOutIterator,
-   VALUE_INPUT_ITERATOR valueOutIterator,
-   OutgoingConstraintFunction<T, I, L> & dst
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    OutgoingConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me
@@ -482,28 +512,28 @@ public:
 template<class T, class I, class L>
 inline size_t FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::indexSequenceSize
 (
-   const OutgoingNoDivConstraintFunction<T, I, L> & src
+    const OutgoingNoDivConstraintFunction<T, I, L> & src
 )
 {
-   return src.dimension() +1;
+    return src.dimension() + 1;
 }
 
 template<class T, class I, class L>
 inline size_t FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::valueSequenceSize
 (
-   const OutgoingNoDivConstraintFunction<T, I, L> & src
+    const OutgoingNoDivConstraintFunction<T, I, L> & src
 )
 {
-   return src.size();
+    return src.size();
 }
 
 template<class T, class I, class L>
 template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
 void FunctionSerialization< OutgoingNoDivConstraintFunction<T, I, L> >::serialize
 (
-   const OutgoingNoDivConstraintFunction<T, I, L> & src,
-   INDEX_OUTPUT_ITERATOR indexOutIterator,
-   VALUE_OUTPUT_ITERATOR valueOutIterator
+    const OutgoingNoDivConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
 )
 {
     //TODO implement me
@@ -515,9 +545,9 @@ template<class T, class I, class L>
 template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
 void FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::deserialize
 (
-   INDEX_INPUT_ITERATOR indexOutIterator,
-   VALUE_INPUT_ITERATOR valueOutIterator,
-   OutgoingNoDivConstraintFunction<T, I, L> & dst
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    OutgoingNoDivConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me
@@ -543,28 +573,28 @@ public:
 template<class T, class I, class L>
 inline size_t FunctionSerialization<DetectionConstraintFunction<T, I, L> >::indexSequenceSize
 (
-   const DetectionConstraintFunction<T, I, L> & src
+    const DetectionConstraintFunction<T, I, L> & src
 )
 {
-   return src.dimension() +1;
+    return src.dimension() + 1;
 }
 
 template<class T, class I, class L>
 inline size_t FunctionSerialization<DetectionConstraintFunction<T, I, L> >::valueSequenceSize
 (
-   const DetectionConstraintFunction<T, I, L> & src
+    const DetectionConstraintFunction<T, I, L> & src
 )
 {
-   return src.size();
+    return src.size();
 }
 
 template<class T, class I, class L>
 template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
 void FunctionSerialization< DetectionConstraintFunction<T, I, L> >::serialize
 (
-   const DetectionConstraintFunction<T, I, L> & src,
-   INDEX_OUTPUT_ITERATOR indexOutIterator,
-   VALUE_OUTPUT_ITERATOR valueOutIterator
+    const DetectionConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
 )
 {
     //TODO implement me
@@ -576,9 +606,9 @@ template<class T, class I, class L>
 template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
 void FunctionSerialization<DetectionConstraintFunction<T, I, L> >::deserialize
 (
-   INDEX_INPUT_ITERATOR indexOutIterator,
-   VALUE_INPUT_ITERATOR valueOutIterator,
-   DetectionConstraintFunction<T, I, L> & dst
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    DetectionConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me
@@ -603,26 +633,26 @@ public:
 
 inline size_t FunctionSerialization<marray::Marray<double> >::indexSequenceSize
 (
-   const marray::Marray<double> & src
+    const marray::Marray<double> & src
 )
 {
-   return src.dimension() +1;
+    return src.dimension() + 1;
 }
 
 inline size_t FunctionSerialization<marray::Marray<double> >::valueSequenceSize
 (
-   const marray::Marray<double> & src
+    const marray::Marray<double> & src
 )
 {
-   return src.size();
+    return src.size();
 }
 
 template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
 void FunctionSerialization< marray::Marray<double> >::serialize
 (
-   const marray::Marray<double> & src,
-   INDEX_OUTPUT_ITERATOR indexOutIterator,
-   VALUE_OUTPUT_ITERATOR valueOutIterator
+    const marray::Marray<double> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
 )
 {
     //TODO implement me
@@ -633,9 +663,9 @@ void FunctionSerialization< marray::Marray<double> >::serialize
 template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
 void FunctionSerialization<marray::Marray<double> >::deserialize
 (
-   INDEX_INPUT_ITERATOR indexOutIterator,
-   VALUE_INPUT_ITERATOR valueOutIterator,
-   marray::Marray<double> & dst
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    marray::Marray<double> & dst
 )
 {
     //TODO implement me

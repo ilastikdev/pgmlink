@@ -19,7 +19,7 @@ void export_evaluation();
 
 BOOST_PYTHON_MODULE( pgmlink )
 {
-	vigra::import_vigranumpy();
+    vigra::import_vigranumpy();
     export_field_of_view();
     export_uncertaintyParameter();
     export_hypotheses();
