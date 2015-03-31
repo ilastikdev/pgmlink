@@ -24,7 +24,7 @@
 
 #include "pgmlink/pgmlink_export.h"
 #include "pgmlink/log.h"
-#include "featurestore.h"
+#include "pgmlink/features/featurestore.h"
 
 namespace pgmlink
 {

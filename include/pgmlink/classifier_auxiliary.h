@@ -13,7 +13,7 @@
 #include <vigra/random_forest.hxx>
 
 // pgmlink
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/traxels.h"
 
 namespace pgmlink

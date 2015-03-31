@@ -6,7 +6,7 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/function.hpp>
 
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/field_of_view.h"
 
 using namespace pgmlink;

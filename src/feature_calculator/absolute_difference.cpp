@@ -1,4 +1,4 @@
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/feature_calculator/absolute_difference.h"
 
 namespace pgmlink

@@ -26,7 +26,7 @@
 #include "pgmlink/reasoner.h"
 #include "pgmlink/merger_resolving_grammar.h"
 #include "pgmlink/reasoner_constracking.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/pgmlink_export.h"
 
 /**

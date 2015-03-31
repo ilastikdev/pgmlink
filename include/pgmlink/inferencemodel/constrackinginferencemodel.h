@@ -9,7 +9,7 @@
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
-#include "pgmlink/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool.hxx"
 
 #include "inferencemodel.h"
 

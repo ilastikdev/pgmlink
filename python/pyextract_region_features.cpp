@@ -5,7 +5,7 @@
 #include <vigra/numpy_array.hxx>
 #include <vigra/numpy_array_converters.hxx>
 
-#include "pgmlink/extract_region_features.h"
+#include "pgmlink/features/extract_region_features.h"
 
 #include <boost/python.hpp>
 

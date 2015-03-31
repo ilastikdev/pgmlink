@@ -7,7 +7,7 @@
 #include <cmath> /* for abs() */
 
 #include "pgmlink/log.h"
-#include "pgmlink/higher_order_features.h"
+#include "pgmlink/features/higher_order_features.h"
 #include "pgmlink/classifier_auxiliary.h"
 
 using namespace pgmlink;

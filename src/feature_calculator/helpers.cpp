@@ -3,7 +3,7 @@
 #include <string>
 
 // pgmlink
-#include "pgmlink/feature_calculator.h"
+#include "pgmlink/features/feature_calculator.h"
 #include "pgmlink/feature_calculator/helpers.h"
 
 

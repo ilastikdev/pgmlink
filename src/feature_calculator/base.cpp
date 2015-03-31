@@ -1,5 +1,5 @@
 // pgmlink
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/feature_calculator/base.h"
 
 namespace pgmlink

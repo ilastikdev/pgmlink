@@ -1,4 +1,4 @@
-#include "pgmlink/higher_order_features.h"
+#include "pgmlink/features/higher_order_features.h"
 #include <cmath> /* for sqrt */
 
 #include <vigra/multi_math.hxx> /* for operator+ */

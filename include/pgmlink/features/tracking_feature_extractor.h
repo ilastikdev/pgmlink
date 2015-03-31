@@ -2,7 +2,7 @@
 #define TRACKING_FEATURE_EXTRACTOR_H
 
 #include "pgmlink/hypotheses.h"
-#include "pgmlink/higher_order_features.h"
+#include "pgmlink/features/higher_order_features.h"
 
 namespace pgmlink
 {

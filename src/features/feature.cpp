@@ -1,4 +1,4 @@
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/log.h"
 #include <cmath>
 #include <string>

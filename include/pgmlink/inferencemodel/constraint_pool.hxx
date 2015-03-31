@@ -8,8 +8,8 @@
 #include <opengm/inference/lpcplex.hxx>
 #include <boost/serialization/serialization.hpp>
 
-#include "pgm.h"
-#include "constraint_function.hxx"
+#include "pgmlink/pgm.h"
+#include "pgmlink/constraint_function.hxx"
 
 namespace pgmlink
 {

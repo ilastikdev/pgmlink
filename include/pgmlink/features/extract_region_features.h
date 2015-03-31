@@ -3,7 +3,7 @@
 
 #include <vigra/accumulator.hxx>
 #include <boost/shared_ptr.hpp>
-#include "pgmlink/featurestore.h"
+#include "pgmlink/features/featurestore.h"
 #include "pgmlink/log.h"
 #include <iostream>
 #include <numeric>

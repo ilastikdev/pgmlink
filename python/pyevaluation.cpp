@@ -8,7 +8,7 @@
 #include <sstream>
 
 // pgmlink
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/log.h"
 #include "pgmlink/tracking_evaluation.h"
 

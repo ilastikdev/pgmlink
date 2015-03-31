@@ -20,7 +20,7 @@
 
 #include "pgmlink/graph.h"
 #include "pgmlink/hypotheses.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/reasoner_pgm.h"
 #include "pgmlink/traxels.h"
 

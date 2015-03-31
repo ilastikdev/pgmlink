@@ -16,7 +16,7 @@
 #include <vigra/error.hxx>
 
 // pgmlink
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/traxels.h"
 #include "pgmlink/classifier_auxiliary.h"
 

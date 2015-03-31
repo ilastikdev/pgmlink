@@ -8,7 +8,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include "pgmlink/tracking_feature_extractor.h"
+#include "pgmlink/features/tracking_feature_extractor.h"
 #include "pgmlink/tracking.h"
 #include "pgmlink/reasoner_constracking.h"
 

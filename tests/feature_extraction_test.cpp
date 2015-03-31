@@ -13,9 +13,9 @@
 #include <boost/test/unit_test.hpp>
 
 // pgmlink
-#include "pgmlink/feature.h"
-#include "pgmlink/feature_calculator.h"
-#include "pgmlink/feature_extraction.h"
+#include "pgmlink/features/feature.h"
+#include "pgmlink/features/feature_calculator.h"
+#include "pgmlink/features/feature_extraction.h"
 #include "pgmlink/traxels.h"
 
 namespace fe = pgmlink::feature_extraction;

@@ -5,7 +5,7 @@
 #include <sstream>
 
 #include "../include/pgmlink/hypotheses.h"
-#include "../include/pgmlink/higher_order_features.h"
+#include "../include/pgmlink/features/higher_order_features.h"
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>

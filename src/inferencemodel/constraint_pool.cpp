@@ -1,4 +1,4 @@
-#include "pgmlink/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool.hxx"
 
 namespace pgmlink
 {

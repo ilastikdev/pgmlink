@@ -1,4 +1,4 @@
-#include "pgmlink/tracking_feature_extractor.h"
+#include "pgmlink/features/tracking_feature_extractor.h"
 #include <boost/algorithm/string.hpp>
 
 #include <cmath> /* for std::abs */

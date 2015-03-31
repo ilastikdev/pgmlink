@@ -1,4 +1,4 @@
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/feature_calculator/square_root_squared_difference.h"
 
 namespace pgmlink

@@ -13,7 +13,7 @@
 #include <opengm/inference/icm.hxx>
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 
-#include "pgmlink/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool.hxx"
 
 using namespace pgmlink::pgm;
 

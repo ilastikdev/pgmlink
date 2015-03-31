@@ -12,13 +12,12 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include "pgmlink/randomforest.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_pgm.h"
 #include "pgmlink/reasoner_constracking.h"
-#include "pgmlink/reasoner_dyn_prog_constracking.h"
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>

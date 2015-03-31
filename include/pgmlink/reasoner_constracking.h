@@ -9,7 +9,7 @@
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/reasoner.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"

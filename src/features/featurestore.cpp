@@ -1,4 +1,4 @@
-#include "pgmlink/featurestore.h"
+#include "pgmlink/features/featurestore.h"
 #include "pgmlink/traxels.h"
 #include "pgmlink/log.h"
 

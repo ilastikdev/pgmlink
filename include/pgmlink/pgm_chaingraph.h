@@ -20,7 +20,7 @@
 
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 
 // Both boost and lemon define the same template ignore_unused_variable_warning<T>.
 // Using boost templates with lemon types triggers ADL and the (MSVC++) compiler can't

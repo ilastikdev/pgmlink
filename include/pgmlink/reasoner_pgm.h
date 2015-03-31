@@ -19,7 +19,7 @@
 #include <opengm/inference/lpcplex.hxx>
 
 #include "pgmlink/event.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/reasoner.h"

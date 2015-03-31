@@ -18,7 +18,7 @@
 
 #include "pgmlink/graph.h"
 #include "pgmlink/hypotheses.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/traxels.h"
 #include "pgmlink/tracking.h"
 #include "pgmlink/field_of_view.h"
