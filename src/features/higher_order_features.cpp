@@ -2234,7 +2234,7 @@ void SVMOutlierCalculator::train(
         throw std::runtime_error("Cannot train outlier SVM without any samples!");
     }
 
-    LOG(logINFO) << "Training outlier SVM from " << col_count << " samples";
+    LOG(logINFO) << "Training outlier SVM from " << col_count << " samples:\n" << feature_matrix;
 
     for (size_t col = 0; col < col_count; col++)
     {

@@ -1345,8 +1345,9 @@ BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_calculate )
     // create training data
     FeatureMatrix x_train;
     get_feature_matrix(x_train);
-    x_train(6, 1) = 4.0;
-    x_train(6, 2) = 3.0;
+    // no outlier in training of x6
+    x_train(6, 0) = 4.0;
+    x_train(6, 1) = 3.0;
 
     // Create outlier detection
     LOG(logINFO) << "  set up the outlier calculator";
@@ -1391,8 +1392,8 @@ BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_serialization )
     // create training data
     FeatureMatrix x_train;
     get_feature_matrix(x_train);
-    x_train(6, 1) = 4.0;
-    x_train(6, 2) = 3.0;
+    x_train(6, 0) = 4.0;
+    x_train(6, 1) = 3.0;
 
     // Create outlier detection
     LOG(logINFO) << "  set up the outlier calculator";
