@@ -13,7 +13,7 @@
 #include <lemon/maps.h>
 
 #include "pgmlink/event.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/reasoner_pgm.h"
 #include "pgmlink/pgm_chaingraph.h"
 #include "pgmlink/traxels.h"
