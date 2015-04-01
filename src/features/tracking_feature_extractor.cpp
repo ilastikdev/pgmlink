@@ -15,59 +15,44 @@ MinMaxMeanVarCalculator::MinMaxMeanVarCalculator()
 
 void MinMaxMeanVarCalculator::reset()
 {
-    n = 0;
-    mean = 0;
-    sum_squared_diff = 0;
-    min = std::numeric_limits<double>::max();
-    max = std::numeric_limits<double>::lowest();
+    values.clear();
 }
 
 void MinMaxMeanVarCalculator::add_value(const double& value)
 {
-    n++;
-    double delta = value - mean;
-    mean += delta / n;
-    sum_squared_diff += delta * (value - mean);
-
-    min = std::min(min, value);
-    max = std::max(max, value);
+    values.push_back(value);
 }
 
-void MinMaxMeanVarCalculator::add_values(const FeatureMatrix& values)
+void MinMaxMeanVarCalculator::add_values(const FeatureMatrix& v)
 {
-    for(FeatureMatrix::const_iterator it = values.begin();
-            it != values.end();
-            it++)
-    {
-        add_value(*it);
-    }
-}
-
-void MinMaxMeanVarCalculator::set_min(const double& value)
-{
-    min = value;
-}
-
-void MinMaxMeanVarCalculator::set_max(const double& value)
-{
-    max = value;
+    values.insert(values.end(), v.begin(), v.end());
 }
 
 size_t MinMaxMeanVarCalculator::get_count() const
 {
-    return n;
+    return values.size();
 }
 
 double MinMaxMeanVarCalculator::get_mean() const
 {
-    return mean;
+    if(values.size() == 0)
+        return 0.0;
+
+    double sum = 0.0;
+    for(auto v : values)
+        sum += v;
+    return sum / values.size();
 }
 
 double MinMaxMeanVarCalculator::get_var() const
 {
-    if (n)
+    if (values.size() > 0)
     {
-        return sum_squared_diff / n;
+        double mean = get_mean();
+        double sum_squared_diff = 0.0;
+        for(auto v : values)
+            sum_squared_diff += pow(v - mean, 2.0);
+        return sum_squared_diff / values.size();
     }
     else
     {
@@ -77,12 +62,18 @@ double MinMaxMeanVarCalculator::get_var() const
 
 double MinMaxMeanVarCalculator::get_min() const
 {
-    return min;
+    if(values.size() == 0)
+//        return std::numeric_limits<double>::max();
+        return 0.0;
+    return *std::min_element(values.begin(), values.end());
 }
 
 double MinMaxMeanVarCalculator::get_max() const
 {
-    return max;
+    if(values.size() == 0)
+//        return std::numeric_limits<double>::lowest();
+        return 0.0;
+    return *std::max_element(values.begin(), values.end());
 }
 
 TrackFeatureExtractor::TrackFeatureExtractor()
@@ -149,9 +140,9 @@ void TrackFeatureExtractor::compute_sq_id_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_id_mmmv;
-    sq_id_mmmv.set_max(0.0);
+//    sq_id_mmmv.set_max(0.0);
 
-    if (traxelref_vec.size() > 1)
+    if (traxelref_vec.size() >= 1)
     {
         // get the features
         FeatureMatrix feature_matrix;
@@ -172,7 +163,7 @@ void TrackFeatureExtractor::compute_sq_diff_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_diff_mmmv;
-    sq_diff_mmmv.set_max(0.0);
+//    sq_diff_mmmv.set_max(0.0);
 
     if (traxelref_vec.size() > 1)
     {
@@ -195,7 +186,7 @@ void TrackFeatureExtractor::compute_sq_curve_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_curve_mmmv;
-    sq_curve_mmmv.set_max(0.0);
+//    sq_curve_mmmv.set_max(0.0);
 
     if (traxelref_vec.size() > 2)
     {
@@ -731,7 +722,7 @@ void TrackingFeatureExtractor::compute_sq_diff_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_diff_mmmv;
-    sq_diff_mmmv.set_max(0.0);
+//    sq_diff_mmmv.set_max(0.0);
 
     // for each track:
     size_t track_id = 0;
@@ -764,7 +755,7 @@ void TrackingFeatureExtractor::compute_sq_accel_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_accel_mmmv;
-    sq_accel_mmmv.set_max(0.0);
+//    sq_accel_mmmv.set_max(0.0);
 
     // for each track:
     size_t track_id = 0;
@@ -797,7 +788,7 @@ void TrackingFeatureExtractor::compute_angle_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator angle_mmmv;
-    angle_mmmv.set_max(0.0);
+//    angle_mmmv.set_max(0.0);
 
     // for each track:
     size_t track_id = 0;
@@ -833,7 +824,7 @@ void TrackingFeatureExtractor::compute_track_length_features(
     ConstTraxelRefVectors& track_traxels)
 {
     MinMaxMeanVarCalculator track_length_mmmv;
-    track_length_mmmv.set_max(0.0);
+//    track_length_mmmv.set_max(0.0);
 
     size_t track_id = 0;
     for (auto track : track_traxels)
@@ -851,7 +842,7 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator id_out_mmmv;
-    id_out_mmmv.set_max(0.0);
+//    id_out_mmmv.set_max(0.0);
     size_t track_id = 0;
     for (auto track : track_traxels)
     {
@@ -877,7 +868,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator diff_out_mmmv;
-    diff_out_mmmv.set_max(0.0);
+//    diff_out_mmmv.set_max(0.0);
     size_t track_id = 0;
     for (auto track : track_traxels)
     {
@@ -923,7 +914,7 @@ void TrackingFeatureExtractor::compute_track_feature_outlier(
         score_matrix.init(0.0);
     }
     MinMaxMeanVarCalculator mmmv_score;
-    mmmv_score.set_max(0.0);
+//    mmmv_score.set_max(0.0);
     mmmv_score.add_values(score_matrix);
     push_back_feature("track feature outlier score", mmmv_score);
 
@@ -938,7 +929,7 @@ void TrackingFeatureExtractor::compute_division_sq_diff_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator sq_diff_mmmv;
-    sq_diff_mmmv.set_max(0.0);
+//    sq_diff_mmmv.set_max(0.0);
 
     size_t division_id = 0;
     for (auto div : div_traxels)
@@ -1010,7 +1001,7 @@ void TrackingFeatureExtractor::compute_child_deceleration_features(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator child_decel_mmmv;
-    child_decel_mmmv.set_max(0.0);
+//    child_decel_mmmv.set_max(0.0);
 
     size_t division_id = 0;
     for (auto div : div_traxels)
@@ -1088,7 +1079,7 @@ void TrackingFeatureExtractor::compute_division_feature_outlier(
         score_matrix.init(0.0);
     }
     MinMaxMeanVarCalculator mmmv_score;
-    mmmv_score.set_max(0.0);
+//    mmmv_score.set_max(0.0);
     mmmv_score.add_values(score_matrix);
     push_back_feature("division feature outlier score", mmmv_score);
 
@@ -1103,7 +1094,7 @@ void TrackingFeatureExtractor::compute_border_distances(
     std::string description)
 {
     MinMaxMeanVarCalculator border_dist_mmmv;
-    border_dist_mmmv.set_max(0.0);
+//    border_dist_mmmv.set_max(0.0);
 
     for (auto appearance : appearance_traxels)
     {
