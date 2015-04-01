@@ -85,7 +85,8 @@ size_t TrackFeatureExtractor::get_feature_vector_length() const
     return 3 * 2 // compute_sq_id_features (Count, Mean, Variance)
            + 4 * 2 // compute_sq_diff_features (com, Count, Mean, Variance)
            + 4 * 2 // compute_sq_accel_features (com, Count, Mean, Variance)
-           + 1 * 2; // compute_angle_features (com)
+           + 1 * 2 // compute_angle_features (com)
+           + 1; // length
 }
 
 std::ostream& operator<<(std::ostream& lhs, TrackFeatureExtractor::FeatureDescription& rhs)
@@ -130,6 +131,7 @@ void TrackFeatureExtractor::compute_features(
     compute_sq_curve_features(traxelref_vec, "Mean");
     compute_sq_curve_features(traxelref_vec, "Variance");
     compute_angle_features(traxelref_vec, "RegionCenter");
+    push_back_feature("Length", (double)traxelref_vec.size());
 }
 
 void TrackFeatureExtractor::compute_features(
