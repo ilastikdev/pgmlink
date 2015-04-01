@@ -76,6 +76,48 @@ double MinMaxMeanVarCalculator::get_max() const
     return *std::max_element(values.begin(), values.end());
 }
 
+void TrackingFeatureExtractorBase::init_compute(FeatureVectorView return_vector)
+{
+    assert(return_vector.shape(0) == get_feature_vector_length());
+    if (feature_descriptions_.size() == 0)
+    {
+        feature_descriptions_.resize(get_feature_vector_length());
+    }
+    feature_descriptions_it_ = feature_descriptions_.begin();
+    feature_vector_it_ = return_vector.begin();
+}
+
+void TrackingFeatureExtractorBase::get_feature_descriptions(
+    FeatureDescriptionVector& feature_descriptions) const
+{
+    feature_descriptions.clear();
+    feature_descriptions.insert(
+        feature_descriptions.begin(),
+        feature_descriptions_.begin(),
+        feature_descriptions_.end());
+}
+
+void TrackingFeatureExtractorBase::push_back_feature(
+    std::string feature_name,
+    double feature_value)
+{
+    LOG(logDEBUG4) << "Push back feature " << feature_name << ": " << feature_value;
+    *feature_vector_it_ = feature_value;
+    feature_vector_it_++;
+    *feature_descriptions_it_ = feature_name;
+    feature_descriptions_it_++;
+}
+
+void TrackingFeatureExtractorBase::push_back_feature(
+    std::string feature_name,
+    const MinMaxMeanVarCalculator& mmmv_calculator)
+{
+//    push_back_feature("min of " + feature_name, mmmv_calculator.get_min());
+//    push_back_feature("max of " + feature_name, mmmv_calculator.get_max());
+    push_back_feature("mean of " + feature_name, mmmv_calculator.get_mean());
+    push_back_feature("var of " + feature_name, mmmv_calculator.get_var());
+}
+
 TrackFeatureExtractor::TrackFeatureExtractor()
 {}
 
@@ -89,7 +131,7 @@ size_t TrackFeatureExtractor::get_feature_vector_length() const
            + 1; // length
 }
 
-std::ostream& operator<<(std::ostream& lhs, TrackFeatureExtractor::FeatureDescription& rhs)
+std::ostream& operator<<(std::ostream& lhs, TrackFeatureExtractor::FeatureDescriptionVector& rhs)
 {
     for(auto s: rhs)
     {
@@ -98,27 +140,11 @@ std::ostream& operator<<(std::ostream& lhs, TrackFeatureExtractor::FeatureDescri
     return lhs;
 }
 
-void TrackFeatureExtractor::get_feature_descriptions(
-    FeatureDescription& feature_descriptions) const
-{
-    feature_descriptions.clear();
-    feature_descriptions.insert(
-        feature_descriptions.begin(),
-        feature_descriptions_.begin(),
-        feature_descriptions_.end());
-}
-
 void TrackFeatureExtractor::compute_features(
     ConstTraxelRefVector& traxelref_vec,
     FeatureVectorView return_vector)
 {
-    assert(return_vector.shape(0) == get_feature_vector_length());
-    if (feature_descriptions_.size() == 0)
-    {
-        feature_descriptions_.resize(get_feature_vector_length());
-    }
-    feature_descriptions_offset_it_ = feature_descriptions_.begin();
-    feature_vector_offset_it_ = return_vector.begin();
+    init_compute(return_vector);
     compute_sq_id_features(traxelref_vec, "Count");
     compute_sq_id_features(traxelref_vec, "Mean");
     compute_sq_id_features(traxelref_vec, "Variance");
@@ -238,27 +264,6 @@ void TrackFeatureExtractor::compute_angle_features(
     push_back_feature("var of angle cosines of " + feature_name, angle_mmmv.get_var());
 }
 
-void TrackFeatureExtractor::push_back_feature(
-    std::string feature_name,
-    double feature_value)
-{
-    LOG(logDEBUG4) << "Push back feature " << feature_name << ": " << feature_value;
-    *feature_vector_offset_it_ = feature_value;
-    feature_vector_offset_it_++;
-    *feature_descriptions_offset_it_ = feature_name;
-    feature_descriptions_offset_it_++;
-}
-
-void TrackFeatureExtractor::push_back_feature(
-    std::string feature_name,
-    const MinMaxMeanVarCalculator& mmmv_calculator)
-{
-//    push_back_feature("min of " + feature_name, mmmv_calculator.get_min());
-//    push_back_feature("max of " + feature_name, mmmv_calculator.get_max());
-    push_back_feature("mean of " + feature_name, mmmv_calculator.get_mean());
-    push_back_feature("var of " + feature_name, mmmv_calculator.get_var());
-}
-
 //-----------------------------------------------------------------------------
 // DivisionFeatureExtractor
 //-----------------------------------------------------------------------------
@@ -273,27 +278,11 @@ size_t DivisionFeatureExtractor::get_feature_vector_length() const
            + 1 * 1; // compute_angle_features (com)
 }
 
-void DivisionFeatureExtractor::get_feature_descriptions(
-    FeatureDescription& feature_descriptions) const
-{
-    feature_descriptions.clear();
-    feature_descriptions.insert(
-        feature_descriptions.begin(),
-        feature_descriptions_.begin(),
-        feature_descriptions_.end());
-}
-
 void DivisionFeatureExtractor::compute_features(
     ConstTraxelRefVector& traxelref_vec,
     FeatureVectorView return_vector)
 {
-    assert(return_vector.shape(0) == get_feature_vector_length());
-    if (feature_descriptions_.size() == 0)
-    {
-        feature_descriptions_.resize(get_feature_vector_length());
-    }
-    feature_descriptions_offset_it_ = feature_descriptions_.begin();
-    feature_vector_offset_it_ = return_vector.begin();
+    init_compute(return_vector);
     compute_id_features(traxelref_vec, "Count");
     compute_id_features(traxelref_vec, "Mean");
     compute_id_features(traxelref_vec, "Variance");
@@ -397,17 +386,6 @@ void DivisionFeatureExtractor::compute_angle_features(
     push_back_feature(
         "angle cosine of " + feature_name,
         dot_matrix(0, 0) / (norm_matrix(0, 0) * norm_matrix(1, 0)));
-}
-
-void DivisionFeatureExtractor::push_back_feature(
-    std::string feature_name,
-    double feature_value)
-{
-    LOG(logDEBUG4) << "Push back feature " << feature_name << ": " << feature_value;
-    *feature_vector_offset_it_ = feature_value;
-    feature_vector_offset_it_++;
-    *feature_descriptions_offset_it_ = feature_name;
-    feature_descriptions_offset_it_++;
 }
 
 //-----------------------------------------------------------------------------

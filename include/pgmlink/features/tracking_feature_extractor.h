@@ -25,14 +25,34 @@ private:
     std::vector<double> values;
 };
 
-class TrackFeatureExtractor
+class TrackingFeatureExtractorBase
+{
+public:
+    typedef std::vector<double> JointFeatureVector;
+    typedef std::vector<std::string> FeatureDescriptionVector;
+public:
+    TrackingFeatureExtractorBase() {};
+    virtual size_t get_feature_vector_length() const = 0;
+    virtual void get_feature_descriptions(
+        FeatureDescriptionVector& feature_descriptions) const;
+protected:
+    virtual void init_compute(FeatureVectorView return_vector);
+    virtual void push_back_feature(
+        std::string feature_name,
+        double feature_value);
+    virtual void push_back_feature(
+        std::string feature_name,
+        const MinMaxMeanVarCalculator& mmmv_calculator);
+    FeatureVectorView::iterator feature_vector_it_;
+    FeatureDescriptionVector::iterator feature_descriptions_it_;
+    FeatureDescriptionVector feature_descriptions_;
+};
+
+class TrackFeatureExtractor : public TrackingFeatureExtractorBase
 /* TODO:
     - add track length as a feature as well?
 */
 {
-public:
-    typedef std::vector<double> JointFeatureVector;
-    typedef std::vector<std::string> FeatureDescription;
 public:
     TrackFeatureExtractor();
     void compute_features(
@@ -41,29 +61,16 @@ public:
     void compute_features(
         ConstTraxelRefVectors& traxelref_vecs,
         FeatureMatrix& return_matrix);
-    size_t get_feature_vector_length() const;
-    void get_feature_descriptions(FeatureDescription& feature_descriptions) const;
+    virtual size_t get_feature_vector_length() const;
 private:
     void compute_sq_id_features(ConstTraxelRefVector&, std::string);
     void compute_sq_diff_features(ConstTraxelRefVector&, std::string);
     void compute_sq_curve_features(ConstTraxelRefVector&, std::string);
     void compute_angle_features(ConstTraxelRefVector&, std::string);
-
-    void push_back_feature(std::string feature_name, double feature_value);
-    void push_back_feature(
-        std::string feature_name,
-        const MinMaxMeanVarCalculator& mmmv_calculator);
-private:
-    FeatureVectorView::iterator feature_vector_offset_it_;
-    FeatureDescription::iterator feature_descriptions_offset_it_;
-    FeatureDescription feature_descriptions_;
 };
 
-class DivisionFeatureExtractor
+class DivisionFeatureExtractor : public TrackingFeatureExtractorBase
 {
-public:
-    typedef std::vector<double> JointFeatureVector;
-    typedef std::vector<std::string> FeatureDescription;
 public:
     DivisionFeatureExtractor();
     void compute_features(
@@ -72,18 +79,11 @@ public:
     void compute_features(
         ConstTraxelRefVectors& traxelref_vecs,
         FeatureMatrix& return_matrix);
-    size_t get_feature_vector_length() const;
-    void get_feature_descriptions(FeatureDescription& feature_descriptions) const;
+    virtual size_t get_feature_vector_length() const;
 private:
     void compute_id_features(ConstTraxelRefVector&, std::string);
     void compute_sq_diff_features(ConstTraxelRefVector&, std::string);
     void compute_angle_features(ConstTraxelRefVector&, std::string);
-
-    void push_back_feature(std::string feature_name, double feature_value);
-private:
-    FeatureVectorView::iterator feature_vector_offset_it_;
-    FeatureDescription::iterator feature_descriptions_offset_it_;
-    FeatureDescription feature_descriptions_;
 };
 
 /**
