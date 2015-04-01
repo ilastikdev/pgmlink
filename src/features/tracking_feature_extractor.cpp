@@ -578,39 +578,11 @@ void TrackingFeatureExtractor::save_division_traxels_to_h5(ConstTraxelRefVectors
     }
 }
 
-void TrackingFeatureExtractor::compute_features()
+void TrackingFeatureExtractor::compute_all_track_features()
 {
-    typedef AppearanceTraxels::AppearanceType AppearanceType;
-    // extract traxels of interest
     LOG(logDEBUG) << "Extract all tracks";
     TrackTraxels track_extractor;
     ConstTraxelRefVectors track_traxels = track_extractor(*graph_);
-    LOG(logDEBUG) << "Extract all divisions to depth 1";
-    DivisionTraxels div_1_extractor(1);
-    ConstTraxelRefVectors div_1_traxels = div_1_extractor(*graph_);
-    LOG(logDEBUG) << "Extract all divisions to depth 2";
-    DivisionTraxels div_2_extractor(2);
-    ConstTraxelRefVectors div_2_traxels = div_2_extractor(*graph_);
-    LOG(logDEBUG) << "Extract all appearances";
-    AppearanceTraxels appearance_extractor(AppearanceType::Appearance);
-    ConstTraxelRefVectors all_app_traxels = appearance_extractor(*graph_);
-    LOG(logDEBUG) << "Extract all disappearances";
-    AppearanceTraxels disappearance_extractor(AppearanceType::Disappearance);
-    ConstTraxelRefVectors all_disapp_traxels = disappearance_extractor(*graph_);
-    LOG(logDEBUG) << "Extract filtered appearances";
-    AppearanceTraxels appearance_extractor_f(
-        AppearanceType::Appearance,
-        margin_filter_function_);
-    ConstTraxelRefVectors filtered_app_traxels = appearance_extractor_f(*graph_);
-    LOG(logDEBUG) << "Extract filtered disappearances";
-    AppearanceTraxels disappearance_extractor_f(
-        AppearanceType::Disappearance,
-        margin_filter_function_);
-    ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
-
-    save_traxel_ids_to_h5(track_traxels);
-    save_division_traxels_to_h5(div_1_traxels);
-
     compute_sq_diff_features(track_traxels, "RegionCenter");
     compute_sq_diff_features(track_traxels, "Count");
     compute_sq_diff_features(track_traxels, "Mean");
@@ -632,6 +604,17 @@ void TrackingFeatureExtractor::compute_features()
     //TODO filter the tracks for the following? (division start / division end)
     compute_svm_track_feature_outlier(track_traxels);
 
+    save_traxel_ids_to_h5(track_traxels);
+}
+
+void TrackingFeatureExtractor::compute_all_division_features()
+{
+    LOG(logDEBUG) << "Extract all divisions to depth 1";
+    DivisionTraxels div_1_extractor(1);
+    ConstTraxelRefVectors div_1_traxels = div_1_extractor(*graph_);
+    LOG(logDEBUG) << "Extract all divisions to depth 2";
+    DivisionTraxels div_2_extractor(2);
+    ConstTraxelRefVectors div_2_traxels = div_2_extractor(*graph_);
     compute_division_sq_diff_features(div_1_traxels, "RegionCenter");
     compute_division_sq_diff_features(div_1_traxels, "Count");
     compute_division_sq_diff_features(div_1_traxels, "Mean");
@@ -649,6 +632,30 @@ void TrackingFeatureExtractor::compute_features()
     compute_child_deceleration_outlier(div_2_traxels, "Mean");
     compute_child_deceleration_outlier(div_2_traxels, "Variance");
     compute_svm_division_feature_outlier(div_1_traxels);
+
+    save_division_traxels_to_h5(div_1_traxels);
+}
+
+void TrackingFeatureExtractor::compute_all_app_dis_features()
+{
+    typedef AppearanceTraxels::AppearanceType AppearanceType;
+
+    LOG(logDEBUG) << "Extract all appearances";
+    AppearanceTraxels appearance_extractor(AppearanceType::Appearance);
+    ConstTraxelRefVectors all_app_traxels = appearance_extractor(*graph_);
+    LOG(logDEBUG) << "Extract all disappearances";
+    AppearanceTraxels disappearance_extractor(AppearanceType::Disappearance);
+    ConstTraxelRefVectors all_disapp_traxels = disappearance_extractor(*graph_);
+    LOG(logDEBUG) << "Extract filtered appearances";
+    AppearanceTraxels appearance_extractor_f(
+        AppearanceType::Appearance,
+        margin_filter_function_);
+    ConstTraxelRefVectors filtered_app_traxels = appearance_extractor_f(*graph_);
+    LOG(logDEBUG) << "Extract filtered disappearances";
+    AppearanceTraxels disappearance_extractor_f(
+        AppearanceType::Disappearance,
+        margin_filter_function_);
+    ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
     push_back_feature(
         "Share of appearances within margin",
         static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
@@ -657,6 +664,13 @@ void TrackingFeatureExtractor::compute_features()
         static_cast<double>(filtered_disapp_traxels.size() / all_disapp_traxels.size()));
     compute_border_distances(all_app_traxels, "appearance");
     compute_border_distances(all_disapp_traxels, "disappearance");
+}
+
+void TrackingFeatureExtractor::compute_features()
+{
+    compute_all_track_features();
+    compute_all_division_features();
+    compute_all_app_dis_features();
 }
 
 void TrackingFeatureExtractor::set_track_feature_output_file(const std::string &filename)

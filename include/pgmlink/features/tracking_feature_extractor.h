@@ -137,6 +137,7 @@ public:
     /// Comments are ignored, and will not be copied to the edited file
     void append_feature_vector_to_file(const std::string &filename);
 
+
 private:
     void push_back_feature(std::string feature_name, double feature_value);
     void push_back_feature(
@@ -164,6 +165,13 @@ private:
     void compute_svm_division_feature_outlier(ConstTraxelRefVectors&);
     void compute_border_distances(ConstTraxelRefVectors&, std::string);
     // TODO: add many more
+
+    /**
+     * methods that compute all features
+     */
+    void compute_all_division_features();
+    void compute_all_app_dis_features();
+    void compute_all_track_features();
 
 private:
     boost::shared_ptr<SquaredDiffCalculator> sq_diff_calc_ptr_;
