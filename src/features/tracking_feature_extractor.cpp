@@ -82,9 +82,9 @@ TrackFeatureExtractor::TrackFeatureExtractor()
 size_t TrackFeatureExtractor::get_feature_vector_length() const
 {
     // TODO: UUUUGLY!
-    return 3 * 4 // compute_sq_id_features (Count, Mean, Variance)
-           + 4 * 4 // compute_sq_diff_features (com, Count, Mean, Variance)
-           + 4 * 4 // compute_sq_accel_features (com, Count, Mean, Variance)
+    return 3 * 2 // compute_sq_id_features (Count, Mean, Variance)
+           + 4 * 2 // compute_sq_diff_features (com, Count, Mean, Variance)
+           + 4 * 2 // compute_sq_accel_features (com, Count, Mean, Variance)
            + 1 * 2; // compute_angle_features (com)
 }
 
@@ -251,8 +251,8 @@ void TrackFeatureExtractor::push_back_feature(
     std::string feature_name,
     const MinMaxMeanVarCalculator& mmmv_calculator)
 {
-    push_back_feature("min of " + feature_name, mmmv_calculator.get_min());
-    push_back_feature("max of " + feature_name, mmmv_calculator.get_max());
+//    push_back_feature("min of " + feature_name, mmmv_calculator.get_min());
+//    push_back_feature("max of " + feature_name, mmmv_calculator.get_max());
     push_back_feature("mean of " + feature_name, mmmv_calculator.get_mean());
     push_back_feature("var of " + feature_name, mmmv_calculator.get_var());
 }
