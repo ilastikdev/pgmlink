@@ -88,6 +88,15 @@ size_t TrackFeatureExtractor::get_feature_vector_length() const
            + 1 * 2; // compute_angle_features (com)
 }
 
+std::ostream& operator<<(std::ostream& lhs, TrackFeatureExtractor::FeatureDescription& rhs)
+{
+    for(auto s: rhs)
+    {
+        lhs << s << ", ";
+    }
+    return lhs;
+}
+
 void TrackFeatureExtractor::get_feature_descriptions(
     FeatureDescription& feature_descriptions) const
 {
@@ -459,11 +468,12 @@ void TrackingFeatureExtractor::train_track_svm()
     // calculate the feature vectors for all tracks
     FeatureMatrix track_feature_matrix;
     TrackFeatureExtractor track_feature_extractor;
+//    TrackFeatureExtractor::FeatureDescription fd;
+//    track_feature_extractor.get_feature_descriptions(fd);
+//    LOG(logINFO) << "Training SVM from features: \n" << fd;
     track_feature_extractor.compute_features(track_traxels, track_feature_matrix);
-    // train the svm
-    // TODO the kernel width is set to 1.0 but all the features are probably on
-    // different scales -> do some normalization in TrackFeatureExtractor
-    svm_track_outlier_calc_ptr_->train(track_feature_matrix, 1.0);
+    // train the svm (feature normalization is performed internally)
+    svm_track_outlier_calc_ptr_->train(track_feature_matrix, sqrt(track_feature_matrix.shape(1)));
 }
 
 void TrackingFeatureExtractor::train_division_svm()
@@ -475,10 +485,8 @@ void TrackingFeatureExtractor::train_division_svm()
     FeatureMatrix div_feature_matrix;
     DivisionFeatureExtractor div_feature_extractor;
     div_feature_extractor.compute_features(div_traxels, div_feature_matrix);
-    // train the svm
-    // TODO the kernel width is set to 1.0 but all the features are probably on
-    // different scales -> do some normalization in DivisionFeatureExtractor
-    svm_div_outlier_calc_ptr_->train(div_feature_matrix, 1.0);
+    // train the svm (feature normalization is performed internally)
+    svm_div_outlier_calc_ptr_->train(div_feature_matrix, sqrt(div_feature_matrix.shape(1)));
 }
 
 boost::shared_ptr<SVMOutlierCalculator> TrackingFeatureExtractor::get_track_svm() const
@@ -620,7 +628,8 @@ void TrackingFeatureExtractor::compute_features()
     compute_track_diff_outlier(track_traxels, "Mean");
     compute_track_diff_outlier(track_traxels, "Variance");
     //TODO filter the tracks for the following? (division start / division end)
-    compute_track_feature_outlier(track_traxels);
+    compute_svm_track_feature_outlier(track_traxels);
+
     compute_division_sq_diff_features(div_1_traxels, "RegionCenter");
     compute_division_sq_diff_features(div_1_traxels, "Count");
     compute_division_sq_diff_features(div_1_traxels, "Mean");
@@ -637,7 +646,7 @@ void TrackingFeatureExtractor::compute_features()
     compute_child_deceleration_outlier(div_2_traxels, "Count");
     compute_child_deceleration_outlier(div_2_traxels, "Mean");
     compute_child_deceleration_outlier(div_2_traxels, "Variance");
-    compute_division_feature_outlier(div_1_traxels);
+    compute_svm_division_feature_outlier(div_1_traxels);
     push_back_feature(
         "Share of appearances within margin",
         static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
@@ -895,7 +904,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
         diff_out_mmmv);
 }
 
-void TrackingFeatureExtractor::compute_track_feature_outlier(
+void TrackingFeatureExtractor::compute_svm_track_feature_outlier(
     ConstTraxelRefVectors& track)
 {
     FeatureMatrix track_feature_matrix;
@@ -1060,7 +1069,7 @@ void TrackingFeatureExtractor::compute_child_deceleration_outlier(
     push_back_feature("Outlier in child " + feature_name + " decelerations", outlier);
 }
 
-void TrackingFeatureExtractor::compute_division_feature_outlier(
+void TrackingFeatureExtractor::compute_svm_division_feature_outlier(
     ConstTraxelRefVectors& divisions)
 {
     FeatureMatrix div_feature_matrix;

@@ -1057,9 +1057,13 @@ public:
         const FeatureMatrix& feature_matrix,
         FeatureMatrix& return_matrix
     ) const;
+    void normalize_features(FeatureMatrix& feature_matrix) const;
+    void compute_feature_mean_var(const FeatureMatrix &feature_matrix);
     bool is_trained() const;
 protected:
     DecisionFunctionType decision_function_;
+    std::vector<double> feature_means_;
+    std::vector<double> feature_vars_;
     bool is_trained_;
     static const std::string name_;
 private:
@@ -1082,6 +1086,8 @@ void SVMOutlierCalculator::save(
     std::string str = sstream.str();
 
     archive & is_trained_;
+    archive & feature_means_;
+    archive & feature_vars_;
     archive & str;
 };
 
@@ -1094,6 +1100,8 @@ void SVMOutlierCalculator::load(
     std::string str;
 
     archive & is_trained_;
+    archive & feature_means_;
+    archive & feature_vars_;
     archive & str;
 
     std::stringstream sstream(str);

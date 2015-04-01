@@ -2220,6 +2220,56 @@ bool SVMOutlierCalculator::is_trained() const
     return is_trained_;
 }
 
+void SVMOutlierCalculator::compute_feature_mean_var(const FeatureMatrix& feature_matrix)
+{
+    size_t col_count = feature_matrix.shape(0);
+    size_t row_count = feature_matrix.shape(1);
+
+    if(col_count < 2 || row_count == 0)
+    {
+        throw std::runtime_error("Cannot compute mean and var for empty matrix or with less than two samples!");
+    }
+
+    feature_means_.clear();
+    feature_vars_.clear();
+
+    for(size_t row_idx = 0; row_idx < row_count; row_idx++)
+    {
+        // get the mean and variance of each feature and store them
+        FeatureVectorView row_view = feature_matrix.bind<1>(row_idx);
+        FeatureScalar row_mean, row_var;
+        row_view.meanVariance(&row_mean, &row_var);
+        feature_means_.push_back(row_mean);
+        feature_vars_.push_back(row_var);
+    }
+}
+
+void SVMOutlierCalculator::normalize_features(FeatureMatrix& feature_matrix) const
+{
+    size_t col_count = feature_matrix.shape(0);
+    size_t row_count = feature_matrix.shape(1);
+
+    if(col_count < 2 || row_count == 0)
+    {
+        throw std::runtime_error("Cannot normalize empty matrix or with less than two samples!");
+    }
+
+    if(row_count != feature_means_.size() || row_count != feature_vars_.size())
+    {
+        throw std::runtime_error("Stored normalization info has different number of features than new data!");
+    }
+
+    for(size_t row_idx = 0; row_idx < row_count; row_idx++)
+    {
+        // normalize each row
+        FeatureVectorView row_view = feature_matrix.bind<1>(row_idx);
+        FeatureScalar row_mean = feature_means_[row_idx];
+        FeatureScalar row_var  = feature_vars_[row_idx];
+        row_view -= row_mean;
+        row_view /= row_var;
+    }
+}
+
 void SVMOutlierCalculator::train(
     const FeatureMatrix& feature_matrix,
     const FeatureScalar& kernel_width
@@ -2234,11 +2284,16 @@ void SVMOutlierCalculator::train(
         throw std::runtime_error("Cannot train outlier SVM without any samples!");
     }
 
-    LOG(logINFO) << "Training outlier SVM from " << col_count << " samples:\n" << feature_matrix;
+    // normalize features using mean and variance of feature_matrix
+    compute_feature_mean_var(feature_matrix);
+    FeatureMatrix normalized_feature_matrix(feature_matrix);
+    normalize_features(normalized_feature_matrix);
+
+//    LOG(logINFO) << "Training outlier SVM from " << col_count << " samples:\n" << normalized_feature_matrix;
 
     for (size_t col = 0; col < col_count; col++)
     {
-        FeatureVectorView column = feature_matrix.bind<0>(col);
+        FeatureVectorView column = normalized_feature_matrix.bind<0>(col);
         SampleType sample(row_count);
         std::copy(column.begin(), column.end(), sample.begin());
         samples.push_back(sample);
@@ -2251,6 +2306,15 @@ void SVMOutlierCalculator::train(
     is_trained_ = true;
 }
 
+std::ostream& operator<<(std::ostream& lhs, std::vector<dlib::matrix<FeatureScalar, 0, 1>>& rhs)
+{
+    for(dlib::matrix<FeatureScalar, 0, 1>& sample : rhs)
+    {
+        lhs << dlib::trans(sample);
+    }
+    return lhs;
+}
+
 void SVMOutlierCalculator::calculate(
     const FeatureMatrix& feature_matrix,
     FeatureMatrix& return_matrix
@@ -2259,21 +2323,32 @@ void SVMOutlierCalculator::calculate(
     size_t col_count = feature_matrix.shape(0);
     size_t row_count = feature_matrix.shape(1);
     std::vector<SampleType> samples;
+
+    // normalize features
+    FeatureMatrix normalized_feature_matrix(feature_matrix);
+    normalize_features(normalized_feature_matrix);
+
     // TODO assert num_samples >> dim ?
     for (size_t col = 0; col < col_count; col++)
     {
-        FeatureVectorView column = feature_matrix.bind<0>(col);
+        FeatureVectorView column = normalized_feature_matrix.bind<0>(col);
         SampleType sample(row_count);
         std::copy(column.begin(), column.end(), sample.begin());
         samples.push_back(sample);
     }
     if (is_trained_)
     {
+//        LOG(logINFO) << "Predicting from SVM with " << decision_function_.alpha.size() << " weights for samples of size " << row_count;
+//        LOG(logINFO) << "Using learned SVM weights: \n" << decision_function_.alpha;
         return_matrix.reshape(vigra::Shape2(col_count, 1));
+//        LOG(logINFO) << "and support vectors: \n" << decision_function_.basis_vectors;
+
         for(size_t col = 0; col < col_count; col++)
         {
             return_matrix(col, 0) = decision_function_(samples[col]);
         }
+
+//        LOG(logINFO) << "SVM predictions from samples\n" << samples << "\n yielded: " << return_matrix.transpose();
     }
     else
     {
