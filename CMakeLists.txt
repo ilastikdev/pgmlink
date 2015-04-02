@@ -55,7 +55,12 @@ find_package( Mlpack REQUIRED )
 find_package( Opengm REQUIRED )
 find_package( Xml2 REQUIRED )
 find_package( PythonInterp REQUIRED )
-find_package( DPCT REQUIRED)
+
+SET(WITH_DPCT false CACHE BOOL "Build with dynamic programming conservation tracking")
+if(WITH_DPCT)
+    find_package(DPCT REQUIRED)
+    add_definitions(-DWITH_DPCT)
+endif(WITH_DPCT)
 
 if(WIN32)
   # FindHDF5 is broken on Windows
@@ -100,8 +105,9 @@ message(STATUS "  Boost: ${Boost_INCLUDE_DIRS}")
 message(STATUS "  HDF5:  ${HDF5_INCLUDE_DIRS}")
 message(STATUS "  Opengm: ${Opengm_INCLUDE_DIR}")
 message(STATUS "  libxml2:  ${Xml2_INCLUDE_DIR}")
-message(STATUS "  dpct: ${DPCT_INCLUDE_DIR}")
-
+if(WITH_DPCT)
+    message(STATUS "  dpct: ${DPCT_INCLUDE_DIR}")
+endif(WITH_DPCT)
 # hide these variables to have a cleaner interface
 mark_as_advanced( Boost_DIR )
 

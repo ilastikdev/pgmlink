@@ -1,3 +1,5 @@
+#ifdef WITH_DPCT
+
 #include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
 #include <stdexcept>
 #include <memory>
@@ -397,3 +399,5 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
 }
 
 } // namespace pgmlink
+
+#endif // WITH_DPCT

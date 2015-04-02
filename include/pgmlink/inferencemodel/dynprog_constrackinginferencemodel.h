@@ -1,6 +1,7 @@
 #ifndef REASONER_DYN_PROG_CONSTRACKING_H
 #define REASONER_DYN_PROG_CONSTRACKING_H
 
+#ifdef WITH_DPCT
 #include "inferencemodel.h"
 #include <dpct/graph.h>
 #include <dpct/trackingalgorithm.h>
@@ -76,6 +77,8 @@ double DynProgConsTrackInferenceModel::getTransitionArcScore(const HypothesesGra
 }
 
 } // namespace pgmlink
+
+#endif // WITH_DPCT
 
 #endif // REASONER_DYN_PROG_CONSTRACKING_H
 

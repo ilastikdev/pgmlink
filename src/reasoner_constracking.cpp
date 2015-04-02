@@ -173,10 +173,12 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
                           ep_gap_,
                           cplex_timeout_);
     }
+#ifdef WITH_DPCT
     else if(solver_ == DynProgSolver)
     {
         inference_model = boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
     }
+#endif // WITH_DPCT
 
     // build inference model
     inference_model->build_from_graph(*graph);
