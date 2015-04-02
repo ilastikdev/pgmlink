@@ -953,7 +953,8 @@ void ConsTracking::write_funkey_features(TraxelStore& ts,
         boost::python::object transitionClassifier)
 {
     const size_t num_parameters = 5;
-    quit_before_inference_ = not(not ground_truth_file_.empty() or not constraints_file_.empty());
+//    quit_before_inference_ = not(not ground_truth_file_.empty() or not constraints_file_.empty());
+    quit_before_inference_ = true;
 
     for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it)
     {
