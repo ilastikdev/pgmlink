@@ -50,9 +50,7 @@ public: // API
     void set_inference_params(size_t numberOfSolutions,
                               const std::string& feature_filename,
                               const std::string& constraints_filename,
-                              const std::string& ground_truth_filename,
-                              bool with_inference,
-                              bool export_from_labeled_graph);
+                              const std::string& ground_truth_filename);
 
     IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
 

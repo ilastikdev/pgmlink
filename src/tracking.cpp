@@ -556,8 +556,6 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
 
-
-
 //	PyEval_InitThreads();
 //	PyGILState_STATE gilstate = PyGILState_Ensure();
 
@@ -581,13 +579,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
                                             );
     ConservationTracking pgm(param);
 
-    pgm.features_file_      = features_file_;
-    pgm.constraints_file_   = constraints_file_;
-    pgm.ground_truth_file_  = ground_truth_file_;
-    pgm.export_from_labeled_graph_ = export_from_labeled_graph_;
-
     // needed for diverse M best when extracting weights
-    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1 && quit_before_inference_)
+    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1)
     {
         if(!ilp_solutions_.size() > 0)
         {
@@ -596,13 +589,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         pgm.set_ilp_solutions(ilp_solutions_);
     }
 
-    pgm.perturbedInference(*hypotheses_graph_, !quit_before_inference_);
-
-    // if we only want to export features: stop here, return empty vector, no active_ maps are set anyway.
-    if(quit_before_inference_)
-    {
-        return EventVectorVectorVector();
-    }
+    pgm.perturbedInference(*hypotheses_graph_);
 
     size_t num_solutions = uncertaintyParam.numberOfIterations;
     if (num_solutions == 1)
@@ -686,60 +673,13 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
     boost::function<double(const double)> transition;
-
-    if (use_classifier_prior_)
-    {
-        LOG(logINFO) << "Using classifier prior";
-        detection = NegLnDetection(detection_weight);
-    }
-    else if (use_size_dependent_detection_)
-    {
-        LOG(logINFO) << "Using size dependent prior";
-        detection = NegLnDetection(detection_weight); // weight
-    }
-    else
-    {
-        LOG(logINFO) << "Using hard prior";
-        // assume a quasi geometric distribution
-        vector<double> prob_vector;
-        double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
-        double sum = 0;
-        for(double state = 0; state < max_number_objects_; ++state)
-        {
-            double prob = p * pow(1 - p, state);
-            prob_vector.push_back(prob);
-            sum += prob;
-        }
-        prob_vector.insert(prob_vector.begin(), 1 - sum);
-
-        detection = boost::bind<double>(NegLnConstant(detection_weight, prob_vector), _2);
-    }
-
-
-
+    boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
+    
     LOG(logDEBUG1) << "division_weight = " << division_weight;
     LOG(logDEBUG1) << "transition_weight = " << transition_weight;
-    division = NegLnDivision(division_weight);
-    transition = NegLnTransition(transition_weight);
-
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
-    boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
-    size_t tmin = hypotheses_graph_->earliest_timestep();
-    size_t tmax = hypotheses_graph_->latest_timestep();
-    appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost,
-                         border_width,
-                         false, // true if relative margin to border
-                         fov_,
-                         tmin);// set appearance cost to zero at t = tmin
-    disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
-                            border_width,
-                            false, // true if relative margin to border
-                            fov_,
-                            tmax);// set disappearance cost to zero at t = tmax
-
-    cout << "-> init ConservationTracking reasoner" << endl;
 
     ConservationTracking::Parameter param(
         max_number_objects_,
@@ -762,10 +702,69 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         division_weight,
         detection_weight,
         transition_weight,
+        border_width,
         transition_classifier,
         with_optical_correction_
     );
+
+    std::vector<double> model_weights = {detection_weight, division_weight, transition_weight, disappearance_cost, appearance_cost};
+
+    setParameterWeights(param,model_weights); 
     return param;
+}
+
+void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
+{
+
+    param.detection_weight  =weights[0];
+    param.division_weight   =weights[1];
+    param.transition_weight =weights[2];
+
+    size_t tmin = hypotheses_graph_->earliest_timestep();
+    size_t tmax = hypotheses_graph_->latest_timestep();
+
+    if (use_classifier_prior_)
+    {
+        LOG(logINFO) << "Using classifier prior";
+        param.detection = NegLnDetection(weights[0]);
+    }
+    else if (use_size_dependent_detection_)
+    {
+        LOG(logINFO) << "Using size dependent prior";
+        param.detection = NegLnDetection(weights[0]); // weight
+    }
+    else
+    {
+        LOG(logINFO) << "Using hard prior";
+        // assume a quasi geometric distribution
+        vector<double> prob_vector;
+        double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
+        double sum = 0;
+        for(double state = 0; state < max_number_objects_; ++state)
+        {
+            double prob = p * pow(1 - p, state);
+            prob_vector.push_back(prob);
+            sum += prob;
+        }
+        prob_vector.insert(prob_vector.begin(), 1 - sum);
+
+        param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
+    }
+
+    param.division = NegLnDivision(weights[1]);
+    param.transition = NegLnTransition(weights[2]);
+
+    param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
+                             param.border_width,
+                             false, // true if relative margin to border
+                             fov_,
+                             tmin);// set appearance cost to zero at t = tmin
+
+    param.disappearance_cost_fn = SpatialBorderAwareWeight(weights[3],
+                            param.border_width,
+                            false, // true if relative margin to border
+                            fov_,
+                            tmax);// set disappearance cost to zero at t = tmax
 }
 
 EventVectorVector ConsTracking::resolve_mergers(
@@ -886,198 +885,101 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
     }
 }
 
-void ConsTracking::write_funkey_set_output_files(std::string writeFeatures,
-        std::string writeConstraints,
-        std::string writeGroundTruth,
-        bool reset,
-        UncertaintyParameter uncertainty_param)
+void ConsTracking::createStructuredLearningFiles(std::string feature_file_name,
+                                      std::string constraints_file_name,
+                                      std::string ground_truth_file_name)
 {
-    if(reset)
-    {
-        constraints_file_.clear();
-        features_file_.clear();
-        ground_truth_file_.clear();
-    }
 
-    if(not  writeConstraints.empty())
+    if(not  constraints_file_name.empty())
     {
-        constraints_file_   = writeConstraints;
         std::ofstream constraints_file;
-        constraints_file.open (writeConstraints);
+        constraints_file.open (constraints_file_name);
         constraints_file.close();
     }
 
-    if(not writeFeatures.empty())
+    if(not feature_file_name.empty())
     {
-        std::cout << "creating feature matrix file: " << writeFeatures << std::endl;
-        features_file_      = writeFeatures;
-        if(!features_file_.empty())
-        {
-            size_t num_matrices = 1;
-            if(uncertainty_param.distributionId != MbestCPLEX)
-            {
-                num_matrices = uncertainty_param.numberOfIterations;
-            }
-
-            for(size_t i = 0; i < num_matrices; i++)
-            {
-                std::ofstream feature_file;
-                feature_file.open (ConservationTracking::get_export_filename(i, features_file_));
-                feature_file.close();
-            }
-        }
+        std::ofstream feature_file;
+        feature_file.open (feature_file_name);
+        feature_file.close();
     }
 
-    if(not writeGroundTruth.empty())
+    if(not ground_truth_file_name.empty())
     {
-        ground_truth_file_  = writeGroundTruth;
-//      std::ofstream labels_file;
-//      labels_file.open (writeGroundTruth);
-//      labels_file.close();
+        std::ofstream labels_file;
+        labels_file.open (ground_truth_file_name);
+        labels_file.close();
     }
 }
 
-void ConsTracking::set_export_labeled_graph(bool in)
+void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
+                                      std::string constraints_file_name,
+                                      std::string ground_truth_file_name,
+                                      ConservationTracking::Parameter param)
 {
-    export_from_labeled_graph_ = in;
+
+    //create empty files that opengm can append to
+    createStructuredLearningFiles(feature_file_name,constraints_file_name,ground_truth_file_name);
+
+
+    //every iteration creates one line in the feature matrix file
+    // if no feature file is written we only need to create the modle once
+    const size_t number_of_weights = 5;
+    size_t num_writes = number_of_weights;
+    if(feature_file_name.empty())
+        num_writes = 1;
+
+    //writing main loop
+    for (int i = 0; i < num_writes; ++i)
+    {
+        vector<double> model_weights =  std::vector<double>(number_of_weights, 0.);
+        model_weights[i] = 1.0;
+        setParameterWeights(param,model_weights);
+
+        ConservationTracking pgm(param);
+
+        pgm.features_file_      = feature_file_name;
+        pgm.constraints_file_   = constraints_file_name;
+
+        //during the model creation the feature and constraint files are filled
+        HypothesesGraph *graph = &(*hypotheses_graph_);
+        boost::shared_ptr<InferenceModel> inference_model = pgm.createInferenceModel(graph);
+
+        //write graph label to file (only once)
+        if (!ground_truth_file_name.empty())
+        {   
+            inference_model->write_labeledgraph_to_file(*hypotheses_graph_, ground_truth_file_name);
+            ground_truth_file_name.clear();
+        }
+
+        //only fill constraint file once
+        if (!constraints_file_name.empty())
+        {
+            constraints_file_name.clear();
+        }
+    }
+    
+    // feature file has been created line by line. Transpose to get one column per feature
+    if(not feature_file_name.empty())
+    {
+        transpose_matrix_in_file(feature_file_name);
+    }
+
 }
 
-void ConsTracking::write_funkey_features(TraxelStore& ts,
-        vector<vector<double>> parameterlist,
-        UncertaintyParameter uncertaintyParam,
-        double forbidden_cost,
-        int ndim,
-        bool with_tracklets,
-        double transition_parameter,
-        double border_width,
-        boost::python::object transitionClassifier)
-{
-    const size_t num_parameters = 5;
-    quit_before_inference_ = not(not ground_truth_file_.empty() or not constraints_file_.empty());
-
-    for(vector<vector<double>>::iterator it = parameterlist.begin(); it != parameterlist.end(); ++it)
-    {
-        //      std::string tmp_feat_file;
-
-        //      if(not ground_truth_file_.empty() and not export_from_labeled_graph_){
-        //          std::cout << "clearing features file" << std::endl;
-        //		tmp_feat_file = features_file_;
-        //		features_file_.clear();
-        //      }
-//          if(not export_from_labeled_graph_)
-//              build_hypo_graph(ts);
-
-        cout << "writing funkey files with weights:";
-        for(int i = 0; i < num_parameters; i++)
-        {
-            std::cout << (*it)[i];
-        }
-
-        cout << "quit_before_inference_" << quit_before_inference_ << endl;
-        track(forbidden_cost,//forbidden_cost,
-              0,
-              with_tracklets,
-              (*it)[0],//detection
-              (*it)[1],//division,
-              (*it)[2],//transition,
-              (*it)[3],//disappearance,
-              (*it)[4],//appearance,
-              false,//with_merger_resolution,
-              ndim,
-              transition_parameter,//transition_parameter,
-              border_width,//border_width,
-              true,//with constraints
-              uncertaintyParam,
-              1e+75,
-              transitionClassifier
-             );
-        // write constraint and ground truth files only once
-        if(not constraints_file_.empty())
-        {
-            constraints_file_.clear();
-        }
-        if(not ground_truth_file_.empty())
-        {
-            ground_truth_file_.clear();
-            //		if(not export_from_labeled_graph_)
-            //			features_file_ = tmp_feat_file;
-        }
-        quit_before_inference_ = true;
-
-    }
-
-    quit_before_inference_ = false;
-
-    if(!features_file_.empty())
-    {
-        size_t num_matrices = 1;
-        if(uncertaintyParam.distributionId != MbestCPLEX)
-        {
-            num_matrices = uncertaintyParam.numberOfIterations;
-        }
-
-        for(size_t i = 0; i < num_matrices; i++)
-        {
-            transpose_matrix_in_file(ConservationTracking::get_export_filename(i, features_file_));
-        }
-    }
-}
-
-void ConsTracking::write_funkey_files(TraxelStore ts,
-                                      std::string writeFeatures,
-                                      std::string writeConstraints,
-                                      std::string writeGroundTruth,
-                                      const vector<double> weights,
-                                      UncertaintyParameter uncertaintyParam,
-                                      double forbidden_cost,
-                                      int ndim,
-                                      bool with_tracklets,
-                                      double transition_parameter,
-                                      double border_width,
-                                      boost::python::object transitionClassifier)
-{
-    int number_of_weights = 5;
-    write_funkey_set_output_files(writeFeatures, writeConstraints, writeGroundTruth);
-    std::vector<std::vector<double>> list;
-    if(not  writeConstraints.empty() and writeFeatures.empty() and writeGroundTruth.empty())
-    {
-        //constraints only
-        list = std::vector<std::vector<double>>(1, std::vector<double>(number_of_weights, 1. ));
-    }
-    else if(not writeGroundTruth.empty() and export_from_labeled_graph_ == false)
-    {
-        // use provided weights for tracking and generating ground truth
-        list = std::vector<std::vector<double>>(1, weights);
-    }
-    if(not writeFeatures.empty())
-    {
-        //call the Conservation Tracking constructor #weights times with one weight set to 1, all others to zero
-        for(int i = 0; i < number_of_weights; i++)
-        {
-            std::vector<double> param(number_of_weights, 0.);
-            param[i] = 1;
-            list.push_back(param);
-        }
-        cout << "DEBUG OUT " << number_of_weights << "\t" << list.size() << endl;
-    }
-    write_funkey_features(ts, list, uncertaintyParam, forbidden_cost, ndim, with_tracklets, transition_parameter, border_width, transitionClassifier);
-    if(not writeFeatures.empty())
-    {
-        transpose_matrix_in_file(writeFeatures);
-    }
-}
-
-vector<double> ConsTracking::learn_from_funkey_files(std::string features, std::string constraints, std::string groundTruth, std::string weights, std::string options)
+vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_name,
+                                      std::string constraints_file_name,
+                                      std::string ground_truth_file_name,
+                                      std::string lossweights,
+                                      std::string options)
 {
 
     vector<double> out;
-    std::string command = std::string("/home/swolf/local/src/sbmrm/build/binaries/sbmrm") + " --featuresFile=" + features + " --constraintsFile=" + constraints + " --labelsFile=" + groundTruth + " " +  options;
-    if(not weights.empty())
+    std::string command = std::string("/home/swolf/local/src/sbmrm/build/binaries/sbmrm") + " --featuresFile=" + feature_file_name + " --constraintsFile=" + constraints_file_name + " --labelsFile=" + ground_truth_file_name + " " +  options;
+    if(not lossweights.empty())
     {
-        command += " --weightCostsFile=" + groundTruth + " --weightCostString=" + "\"" + weights + "\" ";
+        command += " --weightCostsFile=" + ground_truth_file_name + " --weightCostString=" + "\"" + lossweights + "\" ";
     }
-
-
 
     LOG(logINFO) << "calling funkey with " << command;
     std::string shell_output =  exec(command.c_str());
@@ -1090,9 +992,7 @@ vector<double> ConsTracking::learn_from_funkey_files(std::string features, std::
     for(int i = 0; i != std::string::npos ; i = numlist.find(",", i))
     {
         if(i > 0)
-        {
             i += 2;
-        }
         out.push_back(string_to_double(numlist.substr(i, numlist.find(",", i) - i).c_str()));
     }
     return out;
@@ -1110,10 +1010,10 @@ double ConsTracking::hammingloss_of_files(std::string f1, std::string f2)
         getline(in, line);
         getline(in2, line2);
         LOG(logDEBUG4) << "ConsTracking::hammingloss_of_files: comparing  " << line[0] << " and " << line2[0] ;
+        
         if(line[0] != line2[0])
-        {
             loss += 1;
-        }
+
     }
     return loss;
 }

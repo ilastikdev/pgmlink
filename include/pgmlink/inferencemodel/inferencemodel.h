@@ -64,6 +64,9 @@ public: // API
 
     virtual std::vector<size_t> infer() = 0;
 
+    virtual void write_labeledgraph_to_file(const HypothesesGraph & g,
+                                    const std::string &ground_truth_filename);
+
 protected: // methods
     double get_transition_prob(double distance,
                                size_t state,

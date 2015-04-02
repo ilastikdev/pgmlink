@@ -60,7 +60,6 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       with_constraints_(param.with_constraints),
       uncertainty_param_(param.uncertainty_param),
       cplex_timeout_(param.cplex_timeout),
-      export_from_labeled_graph_(false),
       isMAP_(true),
       division_weight_(param.division_weight),
       detection_weight_(param.detection_weight),
@@ -128,42 +127,22 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
     return export_filename.str();
 }
 
-void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool with_inference)
+boost::shared_ptr<InferenceModel> ConservationTracking::createInferenceModel(HypothesesGraph*& graph)
 {
-    if (with_inference)
-    {
-        solutions_.clear();
-    }
-
-    HypothesesGraph *graph;
 
     // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
     if (with_tracklets_)
     {
         LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
-        tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
+        tracklet2traxel_node_map_ = generateTrackletGraph2(*graph, tracklet_graph_);
         graph = &tracklet_graph_;
     }
-    else
-    {
-        graph = &hypotheses;
-    }
+    // else
+    // {
+    //     graph = &hypotheses;
+    // }
 
     graph->add(relative_uncertainty()).add(node_active_count());
-
-    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
-    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
-
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
-    uncertainty_param_.print();
-
-    //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
-    size_t numberOfSolutions = 1;
-    if (uncertainty_param_.distributionId == MbestCPLEX)
-    {
-        numberOfSolutions = uncertainty_param_.numberOfIterations;
-    }
 
     // instanciate inference model
     boost::shared_ptr<InferenceModel> inference_model;
@@ -181,6 +160,30 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
     // build inference model
     inference_model->build_from_graph(*graph);
 
+    return inference_model;
+}
+
+void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
+{
+    HypothesesGraph *graph = &hypotheses;
+
+    boost::shared_ptr<InferenceModel> inference_model = createInferenceModel(graph);
+
+    solutions_.clear();
+
+    //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
+    size_t numberOfSolutions = 1;
+    if (uncertainty_param_.distributionId == MbestCPLEX)
+    {
+        numberOfSolutions = uncertainty_param_.numberOfIterations;
+    }
+
+    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
+    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
+    LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
+    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
+    uncertainty_param_.print();
+
     // run inference
     if(solver_ == CplexSolver)
     {
@@ -188,36 +191,25 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
             numberOfSolutions,
             get_export_filename(0, features_file_),
             constraints_file_,
-            get_export_filename(0, ground_truth_file_),
-            with_inference,
-            export_from_labeled_graph_);
+            get_export_filename(0, ground_truth_file_));
     }
 
-    if (with_inference)
+
+    solutions_.push_back(inference_model->infer());
+
+    LOG(logINFO) << "conclude MAP";
+    inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
+
+    for (size_t k = 1; k < numberOfSolutions; ++k)
     {
-        solutions_.push_back(inference_model->infer());
+        assert(solver_ == CplexSolver);
+        LOG(logINFO) << "conclude " << k + 1 << "-best solution";
+        solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
+                                 inference_model)->extractSolution(k, get_export_filename(k, ground_truth_file_)));
 
-        if (solver_ == CplexSolver && export_from_labeled_graph_ && !ground_truth_file_.empty())
-        {
-            LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
-            boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->
-            write_labeledgraph_to_file(*graph, ground_truth_file_);
-            ground_truth_file_.clear();
-        }
-
-        LOG(logINFO) << "conclude MAP";
         inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
-
-        for (size_t k = 1; k < numberOfSolutions; ++k)
-        {
-            assert(solver_ == CplexSolver);
-            LOG(logINFO) << "conclude " << k + 1 << "-best solution";
-            solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
-                                     inference_model)->extractSolution(k, get_export_filename(k, ground_truth_file_)));
-
-            inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
-        }
     }
+
 
     //store offset by factor index
     //technical assumption: the number & order of factors remains the same for the perturbed models
@@ -272,16 +264,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, bool
             perturbed_inference_model->set_inference_params(1,
                     get_export_filename(iterStep, features_file_),
                     "",
-                    get_export_filename(iterStep, ground_truth_file_),
-                    with_inference,
-                    false);
+                    get_export_filename(iterStep, ground_truth_file_));
 
-            if (with_inference)
-            {
-                solutions_.push_back(perturbed_inference_model->infer());
-                LOG(logINFO) << "conclude";
-                perturbed_inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
-            }
+            solutions_.push_back(perturbed_inference_model->infer());
+            LOG(logINFO) << "conclude";
+            perturbed_inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
         }
     }
 

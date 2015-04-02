@@ -46,6 +46,9 @@ public:
 
     virtual void build_from_graph(const HypothesesGraph&);
 
+    virtual void write_labeledgraph_to_file(const HypothesesGraph & g,
+                            const std::string &ground_truth_filename){};
+
     template<class ArcIterator>
     double getTransitionArcScore(const HypothesesGraph& g, ArcIterator a);
 protected:

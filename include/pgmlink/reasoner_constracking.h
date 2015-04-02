@@ -49,12 +49,14 @@ public:
             double division_weight = 10,
             double detection_weight = 10,
             double transition_weight = 10,
+            double border_width = 0,
             boost::python::object transition_classifier = boost::python::object(),
             bool with_optical_correction = false):
             max_number_objects(max_number_objects),
             detection(detection),
             division(division),
             transition(transition),
+            border_width(border_width),
             forbidden_cost(forbidden_cost),
             ep_gap(ep_gap),
             with_tracklets(with_tracklets),
@@ -99,6 +101,7 @@ public:
         double division_weight;
         double detection_weight;
         double transition_weight;
+        double border_width;
         boost::python::object transition_classifier;
         bool with_optical_correction;
     };
@@ -118,7 +121,7 @@ public:
     virtual void infer();
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
-    virtual void perturbedInference(HypothesesGraph&, bool with_inference = true);
+    virtual void perturbedInference(HypothesesGraph&);
 
     double forbidden_cost() const;
 
@@ -131,13 +134,12 @@ public:
     std::string constraints_file_;
     std::string ground_truth_file_;
 
-    bool export_from_labeled_graph_;
+    boost::shared_ptr<InferenceModel> createInferenceModel(HypothesesGraph*& graph);
 
     static std::string get_export_filename(size_t iteration, const std::string &orig_file_name);
 protected:
     void reset();
     void compute_relative_uncertainty(HypothesesGraph *graph);
-
     unsigned int max_number_objects_;
 
     // energy functions

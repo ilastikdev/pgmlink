@@ -12,7 +12,6 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     number_of_division_nodes_(0),
     number_of_appearance_nodes_(0),
     number_of_disappearance_nodes_(0),
-    export_from_labeled_graph_(false),
     ground_truth_filename_("")
 {
     cplex_param_.verbose_ = true;
@@ -45,6 +44,10 @@ void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypothe
 
     add_finite_factors(hypotheses);
     add_constraints_to_pool(hypotheses);
+
+    clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
+    clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
+
 }
 
 ConsTrackingInferenceModel::GraphicalModelType& ConsTrackingInferenceModel::get_model()
@@ -589,18 +592,14 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
 void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
         const std::string &feature_filename,
         const std::string &constraints_filename,
-        const std::string &ground_truth_filename,
-        bool with_inference,
-        bool export_from_labeled_graph)
+        const std::string &ground_truth_filename)
 {
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
                  cplex_param_,
                  numberOfSolutions,
                  feature_filename,
                  constraints_filename,
-                 ground_truth_filename,
-                 export_from_labeled_graph));
-    export_from_labeled_graph_ = export_from_labeled_graph;
+                 ground_truth_filename));
     ground_truth_filename_ = ground_truth_filename;
 }
 
@@ -630,12 +629,6 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
     if (statusExtract != opengm::NORMAL)
     {
         throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
-    }
-
-    if(export_from_labeled_graph_ and not  ground_truth_filename_.empty())
-    {
-        clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
-        clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
     }
 
     return solution;
@@ -687,9 +680,6 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
             cplexid_label_map[id] = ((g.get(appearance_label())[n] == state) ? 1 : 0);
             LOG(logDEBUG4) << "app\t" << cplexid_label_map[id] << "  " << id << "  "
                            <<  get_appearance_node_map()[n] << "  " << state;
-            // cplexid_label_info_map[id] <<  "# appearance id:" << id << " state:"
-            // << g.get(appearance_label())[n] << "/" << state << "  node:" << get_appearance_node_map()[n]
-            // << "traxel id:" <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
             cplexid_weight_class_map[id].clear();
             cplexid_weight_class_map[id].push_back(std::make_pair(0, 1.));
         }
@@ -702,10 +692,6 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
             cplexid_label_map[id] = ((g.get(disappearance_label())[n] == state) ? 1 : 0);
             LOG(logDEBUG4) << "dis\t" << cplexid_label_map[id] << "  " << id << "  "
                            <<  get_disappearance_node_map()[n] << "  " << state;
-            // cplexid_label_info_map[id] <<  "# disappearance id:" << id << " state:"
-            // << g.get(disappearance_label())[n] << "/" << state << "  node:"
-            // << get_disappearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:"
-            // << traxel_map[n].Timestep ;
             cplexid_weight_class_map[id].clear();
             cplexid_weight_class_map[id].push_back(std::make_pair(1, 1.));
         }
@@ -721,9 +707,6 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
                 cplexid_label_map[id] = ((g.get(division_label())[n] == state) ? 1 : 0);
                 LOG(logDEBUG4) << "div\t" << cplexid_label_map[id] << "  " << id << "  "
                                << get_division_node_map()[n] << "  " << state << "   "; // << number_of_division_nodes_;
-                // cplexid_label_info_map[id] <<  "# division id:" << id << " state:"
-                // << g.get(division_label())[n] << "/" << state << "  node:" << div_node_map_[n]  << "traxel id:"
-                // <<  traxel_map[n].Id << "  ts:" << traxel_map[n].Timestep ;
                 cplexid_weight_class_map[id].clear();
                 cplexid_weight_class_map[id].push_back(std::make_pair(2, 1.));
             }
@@ -737,11 +720,6 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
             int id = clpex_variable_id_map_[make_pair(get_arc_map()[a], state)];
             cplexid_label_map[id] = ((g.get(arc_label())[a] == state) ? 1 : 0);
             LOG(logDEBUG4) << "arc\t" << cplexid_label_map[id] << "  " << id << "  " <<  get_arc_map()[a] << "  " << state;
-            // cplexid_label_info_map[id] <<  "# move id:" << id << " state:" << g.get(arc_label())[a] << "/"
-            // << state << "  node:" << get_arc_map()[a]  << "traxel id:"
-            // <<  traxel_map[g.source(a)].Id << "-->" << traxel_map[g.target(a)].Id << "  ts:"
-            // << traxel_map[g.target(a)].Timestep ;
-
             cplexid_weight_class_map[id].clear();
             if (param_.with_tracklets and (tracklet_map[g.source(a)]).size() > 1)
             {
@@ -787,15 +765,9 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
                     }
                     cplexid_weight_class_map[id].push_back(std::make_pair(4, 1.));
                 }
-                // cplexid_label_info_map[id] <<  "# factor id:" << id << " state:" << g.get(appearance_label())[n]
-                // <<","<<g.get(disappearance_label())[n]<< "/" << s1 << "," << s2 << "  node:"
-                // << get_appearance_node_map()[n]  << "traxel id:" <<  traxel_map[n].Id << "  ts:"
-                // << traxel_map[n].Timestep ;
             }
         }
     }
-
-
 
     //write labels to file
     std::ofstream ground_truth_file;

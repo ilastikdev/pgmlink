@@ -839,10 +839,11 @@ void resolve_graph(const HypothesesGraph& src,
         0.,//division_weight,
         0.,//detection_weight,
         1.,//transition_weight
+        0.,//border_width
         transitionClassifier);
     ConservationTracking pgm(param);
 
-    pgm.perturbedInference(dest, 0);
+    pgm.perturbedInference(dest);
 
     // Remap results from clones to original nodes.
     merge_split_divisions(dest, division_splits, arc_cross_reference_divisions);

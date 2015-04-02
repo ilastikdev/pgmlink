@@ -119,33 +119,33 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
     return result;
 }
 
-void pywrite_all_funkey_features(ConsTracking& tracking,
-                                 TraxelStore& ts,
-                                 UncertaintyParameter& uncertaintyParam,
-                                 double forbidden_cost,
-                                 int ndim,
-                                 bool with_tracklets,
-                                 double transition_parameter,
-                                 double border_width)
-{
-    vector<vector<double>> parameterlist;
+// void pywrite_all_funkey_features(ConsTracking& tracking,
+//                                  TraxelStore& ts,
+//                                  UncertaintyParameter& uncertaintyParam,
+//                                  double forbidden_cost,
+//                                  int ndim,
+//                                  bool with_tracklets,
+//                                  double transition_parameter,
+//                                  double border_width)
+// {
+//     vector<vector<double>> parameterlist;
 
-    for(size_t i = 0; i < 5; i++)
-    {
-        vector<double> params(5);
-        params[i] = 1.0;
-        parameterlist.push_back(params);
-    }
+//     for(size_t i = 0; i < 5; i++)
+//     {
+//         vector<double> params(5);
+//         params[i] = 1.0;
+//         parameterlist.push_back(params);
+//     }
 
-    tracking.write_funkey_features(ts,
-                                   parameterlist,
-                                   uncertaintyParam,
-                                   forbidden_cost,
-                                   ndim,
-                                   with_tracklets,
-                                   transition_parameter,
-                                   border_width);
-}
+//     tracking.write_funkey_features(ts,
+//                                    parameterlist,
+//                                    uncertaintyParam,
+//                                    forbidden_cost,
+//                                    ndim,
+//                                    with_tracklets,
+//                                    transition_parameter,
+//                                    border_width);
+// }
 
 feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract1)(const Traxel& t1) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
 feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract2)(const Traxel& t1, const Traxel& t2) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
@@ -224,13 +224,11 @@ void export_track()
     .def("detections", &ConsTracking::detections)
     .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)
     .def("get_resolved_hypotheses_graph", &ConsTracking::get_resolved_hypotheses_graph)
-    .def("SetFunkeyOutputFiles", &ConsTracking::write_funkey_set_output_files)
-    .def("writeFunkeyFeatures", &ConsTracking::write_funkey_features)
-    .def("writeAllFunkeyFeatures", &pywrite_all_funkey_features)
-    .def("writeFunkeyFiles", &ConsTracking::write_funkey_files)
+    .def("createStructuredLearningFiles", &ConsTracking::createStructuredLearningFiles)
+    // .def("writeAllFunkeyFeatures", &pywrite_all_funkey_features)
+    .def("writeStructuredLearningFiles", &ConsTracking::writeStructuredLearningFiles)
+    .def("learnTrackingWeights", &ConsTracking::learnTrackingWeights)
     .def("HamminglossOfFiles", &ConsTracking::hammingloss_of_files)
-    .def("LearnWithFunkey", &ConsTracking::learn_from_funkey_files)
-    .def("SetFunkeyExportLabeledGraph", &ConsTracking::set_export_labeled_graph)
     .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
     .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
     ;
