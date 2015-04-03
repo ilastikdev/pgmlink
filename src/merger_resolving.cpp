@@ -731,7 +731,8 @@ void resolve_graph(const HypothesesGraph& src,
                    bool with_tracklets,
                    const double transition_parameter,
                    const bool with_constraints,
-                   boost::python::object transitionClassifier)
+                   boost::python::object transitionClassifier,
+                   ConservationTracking::SolverType solver)
 {
 
     // Optimize the graph built by the class MergerResolver.
@@ -839,7 +840,9 @@ void resolve_graph(const HypothesesGraph& src,
         0.,//division_weight,
         0.,//detection_weight,
         1.,//transition_weight
-        transitionClassifier);
+        transitionClassifier,
+        false,
+        solver);
     ConservationTracking pgm(param);
 
     pgm.perturbedInference(dest, 0);
