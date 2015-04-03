@@ -231,6 +231,30 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
 
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
+    // add counting properties for analysis of perturbed models
+    g.add(arc_active_count()).add(node_active_count()).add(division_active_count());
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
+        g.get(arc_active_count());
+    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
+        g.get(node_active_count());
+    property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
+        g.get(division_active_count());
+
+    int iterStep = active_nodes_count[g.nodeFromId(0)].size();
+    if (iterStep == 0)
+    {
+        //initialize vectors for storing optimizer results
+        for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+        {
+            active_arcs_count.set(a, std::vector<bool>());
+        }
+        for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+        {
+            active_nodes_count.set(n, std::vector<long unsigned int>());
+            active_divisions_count.set(n, std::vector<bool>());
+        }
+    }
+
     if (!param_.with_tracklets)
     {
         tracklet_graph.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
@@ -244,12 +268,15 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     {
         active_nodes.set(n, 0);
         active_divisions.set(n, false);
+        active_nodes_count.get_value(n).push_back(0);
+        active_divisions_count.get_value(n).push_back(0);
     }
 
     //initialize arc counts by 0
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
         active_arcs.set(a, false);
+        active_arcs_count.get_value(a).push_back(0);
     }
 
     // function used to increase number of objects per node
@@ -268,6 +295,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
             {
                 HypothesesGraph::Node no = *tr_n_it;
                 active_nodes.set(no, active_nodes[no] + 1);
+                active_nodes_count.get_value(no)[iterStep] = active_nodes[no];
             }
 
             // set state of tracklet internal arcs
@@ -277,11 +305,13 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                 HypothesesGraph::Arc a = g.arcFromId(*arc_id_it);
 //                assert(active_arcs[a] == false);
                 active_arcs.set(a, true);
+                active_arcs_count.get_value(a)[iterStep] = true;
             }
         }
         else
         {
             active_nodes.set(n, active_nodes[n] + 1);
+            active_nodes_count.get_value(n)[iterStep] = active_nodes[n];
         }
     };
 
@@ -294,10 +324,12 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         if(param_.with_tracklets)
         {
             active_arcs.set(g.arcFromId((traxel_arc_id_map[a])), true);
+            active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[a])))[iterStep] = true;
         }
         else
         {
             active_arcs.set(a, true);
+            active_arcs_count.get_value(a)[iterStep] = true;
         }
     };
 
@@ -374,6 +406,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                         {
                             LOG(logDEBUG3) << "Found arc to activate for division!" << std::endl;
                             active_arcs.set(oa, true);
+                            active_arcs_count.get_value(oa)[iterStep] = true;
                             break;
                         }
                     }
