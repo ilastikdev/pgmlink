@@ -300,6 +300,7 @@ protected:
     boost::shared_ptr<ConservationTracking> pgm_;
 
     bool with_optical_correction_;
+
     ConservationTracking::SolverType solver_;
 };
 
