@@ -13,7 +13,7 @@ using namespace boost::python;
 void export_uncertaintyParameter()
 {
     enum_<DistrId>("DistrId")
-    .value("GaussianPertubation", GaussianPertubation)
+    .value("GaussianPertubation", Gaussian)
     .value("PerturbAndMAP", PerturbAndMAP)
     .value("DiverseMbest", DiverseMbest)
     .value("MbestCPLEX", MbestCPLEX)
