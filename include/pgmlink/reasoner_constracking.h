@@ -12,6 +12,7 @@
 #include "pgmlink/features/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/perturbation/perturbation.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
 #include <opengm/opengm.hxx>
@@ -166,7 +167,7 @@ protected:
 
     UncertaintyParameter uncertainty_param_;
     ConsTrackingInferenceModel::Parameter inference_model_param_;
-    PerturbedInferenceModel::Parameter perturbed_inference_model_param_;
+    Perturbation::Parameter perturbed_inference_model_param_;
 
     double cplex_timeout_;
     bool isMAP_;
