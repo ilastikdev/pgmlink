@@ -66,7 +66,7 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       transition_weight_(param.transition_weight),
       transition_classifier_(param.transition_classifier),
       with_optical_correction_(param.with_optical_correction),
-      solver_(CplexSolver)
+      solver_(param.solver_)
 {
     inference_model_param_.max_number_objects = max_number_objects_;
 
@@ -152,10 +152,17 @@ boost::shared_ptr<InferenceModel> ConservationTracking::createInferenceModel(Hyp
                           ep_gap_,
                           cplex_timeout_);
     }
+#ifdef WITH_DPCT
     else if(solver_ == DynProgSolver)
     {
         inference_model = boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
     }
+#else
+    else if(solver_ == DynProgSolver)
+    {
+        throw std::runtime_error("Support for dynamic programming solver not built!");
+    }
+#endif // WITH_DPCT
 
     // build inference model
     inference_model->build_from_graph(*graph);
@@ -184,7 +191,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
     uncertainty_param_.print();
 
-    // run inference
     if(solver_ == CplexSolver)
     {
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
@@ -202,11 +208,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 
     for (size_t k = 1; k < numberOfSolutions; ++k)
     {
-        assert(solver_ == CplexSolver);
+        if(solver_ != CplexSolver)
+            throw std::runtime_error("When using CPlex MBest perturbations you need to use the Cplex solver, too!");
         LOG(logINFO) << "conclude " << k + 1 << "-best solution";
         solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
                                  inference_model)->extractSolution(k, get_export_filename(k, ground_truth_file_)));
-
         inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
     }
 

@@ -1,17 +1,17 @@
-#include "pgmlink/inferencemodel/perturbedinferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_perturbedinferencemodel.h"
 #include "pgmlink/inferencemodel/perturbation/gaussian_perturbation.h"
 #include "pgmlink/inferencemodel/perturbation/divmbest_perturbation.h"
 #include "pgmlink/inferencemodel/perturbation/classifier_uncertainty_perturbation.h"
 #include "pgmlink/inferencemodel/perturbation/perturbandmap_perturbation.h"
 
+#ifdef WITH_DPCT
+
 namespace pgmlink
 {
 
-PerturbedInferenceModel::PerturbedInferenceModel(const ConsTrackingInferenceModel::Parameter& param,
-                                                 const Perturbation::Parameter &perturbation_param,
-                                                 double ep_gap,
-                                                 double cplex_timeout):
-    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)
+DynProgPerturbedInferenceModel::DynProgPerturbedInferenceModel(const InferenceModel::Parameter& param,
+                                                               const Perturbation::Parameter &perturbation_param):
+    DynProgConsTrackInferenceModel(param)
 {
     // instanciate perturbation depending on distribution type
     switch(perturbation_param.distributionId)
@@ -23,7 +23,8 @@ PerturbedInferenceModel::PerturbedInferenceModel(const ConsTrackingInferenceMode
             perturbation_ = boost::make_shared<PerturbAndMapPerturbation>(perturbation_param, param);
             break;
         case DiverseMbest:
-            perturbation_ = boost::make_shared<DivMBestPerturbation>(perturbation_param, param);
+            throw std::runtime_error("Diverse M Best perturbation does not work with Magnusson yet");
+//            perturbation_ = boost::make_shared<DivMBestPerturbation>(perturbation_param, param);
             break;
         case ClassifierUncertainty:
             perturbation_ = boost::make_shared<ClassifierUncertaintyPerturbation>(perturbation_param, param);
@@ -34,7 +35,7 @@ PerturbedInferenceModel::PerturbedInferenceModel(const ConsTrackingInferenceMode
     }
 }
 
-double PerturbedInferenceModel::generateRandomOffset(EnergyType parameterIndex,
+double DynProgPerturbedInferenceModel::generateRandomOffset(EnergyType parameterIndex,
                                                      double energy,
                                                      Traxel tr,
                                                      Traxel tr2,
@@ -43,16 +44,6 @@ double PerturbedInferenceModel::generateRandomOffset(EnergyType parameterIndex,
     return perturbation_->generateRandomOffset(parameterIndex, energy, tr, tr2, state, transition_predictions_);
 }
 
-size_t PerturbedInferenceModel::add_div_m_best_perturbation(marray::Marray<double> &energies,
-                                                            EnergyType energy_type,
-                                                            size_t factorIndex)
-{
-    return perturbation_->add_div_m_best_perturbation(energies, energy_type, factorIndex);
-}
-
-void PerturbedInferenceModel::perturb(Perturbation::DeterministicOffset *det_off)
-{
-    perturbation_->perturb(det_off);
-}
-
 } // namespace pgmlink
+
+#endif // WITH_DPCT

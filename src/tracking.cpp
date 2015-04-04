@@ -188,7 +188,11 @@ vector<vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
         }
 
         b.with_detection_vars(detection, misdetection);
-        mrf = std::auto_ptr<Chaingraph>(new Chaingraph(b, with_constraints_, ep_gap_, fixed_detections_, cplex_timeout_));
+        mrf = std::auto_ptr<Chaingraph>(new Chaingraph(b,
+                                                       with_constraints_,
+                                                       ep_gap_,
+                                                       fixed_detections_,
+                                                       cplex_timeout_));
     }
     else
     {
@@ -204,7 +208,11 @@ vector<vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
         }
 
         b.with_detection_vars(detection, misdetection);
-        mrf = std::auto_ptr<Chaingraph>(new Chaingraph(b, with_constraints_, ep_gap_, fixed_detections_, cplex_timeout_));
+        mrf = std::auto_ptr<Chaingraph>(new Chaingraph(b,
+                                                       with_constraints_,
+                                                       ep_gap_,
+                                                       fixed_detections_,
+                                                       cplex_timeout_));
     }
 
     cout << "-> formulate MRF model" << endl;
@@ -396,7 +404,8 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
 
     if(not use_classifier_prior_ and use_size_dependent_detection_)
     {
-        LOG(logDEBUG3) << "creating detProb feature in traxel store from deterministic detection probability function";
+        LOG(logDEBUG3) << "creating detProb feature in traxel store from "
+                          "deterministic detection probability function";
         vector<double> means;
         if (means_.size() == 0 )
         {
@@ -480,10 +489,13 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     SingleTimestepTraxel_HypothesesBuilder hyp_builder(traxel_store_, builder_opts);
     hypotheses_graph_ = boost::shared_ptr<HypothesesGraph>(hyp_builder.build());
 
-    hypotheses_graph_->add(arc_distance()).add(tracklet_intern_dist()).add(node_tracklet()).add(tracklet_intern_arc_ids()).add(traxel_arc_id());
+    hypotheses_graph_->add(arc_distance()).add(tracklet_intern_dist()).add(node_tracklet())
+            .add(tracklet_intern_arc_ids()).add(traxel_arc_id());
 
-    property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances = (hypotheses_graph_)->get(arc_distance());
-    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = (hypotheses_graph_)->get(node_traxel());
+    property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances =
+            (hypotheses_graph_)->get(arc_distance());
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map =
+            (hypotheses_graph_)->get(node_traxel());
 
 
     Traxel some_traxel = (*traxel_map.beginValue());
@@ -550,8 +562,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
-        boost::python::object transition_classifier
-                                           )
+        boost::python::object transition_classifier)
 {
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
@@ -575,8 +586,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             with_constraints,
             uncertaintyParam,
             cplex_timeout,
-            transition_classifier
-                                            );
+            transition_classifier,
+            solver_);
     ConservationTracking pgm(param);
 
     // needed for diverse M best when extracting weights
@@ -648,7 +659,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
-        boost::python::api::object transition_classifier)
+        boost::python::api::object transition_classifier,
+        ConservationTracking::SolverType solver)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
@@ -704,7 +716,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         transition_weight,
         border_width,
         transition_classifier,
-        with_optical_correction_
+        with_optical_correction_,
+        solver
     );
 
     std::vector<double> model_weights = {detection_weight, division_weight, transition_weight, disappearance_cost, appearance_cost};
@@ -819,7 +832,15 @@ EventVectorVector ConsTracking::resolve_mergers(
         m.resolve_mergers(handler);
 
         HypothesesGraph g_res;
-        resolve_graph(*resolved_graph_, g_res, transition, ep_gap, with_tracklets, transition_parameter, with_constraints, transitionClassifier);
+        resolve_graph(*resolved_graph_,
+                      g_res,
+                      transition,
+                      ep_gap,
+                      with_tracklets,
+                      transition_parameter,
+                      with_constraints,
+                      transitionClassifier,
+                      solver_);
 //            prune_inactive(resolved_graph);
 
         cout << "-> constructing resolved events" << endl;
@@ -921,7 +942,6 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
     //create empty files that opengm can append to
     createStructuredLearningFiles(feature_file_name,constraints_file_name,ground_truth_file_name);
 
-
     //every iteration creates one line in the feature matrix file
     // if no feature file is written we only need to create the modle once
     const size_t number_of_weights = 5;
@@ -944,6 +964,12 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
         //during the model creation the feature and constraint files are filled
         HypothesesGraph *graph = &(*hypotheses_graph_);
         boost::shared_ptr<InferenceModel> inference_model = pgm.createInferenceModel(graph);
+
+        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
+            0,
+            feature_file_name,
+            constraints_file_name,
+            "");
 
         //write graph label to file (only once)
         if (!ground_truth_file_name.empty())
@@ -1017,65 +1043,5 @@ double ConsTracking::hammingloss_of_files(std::string f1, std::string f2)
     }
     return loss;
 }
-
-//  EventVectorVectorVector ConsTrackingDynProg::track(double forbidden_cost,
-//                                                     double ep_gap,
-//                                                     bool with_tracklets,
-//                                                     double detection_weight,
-//                                                     double division_weight,
-//                                                     double transition_weight,
-//                                                     double disappearance_cost,
-//                                                     double appearance_cost,
-//                                                     bool with_merger_resolution,
-//                                                     int n_dim,
-//                                                     double transition_parameter,
-//                                                     double border_width,
-//                                                     bool with_constraints,
-//                                                     UncertaintyParameter uncertaintyParam,
-//                                                     double cplex_timeout,
-//                                                     boost::python::api::object transition_classifier)
-//  {
-//      original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
-//      HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
-
-//      ConservationTracking::Parameter param = get_conservation_tracking_parameters(
-//                  forbidden_cost,
-//                  ep_gap,
-//                  with_tracklets,
-//                  detection_weight,
-//                  division_weight,
-//                  transition_weight,
-//                  disappearance_cost,
-//                  appearance_cost,
-//                  with_merger_resolution,
-//                  n_dim,
-//                  transition_parameter,
-//                  border_width,
-//                  with_constraints,
-//                  uncertaintyParam,
-//                  cplex_timeout,
-//                  transition_classifier
-//                  );
-
-//      DynProgConsTrackInferenceModel pgm(param);
-//      pgm.formulate(*hypotheses_graph_);
-//      pgm.infer();
-//      pgm.conclude(*hypotheses_graph_);
-
-//      cout << "-> constructing unresolved events" << endl;
-
-//      EventVectorVectorVector all_ev(1);
-//      all_ev[0] = *events(*hypotheses_graph_,0);
-
-//      if(event_vector_dump_filename_ != "none")
-//      {
-//          // store the traxel store and the resulting event vector
-//          std::ofstream ofs(event_vector_dump_filename_.c_str());
-//          boost::archive::text_oarchive out_archive(ofs);
-//          out_archive << all_ev[0];
-//      }
-
-//      return all_ev;
-//  }
 
 } // namespace tracking

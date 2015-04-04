@@ -12,6 +12,7 @@
 #include "pgmlink/features/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/perturbation/perturbation.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
 #include <opengm/opengm.hxx>
@@ -25,9 +26,16 @@ class Traxel;
 class ConservationTracking : public Reasoner
 {
 public:
+    enum SolverType
+    {
+        CplexSolver,
+        DynProgSolver
+    };
+
     class Parameter
     {
     public:
+
         Parameter(
             unsigned int max_number_objects,
             boost::function<double (const Traxel&, const size_t)> detection,
@@ -51,7 +59,8 @@ public:
             double transition_weight = 10,
             double border_width = 0,
             boost::python::object transition_classifier = boost::python::object(),
-            bool with_optical_correction = false):
+            bool with_optical_correction = false,
+            SolverType solver = CplexSolver):
             max_number_objects(max_number_objects),
             detection(detection),
             division(division),
@@ -74,7 +83,8 @@ public:
             detection_weight(detection_weight),
             transition_weight(transition_weight),
             transition_classifier(transition_classifier),
-            with_optical_correction(with_optical_correction)
+            with_optical_correction(with_optical_correction),
+            solver_(solver)
         {}
 
         // empty parameter needed for python
@@ -104,12 +114,7 @@ public:
         double border_width;
         boost::python::object transition_classifier;
         bool with_optical_correction;
-    };
-
-    enum Solver
-    {
-        CplexSolver,
-        DynProgSolver
+        SolverType solver_;
     };
 
 public:
@@ -164,11 +169,11 @@ protected:
 
     UncertaintyParameter uncertainty_param_;
     ConsTrackingInferenceModel::Parameter inference_model_param_;
-    PerturbedInferenceModel::Parameter perturbed_inference_model_param_;
+    Perturbation::Parameter perturbed_inference_model_param_;
 
     double cplex_timeout_;
     bool isMAP_;
-    Solver solver_;
+    SolverType solver_;
 
     double division_weight_; // these cannot be read from the division/detection variable since
     double detection_weight_;// those were converted to boost::function objects in tracking

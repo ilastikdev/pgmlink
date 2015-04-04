@@ -45,9 +45,6 @@ void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypothe
     add_finite_factors(hypotheses);
     add_constraints_to_pool(hypotheses);
 
-    clpex_variable_id_map_ = optimizer_->get_clpex_variable_id_map();
-    clpex_factor_id_map_ = optimizer_->get_clpex_factor_id_map();
-
 }
 
 ConsTrackingInferenceModel::GraphicalModelType& ConsTrackingInferenceModel::get_model()
@@ -601,6 +598,10 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
                  constraints_filename,
                  ground_truth_filename));
     ground_truth_filename_ = ground_truth_filename;
+
+    cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
+    cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
+
 }
 
 
@@ -676,7 +677,7 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
                 state < get_model().numberOfLabels(get_appearance_node_map()[n]);
                 ++state)
         {
-            int id = clpex_variable_id_map_[make_pair(get_appearance_node_map()[n], state)];
+            int id = cplex_variable_id_map_[make_pair(get_appearance_node_map()[n], state)];
             cplexid_label_map[id] = ((g.get(appearance_label())[n] == state) ? 1 : 0);
             LOG(logDEBUG4) << "app\t" << cplexid_label_map[id] << "  " << id << "  "
                            <<  get_appearance_node_map()[n] << "  " << state;
@@ -688,7 +689,7 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
                 state < get_model().numberOfLabels(get_disappearance_node_map()[n]);
                 ++state)
         {
-            int id = clpex_variable_id_map_[make_pair(get_disappearance_node_map()[n], state)];
+            int id = cplex_variable_id_map_[make_pair(get_disappearance_node_map()[n], state)];
             cplexid_label_map[id] = ((g.get(disappearance_label())[n] == state) ? 1 : 0);
             LOG(logDEBUG4) << "dis\t" << cplexid_label_map[id] << "  " << id << "  "
                            <<  get_disappearance_node_map()[n] << "  " << state;
@@ -703,7 +704,7 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
                     state < get_model().numberOfLabels(get_division_node_map()[n]);
                     ++state)
             {
-                int id = clpex_variable_id_map_[make_pair(get_division_node_map()[n], state)];
+                int id = cplex_variable_id_map_[make_pair(get_division_node_map()[n], state)];
                 cplexid_label_map[id] = ((g.get(division_label())[n] == state) ? 1 : 0);
                 LOG(logDEBUG4) << "div\t" << cplexid_label_map[id] << "  " << id << "  "
                                << get_division_node_map()[n] << "  " << state << "   "; // << number_of_division_nodes_;
@@ -717,7 +718,7 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
         //move
         for (size_t state = 0; state < get_model().numberOfLabels(get_arc_map()[a]); ++state)
         {
-            int id = clpex_variable_id_map_[make_pair(get_arc_map()[a], state)];
+            int id = cplex_variable_id_map_[make_pair(get_arc_map()[a], state)];
             cplexid_label_map[id] = ((g.get(arc_label())[a] == state) ? 1 : 0);
             LOG(logDEBUG4) << "arc\t" << cplexid_label_map[id] << "  " << id << "  " <<  get_arc_map()[a] << "  " << state;
             cplexid_weight_class_map[id].clear();
@@ -728,10 +729,10 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
             }
             else
             {
-                if (param_.with_tracklets)
-                {
-                    assert((tracklet_map[g.source(a)]).size() == 1);
-                }
+                // if (param_.with_tracklets)
+                // {
+                //     assert((tracklet_map[g.source(a)]).size() == 1);
+                // }
                 cplexid_weight_class_map[id].push_back(std::make_pair(3, 1.));
             }
         }
@@ -747,7 +748,7 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
         {
             for (size_t s2 = 0; s2 < get_model().numberOfLabels(detection_f_node_map[n]); ++s2)
             {
-                int id = clpex_factor_id_map_[make_pair(detection_f_node_map[n], make_pair(s1, s2))];
+                int id = cplex_factor_id_map_[make_pair(detection_f_node_map[n], make_pair(s1, s2))];
                 cplexid_label_map[id] = ((g.get(appearance_label())[n] == s1 and g.get(disappearance_label())[n] == s2) ? 1 : 0);
                 LOG(logDEBUG4) << "detection\t" << cplexid_label_map[id] << "  " << id << "  "
                                <<  detection_f_node_map[n] << "  " << s1 << "  " << s2 << endl;
@@ -759,10 +760,10 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
                 }
                 else
                 {
-                    if (param_.with_tracklets)
-                    {
-                        assert((tracklet_map[n]).size() == 1);
-                    }
+                    // if (param_.with_tracklets)
+                    // {
+                    //     assert((tracklet_map[n]).size() == 1);
+                    // }
                     cplexid_weight_class_map[id].push_back(std::make_pair(4, 1.));
                 }
             }

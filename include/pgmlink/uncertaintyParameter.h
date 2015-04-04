@@ -18,7 +18,7 @@ namespace pgmlink
 {
 enum PGMLINK_EXPORT DistrId
 {
-    GaussianPertubation, PerturbAndMAP, DiverseMbest, MbestCPLEX, ClassifierUncertainty
+    Gaussian, PerturbAndMAP, DiverseMbest, MbestCPLEX, ClassifierUncertainty
 };
 
 class PGMLINK_EXPORT UncertaintyParameter
@@ -32,7 +32,7 @@ public:
     {
         numberOfIterations = 1;
 
-        distributionId = GaussianPertubation;
+        distributionId = Gaussian;
         //distributionId table:
         //0: Gauss normal
         //1: Gumbel Perturb&MAP
