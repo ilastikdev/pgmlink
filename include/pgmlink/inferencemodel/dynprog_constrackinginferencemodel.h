@@ -49,6 +49,12 @@ public:
 
     template<class ArcIterator>
     double getTransitionArcScore(const HypothesesGraph& g, ArcIterator a);
+
+    virtual double generateRandomOffset(EnergyType parameterIndex,
+                                        double energy = 0,
+                                        Traxel tr = 0,
+                                        Traxel tr2 = 0,
+                                        size_t state = 0);
 protected:
     // dpct inference members
     dpct::Graph inference_graph_;
@@ -73,7 +79,9 @@ double DynProgConsTrackInferenceModel::getTransitionArcScore(const HypothesesGra
         tr2 = traxel_map[g.target(a)];
     }
 
-    return param_.transition(get_transition_probability(tr1, tr2, 0)) - param_.transition(get_transition_probability(tr1, tr2, 1));
+    double score = param_.transition(get_transition_probability(tr1, tr2, 0))
+            - param_.transition(get_transition_probability(tr1, tr2, 1));
+    return score - generateRandomOffset(Transition, -score, tr1, tr2);
 }
 
 } // namespace pgmlink

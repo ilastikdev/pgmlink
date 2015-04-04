@@ -92,7 +92,8 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                 // add all detection factors of the internal nodes
                 for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin(); trax_it != tracklet_map[n].end(); ++trax_it)
                 {
-                    energy += param_.detection(*trax_it, state);
+                    double e = param_.detection(*trax_it, state);
+                    energy += e + generateRandomOffset(Detection, e, *trax_it, 0, state);
                 }
 
                 // add all transition factors of the internal arcs
@@ -104,7 +105,8 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                     Traxel tr = *trax_it;
                     if (!first)
                     {
-                        energy += param_.transition( get_transition_probability(tr_prev, tr, state) );
+                        double e = param_.transition(get_transition_probability(tr_prev, tr, state));
+                        energy += e + generateRandomOffset(Transition, e, tr_prev, tr);
                     }
                     else
                     {
@@ -117,6 +119,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
             {
                 // only look at this single traxel
                 energy = param_.detection(traxel_map[n], state);
+                energy += generateRandomOffset(Detection, energy, traxel_map[n], 0, state);
             }
 
             scoreDeltas.push_back(-1.0 * energy);
@@ -152,17 +155,23 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
             tr = traxel_map[n];
         }
 
-        double app_score = -1.0 * param_.appearance_cost(tr);
+        double app_score = -1.0 * param_.appearance_cost(tr) - generateRandomOffset(Appearance);
 
         if(param_.with_tracklets)
         {
             tr = tracklet_map[n].back();
         }
-        double dis_score = -1.0 * param_.disappearance_cost(tr);
+        double dis_score = -1.0 * param_.disappearance_cost(tr) - generateRandomOffset(Disappearance);
         LOG(logDEBUG3) << "\tapp-score " << app_score << std::endl;
         LOG(logDEBUG3) << "\tdis-score " << dis_score << std::endl;
 
-        dpct::Graph::NodePtr inf_node = inference_graph_.addNode(timestep_map[n] - first_timestep, scoreDeltas, app_score, dis_score, in_first_frame, in_last_frame, std::make_shared<ConservationTrackingNodeData>(n));
+        dpct::Graph::NodePtr inf_node = inference_graph_.addNode(timestep_map[n] - first_timestep,
+                                                                 scoreDeltas,
+                                                                 app_score,
+                                                                 dis_score,
+                                                                 in_first_frame,
+                                                                 in_last_frame,
+                                                                 std::make_shared<ConservationTrackingNodeData>(n));
         node_reference_map[n] = inf_node;
     }
 
@@ -174,9 +183,12 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
         dpct::Graph::NodePtr source = node_reference_map[graph->source(a)];
         dpct::Graph::NodePtr target = node_reference_map[graph->target(a)];
 
-        double score = getTransitionArcScore(*graph, a);
+        double perturbed_score = getTransitionArcScore(*graph, a);
 
-        dpct::Graph::ArcPtr inf_arc = inference_graph_.addMoveArc(source, target, score, std::make_shared<ConservationTrackingArcData>(a));
+        dpct::Graph::ArcPtr inf_arc = inference_graph_.addMoveArc(source,
+                                                                  target,
+                                                                  perturbed_score,
+                                                                  std::make_shared<ConservationTrackingArcData>(a));
     }
 
     if(param_.with_divisions)
@@ -207,9 +219,14 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                 for (HypothesesGraph::OutArcIt a(*graph, n); a != lemon::INVALID; ++a)
                 {
                     // division arc score = division score + move score
-                    double move_score = getTransitionArcScore(*graph, a);
-                    LOG(logDEBUG3) << "Adding possible division from " << tr << " with score: " << move_score << "(move) + " << division_score << "(div)" << std::endl;
-                    inference_graph_.allowMitosis(node_reference_map[n], node_reference_map[graph->target(a)], move_score + division_score);
+                    double perturbed_move_score = getTransitionArcScore(*graph, a);
+                    double perturb_div = generateRandomOffset(Division, -division_score, tr);
+                    LOG(logDEBUG3) << "Adding possible division from " << tr << " with score: "
+                                   << perturbed_move_score << "(move) + " << division_score << "(div)" << std::endl;
+
+                    inference_graph_.allowMitosis(node_reference_map[n],
+                                                  node_reference_map[graph->target(a)],
+                                                  perturbed_move_score + division_score - perturb_div);
                 }
             }
         }
@@ -217,6 +234,11 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 
     LOG(logINFO) << "Constructed DPCT graph with " << inference_graph_.getNumNodes() << " nodes and " << inference_graph_.getNumArcs()
                  << " arcs on " << inference_graph_.getNumTimesteps() << " timesteps" << std::endl;
+}
+
+double DynProgConsTrackInferenceModel::generateRandomOffset(EnergyType parameterIndex, double energy, Traxel tr, Traxel tr2, size_t state)
+{
+    return 0.0;
 }
 
 void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
@@ -260,8 +282,10 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         tracklet_graph.add(tracklet_intern_arc_ids()).add(traxel_arc_id());
     }
 
-    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map = tracklet_graph.get(tracklet_intern_arc_ids());
-    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map = tracklet_graph.get(traxel_arc_id());
+    property_map<tracklet_intern_arc_ids, HypothesesGraph::base_graph>::type& tracklet_arc_id_map
+            = tracklet_graph.get(tracklet_intern_arc_ids());
+    property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& traxel_arc_id_map
+            = tracklet_graph.get(traxel_arc_id());
 
     // initialize nodes and divisions to 0
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -282,7 +306,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     // function used to increase number of objects per node
     std::function<void(dpct::Node*)> increase_object_count = [&](dpct::Node * node)
     {
-        std::shared_ptr<ConservationTrackingNodeData> nd = std::static_pointer_cast<ConservationTrackingNodeData>(node->getUserData());
+        std::shared_ptr<ConservationTrackingNodeData> nd
+                = std::static_pointer_cast<ConservationTrackingNodeData>(node->getUserData());
         HypothesesGraph::Node n = nd->getRef();
         LOG(logDEBUG3) << "increasing use count of " << traxel_map[n] << std::endl;
 
@@ -291,7 +316,9 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
             // set state of tracklet nodes
             std::vector<HypothesesGraph::Node> traxel_nodes = tracklet2traxel_node_map[n];
 
-            for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin(); tr_n_it != traxel_nodes.end(); ++tr_n_it)
+            for (std::vector<HypothesesGraph::Node>::const_iterator tr_n_it = traxel_nodes.begin();
+                 tr_n_it != traxel_nodes.end();
+                 ++tr_n_it)
             {
                 HypothesesGraph::Node no = *tr_n_it;
                 active_nodes.set(no, active_nodes[no] + 1);
@@ -300,7 +327,9 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
 
             // set state of tracklet internal arcs
             std::vector<int> arc_ids = tracklet_arc_id_map[n];
-            for (std::vector<int>::const_iterator arc_id_it = arc_ids.begin(); arc_id_it != arc_ids.end(); ++arc_id_it)
+            for (std::vector<int>::const_iterator arc_id_it = arc_ids.begin();
+                 arc_id_it != arc_ids.end();
+                 ++arc_id_it)
             {
                 HypothesesGraph::Arc a = g.arcFromId(*arc_id_it);
 //                assert(active_arcs[a] == false);
@@ -318,7 +347,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     // function used to activate an arc
     std::function<void(dpct::Arc*)> activate_arc = [&](dpct::Arc * arc)
     {
-        std::shared_ptr<ConservationTrackingArcData> ad = std::static_pointer_cast<ConservationTrackingArcData>(arc->getUserData());
+        std::shared_ptr<ConservationTrackingArcData> ad
+                = std::static_pointer_cast<ConservationTrackingArcData>(arc->getUserData());
         HypothesesGraph::Arc a = ad->getRef();
 
         if(param_.with_tracklets)
@@ -383,7 +413,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                 case dpct::Arc::Division:
                 {
                     // set as active division
-                    std::shared_ptr<ConservationTrackingNodeData> nd = std::static_pointer_cast<ConservationTrackingNodeData>(a->getObservedNode()->getUserData());
+                    std::shared_ptr<ConservationTrackingNodeData> nd
+                            = std::static_pointer_cast<ConservationTrackingNodeData>(a->getObservedNode()->getUserData());
                     HypothesesGraph::Node parent = nd->getRef();
                     nd = std::static_pointer_cast<ConservationTrackingNodeData>(a->getTargetNode()->getUserData());
                     HypothesesGraph::Node child = nd->getRef();
