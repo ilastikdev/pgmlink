@@ -590,6 +590,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             solver_);
     ConservationTracking pgm(param);
 
+    pgm.labels_export_file_name_ = tracking_labels_export_file_name_;
+
 //    // needed for diverse M best when extracting weights
 //    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1)
 //    {
@@ -904,6 +906,11 @@ void ConsTracking::save_ilp_solutions(const std::string& filename)
 
         result_file << "\n";
     }
+}
+
+void ConsTracking::setTrackLabelingExportFile(std::string file_name)
+{
+    tracking_labels_export_file_name_ = file_name;
 }
 
 void ConsTracking::createStructuredLearningFiles(std::string feature_file_name,

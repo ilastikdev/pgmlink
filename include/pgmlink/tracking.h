@@ -243,6 +243,8 @@ public:
             boost::python::object transition_classifier = boost::python::object(),
             ConservationTracking::SolverType solver = ConservationTracking::CplexSolver);
 
+    PGMLINK_EXPORT void setTrackLabelingExportFile(std::string file_name);
+
     PGMLINK_EXPORT void setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights);
 
     PGMLINK_EXPORT EventVectorVector resolve_mergers(EventVectorVector &events,
@@ -291,6 +293,8 @@ protected:
     FieldOfView fov_;
     std::string event_vector_dump_filename_;
     std::vector<ConservationTracking::IlpSolution> ilp_solutions_;
+
+    std::string tracking_labels_export_file_name_;
 
     TraxelStore* traxel_store_;
 

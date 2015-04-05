@@ -137,7 +137,7 @@ public:
     //cplex export file names
     std::string features_file_;
     std::string constraints_file_;
-    std::string ground_truth_file_;
+    std::string labels_export_file_name_;
 
     static std::string get_export_filename(size_t iteration, const std::string &orig_file_name);
 

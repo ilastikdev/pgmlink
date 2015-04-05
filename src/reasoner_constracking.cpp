@@ -252,18 +252,18 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             numberOfSolutions,
             get_export_filename(0, features_file_),
             constraints_file_,
-            get_export_filename(0, ground_truth_file_));
+            get_export_filename(0, labels_export_file_name_));
     }
 
     // run inference & conclude
     solutions_.push_back(inference_model->infer());
 
-//    if (solver_ == CplexSolver && export_from_labeled_graph_ && !ground_truth_file_.empty())
+//    if (solver_ == CplexSolver && export_from_labeled_graph_ && !labels_export_file_name_.empty())
 //    {
-//        LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
+//        LOG(logINFO) << "export graph labels to " << labels_export_file_name_ << std::endl;
 //        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->
-//        write_labeledgraph_to_file(*graph, ground_truth_file_);
-//        ground_truth_file_.clear();
+//        write_labeledgraph_to_file(*graph, labels_export_file_name_);
+//        labels_export_file_name_.clear();
 //    }
 
     LOG(logINFO) << "conclude MAP";
@@ -275,7 +275,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             throw std::runtime_error("When using CPlex MBest perturbations you need to use the Cplex solver!");
         LOG(logINFO) << "conclude " << k + 1 << "-best solution";
         solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
-                                 inference_model)->extractSolution(k, get_export_filename(k, ground_truth_file_)));
+                                 inference_model)->extractSolution(k, get_export_filename(k, labels_export_file_name_)));
 
         inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
     }
@@ -310,7 +310,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
                 boost::static_pointer_cast<ConsTrackingInferenceModel>(perturbed_inference_model)->set_inference_params(1,
                                                                 get_export_filename(iterStep, features_file_),
                                                                 "",
-                                                                get_export_filename(iterStep, ground_truth_file_));
+                                                                get_export_filename(iterStep, labels_export_file_name_));
             }
 
             solutions_.push_back(perturbed_inference_model->infer());
