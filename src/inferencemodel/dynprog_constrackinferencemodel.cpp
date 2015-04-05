@@ -144,6 +144,23 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
         bool in_first_frame = node_begin_time == first_timestep;
         bool in_last_frame = node_end_time == last_timestep;
 
+        // for merger resolving: paths can start and end at other timeframes!
+        if(!inference_graph_.getConfig().withAppearance)
+        {
+            if(lemon::countInArcs(*graph, n) == 0)
+            {
+                in_first_frame = true;
+            }
+        }
+
+        if(!inference_graph_.getConfig().withDisappearance)
+        {
+            if(lemon::countOutArcs(*graph, n) == 0)
+            {
+                in_last_frame = true;
+            }
+        }
+
         // appearance and disappearance score
         Traxel tr;
         if(param_.with_tracklets)
