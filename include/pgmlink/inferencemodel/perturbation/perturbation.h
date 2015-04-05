@@ -45,8 +45,6 @@ public: // Parameter object
 public: // API
     Perturbation(const Parameter& perturbation_param, const InferenceModel::Parameter& inf_param);
 
-    virtual void perturb(DeterministicOffset* det_off);
-
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,
                                         Traxel tr = 0,

@@ -15,11 +15,6 @@ Perturbation::Perturbation(const Parameter &perturbation_param,
 
 }
 
-void Perturbation::perturb(Perturbation::DeterministicOffset *det_off)
-{
-
-}
-
 size_t Perturbation::add_div_m_best_perturbation(marray::Marray<double>& energies,
         EnergyType energy_type,
         size_t factorIndex)

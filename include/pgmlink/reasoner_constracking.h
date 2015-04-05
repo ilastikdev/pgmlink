@@ -139,12 +139,19 @@ public:
     std::string constraints_file_;
     std::string ground_truth_file_;
 
-    boost::shared_ptr<InferenceModel> createInferenceModel(HypothesesGraph*& graph);
-
     static std::string get_export_filename(size_t iteration, const std::string &orig_file_name);
-protected:
+
+    HypothesesGraph *get_prepared_graph(HypothesesGraph &hypotheses);
+    boost::shared_ptr<InferenceModel> create_inference_model();
+
+protected: // methods
     void reset();
     void compute_relative_uncertainty(HypothesesGraph *graph);
+
+    boost::shared_ptr<Perturbation> create_perturbation();
+    boost::shared_ptr<InferenceModel> create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb);
+
+protected: // members
     unsigned int max_number_objects_;
 
     // energy functions

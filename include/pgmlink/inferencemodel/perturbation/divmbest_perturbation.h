@@ -29,7 +29,8 @@ class DivMBestPerturbation : public Perturbation
 public: // API
     DivMBestPerturbation(const Parameter& perturbation_param, const InferenceModel::Parameter& inf_param);
 
-    virtual void perturb(DeterministicOffset* det_off);
+
+    virtual void push_away_from_solution(const PertGmType& model, std::vector<size_t> solution);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,
@@ -54,7 +55,7 @@ protected: // Methods
     double sample_with_classifier_variance(double mean, double variance);
 
 protected: // Members
-    DeterministicOffset* deterministic_offset_;
+    DeterministicOffset deterministic_offset_;
 };
 
 } // namespace pgmlink

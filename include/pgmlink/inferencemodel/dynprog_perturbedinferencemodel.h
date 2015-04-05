@@ -21,7 +21,7 @@ class DynProgPerturbedInferenceModel : public DynProgConsTrackInferenceModel
 {
 public: // API
     DynProgPerturbedInferenceModel(const InferenceModel::Parameter& param,
-                                   const Perturbation::Parameter& perturbation_param);
+                                   boost::shared_ptr<Perturbation> perturbation);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,

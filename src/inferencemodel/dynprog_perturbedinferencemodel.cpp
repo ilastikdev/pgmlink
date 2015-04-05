@@ -10,29 +10,10 @@ namespace pgmlink
 {
 
 DynProgPerturbedInferenceModel::DynProgPerturbedInferenceModel(const InferenceModel::Parameter& param,
-                                                               const Perturbation::Parameter &perturbation_param):
-    DynProgConsTrackInferenceModel(param)
+                                                               boost::shared_ptr<Perturbation> perturbation):
+    DynProgConsTrackInferenceModel(param),
+    perturbation_(perturbation)
 {
-    // instanciate perturbation depending on distribution type
-    switch(perturbation_param.distributionId)
-    {
-        case Gaussian:
-            perturbation_ = boost::make_shared<GaussianPerturbation>(perturbation_param, param);
-            break;
-        case PerturbAndMAP:
-            perturbation_ = boost::make_shared<PerturbAndMapPerturbation>(perturbation_param, param);
-            break;
-        case DiverseMbest:
-            throw std::runtime_error("Diverse M Best perturbation does not work with Magnusson yet");
-//            perturbation_ = boost::make_shared<DivMBestPerturbation>(perturbation_param, param);
-            break;
-        case ClassifierUncertainty:
-            perturbation_ = boost::make_shared<ClassifierUncertaintyPerturbation>(perturbation_param, param);
-            break;
-        default:
-            throw std::runtime_error("The chosen perturbation distribution is not available "
-                                     "with the current inference model");
-    }
 }
 
 double DynProgPerturbedInferenceModel::generateRandomOffset(EnergyType parameterIndex,

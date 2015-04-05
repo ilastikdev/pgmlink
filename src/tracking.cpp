@@ -590,15 +590,15 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             solver_);
     ConservationTracking pgm(param);
 
-    // needed for diverse M best when extracting weights
-    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1)
-    {
-        if(!ilp_solutions_.size() > 0)
-        {
-            throw std::runtime_error("cannot inject solutions into tracker, solutions are empty! Run proper inference first.");
-        }
-        pgm.set_ilp_solutions(ilp_solutions_);
-    }
+//    // needed for diverse M best when extracting weights
+//    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1)
+//    {
+//        if(!ilp_solutions_.size() > 0)
+//        {
+//            throw std::runtime_error("cannot inject solutions into tracker, solutions are empty! Run proper inference first.");
+//        }
+//        pgm.set_ilp_solutions(ilp_solutions_);
+//    }
 
     pgm.perturbedInference(*hypotheses_graph_);
 
@@ -962,8 +962,9 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
         pgm.constraints_file_   = constraints_file_name;
 
         //during the model creation the feature and constraint files are filled
-        HypothesesGraph *graph = &(*hypotheses_graph_);
-        boost::shared_ptr<InferenceModel> inference_model = pgm.createInferenceModel(graph);
+        HypothesesGraph *graph = pgm.get_prepared_graph(*hypotheses_graph_);
+        boost::shared_ptr<InferenceModel> inference_model = pgm.create_inference_model();
+        inference_model->build_from_graph(*graph);
 
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
             0,

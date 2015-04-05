@@ -18,6 +18,13 @@
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_perturbedinferencemodel.h"
+
+// perturbations
+#include "pgmlink/inferencemodel/perturbation/gaussian_perturbation.h"
+#include "pgmlink/inferencemodel/perturbation/divmbest_perturbation.h"
+#include "pgmlink/inferencemodel/perturbation/classifier_uncertainty_perturbation.h"
+#include "pgmlink/inferencemodel/perturbation/perturbandmap_perturbation.h"
 
 //added for view-support
 #include "opengm/opengm.hxx"
@@ -127,35 +134,43 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
     return export_filename.str();
 }
 
-boost::shared_ptr<InferenceModel> ConservationTracking::createInferenceModel(HypothesesGraph*& graph)
+boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
 {
-
-    // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
-    if (with_tracklets_)
+    // instanciate perturbation depending on distribution type
+    switch(perturbed_inference_model_param_.distributionId)
     {
-        LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
-        tracklet2traxel_node_map_ = generateTrackletGraph2(*graph, tracklet_graph_);
-        graph = &tracklet_graph_;
+        case Gaussian:
+            return boost::make_shared<GaussianPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            break;
+        case PerturbAndMAP:
+            return boost::make_shared<PerturbAndMapPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            break;
+        case DiverseMbest:
+            if(solver_ == DynProgSolver)
+                throw std::runtime_error("Diverse M Best perturbation does not work with Magnusson yet");
+            return boost::make_shared<DivMBestPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            break;
+        case ClassifierUncertainty:
+            return boost::make_shared<ClassifierUncertaintyPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            break;
+        default:
+            throw std::runtime_error("The chosen perturbation distribution is not available "
+                                     "with the current inference model");
     }
-    // else
-    // {
-    //     graph = &hypotheses;
-    // }
+}
 
-    graph->add(relative_uncertainty()).add(node_active_count());
-
-    // instanciate inference model
-    boost::shared_ptr<InferenceModel> inference_model;
+boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
+{
     if(solver_ == CplexSolver)
     {
-        inference_model = boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
-                          ep_gap_,
-                          cplex_timeout_);
+        return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
+                                                              ep_gap_,
+                                                              cplex_timeout_);
     }
 #ifdef WITH_DPCT
     else if(solver_ == DynProgSolver)
     {
-        inference_model = boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
     }
 #else
     else if(solver_ == DynProgSolver)
@@ -163,20 +178,60 @@ boost::shared_ptr<InferenceModel> ConservationTracking::createInferenceModel(Hyp
         throw std::runtime_error("Support for dynamic programming solver not built!");
     }
 #endif // WITH_DPCT
+}
 
-    // build inference model
-    inference_model->build_from_graph(*graph);
+boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
+{
+    if(solver_ == CplexSolver)
+    {
+        return boost::make_shared<PerturbedInferenceModel>(
+                    inference_model_param_,
+                    perturb,
+                    ep_gap_,
+                    cplex_timeout_);
+    }
+#ifdef WITH_DPCT
+    else if (solver_ == DynProgSolver)
+    {
+        return boost::make_shared<DynProgPerturbedInferenceModel>(
+                    inference_model_param_,
+                    perturb);
+    }
+#endif
+}
 
-    return inference_model;
+HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypotheses)
+{
+    HypothesesGraph *graph;
+
+    // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
+    if (with_tracklets_)
+    {
+        LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
+        tracklet_graph_.clear();
+        tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
+        graph = &tracklet_graph_;
+    }
+    else
+    {
+        graph = &hypotheses;
+    }
+
+    graph->add(relative_uncertainty()).add(node_active_count());
+
+    return graph;
 }
 
 void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 {
-    HypothesesGraph *graph = &hypotheses;
+    HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
-    boost::shared_ptr<InferenceModel> inference_model = createInferenceModel(graph);
+    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
+    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
+    LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
 
-    solutions_.clear();
+    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
+    uncertainty_param_.print();
 
     //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
     size_t numberOfSolutions = 1;
@@ -185,11 +240,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         numberOfSolutions = uncertainty_param_.numberOfIterations;
     }
 
-    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
-    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
-    uncertainty_param_.print();
+    // instanciate inference model
+    boost::shared_ptr<InferenceModel> inference_model = create_inference_model();
+
+    // build inference model
+    inference_model->build_from_graph(*graph);
 
     if(solver_ == CplexSolver)
     {
@@ -200,8 +255,16 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             get_export_filename(0, ground_truth_file_));
     }
 
-
+    // run inference & conclude
     solutions_.push_back(inference_model->infer());
+
+//    if (solver_ == CplexSolver && export_from_labeled_graph_ && !ground_truth_file_.empty())
+//    {
+//        LOG(logINFO) << "export graph labels to " << ground_truth_file_ << std::endl;
+//        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->
+//        write_labeledgraph_to_file(*graph, ground_truth_file_);
+//        ground_truth_file_.clear();
+//    }
 
     LOG(logINFO) << "conclude MAP";
     inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
@@ -209,72 +272,53 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     for (size_t k = 1; k < numberOfSolutions; ++k)
     {
         if(solver_ != CplexSolver)
-            throw std::runtime_error("When using CPlex MBest perturbations you need to use the Cplex solver, too!");
+            throw std::runtime_error("When using CPlex MBest perturbations you need to use the Cplex solver!");
         LOG(logINFO) << "conclude " << k + 1 << "-best solution";
         solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
                                  inference_model)->extractSolution(k, get_export_filename(k, ground_truth_file_)));
+
         inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
     }
 
-
-    //store offset by factor index
-    //technical assumption: the number & order of factors remains the same for the perturbed models
-    //performance assumption: the number of pertubations is rather low, so iterating over
-    //a list of offset for each iteration Step is not the bottle nec (this is O(n*n) time in the number of pertubations)
     size_t numberOfIterations = uncertainty_param_.numberOfIterations;
     if (uncertainty_param_.distributionId == MbestCPLEX)
     {
         numberOfIterations = 1;
     }
 
-    if(solver_ == CplexSolver)
+    if(numberOfIterations > 1)
     {
-        // get number of factors and then we can dispose of the inference model
-        size_t num_factors = boost::static_pointer_cast<ConsTrackingInferenceModel>(
-                                 inference_model)->get_model().numberOfFactors();
-        boost::shared_ptr<PerturbedInferenceModel> perturbed_inference_model;
+        boost::shared_ptr<Perturbation> perturbation = create_perturbation();
+        boost::shared_ptr<InferenceModel> perturbed_inference_model;
 
-        // offsets for DivMBest
-        vector<vector<vector<size_t> > >deterministic_offset(num_factors);
-
-        //deterministic & non-deterministic perturbation
         for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
         {
-            perturbed_inference_model = boost::shared_ptr<PerturbedInferenceModel>(
-                                            new PerturbedInferenceModel(inference_model_param_,
-                                                    perturbed_inference_model_param_,
-                                                    ep_gap_, cplex_timeout_));
-
-            // Push away from the solution of the last iteration
-            if (uncertainty_param_.distributionId == DiverseMbest)
+            if (uncertainty_param_.distributionId == DiverseMbest && solver_ == CplexSolver)
             {
-                for (size_t factorId = 0; factorId < num_factors; ++factorId)
-                {
-                    PertGmType::FactorType factor = boost::static_pointer_cast<ConsTrackingInferenceModel>(
-                                                        inference_model)->get_model()[factorId];
-                    vector<size_t> varIndices;
-                    for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin();
-                            ind != factor.variableIndicesEnd();
-                            ++ind)
-                    {
-                        varIndices.push_back(solutions_[iterStep - 1][*ind]);
-                    }
-                    deterministic_offset[factorId].push_back(varIndices);
-                }
-                perturbed_inference_model->perturb(&deterministic_offset);
+                boost::static_pointer_cast<DivMBestPerturbation>(perturbation)->push_away_from_solution(
+                            boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->get_model(),
+                            solutions_.back());
             }
+
+            perturbed_inference_model = create_perturbed_inference_model(perturbation);
 
             perturbed_inference_model->use_transition_prediction_cache(inference_model.get());
             perturbed_inference_model->build_from_graph(*graph);
 
-            perturbed_inference_model->set_inference_params(1,
-                    get_export_filename(iterStep, features_file_),
-                    "",
-                    get_export_filename(iterStep, ground_truth_file_));
+            if(solver_ == CplexSolver)
+            {
+                boost::static_pointer_cast<ConsTrackingInferenceModel>(perturbed_inference_model)->set_inference_params(1,
+                                                                get_export_filename(iterStep, features_file_),
+                                                                "",
+                                                                get_export_filename(iterStep, ground_truth_file_));
+            }
 
             solutions_.push_back(perturbed_inference_model->infer());
             LOG(logINFO) << "conclude";
-            perturbed_inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
+            perturbed_inference_model->conclude(hypotheses,
+                                                tracklet_graph_,
+                                                tracklet2traxel_node_map_,
+                                                solutions_.back());
         }
     }
 
