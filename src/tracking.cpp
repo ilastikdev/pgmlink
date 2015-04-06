@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 
-using namespace std;
 using boost::shared_ptr;
 using boost::shared_array;
 
@@ -89,7 +88,7 @@ void ChaingraphTracking::set_cplex_timeout(double seconds)
     cplex_timeout_ = seconds;
 }
 
-vector<vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
+std::vector<std::vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
 {
     LOG(logINFO) << "Calling chaingraph tracking with the following parameters:\n"
                  << "\trandom forest filename: " << rf_fn_ << "\n"
@@ -235,9 +234,9 @@ vector<vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
     return *events(*graph);
 }
 
-vector<map<unsigned int, bool> > ChaingraphTracking::detections()
+std::vector<std::map<unsigned int, bool> > ChaingraphTracking::detections()
 {
-    vector<map<unsigned int, bool> > res;
+    std::vector<std::map<unsigned int, bool> > res;
     if (last_detections_)
     {
         return *last_detections_;
@@ -252,7 +251,7 @@ vector<map<unsigned int, bool> > ChaingraphTracking::detections()
 
 namespace
 {
-std::vector<double> computeDetProb(double vol, vector<double> means, vector<double> s2)
+std::vector<double> computeDetProb(double vol, std::vector<double> means, std::vector<double> s2)
 {
     std::vector<double> result;
 
@@ -406,7 +405,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     {
         LOG(logDEBUG3) << "creating detProb feature in traxel store from "
                           "deterministic detection probability function";
-        vector<double> means;
+        std::vector<double> means;
         if (means_.size() == 0 )
         {
             for(int i = 0; i < max_number_objects_ + 1; ++i)
@@ -425,7 +424,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             }
         }
 
-        vector<double> sigma2;
+        std::vector<double> sigma2;
         if (sigmas_.size() == 0)
         {
             double s2 = (avg_obj_size_ * avg_obj_size_) / 4.0;
@@ -457,7 +456,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
                 throw runtime_error("get_detection_prob(): cellness feature not in traxel");
             }
             double vol = it->second[0];
-            vector<double> detProb;
+            std::vector<double> detProb;
             detProb = computeDetProb(vol, means, sigma2);
             feature_array detProbFeat(feature_array::difference_type(max_number_objects_ + 1));
             for(int i = 0; i <= max_number_objects_; ++i)
@@ -752,7 +751,7 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     {
         LOG(logINFO) << "Using hard prior";
         // assume a quasi geometric distribution
-        vector<double> prob_vector;
+        std::vector<double> prob_vector;
         double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
         double sum = 0;
         for(double state = 0; state < max_number_objects_; ++state)
@@ -874,9 +873,9 @@ EventVectorVector ConsTracking::resolve_mergers(
     return events;
 }
 
-vector<map<unsigned int, bool> > ConsTracking::detections()
+std::vector<std::map<unsigned int, bool> > ConsTracking::detections()
 {
-    vector<map<unsigned int, bool> > res;
+    std::vector<std::map<unsigned int, bool> > res;
     if (last_detections_)
     {
         return *last_detections_;
@@ -959,7 +958,7 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
     //writing main loop
     for (int i = 0; i < num_writes; ++i)
     {
-        vector<double> model_weights =  std::vector<double>(number_of_weights, 0.);
+        std::vector<double> model_weights =  std::vector<double>(number_of_weights, 0.);
         model_weights[i] = 1.0;
         setParameterWeights(param,model_weights);
 
@@ -1001,14 +1000,14 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
 
 }
 
-vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_name,
+std::vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
                                       std::string lossweights,
                                       std::string options)
 {
 
-    vector<double> out;
+    std::vector<double> out;
     std::string command = std::string("/home/swolf/local/src/sbmrm/build/binaries/sbmrm") + " --featuresFile=" + feature_file_name + " --constraintsFile=" + constraints_file_name + " --labelsFile=" + ground_truth_file_name + " " +  options;
     if(not lossweights.empty())
     {
