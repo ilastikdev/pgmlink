@@ -35,7 +35,7 @@ double Locator::coordinate_from(const FeatureMap& m, size_t idx) const
 Traxel::Traxel(const Traxel& other):
     Id(other.Id),
     Timestep(other.Timestep),
-    features_(other.features_)
+    featurestore_(other.featurestore_)
 {
     locator_ = other.locator_->clone();
     corr_locator_ = other.corr_locator_;
@@ -46,7 +46,7 @@ Traxel& Traxel::operator=(const Traxel& other)
 {
     Id = other.Id;
     Timestep = other.Timestep;
-    features_ = other.features_;
+    featurestore_ = other.featurestore_;
     features = FeatureMapAccessor(this, other.features.get());
 
     corr_locator_ = other.corr_locator_;
@@ -66,7 +66,7 @@ Traxel& Traxel::set_locator(Locator* l)
 
 boost::shared_ptr<FeatureStore> Traxel::get_feature_store() const
 {
-    return features_;
+    return featurestore_;
 }
 
 double Traxel::X() const
@@ -169,9 +169,9 @@ double Traxel::angle(const Traxel& leg1, const Traxel& leg2) const
 
 void Traxel::set_feature_store(boost::shared_ptr<FeatureStore> fs)
 {
-    if(fs && fs != features_)
+    if(fs && fs != featurestore_)
     {
-        features_ = fs;
+        featurestore_ = fs;
         features.feature_store_set_notification();
     }
 }
@@ -334,7 +334,7 @@ size_t filter_by_fov(const TraxelStore& in, TraxelStore& out, const FieldOfView&
 Traxel::FeatureMapAccessor::FeatureMapAccessor(Traxel* parent, const FeatureMap& fm):
     parent_(parent)
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
         // ignore feature map!
     }
@@ -346,9 +346,9 @@ Traxel::FeatureMapAccessor::FeatureMapAccessor(Traxel* parent, const FeatureMap&
 
 const size_t Traxel::FeatureMapAccessor::size() const
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).size();
+        return parent_->featurestore_->get_traxel_features(*parent_).size();
     }
     else
     {
@@ -358,9 +358,9 @@ const size_t Traxel::FeatureMapAccessor::size() const
 
 feature_array &Traxel::FeatureMapAccessor::operator[](const string &feature_name)
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_)[feature_name];
+        return parent_->featurestore_->get_traxel_features(*parent_)[feature_name];
     }
     else
     {
@@ -371,9 +371,9 @@ feature_array &Traxel::FeatureMapAccessor::operator[](const string &feature_name
 
 FeatureMap::iterator Traxel::FeatureMapAccessor::find(const string &feature_name)
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).find(feature_name);
+        return parent_->featurestore_->get_traxel_features(*parent_).find(feature_name);
     }
     else
     {
@@ -383,9 +383,9 @@ FeatureMap::iterator Traxel::FeatureMapAccessor::find(const string &feature_name
 
 FeatureMap::iterator Traxel::FeatureMapAccessor::begin()
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).begin();
+        return parent_->featurestore_->get_traxel_features(*parent_).begin();
     }
     else
     {
@@ -395,9 +395,9 @@ FeatureMap::iterator Traxel::FeatureMapAccessor::begin()
 
 FeatureMap::iterator Traxel::FeatureMapAccessor::end()
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).end();
+        return parent_->featurestore_->get_traxel_features(*parent_).end();
     }
     else
     {
@@ -407,9 +407,9 @@ FeatureMap::iterator Traxel::FeatureMapAccessor::end()
 
 FeatureMap::const_iterator Traxel::FeatureMapAccessor::find(const string &feature_name) const
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).find(feature_name);
+        return parent_->featurestore_->get_traxel_features(*parent_).find(feature_name);
     }
     else
     {
@@ -419,9 +419,9 @@ FeatureMap::const_iterator Traxel::FeatureMapAccessor::find(const string &featur
 
 FeatureMap::const_iterator Traxel::FeatureMapAccessor::begin() const
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).begin();
+        return parent_->featurestore_->get_traxel_features(*parent_).begin();
     }
     else
     {
@@ -431,9 +431,9 @@ FeatureMap::const_iterator Traxel::FeatureMapAccessor::begin() const
 
 FeatureMap::const_iterator Traxel::FeatureMapAccessor::end() const
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_).end();
+        return parent_->featurestore_->get_traxel_features(*parent_).end();
     }
     else
     {
@@ -443,9 +443,9 @@ FeatureMap::const_iterator Traxel::FeatureMapAccessor::end() const
 
 const FeatureMap &Traxel::FeatureMapAccessor::get() const
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        return parent_->features_->get_traxel_features(*parent_);
+        return parent_->featurestore_->get_traxel_features(*parent_);
     }
     else
     {
@@ -455,9 +455,9 @@ const FeatureMap &Traxel::FeatureMapAccessor::get() const
 
 void Traxel::FeatureMapAccessor::feature_store_set_notification()
 {
-    if(parent_->features_)
+    if(parent_->featurestore_)
     {
-        FeatureMap& feat_map = parent_->features_->get_traxel_features(*parent_);
+        FeatureMap& feat_map = parent_->featurestore_->get_traxel_features(*parent_);
         if(feature_map_.size() > 0)
         {
             if(feat_map.size() > 0)

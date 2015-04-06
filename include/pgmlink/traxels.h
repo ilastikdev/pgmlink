@@ -272,7 +272,7 @@ public:
 
 
 private:
-    boost::shared_ptr<FeatureStore> features_;
+    boost::shared_ptr<FeatureStore> featurestore_;
 
     // boost serialize for Traxel datatype
     friend class boost::serialization::access;
