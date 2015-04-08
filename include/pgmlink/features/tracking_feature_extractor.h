@@ -157,7 +157,7 @@ private:
     void compute_track_length_features(ConstTraxelRefVectors&);
     void compute_track_id_outlier(ConstTraxelRefVectors&, std::string);
     void compute_track_diff_outlier(ConstTraxelRefVectors&, std::string);
-    void compute_svm_track_feature_outlier(ConstTraxelRefVectors&);
+    void compute_svm_track_feature_outlier(ConstTraxelRefVectors&tracks);
     void compute_division_sq_diff_features(ConstTraxelRefVectors&, std::string);
     void compute_division_sq_diff_outlier(ConstTraxelRefVectors&, std::string);
     void compute_child_deceleration_features(ConstTraxelRefVectors&, std::string);

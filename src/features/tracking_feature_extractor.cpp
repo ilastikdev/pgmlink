@@ -579,7 +579,12 @@ void TrackingFeatureExtractor::compute_all_track_features()
     compute_track_diff_outlier(track_traxels, "Count");
     compute_track_diff_outlier(track_traxels, "Mean");
     compute_track_diff_outlier(track_traxels, "Variance");
+
     //TODO filter the tracks for the following? (division start / division end)
+
+    // FIXME: train_track_svm_outlier now also works on these traxels,
+    // but for training we use different
+    // (true, true) parameters when extracting the tracks
     compute_svm_track_feature_outlier(track_traxels);
 
     save_traxel_ids_to_h5(track_traxels);
@@ -899,11 +904,11 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
 }
 
 void TrackingFeatureExtractor::compute_svm_track_feature_outlier(
-    ConstTraxelRefVectors& track)
+    ConstTraxelRefVectors& tracks)
 {
     FeatureMatrix track_feature_matrix;
     TrackFeatureExtractor track_feature_extractor;
-    track_feature_extractor.compute_features(track, track_feature_matrix);
+    track_feature_extractor.compute_features(tracks, track_feature_matrix);
     FeatureMatrix score_matrix;
     if (svm_track_outlier_calc_ptr_->is_trained())
     {
