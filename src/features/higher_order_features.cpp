@@ -193,7 +193,7 @@ void set_injected_solution(HypothesesGraph& graph)
     {
         is_active = gt_appearance[n_it] || gt_disappearance[n_it];
         node_active_map[n_it] = is_active;
-        node_active2_map.set(n_it, is_active);
+        node_active2_map.set(n_it, std::max(gt_appearance[n_it], gt_disappearance[n_it]));
         div_active_map[n_it] = gt_division[n_it];
     }
 
@@ -446,7 +446,8 @@ void TraxelsFeaturesIdentity::extract(
     )
     {
         // fetch the features which are stored in a map
-        const FeatureMap feature_map = (*tref_it)->features.get();
+        assert(*tref_it != nullptr);
+        const FeatureMap& feature_map = (*tref_it)->features.get();
 
         // get the current column as a view
         FeatureVectorView column = feature_matrix.bind<0>(column_index);
@@ -510,10 +511,10 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     ret_.clear();
 
     // Check if the graph has the necessary attributes
-    if (not graph.has_property(node_active()))
+    if (not graph.has_property(node_active2()))
     {
         throw std::runtime_error(
-            "Graph doesn't have a \"node_active\" property map"
+            "Graph doesn't have a \"node_active2\" property map"
         );
     }
     if (not graph.has_property(arc_active()))
@@ -524,26 +525,31 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     }
 
     // Get the property maps
-    node_active_map_type& node_active_map = graph.get(node_active());
+    node_active2_map_type& node_active_map = graph.get(node_active2());
     arc_active_map_type& arc_active_map = graph.get(arc_active());
 
     // check if we have a tracklet graph
     bool with_tracklets = graph.has_property(node_tracklet());
 
-    // check if the traxel vector for any tracklet is empty
-    for (
-        NodeActiveIt n_it(node_active_map);
-        (n_it != lemon::INVALID) and with_tracklets;
-        ++n_it
-    )
+    if(with_tracklets)
     {
-        const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
-        if (t_vec.size() == 0)
+        // check if the traxel vector for any tracklet is empty
+        property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = node_active_map.beginValue();
+        ++active_valueIt; // ignore nodes at state 0
+        for (; active_valueIt != node_active_map.endValue(); ++active_valueIt)
         {
-            with_tracklets = false;
-            LOG(logDEBUG) << "In TrackTraxels::operator(): "
-                          << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
-            LOG(logDEBUG) << "Use therefore traxel in traxel map";
+            property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(node_active_map, *active_valueIt);
+            for (; active_itemIt != lemon::INVALID; ++active_itemIt)
+            {
+                const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[active_itemIt];
+                if (t_vec.size() == 0)
+                {
+                    with_tracklets = false;
+                    LOG(logDEBUG3) << "In TrackTraxels::operator(): "
+                                  << "Empty traxel vector in tracklet map for node " << graph.id(active_itemIt);
+                    LOG(logDEBUG3) << "Use therefore traxel in traxel map";
+                }
+            }
         }
     }
 
@@ -567,31 +573,42 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     std::map<HypothesesGraph::Node, bool> has_natural_child;
 
     // Initialize
-    for (NodeActiveIt n_it(node_active_map); n_it != lemon::INVALID; ++n_it)
+    property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = node_active_map.beginValue();
+    ++active_valueIt; // ignore nodes at state 0
+    for (; active_valueIt != node_active_map.endValue(); ++active_valueIt)
     {
-        parent[n_it] = n_it;
-        child[n_it] = n_it;
-        has_natural_parent[n_it] = false;
-        has_natural_child[n_it] = false;
+        property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt n_it(node_active_map, *active_valueIt);
+        for (; n_it != lemon::INVALID; ++n_it)
+        {
+            assert(graph.get(node_traxel())[n_it].Id > 0);
+            parent[n_it] = n_it;
+            child[n_it] = n_it;
+            has_natural_parent[n_it] = false;
+            has_natural_child[n_it] = false;
+        }
     }
 
     // Set connections
     for (ArcActiveIt a_it(arc_active_map); a_it != lemon::INVALID; ++a_it)
     {
+        assert(graph.get(node_traxel())[graph.target(a_it)].Id > 0);
+        assert(graph.get(node_traxel())[graph.source(a_it)].Id > 0);
+        assert(node_active_map[graph.source(a_it)] > 0);
+        assert(node_active_map[graph.target(a_it)] > 0);
         has_natural_parent[graph.target(a_it)] = true;
         has_natural_child[graph.source(a_it)] = true;
         // count the active arcs with the same source
-        size_t out_arcs = 0;
+        size_t active_out_arcs = 0;
         for (
             OutArcIt o_it(graph, graph.source(a_it));
             o_it != lemon::INVALID;
             ++o_it
         )
         {
-            out_arcs += (arc_active_map[o_it] ? 1 : 0);
+            active_out_arcs += (arc_active_map[o_it] ? 1 : 0);
         }
         // link those nodes if there are no other active arcs with the same source
-        if (out_arcs == 1)
+        if (active_out_arcs == 1)
         {
             parent[graph.target(a_it)] = graph.source(a_it);
             child[graph.source(a_it)] = graph.target(a_it);
@@ -608,6 +625,7 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
         HypothesesGraph::Node current_node = nmap_it->first;
         LOG(logDEBUG4) << "Is parent node invalid?";
         LOG(logDEBUG4) << (parent[current_node] == lemon::INVALID);
+        assert(graph.get(node_traxel())[current_node].Id > 0);
         // check for node if we have to start a new track
         bool start_track = (parent[current_node] == current_node);
         if (start_track and require_div_start_)
@@ -622,6 +640,7 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
             // loop as long as the track isn't finished
             while (loop)
             {
+                assert(graph.get(node_traxel())[current_node].Id > 0);
                 if (with_tracklets)
                 {
                     // get the traxel vector of this node
@@ -637,9 +656,13 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
                 }
                 else
                 {
+                    assert(graph.get(node_traxel())[current_node].Id > 0);
                     ret_.back().push_back( &(graph.get(node_traxel())[current_node]) );
                 }
-                loop = current_node != child[current_node];
+                if(child.find(current_node) == child.end())
+                    loop = false;
+                else
+                    loop = current_node != child[current_node];
                 // remove the last vector if a division is required at the end of a
                 // track and this condition isn't fulfilled
                 if ((not loop) and (require_div_end_))
@@ -649,7 +672,8 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
                         ret_.erase(ret_.end() - 1);
                     }
                 }
-                current_node = child[current_node];
+                if(child.find(current_node) != child.end())
+                    current_node = child[current_node];
             }
         }
     }
@@ -692,25 +716,30 @@ const std::vector<ConstTraxelRefVector>& DivisionTraxels::operator()(
     }
 
     // Get the node_active property map
-    node_active_map_type& node_active_map = graph.get(node_active());
+    node_active2_map_type& node_active_map = graph.get(node_active2());
 
     // check if we have a tracklet graph
     bool with_tracklets = graph.has_property(node_tracklet());
 
-    // check if the traxel vector for any tracklet is empty
-    for (
-        NodeActiveIt n_it(node_active_map);
-        (n_it != lemon::INVALID) and with_tracklets;
-        ++n_it
-    )
+    if(with_tracklets)
     {
-        const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
-        if (t_vec.size() == 0)
+        // check if the traxel vector for any tracklet is empty
+        property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = node_active_map.beginValue();
+        ++active_valueIt; // ignore nodes at state 0
+        for (; active_valueIt != node_active_map.endValue(); ++active_valueIt)
         {
-            with_tracklets = false;
-            LOG(logDEBUG) << "In DivisionTraxels::operator(): "
-                          << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
-            LOG(logDEBUG) << "Use therefore traxel in traxel map";
+            property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(node_active_map, *active_valueIt);
+            for (; active_itemIt != lemon::INVALID; ++active_itemIt)
+            {
+                const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[active_itemIt];
+                if (t_vec.size() == 0)
+                {
+                    with_tracklets = false;
+                    LOG(logDEBUG3) << "In TrackTraxels::operator(): "
+                                  << "Empty traxel vector in tracklet map for node " << graph.id(active_itemIt);
+                    LOG(logDEBUG3) << "Use therefore traxel in traxel map";
+                }
+            }
         }
     }
 
@@ -1003,10 +1032,10 @@ const std::vector<ConstTraxelRefVector>& AppearanceTraxels::operator()(
     ret_.clear();
 
     // Check if the graph has the necessary attributes
-    if (not graph.has_property(node_active()))
+    if (not graph.has_property(node_active2()))
     {
         throw std::runtime_error(
-            "Graph doesn't have a \"node_active\" property map"
+            "Graph doesn't have a \"node_active2\" property map"
         );
     }
     if (not graph.has_property(arc_active()))
@@ -1017,26 +1046,31 @@ const std::vector<ConstTraxelRefVector>& AppearanceTraxels::operator()(
     }
 
     // Get the property maps
-    node_active_map_type& node_active_map = graph.get(node_active());
+    node_active2_map_type& node_active_map = graph.get(node_active2());
     arc_active_map_type& arc_active_map = graph.get(arc_active());
 
     // check if we have a tracklet graph
     bool with_tracklets = graph.has_property(node_tracklet());
 
-    // check if the traxel vector for any tracklet is empty
-    for (
-        NodeActiveIt n_it(node_active_map);
-        (n_it != lemon::INVALID) and with_tracklets;
-        ++n_it
-    )
+    if(with_tracklets)
     {
-        const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[n_it];
-        if (t_vec.size() == 0)
+        // check if the traxel vector for any tracklet is empty
+        property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = node_active_map.beginValue();
+        ++active_valueIt; // ignore nodes at state 0
+        for (; active_valueIt != node_active_map.endValue(); ++active_valueIt)
         {
-            with_tracklets = false;
-            LOG(logDEBUG) << "In AppearanceTraxels::operator(): "
-                          << "Empty traxel vector in tracklet map for node " << graph.id(n_it);
-            LOG(logDEBUG) << "Use therefore traxel in traxel map";
+            property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(node_active_map, *active_valueIt);
+            for (; active_itemIt != lemon::INVALID; ++active_itemIt)
+            {
+                const std::vector<Traxel>& t_vec = graph.get(node_tracklet())[active_itemIt];
+                if (t_vec.size() == 0)
+                {
+                    with_tracklets = false;
+                    LOG(logDEBUG3) << "In TrackTraxels::operator(): "
+                                  << "Empty traxel vector in tracklet map for node " << graph.id(active_itemIt);
+                    LOG(logDEBUG3) << "Use therefore traxel in traxel map";
+                }
+            }
         }
     }
 
@@ -1048,71 +1082,77 @@ const std::vector<ConstTraxelRefVector>& AppearanceTraxels::operator()(
         );
     }
 
-    for (NodeActiveIt n_it(node_active_map); n_it != lemon::INVALID; ++n_it)
+    property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = node_active_map.beginValue();
+    ++active_valueIt; // ignore nodes at state 0
+    for (; active_valueIt != node_active_map.endValue(); ++active_valueIt)
     {
-        if (appearance_ == AppearanceType::Appearance)
+        property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt n_it(node_active_map, *active_valueIt);
+        for (; n_it != lemon::INVALID; ++n_it)
         {
-            size_t in_arcs = 0;
-            for (InArcIt a_it(graph, n_it); a_it != lemon::INVALID; ++a_it)
+            if (appearance_ == AppearanceType::Appearance)
             {
-                in_arcs += (arc_active_map[a_it] ? 1 : 0);
-            }
-            if (in_arcs == 0)
-            {
-                const Traxel* traxel_ref;
-                if (with_tracklets)
+                size_t in_arcs = 0;
+                for (InArcIt a_it(graph, n_it); a_it != lemon::INVALID; ++a_it)
                 {
-                    traxel_ref = &(graph.get(node_tracklet())[n_it].front());
+                    in_arcs += (arc_active_map[a_it] ? 1 : 0);
                 }
-                else
+                if (in_arcs == 0)
                 {
-                    traxel_ref = &(graph.get(node_traxel())[n_it]);
-                }
-                if (filter_function_)
-                {
-                    if (filter_function_(*traxel_ref))
+                    const Traxel* traxel_ref;
+                    if (with_tracklets)
+                    {
+                        traxel_ref = &(graph.get(node_tracklet())[n_it].front());
+                    }
+                    else
+                    {
+                        traxel_ref = &(graph.get(node_traxel())[n_it]);
+                    }
+                    if (filter_function_)
+                    {
+                        if (filter_function_(*traxel_ref))
+                        {
+                            ret_.resize(ret_.size() + 1);
+                            ret_.back().push_back(traxel_ref);
+                        }
+                    }
+                    else
                     {
                         ret_.resize(ret_.size() + 1);
                         ret_.back().push_back(traxel_ref);
                     }
                 }
-                else
-                {
-                    ret_.resize(ret_.size() + 1);
-                    ret_.back().push_back(traxel_ref);
-                }
             }
-        }
-        else if (appearance_ == AppearanceType::Disappearance)
-        {
-            size_t out_arcs = 0;
-            for (OutArcIt a_it(graph, n_it); a_it != lemon::INVALID; ++a_it)
+            else if (appearance_ == AppearanceType::Disappearance)
             {
-                out_arcs += (arc_active_map[a_it] ? 1 : 0);
-            }
-            if (out_arcs == 0)
-            {
-                const Traxel* traxel_ref;
-                if (with_tracklets)
+                size_t out_arcs = 0;
+                for (OutArcIt a_it(graph, n_it); a_it != lemon::INVALID; ++a_it)
                 {
-                    traxel_ref = &(graph.get(node_tracklet())[n_it].front());
+                    out_arcs += (arc_active_map[a_it] ? 1 : 0);
                 }
-                else
+                if (out_arcs == 0)
                 {
-                    traxel_ref = &(graph.get(node_traxel())[n_it]);
-                }
-                if (filter_function_)
-                {
-                    if (filter_function_(*traxel_ref))
+                    const Traxel* traxel_ref;
+                    if (with_tracklets)
+                    {
+                        traxel_ref = &(graph.get(node_tracklet())[n_it].front());
+                    }
+                    else
+                    {
+                        traxel_ref = &(graph.get(node_traxel())[n_it]);
+                    }
+                    if (filter_function_)
+                    {
+                        if (filter_function_(*traxel_ref))
+                        {
+                            ret_.resize(ret_.size() + 1);
+                            ret_.back().push_back(traxel_ref);
+                        }
+                    }
+                    else
                     {
                         ret_.resize(ret_.size() + 1);
                         ret_.back().push_back(traxel_ref);
                     }
-                }
-                else
-                {
-                    ret_.resize(ret_.size() + 1);
-                    ret_.back().push_back(traxel_ref);
                 }
             }
         }
