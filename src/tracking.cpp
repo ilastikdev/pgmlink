@@ -612,15 +612,15 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 
     //	PyGILState_Release(gilstate);
 
-    // copy solutions
-    ilp_solutions_.clear();
-    const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();
-    for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = pgm_solution.begin();
-            sol_it != pgm_solution.end();
-            ++sol_it)
-    {
-        ilp_solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
-    }
+//    // copy solutions
+//    ilp_solutions_.clear();
+//    const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();
+//    for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = pgm_solution.begin();
+//            sol_it != pgm_solution.end();
+//            ++sol_it)
+//    {
+//        ilp_solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
+//    }
 
     //TODO: conceptual problem here:
     //revise prune_inactive//events

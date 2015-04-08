@@ -485,7 +485,6 @@ void FeatureHandlerFromTraxels::operator()(
         origin_map.set(new_node, std::vector<unsigned int>(1, trax.Id));
         LOG(logDEBUG3) << "FeatureHandlerFromTraxels::operator(): added " << trax.Id << " to origin_map[" << g.id(new_node) << "]";
         node_resolution_map.set(new_node, true);
-
     }
     LOG(logDEBUG3) << "FeatureHandlerFromTraxle::operator() -- exit";
 }
@@ -824,7 +823,6 @@ void resolve_graph(const HypothesesGraph& src,
         detection, //detection,
         division, // division
         transition, // transition
-
         0, // forbidden_cost_,
         ep_gap, // ep_gap_
         with_tracklets, // with_tracklets_

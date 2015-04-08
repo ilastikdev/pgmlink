@@ -208,7 +208,7 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
     if (with_tracklets_)
     {
         LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
-        tracklet_graph_.clear();
+//        tracklet_graph_.clear();
         tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
         graph = &tracklet_graph_;
     }
