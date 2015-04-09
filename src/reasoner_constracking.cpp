@@ -314,7 +314,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             }
 
             solutions_.push_back(perturbed_inference_model->infer());
-            LOG(logINFO) << "conclude";
+            LOG(logINFO) << "conclude iteration " << iterStep;
             perturbed_inference_model->conclude(hypotheses,
                                                 tracklet_graph_,
                                                 tracklet2traxel_node_map_,
