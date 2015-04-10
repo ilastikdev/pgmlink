@@ -232,6 +232,7 @@ public:
         FeatureMap::iterator end();
 
         // const access and iterators
+        feature_array operator[](const std::string& feature_name) const;
         FeatureMap::const_iterator find(const std::string& feature_name) const;
         FeatureMap::const_iterator begin() const;
         FeatureMap::const_iterator end() const;
@@ -254,6 +255,7 @@ public:
 
     // method to set the used feature store from outside
     void set_feature_store(boost::shared_ptr<FeatureStore> fs);
+    boost::shared_ptr<FeatureStore> get_feature_store() { return featurestore_; }
 
     // position according to locator
     PGMLINK_EXPORT double X() const;

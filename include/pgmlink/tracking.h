@@ -175,7 +175,8 @@ public:
           fov_(fov),
           event_vector_dump_filename_(event_vector_dump_filename),
           with_optical_correction_(false),
-          solver_(solver)
+          solver_(solver),
+          traxel_store_(nullptr)
     {}
 
 

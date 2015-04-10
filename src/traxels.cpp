@@ -405,6 +405,21 @@ FeatureMap::iterator Traxel::FeatureMapAccessor::end()
     }
 }
 
+feature_array Traxel::FeatureMapAccessor::operator[](const string &feature_name) const
+{
+    if(parent_->featurestore_)
+    {
+        return parent_->featurestore_->get_traxel_features(*parent_)[feature_name];
+    }
+    else
+    {
+        FeatureMap::const_iterator it = feature_map_.find(feature_name);
+        if(it == feature_map_.end())
+            throw std::runtime_error("Tried to access feature that is not present in feature map");
+        return it->second;
+    }
+}
+
 FeatureMap::const_iterator Traxel::FeatureMapAccessor::find(const string &feature_name) const
 {
     if(parent_->featurestore_)

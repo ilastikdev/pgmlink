@@ -47,6 +47,7 @@ FeatureMap &FeatureStore::get_traxel_features(const std::vector<const Traxel *> 
     {
         keys.push_back(std::make_pair(t->Timestep, t->Id));
     }
+    return traxel_feature_map_[keys];
 }
 
 void FeatureStore::dump(std::ostream& stream)

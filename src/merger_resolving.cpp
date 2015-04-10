@@ -162,7 +162,12 @@ double GMMWithInitialized::score() const
 //// GMMInitializeArma
 ////
 GMMInitializeArma::GMMInitializeArma(int k, const arma::mat& data, int n_trials, int n_iterations, double threshold) :
-    k_(k), data_(data), score_(0.0), n_trials_(n_trials), n_iterations_(n_iterations), threshold_(threshold)
+    k_(k),
+    data_(data),
+    score_(0.0),
+    n_trials_(n_trials),
+    n_iterations_(n_iterations),
+    threshold_(threshold)
 {
     LOG(logDEBUG4) << "GMMInitializeArma -- constructor call";
 }
@@ -185,6 +190,7 @@ feature_array GMMInitializeArma::operator()()
     gmm.Classify(data_, labels_);
     // TRANSPOSE NECCESSARY FOR GMM?
     const std::vector<arma::vec>& centers = gmm.Means();
+    assert(centers.size() == k_);
     LOG(logDEBUG4) << "GMMInitializeArma::operator() -- ret has size " << ret.size()
                    << " and got " << centers.size() << " centers from GMM.";
     {
@@ -336,9 +342,8 @@ FeatureExtractorArmadillo::FeatureExtractorArmadillo(TimestepIdCoordinateMapPtr 
 
 
 std::vector<Traxel> FeatureExtractorArmadillo::operator() (Traxel& trax,
-        size_t nMergers,
-        unsigned int max_id
-                                                          )
+                                                           size_t nMergers,
+                                                           unsigned int max_id)
 {
     LOG(logDEBUG3) << "FeatureExtractorArmadillo::operator() -- entered for " << trax;
     TimestepIdCoordinateMap::const_iterator it = coordinates_->find(std::make_pair(trax.Timestep, trax.Id));
@@ -361,10 +366,9 @@ std::vector<Traxel> FeatureExtractorArmadillo::operator() (Traxel& trax,
 }
 
 void FeatureExtractorArmadillo::update_coordinates(Traxel& trax,
-        size_t nMergers,
-        unsigned int max_id,
-        arma::Col<size_t> labels
-                                                  )
+                                                   size_t nMergers,
+                                                   unsigned int max_id,
+                                                   arma::Col<size_t> labels)
 {
     LOG(logDEBUG3) << "in FeatureExtractorArmadillo::update_coordinates";
     TimestepIdCoordinateMap::const_iterator it = coordinates_->find(std::make_pair(trax.Timestep, trax.Id));
@@ -465,6 +469,10 @@ void FeatureHandlerFromTraxels::operator()(
     LOG(logDEBUG3) << "FeatureHandlerFromTraxel::operator() -- entered for " << trax;
     std::vector<Traxel> ft = extractor_(trax, n_merger, max_id);
     LOG(logDEBUG3) << "FeatureHandlerFromTraxel::operator() -- got " << ft.size() << " new traxels";
+
+    // get feature store
+    boost::shared_ptr<FeatureStore> fs = traxel_store_->begin()->get_feature_store();
+
     // MAYBE LOG
     for (std::vector<Traxel>::iterator it = ft.begin(); it != ft.end(); ++it)
     {
@@ -476,6 +484,8 @@ void FeatureHandlerFromTraxels::operator()(
         traxel_map.set(new_node, *it);
         active_map.set(new_node, 1);
         time_map.set(new_node, timestep);
+        // add new traxel to traxelstore
+        add(*traxel_store_, fs, *it);
 
         // add arc candidates for new nodes (todo: need to somehow choose which ones are active)
         this->add_arcs_for_replacement_node(g, new_node, sources, targets, base_);

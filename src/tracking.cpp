@@ -828,7 +828,7 @@ EventVectorVector ConsTracking::resolve_mergers(
             calculate_gmm_beforehand(*resolved_graph_, 1, n_dim);
             extractor = new FeatureExtractorMCOMsFromMCOMs;
         }
-        FeatureHandlerFromTraxels handler(*extractor, distance);
+        FeatureHandlerFromTraxels handler(*extractor, distance, traxel_store_);
 
         m.resolve_mergers(handler);
 

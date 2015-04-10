@@ -367,12 +367,14 @@ class FeatureHandlerFromTraxels
 private:
     FeatureExtractorBase& extractor_;
     DistanceBase& base_;
+    TraxelStore* traxel_store_;
     // FeatureHandlerFromTraxelsMCOMsFromPCOMs() {};
 public:
     PGMLINK_EXPORT
     FeatureHandlerFromTraxels(FeatureExtractorBase& extractor,
-                              DistanceBase& base)
-        : extractor_(extractor), base_(base)
+                              DistanceBase& base,
+                              TraxelStore* ts)
+        : extractor_(extractor), base_(base), traxel_store_(ts)
     {}
 
     PGMLINK_EXPORT
@@ -951,6 +953,7 @@ void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
 template<int N, typename T>
 void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
                        vigra::MultiArrayView<N, T>& image,
+                       TraxelStore& ts,
                        const vigra::TinyVector<long int, N>& offsets,
                        const size_t timestep,
                        const size_t traxel_id)
@@ -972,6 +975,29 @@ void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
             pixel_key[dim] = traxel_coord(dim, index) - offsets[dim];
         }
         image[pixel_key] = traxel_id;
+    }
+
+    // if no pixel was assigned the new ID, change the COM at least (if it is within the given ROI)
+    if(traxel_coord.n_cols == 0)
+    {
+        TraxelStoreByTimeid::iterator it = (ts.get<by_timeid>().find(boost::make_tuple(timestep, traxel_id)));
+        if(it != ts.get<by_timeid>().end())
+        {
+            feature_array com = it->features["com"];
+            assert(com.size() >= N);
+            KeyType pixel_key;
+            for (size_t dim = 0; dim < N; dim++)
+            {
+                pixel_key[dim] = com[dim] - offsets[dim];
+            }
+
+            image[pixel_key] = traxel_id;
+        }
+        else
+        {
+            throw std::runtime_error("No pixel was assigned the new traxel id, and could not find traxel "
+                                     "in traxel store to assign the COM pixel at least");
+        }
     }
 }
 
