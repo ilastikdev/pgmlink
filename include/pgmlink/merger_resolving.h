@@ -302,7 +302,7 @@ private:
     void update_coordinates(Traxel& trax,
                             size_t nMergers,
                             unsigned int max_id,
-                            arma::Col<size_t> labels);
+                            arma::Col<size_t> &labels);
     FeatureExtractorArmadillo();
     TimestepIdCoordinateMapPtr coordinates_;
 };
