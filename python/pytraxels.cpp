@@ -142,6 +142,14 @@ const Traxel& get_from_traxel_store(TraxelStore& ts, unsigned int id, int timest
     }
 }
 
+void print_traxels_in_store(TraxelStore& ts)
+{
+    for(auto it = ts.begin(); it != ts.end(); ++it)
+    {
+        LOG(logINFO) << *it;
+    }
+}
+
 // extending featurestore
 void dump_featurestore(boost::shared_ptr<FeatureStore>& fs)
 {
@@ -224,6 +232,7 @@ void export_traxels()
     .def("size", &TraxelStore::size)
     .def("set_feature_store", &set_feature_store)
     .def("filter_by_fov", &filter_by_fov)
+    .def("list_contents", &print_traxels_in_store)
     .def_pickle(TemplatedPickleSuite< TraxelStore >())
     ;
 
