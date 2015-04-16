@@ -602,11 +602,6 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
     cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
     cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
 
-}
-
-
-ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
-{
     if(param_.with_constraints)
     {
         LOG(logINFO) << "add_constraints";
@@ -618,7 +613,10 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
         throw std::runtime_error("GraphicalModel::infer(): inference with soft constraints is not implemented yet. "
                                  "The conservation tracking factor graph has been saved to file");
     }
+}
 
+ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
+{
     opengm::InferenceTermination status = optimizer_->infer();
     if (status != opengm::NORMAL)
     {
