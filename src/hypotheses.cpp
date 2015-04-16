@@ -1865,6 +1865,30 @@ void PropertyGraph<lemon::ListDigraph>::copy(PropertyGraph<lemon::ListDigraph>& 
         graph_copy.nodeMap(src.get(node_traxel()), dest.get(node_traxel()));
     }
 
+    if(src.has_property(disappearance_label()))
+    {
+        dest.add(disappearance_label());
+        graph_copy.nodeMap(src.get(disappearance_label()), dest.get(disappearance_label()));
+    }
+    
+    if(src.has_property(appearance_label()))
+    {
+        dest.add(appearance_label());
+        graph_copy.nodeMap(src.get(appearance_label()), dest.get(appearance_label()));
+    }
+
+    if(src.has_property(division_label()))
+    {
+        dest.add(division_label());
+        graph_copy.nodeMap(src.get(division_label()), dest.get(division_label()));
+    }
+    
+    if(src.has_property(arc_label()))
+    {
+        dest.add(arc_label());
+        graph_copy.arcMap(src.get(arc_label()), dest.get(arc_label()));
+    }
+
     graph_copy.run();
 }
 
@@ -2019,6 +2043,29 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
         graph_copy.nodeMap(src.get(node_traxel()), dest.get(node_traxel()));
     }
 
+    if(src.has_property(disappearance_label()))
+    {
+        dest.add(disappearance_label());
+        graph_copy.nodeMap(src.get(disappearance_label()), dest.get(disappearance_label()));
+    }
+    
+    if(src.has_property(appearance_label()))
+    {
+        dest.add(appearance_label());
+        graph_copy.nodeMap(src.get(appearance_label()), dest.get(appearance_label()));
+    }
+
+    if(src.has_property(division_label()))
+    {
+        dest.add(division_label());
+        graph_copy.nodeMap(src.get(division_label()), dest.get(division_label()));
+    }
+    
+    if(src.has_property(arc_label()))
+    {
+        dest.add(arc_label());
+        graph_copy.arcMap(src.get(arc_label()), dest.get(arc_label()));
+    }
     // add node references
     dest.add(node_origin_reference());
     graph_copy.nodeCrossRef(dest.get(node_origin_reference()));
