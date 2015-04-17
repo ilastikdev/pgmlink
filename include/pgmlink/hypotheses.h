@@ -375,7 +375,7 @@ struct property_map< arc_label, Graph>
 template <typename Graph>
 const std::string property_map<arc_label, Graph>::name = "arc_label";
 
-// node_timestep
+
 struct node_origin_reference {};
 template <typename Graph>
 struct property_map<node_origin_reference, Graph>
@@ -385,6 +385,16 @@ struct property_map<node_origin_reference, Graph>
 };
 template <typename Graph>
 const std::string property_map<node_origin_reference, Graph>::name = "node_origin_reference";
+
+struct arc_origin_reference {};
+template <typename Graph>
+struct property_map<arc_origin_reference, Graph>
+{
+    typedef lemon::IterableValueMap< Graph, typename Graph::Arc, typename Graph::Arc > type;
+    static const std::string name;
+};
+template <typename Graph>
+const std::string property_map<arc_origin_reference, Graph>::name = "arc_origin_reference";
 
 class HypothesesGraph
     : public PropertyGraph<lemon::ListDigraph>

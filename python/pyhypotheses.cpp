@@ -22,8 +22,10 @@ using namespace boost::python;
 typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_m;
 typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcActiveMap;
 typedef property_map<node_active2, HypothesesGraph::base_graph>::type NodeActiveMap;
+typedef property_map<division_active, HypothesesGraph::base_graph>::type DivisionActiveMap;
 typedef property_map<node_timestep, HypothesesGraph::base_graph>::type NodeTimestepMap;
 typedef property_map<node_origin_reference, HypothesesGraph::base_graph>::type NodeOriginReferenceMap;
+typedef property_map<arc_origin_reference, HypothesesGraph::base_graph>::type ArcOriginReferenceMap;
 
 std::vector< std::vector<Event> > get_events_of_graph(const HypothesesGraph& g)
 {
@@ -60,9 +62,24 @@ bool get_item_ArcActiveMap(ArcActiveMap& map, const ArcActiveMap::Key& k)
     return map[k];
 }
 
+DivisionActiveMap& getDivisionActiveMap(HypothesesGraph* g)
+{
+    return g->get(division_active());
+}
+
+bool get_item_DivisionActiveMap(DivisionActiveMap& map, const DivisionActiveMap::Key& k)
+{
+    return map[k];
+}
+
 NodeOriginReferenceMap& getNodeOriginReferenceMap(HypothesesGraph* g)
 {
     return g->get(node_origin_reference());
+}
+
+ArcOriginReferenceMap& getArcOriginReferenceMap(HypothesesGraph* g)
+{
+    return g->get(arc_origin_reference());
 }
 
 NodeTimestepMap& getNodeTimestepMap(HypothesesGraph* g)
@@ -229,6 +246,10 @@ void export_hypotheses()
     .def("__getitem__", &get_item_NodeActiveMap)
     .def("__setitem__", &NodeActiveMap::set);
 
+    class_< DivisionActiveMap, boost::noncopyable >("DivisionActiveMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", &get_item_DivisionActiveMap)
+    .def("__setitem__", &DivisionActiveMap::set);
+
     class_< NodeTimestepMap, boost::noncopyable >("NodeTimestepMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
     .def("__getitem__", &get_item_NodeTimestepMap)
     .def("__setitem__", &NodeTimestepMap::set);
@@ -237,6 +258,9 @@ void export_hypotheses()
     class_< NodeOriginReferenceMap, boost::noncopyable >("NodeOriginReferenceMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
     .def("__getitem__", &NodeOriginReferenceMap::operator[], return_internal_reference<>())
     .def("__setitem__", &NodeOriginReferenceMap::set);
+    class_< ArcOriginReferenceMap, boost::noncopyable >("ArcOriginReferenceMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", &ArcOriginReferenceMap::operator[], return_internal_reference<>())
+    .def("__setitem__", &ArcOriginReferenceMap::set);
 
     // handle function overloading
     HypothesesGraph::Node (HypothesesGraph::*addnode1)(const int)
@@ -303,7 +327,9 @@ void export_hypotheses()
     .def("getNodeTraxelMap", &getNodeTraxelMap, return_internal_reference<>())
     .def("getNodeActiveMap", &getNodeActiveMap, return_internal_reference<>())
     .def("getArcActiveMap", &getArcActiveMap, return_internal_reference<>())
+    .def("getDivisionActiveMap", &getDivisionActiveMap, return_internal_reference<>())
     .def("getNodeOriginReferenceMap", &getNodeOriginReferenceMap, return_internal_reference<>())
+    .def("getArcOriginReferenceMap", &getArcOriginReferenceMap, return_internal_reference<>())
     .def_pickle(HypothesesGraph_pickle_suite())
     ;
 

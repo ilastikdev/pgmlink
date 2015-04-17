@@ -2082,6 +2082,10 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
     dest.add(node_origin_reference());
     graph_copy.nodeCrossRef(dest.get(node_origin_reference()));
 
+    // add arc references
+    dest.add(arc_origin_reference());
+    graph_copy.arcCrossRef(dest.get(arc_origin_reference()));
+
     graph_copy.run();
 }
 
