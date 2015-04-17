@@ -529,7 +529,6 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
         out_archive << ts;
     }
     return hypotheses_graph_;
-
 }
 
 boost::shared_ptr<HypothesesGraph> ConsTracking::get_hypo_graph()

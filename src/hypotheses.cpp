@@ -1841,6 +1841,12 @@ void PropertyGraph<lemon::ListDigraph>::copy(PropertyGraph<lemon::ListDigraph>& 
         graph_copy.arcMap(src.get(arc_resolution_candidate()), dest.get(arc_resolution_candidate()));
     }
 
+    if(src.has_property(node_tracklet()))
+    {
+        dest.add(node_tracklet());
+        graph_copy.nodeMap(src.get(node_tracklet()), dest.get(node_tracklet()));
+    }
+
     if(src.has_property(tracklet_intern_dist()))
     {
         dest.add(tracklet_intern_dist());
@@ -2017,6 +2023,12 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
     {
         dest.add(arc_resolution_candidate());
         graph_copy.arcMap(src.get(arc_resolution_candidate()), dest.get(arc_resolution_candidate()));
+    }
+
+    if(src.has_property(node_tracklet()))
+    {
+        dest.add(node_tracklet());
+        graph_copy.nodeMap(src.get(node_tracklet()), dest.get(node_tracklet()));
     }
 
     if(src.has_property(tracklet_intern_dist()))
