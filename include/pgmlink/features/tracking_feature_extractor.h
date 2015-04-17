@@ -180,7 +180,6 @@ private:
 
     boost::shared_ptr<MinCalculator<0> > row_min_calc_ptr_;
     boost::shared_ptr<MaxCalculator<0> > row_max_calc_ptr_;
-    boost::shared_ptr<MVNOutlierCalculator> mvn_outlier_calc_ptr_;
     boost::shared_ptr<SVMOutlierCalculator> svm_track_outlier_calc_ptr_;
     boost::shared_ptr<SVMOutlierCalculator> svm_div_outlier_calc_ptr_;
     boost::shared_ptr<SquaredMahalanobisCalculator> sq_mahal_calc_ptr_;

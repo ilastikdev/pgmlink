@@ -402,7 +402,6 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
-    mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
     svm_div_outlier_calc_ptr_(new SVMOutlierCalculator),
     sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
@@ -422,7 +421,6 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
-    mvn_outlier_calc_ptr_(new MVNOutlierCalculator),
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
     svm_div_outlier_calc_ptr_(new SVMOutlierCalculator),
     sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
@@ -852,20 +850,60 @@ void TrackingFeatureExtractor::compute_track_id_outlier(
     MinMaxMeanVarCalculator id_out_mmmv;
 //    id_out_mmmv.set_max(0.0);
     size_t track_id = 0;
+    // get the feature matrices of all tracks into one large vector
+    std::vector<FeatureMatrix> feature_matrices;
+    size_t cols = 0;
     for (auto track : track_traxels)
     {
+        // create a new empty feature matrix at the end of the vector
+        feature_matrices.emplace_back();
         // extract features
-        FeatureMatrix feature_matrix;
         TraxelsFeaturesIdentity feature_extractor(feature_name);
-        feature_extractor.extract(track, feature_matrix);
-
-        // calculate identity outlier if num_samples > dim
-        FeatureMatrix temp;
-        if (feature_matrix.size(0) > feature_matrix.size(1))
+        feature_extractor.extract(track, feature_matrices.back());
+        // accumulate the number of columns for the final joint feature matrix
+        cols += feature_matrices.back().shape(0);
+    }
+    // make one large feature matrix
+    size_t rows = feature_matrices.back().shape(1);
+    FeatureMatrix feature_matrix(vigra::Shape2(cols, rows));
+    std::vector<size_t> offsets(1, 0);
+    for (auto matrix : feature_matrices)
+    {
+        const size_t& offset = offsets.back();
+        assert(rows == matrix.shape(1));
+        // create the view where to insert the current feature matrix
+        FeatureMatrixView subarray_view = feature_matrix.subarray(
+            vigra::Shape2(offset, 0),
+            vigra::Shape2(offset + matrix.shape(0), rows));
+        // assign the matrix
+        subarray_view = matrix;
+        // push back the index of the end of the inserted matrix
+        offsets.push_back(offset + matrix.shape(0));
+    }
+    // calculate the squared mahalanobis distances in this large feature matrix
+    FeatureMatrix sq_mahal_dist_mat;
+    if (feature_matrix.size(0) > feature_matrix.size(1))
+    {
+        sq_mahal_calc_ptr_->calculate(feature_matrix, sq_mahal_dist_mat);
+        // relate the squared distances to the track ids
+        for (size_t track_id = 0; track_id < offsets.size() - 1; track_id++)
         {
-            mvn_outlier_calc_ptr_->calculate(feature_matrix, temp);
-            id_out_mmmv.add_value(temp(0, 0));
-            save_features_to_h5(track_id++, "outlier_id_" + feature_name, temp);
+            FeatureMatrix value(vigra::Shape2(1, 1));
+            value(0, 0) = 0;
+            // loop over all distance values for one track
+            const size_t& v_id_start = offsets[track_id];
+            const size_t& v_id_end = offsets[track_id + 1];
+            for (size_t value_id = v_id_start; value_id < v_id_end; value_id++)
+            {
+                if (sq_mahal_dist_mat(value_id, 0) > 3.0)
+                {
+                    value(0, 0) += 1.0;
+                }
+            }
+            value(0, 0) /= static_cast<FeatureScalar>(v_id_end - v_id_start);
+            // save results
+            save_features_to_h5(track_id, "outlier_id_" + feature_name, value);
+            id_out_mmmv.add_value(value(0, 0));
         }
     }
     push_back_feature("track outlier share of " + feature_name, id_out_mmmv);
@@ -876,26 +914,64 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
     std::string feature_name)
 {
     MinMaxMeanVarCalculator diff_out_mmmv;
-//    diff_out_mmmv.set_max(0.0);
     size_t track_id = 0;
+    // get the feature matrices of all tracks into one large vector
+    std::vector<FeatureMatrix> feature_matrices;
+    size_t cols = 0;
     for (auto track : track_traxels)
     {
+        // create a new empty feature matrix at the end of the vector
+        feature_matrices.emplace_back();
         // extract features
-        FeatureMatrix feature_matrix;
-        TraxelsFeaturesIdentity feature_extractor(feature_name);
-        feature_extractor.extract(track, feature_matrix);
-
-        // calculate differences
-        FeatureMatrix diff_matrix;
-        diff_calc_ptr_->calculate(feature_matrix, diff_matrix);
-
-        // calculate diff outlier if num_samples > dim
         FeatureMatrix temp;
-        if (diff_matrix.size(0) > diff_matrix.size(1))
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(track, temp);
+        // calculate differences
+        diff_calc_ptr_->calculate(temp, feature_matrices.back());
+        // accumulate the number of columns for the final joint feature matrix
+        cols += feature_matrices.back().shape(0);
+    }
+    // make one large feature matrix
+    size_t rows = feature_matrices.back().shape(1);
+    FeatureMatrix feature_matrix(vigra::Shape2(cols, rows));
+    std::vector<size_t> offsets(1, 0);
+    for (auto matrix : feature_matrices)
+    {
+        const size_t& offset = offsets.back();
+        assert(rows == matrix.shape(1));
+        // create the view where to insert the current feature matrix
+        FeatureMatrixView subarray_view = feature_matrix.subarray(
+            vigra::Shape2(offset, 0),
+            vigra::Shape2(offset + matrix.shape(0), rows));
+        // assign the matrix
+        subarray_view = matrix;
+        // push back the index of the end of the inserted matrix
+        offsets.push_back(offset + matrix.shape(0));
+    }
+    // calculate the squared mahalanobis distances in this large feature matrix
+    FeatureMatrix sq_mahal_dist_mat;
+    if (feature_matrix.size(0) > feature_matrix.size(1))
+    {
+        sq_mahal_calc_ptr_->calculate(feature_matrix, sq_mahal_dist_mat);
+        // relate the squared distances to the track ids
+        for (size_t track_id = 0; track_id < offsets.size() - 1; track_id++)
         {
-            mvn_outlier_calc_ptr_->calculate(diff_matrix, temp);
-            diff_out_mmmv.add_value(temp(0, 0));
-            save_features_to_h5(track_id++, "diff_outlier_" + feature_name, temp);
+            FeatureMatrix value(vigra::Shape2(1, 1));
+            value(0, 0) = 0;
+            // loop over all distance values for one track
+            const size_t& v_id_start = offsets[track_id];
+            const size_t& v_id_end = offsets[track_id + 1];
+            for (size_t value_id = v_id_start; value_id < v_id_end; value_id++)
+            {
+                if (sq_mahal_dist_mat(value_id, 0) > 3.0)
+                {
+                    value(0, 0) += 1.0;
+                }
+            }
+            value(0, 0) /= static_cast<FeatureScalar>(v_id_end - v_id_start);
+            // save results
+            save_features_to_h5(track_id, "outlier_id_" + feature_name, value);
+            diff_out_mmmv.add_value(value(0, 0));
         }
     }
     push_back_feature(
