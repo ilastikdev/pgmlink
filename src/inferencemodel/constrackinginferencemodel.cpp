@@ -56,7 +56,10 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(const Hypoth
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
         if(timestep_map[n] == earliest_timestep)
+        {
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
+            constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+        }
     }
 }
 
