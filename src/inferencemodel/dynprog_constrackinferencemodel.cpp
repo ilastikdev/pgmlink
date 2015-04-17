@@ -253,6 +253,11 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                  << " arcs on " << inference_graph_.getNumTimesteps() << " timesteps" << std::endl;
 }
 
+void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(const HypothesesGraph& g)
+{
+    throw std::runtime_error("Fixing node values does not work for magnusson yet!");
+}
+
 double DynProgConsTrackInferenceModel::generateRandomOffset(EnergyType parameterIndex, double energy, Traxel tr, Traxel tr2, size_t state)
 {
     return 0.0;

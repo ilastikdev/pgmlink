@@ -238,6 +238,7 @@ void export_track()
     class_<ConservationTracking, boost::noncopyable>("ConservationTracking",
             init<ConservationTracking::Parameter>(args("parameters")))
     .def("perturbedInference", &ConservationTracking::perturbedInference)
+    .def("fixLabeledAppearanceNodes", &ConservationTracking::enableFixingLabeledAppearanceNodes)
     ;
 
     enum_<ConservationTracking::SolverType>("ConsTrackingSolverType")

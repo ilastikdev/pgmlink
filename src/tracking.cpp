@@ -997,7 +997,6 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
     {
         transpose_matrix_in_file(feature_file_name);
     }
-
 }
 
 std::vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_name,

@@ -22,6 +22,7 @@ using namespace boost::python;
 typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_m;
 typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcActiveMap;
 typedef property_map<node_active, HypothesesGraph::base_graph>::type NodeActiveMap;
+typedef property_map<node_timestep, HypothesesGraph::base_graph>::type NodeTimestepMap;
 typedef property_map<node_origin_reference, HypothesesGraph::base_graph>::type NodeOriginReferenceMap;
 
 std::vector< std::vector<Event> > get_events_of_graph(const HypothesesGraph& g)
@@ -62,6 +63,16 @@ bool get_item_ArcActiveMap(ArcActiveMap& map, const ArcActiveMap::Key& k)
 NodeOriginReferenceMap& getNodeOriginReferenceMap(HypothesesGraph* g)
 {
     return g->get(node_origin_reference());
+}
+
+NodeTimestepMap& getNodeTimestepMap(HypothesesGraph* g)
+{
+    return g->get(node_timestep());
+}
+
+int get_item_NodeTimestepMap(NodeTimestepMap& map, const NodeTimestepMap::Key& k)
+{
+    return map[k];
 }
 
 struct HypothesesGraph_pickle_suite : pickle_suite
@@ -211,16 +222,16 @@ void export_hypotheses()
 
     // node/arc active maps
     class_< ArcActiveMap, boost::noncopyable >("ArcActiveMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
-//    .def("__getitem__", (ArcActiveMap::Reference (ArcActiveMap::*)(const ArcActiveMap::Key&))&ArcActiveMap::operator[])
-//    .def("__getitem__", &ArcActiveMap::operator[])
     .def("__getitem__", &get_item_ArcActiveMap)
     .def("__setitem__", &ArcActiveMap::set);
 
     class_< NodeActiveMap, boost::noncopyable >("NodeActiveMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
-//    .def("__getitem__", (NodeActiveMap::Reference (NodeActiveMap::*)(const NodeActiveMap::Key&))&NodeActiveMap::operator[])
-//    .def("__getitem__", &NodeActiveMap::operator[])
     .def("__getitem__", &get_item_NodeActiveMap)
     .def("__setitem__", &NodeActiveMap::set);
+
+    class_< NodeTimestepMap, boost::noncopyable >("NodeTimestepMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", &get_item_NodeTimestepMap)
+    .def("__setitem__", &NodeTimestepMap::set);
 
     // node origin reference map
     class_< NodeOriginReferenceMap, boost::noncopyable >("NodeOriginReferenceMap", init<const HypothesesGraph&>(args("hypotheses_graph")))

@@ -44,7 +44,20 @@ void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypothe
 
     add_finite_factors(hypotheses);
     add_constraints_to_pool(hypotheses);
+}
 
+void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(const HypothesesGraph &g)
+{
+    assert(g.has_property(appearance_label()));
+    property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
+    property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = g.get(node_timestep());
+    int earliest_timestep = *(timestep_map.beginValue());
+
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        if(timestep_map[n] == earliest_timestep)
+            constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
+    }
 }
 
 ConsTrackingInferenceModel::GraphicalModelType& ConsTrackingInferenceModel::get_model()

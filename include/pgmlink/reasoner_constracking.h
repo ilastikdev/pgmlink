@@ -127,6 +127,7 @@ public:
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
     virtual void perturbedInference(HypothesesGraph&);
+    void enableFixingLabeledAppearanceNodes();
 
     double forbidden_cost() const;
 
@@ -189,6 +190,7 @@ protected: // members
     boost::python::object transition_classifier_;
 
     bool with_optical_correction_;
+    bool use_app_node_labels_to_fix_values_;
 
     HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;

@@ -301,6 +301,47 @@ protected:
     bool with_disappearance_;
 };
 
+//------------------------------------------------------------------------
+// FixNodeValueConstraintFunction
+//------------------------------------------------------------------------
+/// expects a configuration of size 1, containing a disappearance node
+template<class T, class I, class L>
+class FixNodeValueConstraintFunction: public ConstraintFunction<T, I, L>
+{
+public:
+    template<class SHAPE_ITERATOR>
+    FixNodeValueConstraintFunction(SHAPE_ITERATOR shape_begin,
+                                SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+        value(0)
+    {}
+
+    FixNodeValueConstraintFunction() {}
+
+    void set_desired_value(size_t val){ value = val; }
+
+protected:
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
+    {
+        assert(configuration.size() == 1);
+
+        auto it = configuration.begin();
+        L variable_value = *it;
+
+        if(variable_value == value)
+        {
+            return 0.0;
+        }
+        else
+        {
+            return this->forbidden_energy_;
+        }
+    }
+
+protected:
+    size_t value;
+};
+
 } // namespace pgm
 } // namespace pgmlink
 
@@ -322,6 +363,7 @@ using pgmlink::pgm::IncomingConstraintFunction;
 using pgmlink::pgm::OutgoingConstraintFunction;
 using pgmlink::pgm::OutgoingNoDivConstraintFunction;
 using pgmlink::pgm::DetectionConstraintFunction;
+using pgmlink::pgm::FixNodeValueConstraintFunction;
 
 //------------------------------------------------------------------------
 /// \cond HIDDEN_SYMBOLS
@@ -355,6 +397,15 @@ struct FunctionRegistration< OutgoingNoDivConstraintFunction<T, I, L> >
 
 template<class T, class I, class L>
 struct FunctionRegistration< DetectionConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
+template<class T, class I, class L>
+struct FunctionRegistration< FixNodeValueConstraintFunction<T, I, L> >
 {
     enum ID
     {
@@ -666,6 +717,67 @@ void FunctionSerialization<marray::Marray<double> >::deserialize
     INDEX_INPUT_ITERATOR indexOutIterator,
     VALUE_INPUT_ITERATOR valueOutIterator,
     marray::Marray<double> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+//------------------------------------------------------------------------
+/// Serialization for the outgoing constraint function
+template<class T, class I, class L>
+class FunctionSerialization< FixNodeValueConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const FixNodeValueConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const FixNodeValueConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const FixNodeValueConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, FixNodeValueConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<FixNodeValueConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const FixNodeValueConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<FixNodeValueConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const FixNodeValueConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< FixNodeValueConstraintFunction<T, I, L> >::serialize
+(
+    const FixNodeValueConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<FixNodeValueConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    FixNodeValueConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me

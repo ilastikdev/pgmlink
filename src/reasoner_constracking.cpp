@@ -73,7 +73,8 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       transition_weight_(param.transition_weight),
       transition_classifier_(param.transition_classifier),
       with_optical_correction_(param.with_optical_correction),
-      solver_(param.solver_)
+      solver_(param.solver_),
+      use_app_node_labels_to_fix_values_(false)
 {
     inference_model_param_.max_number_objects = max_number_objects_;
 
@@ -246,6 +247,12 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     // build inference model
     inference_model->build_from_graph(*graph);
 
+    // fix some node values beforehand
+    if(use_app_node_labels_to_fix_values_)
+    {
+        inference_model->fixFirstDisappearanceNodesToLabels(*graph);
+    }
+
     if(solver_ == CplexSolver)
     {
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
@@ -253,18 +260,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             get_export_filename(0, features_file_),
             constraints_file_,
             get_export_filename(0, labels_export_file_name_));
-    }
+    }    
 
     // run inference & conclude
     solutions_.push_back(inference_model->infer());
-
-//    if (solver_ == CplexSolver && export_from_labeled_graph_ && !labels_export_file_name_.empty())
-//    {
-//        LOG(logINFO) << "export graph labels to " << labels_export_file_name_ << std::endl;
-//        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->
-//        write_labeledgraph_to_file(*graph, labels_export_file_name_);
-//        labels_export_file_name_.clear();
-//    }
 
     LOG(logINFO) << "conclude MAP";
     inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
@@ -323,6 +322,12 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     }
 
     compute_relative_uncertainty(graph);
+}
+
+void ConservationTracking::enableFixingLabeledAppearanceNodes()
+{
+    // use all active nodes and fix them to the active value in the respective inference model
+    use_app_node_labels_to_fix_values_ = true;
 }
 
 void ConservationTracking::compute_relative_uncertainty(HypothesesGraph* graph)

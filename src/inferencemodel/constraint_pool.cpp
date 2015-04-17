@@ -32,6 +32,12 @@ void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& c
     detection_constraints_.push_back(constraint);
 }
 
+template<>
+void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint& constraint)
+{
+    fix_node_value_constraints_.push_back(constraint);
+}
+
 //------------------------------------------------------------------------
 // specialization for IncomingConstraintFunction
 template<>
@@ -408,6 +414,37 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
     }
 }
 
+//------------------------------------------------------------------------
+// specialization for FixNodeValueConstraintFunction
+template<>
+void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+     ConstraintPoolCplexOptimizer,
+     FixNodeValueConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::FixNodeValueConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
+     )
+{
+    LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for FixNodeValue";
+    for(auto it = constraints.begin(); it != constraints.end(); ++it)
+    {
+        const ConstraintPool::FixNodeValueConstraint& constraint = *it;
+
+        std::vector<size_t> cplex_idxs;
+        std::vector<int> coeffs;
+        std::stringstream constraint_name;
+        constraint_name << "fix node value of " << constraint.node << " to " << constraint.value;
+
+        cplex_idxs.push_back(optimizer.lpNodeVi(constraint.node, constraint.value));
+        coeffs.push_back(1);
+
+        optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());
+        LOG(logDEBUG3) << constraint_name.str();
+    }
+}
+
 
 //------------------------------------------------------------------------
 template<>
@@ -438,31 +475,43 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
     indices.push_back(constraint.appearance_node);
 }
 
+template<>
+void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const FixNodeValueConstraint& constraint)
+{
+    indices.push_back(constraint.node);
+}
+
 //------------------------------------------------------------------------
 template<>
-void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*)
+void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, IncomingConstraint)
 {
     // no flags needed
 }
 
 template<>
-void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*)
+void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, OutgoingConstraint)
 {
     // no flags needed
 }
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func)
+void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
 {
     func->set_with_divisions(with_divisions_);
 }
 
 template<>
-void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func)
+void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, DetectionConstraint)
 {
     func->set_with_appearance(with_appearance_);
     func->set_with_disappearance(with_disappearance_);
     func->set_with_misdetections(with_misdetections_);
+}
+
+template<>
+void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint constraint)
+{
+    func->set_desired_value(constraint.value);
 }
 
 } // namespace pgm

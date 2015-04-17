@@ -1398,6 +1398,7 @@ void DiffCalculator::calculate(
     FeatureMatrix& return_matrix
 ) const
 {
+
     size_t col_count = feature_matrix.shape(0);
     size_t row_count = feature_matrix.shape(1);
     if (col_count <= 1)

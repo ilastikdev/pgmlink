@@ -46,6 +46,7 @@ public:
                           std::vector<size_t>& solution);
 
     virtual void build_from_graph(const HypothesesGraph&);
+    virtual void fixFirstDisappearanceNodesToLabels(const HypothesesGraph& g);
 
     template<class ArcIterator>
     double getTransitionArcScore(const HypothesesGraph& g, ArcIterator a);

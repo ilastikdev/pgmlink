@@ -42,6 +42,8 @@ public: // API
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&);
 
+    virtual void fixFirstDisappearanceNodesToLabels(const HypothesesGraph& g);
+
     // extract the model
     GraphicalModelType& get_model();
 

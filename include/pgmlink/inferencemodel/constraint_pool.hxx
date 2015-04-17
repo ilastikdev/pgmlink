@@ -146,6 +146,26 @@ public:
         DetectionConstraint() {}
     };
 
+    class FixNodeValueConstraint
+    {
+    public:
+        FixNodeValueConstraint(IndexType node,
+                               size_t value):
+            node(node),
+            value(value)
+        {}
+
+        IndexType node;
+        size_t value;
+
+    private:
+        // boost serialization interface
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int);
+        FixNodeValueConstraint() {}
+    };
+
 protected:
     template<class CONSTRAINT_TYPE>
     void constraint_indices(std::vector<IndexType>& indices, const CONSTRAINT_TYPE& constraint);
@@ -153,8 +173,8 @@ protected:
     template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
     void add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints);
 
-    template<class FUNCTION_TYPE>
-    void configure_function(FUNCTION_TYPE* func);
+    template<class FUNCTION_TYPE, class CONSTRAINT_TYPE>
+    void configure_function(FUNCTION_TYPE* func, CONSTRAINT_TYPE constraint);
 
     template<class CONSTRAINT_TYPE>
     bool check_all_constraint_vars_in_mapping(std::map<size_t, size_t>& index_mapping, const CONSTRAINT_TYPE& constraint);
@@ -163,6 +183,7 @@ protected:
     std::vector<OutgoingConstraint> outgoing_constraints_;
     std::vector<OutgoingConstraint> outgoing_no_div_constraints_;
     std::vector<DetectionConstraint> detection_constraints_;
+    std::vector<FixNodeValueConstraint> fix_node_value_constraints_;
 
     ValueType big_m_;
     bool with_divisions_;
@@ -199,6 +220,9 @@ void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& co
 template<>
 void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& constraint);
 
+template<>
+void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint& constraint);
+
 //------------------------------------------------------------------------
 template<class GM, class INF>
 void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
@@ -209,6 +233,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
+    add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, fix_node_value_constraints_);
 }
 
 template<class GM, class INF>
@@ -218,6 +243,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     std::vector<OutgoingConstraint> remapped_outgoing_constraints;
     std::vector<OutgoingConstraint> remapped_outgoing_no_div_constraints;
     std::vector<DetectionConstraint> remapped_detection_constraints;
+    std::vector<FixNodeValueConstraint> remapped_fix_node_value_constraints;
 
     for(auto constraint : incoming_constraints_)
     {
@@ -280,10 +306,22 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
         remapped_detection_constraints.push_back(DetectionConstraint(disappearance_node, appearance_node));
     }
 
+    for(auto constraint : fix_node_value_constraints_)
+    {
+        if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
+        {
+            continue;
+        }
+
+        size_t node = index_mapping[constraint.node];
+        remapped_fix_node_value_constraints.push_back(FixNodeValueConstraint(node, constraint.value));
+    }
+
     add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType, IndexType, LabelType>, IncomingConstraint>(model, inf, remapped_incoming_constraints);
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_constraints);
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
+    add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_detection_constraints);
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
@@ -312,7 +350,7 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
         {
             constraint_functions[shape] = new FUNCTION_TYPE(shape.begin(), shape.end());
             constraint_functions[shape]->set_forbidden_energy(big_m_);
-            configure_function(constraint_functions[shape]);
+            configure_function(constraint_functions[shape], *it);
         }
 
         // create factor
@@ -372,6 +410,20 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
      );
 
 //------------------------------------------------------------------------
+// specialization for FixNodeValueConstraintFunction
+template<>
+void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
+     ConstraintPoolCplexOptimizer,
+     FixNodeValueConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
+     ConstraintPool::FixNodeValueConstraint>
+     (
+         ConstraintPoolOpengmModel& model,
+         ConstraintPoolCplexOptimizer& optimizer,
+         const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
+     );
+
+
+//------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
 void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
 {
@@ -386,6 +438,9 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 
 template<>
 void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const DetectionConstraint& constraint);
+
+template<>
+void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const FixNodeValueConstraint& constraint);
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
@@ -406,23 +461,26 @@ bool ConstraintPool::check_all_constraint_vars_in_mapping(std::map<size_t, size_
 }
 
 //------------------------------------------------------------------------
-template<class FUNCTION_TYPE>
-void ConstraintPool::configure_function(FUNCTION_TYPE* func)
+template<class FUNCTION_TYPE, class CONSTRAINT_TYPE>
+void ConstraintPool::configure_function(FUNCTION_TYPE* func, CONSTRAINT_TYPE constraint)
 {
     throw std::logic_error("only template specializations of this method should be called");
 }
 
 template<>
-void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*);
+void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPool::IncomingConstraint);
 
 template<>
-void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*);
+void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPool::OutgoingConstraint);
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func);
+void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::IncomingConstraint);
 
 template<>
-void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func);
+void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::DetectionConstraint);
+
+template<>
+void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint constraint);
 
 //------------------------------------------------------------------------
 // Serialization
@@ -443,6 +501,7 @@ void ConstraintPool::serialize(Archive & ar, const unsigned int)
     ar & outgoing_constraints_;
     ar & outgoing_no_div_constraints_;
     ar & detection_constraints_;
+    ar & fix_node_value_constraints_;
 }
 
 template<class Archive>
@@ -460,12 +519,18 @@ void ConstraintPool::OutgoingConstraint::serialize(Archive & ar, const unsigned 
     ar & transition_nodes;
 }
 
-
 template<class Archive>
 void ConstraintPool::DetectionConstraint::serialize(Archive & ar, const unsigned int)
 {
     ar & appearance_node;
     ar & disappearance_node;
+}
+
+template<class Archive>
+void ConstraintPool::FixNodeValueConstraint::serialize(Archive & ar, const unsigned int)
+{
+    ar & value;
+    ar & node;
 }
 
 } // namespace pgm
