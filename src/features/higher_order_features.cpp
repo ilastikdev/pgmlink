@@ -181,11 +181,28 @@ void set_injected_solution(HypothesesGraph& graph)
         graph.add(division_active());
     }
 
+    if(not graph.has_property(division_active_count()))
+    {
+        graph.add(division_active_count());
+    }
+    if (not graph.has_property(node_active_count()))
+    {
+        graph.add(node_active_count());
+    }
+    if (not graph.has_property(arc_active_count()))
+    {
+        graph.add(arc_active_count());
+    }
+
     // Get the property maps (caution: "node_active_map" not "nodes_active_map")
     node_active_map_type& node_active_map = graph.get(node_active());
     node_active2_map_type& node_active2_map = graph.get(node_active2());
     arc_active_map_type& arc_active_map = graph.get(arc_active());
     division_active_map_type& div_active_map = graph.get(division_active());
+
+    property_map<node_active_count, HypothesesGraph::base_graph>::type& node_active_count_map = graph.get(node_active_count());
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type& arc_active_count_map = graph.get(arc_active_count());
+    property_map<division_active_count, HypothesesGraph::base_graph>::type& div_active_count_map = graph.get(division_active_count());
 
     // insert solution
     bool is_active;
@@ -195,11 +212,14 @@ void set_injected_solution(HypothesesGraph& graph)
         node_active_map[n_it] = is_active;
         node_active2_map.set(n_it, std::max(gt_appearance[n_it], gt_disappearance[n_it]));
         div_active_map[n_it] = gt_division[n_it];
+        div_active_count_map.set(n_it, { gt_division[n_it] });
+        node_active_count_map.set(n_it, { std::max(gt_appearance[n_it], gt_disappearance[n_it]) });
     }
 
     for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it)
     {
         arc_active_map[a_it] = gt_arc[a_it];
+        arc_active_count_map.set(a_it, { gt_arc[a_it] });
     }
 }
 
