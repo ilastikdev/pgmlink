@@ -21,7 +21,7 @@ using namespace boost::python;
 
 typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_m;
 typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcActiveMap;
-typedef property_map<node_active, HypothesesGraph::base_graph>::type NodeActiveMap;
+typedef property_map<node_active2, HypothesesGraph::base_graph>::type NodeActiveMap;
 typedef property_map<node_timestep, HypothesesGraph::base_graph>::type NodeTimestepMap;
 typedef property_map<node_origin_reference, HypothesesGraph::base_graph>::type NodeOriginReferenceMap;
 
@@ -42,10 +42,10 @@ node_traxel_m& getNodeTraxelMap(HypothesesGraph* g)
 
 NodeActiveMap& getNodeActiveMap(HypothesesGraph* g)
 {
-    return g->get(node_active());
+    return g->get(node_active2());
 }
 
-bool get_item_NodeActiveMap(NodeActiveMap& map, const NodeActiveMap::Key& k)
+size_t get_item_NodeActiveMap(NodeActiveMap& map, const NodeActiveMap::Key& k)
 {
     return map[k];
 }
@@ -299,16 +299,11 @@ void export_hypotheses()
     .def("num_active_incoming_arcs", &num_active_incoming_arcs)
 
     // extensions
-    .def("addNodeTraxelMap", &addNodeTraxelMap,
-         return_internal_reference<>())
-    .def("getNodeTraxelMap", &getNodeTraxelMap,
-         return_internal_reference<>())
-    .def("getNodeActiveMap", &getNodeActiveMap,
-         return_internal_reference<>())
-    .def("getArcActiveMap", &getArcActiveMap,
-         return_internal_reference<>())
-    .def("getNodeOriginReferenceMap", &getNodeOriginReferenceMap,
-         return_internal_reference<>())
+    .def("addNodeTraxelMap", &addNodeTraxelMap, return_internal_reference<>())
+    .def("getNodeTraxelMap", &getNodeTraxelMap, return_internal_reference<>())
+    .def("getNodeActiveMap", &getNodeActiveMap, return_internal_reference<>())
+    .def("getArcActiveMap", &getArcActiveMap, return_internal_reference<>())
+    .def("getNodeOriginReferenceMap", &getNodeOriginReferenceMap, return_internal_reference<>())
     .def_pickle(HypothesesGraph_pickle_suite())
     ;
 
