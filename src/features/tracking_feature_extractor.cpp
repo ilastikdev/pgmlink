@@ -569,7 +569,7 @@ void TrackingFeatureExtractor::compute_all_track_features()
     compute_sq_accel_features(track_traxels, "Variance");
     compute_angle_features(track_traxels, "RegionCenter");
     compute_track_length_features(track_traxels);
-    compute_track_id_outlier(track_traxels, "RegionCenter");
+    //compute_track_id_outlier(track_traxels, "RegionCenter");
     compute_track_id_outlier(track_traxels, "Count");
     compute_track_id_outlier(track_traxels, "Mean");
     compute_track_id_outlier(track_traxels, "Variance");
@@ -970,7 +970,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
             }
             value(0, 0) /= static_cast<FeatureScalar>(v_id_end - v_id_start);
             // save results
-            save_features_to_h5(track_id, "outlier_id_" + feature_name, value);
+            save_features_to_h5(track_id, "outlier_diff_" + feature_name, value);
             diff_out_mmmv.add_value(value(0, 0));
         }
     }
