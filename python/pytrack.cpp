@@ -221,6 +221,7 @@ void export_track()
     .def(init<boost::shared_ptr<HypothesesGraph>,
          TraxelStore&,
          ConservationTracking::Parameter,
+         UncertaintyParameter,
          FieldOfView,
          bool,
          double,

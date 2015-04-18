@@ -183,6 +183,7 @@ public:
     ConsTracking(boost::shared_ptr<HypothesesGraph> g,
                  TraxelStore& ts,
                  ConservationTracking::Parameter param,
+                 UncertaintyParameter uncertainty_param,
                  FieldOfView fov = FieldOfView(),
                  bool size_dependent_detection_prob = false,
                  double avg_obj_size = 30.0,
@@ -202,7 +203,8 @@ public:
         with_optical_correction_(false),
         solver_(param.solver_),
         traxel_store_(&ts),
-        hypotheses_graph_(g)
+        hypotheses_graph_(g),
+        uncertainty_param_(uncertainty_param)
     {}
 
 
