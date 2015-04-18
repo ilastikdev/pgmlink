@@ -42,7 +42,10 @@ public: // API
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&);
 
-    virtual void fixFirstDisappearanceNodesToLabels(const HypothesesGraph& g);
+    virtual void fixFirstDisappearanceNodesToLabels(
+            const HypothesesGraph& g,
+            const HypothesesGraph &tracklet_graph,
+            std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &traxel2tracklet_map);
 
     // extract the model
     GraphicalModelType& get_model();

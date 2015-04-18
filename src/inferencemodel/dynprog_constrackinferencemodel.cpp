@@ -253,7 +253,10 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                  << " arcs on " << inference_graph_.getNumTimesteps() << " timesteps" << std::endl;
 }
 
-void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(const HypothesesGraph& g)
+void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(
+        const HypothesesGraph& g,
+        const HypothesesGraph &tracklet_graph,
+        std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_map)
 {
     throw std::runtime_error("Fixing node values does not work for magnusson yet!");
 }

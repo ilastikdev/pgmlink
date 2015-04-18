@@ -63,7 +63,10 @@ public: // API
                           std::vector<size_t> &solution) = 0;
 
     virtual std::vector<size_t> infer() = 0;
-    virtual void fixFirstDisappearanceNodesToLabels(const HypothesesGraph& g) = 0;
+    virtual void fixFirstDisappearanceNodesToLabels(
+            const HypothesesGraph& g,
+            const HypothesesGraph &tracklet_graph,
+            std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_map) = 0;
 
     virtual void write_labeledgraph_to_file(const HypothesesGraph &,
                                             const std::string&) {}

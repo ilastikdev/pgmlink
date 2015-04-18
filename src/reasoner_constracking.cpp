@@ -252,7 +252,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     // fix some node values beforehand
     if(use_app_node_labels_to_fix_values_)
     {
-        inference_model->fixFirstDisappearanceNodesToLabels(*graph);
+        inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 
     if(solver_ == CplexSolver)
@@ -310,7 +310,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             // fix some node values beforehand
             if(use_app_node_labels_to_fix_values_)
             {
-                perturbed_inference_model->fixFirstDisappearanceNodesToLabels(*graph);
+                perturbed_inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
             }
 
             if(solver_ == CplexSolver)

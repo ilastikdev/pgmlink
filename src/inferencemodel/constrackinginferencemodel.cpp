@@ -46,19 +46,44 @@ void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypothe
     add_constraints_to_pool(hypotheses);
 }
 
-void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(const HypothesesGraph &g)
+void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
+        const HypothesesGraph &g,
+        const HypothesesGraph& tracklet_graph,
+        std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& traxel2tracklet_map
+        )
 {
     assert(g.has_property(appearance_label()));
     property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
-    property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = g.get(node_timestep());
-    int earliest_timestep = *(timestep_map.beginValue());
 
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    if(!param_.with_tracklets)
     {
-        if(timestep_map[n] == earliest_timestep)
+        property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = g.get(node_timestep());
+        int earliest_timestep = *(timestep_map.beginValue());
+
+        for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
         {
-            constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
-            constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+            if(timestep_map[n] == earliest_timestep)
+            {
+                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
+                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+            }
+        }
+    }
+    else
+    {
+        // in the tracklet graph, the respective label is overwritten by later traxels in the tracklet,
+        // get the first original node and use its label
+        property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = tracklet_graph.get(node_timestep());
+        int earliest_timestep = *(timestep_map.beginValue());
+
+        for (HypothesesGraph::NodeIt n(tracklet_graph); n != lemon::INVALID; ++n)
+        {
+            if(timestep_map[n] == earliest_timestep)
+            {
+                HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
+                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
+                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+            }
         }
     }
 }
