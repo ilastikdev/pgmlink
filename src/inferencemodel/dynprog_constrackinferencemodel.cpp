@@ -68,7 +68,6 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 {
     const HypothesesGraph *graph = &g;
 
-    std::map<HypothesesGraph::Node, dpct::Graph::NodePtr> node_reference_map;
     HypothesesGraph::node_timestep_map& timestep_map = graph->get(node_timestep());
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = graph->get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = graph->get(node_tracklet());
@@ -189,7 +188,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                                                                  in_first_frame,
                                                                  in_last_frame,
                                                                  std::make_shared<ConservationTrackingNodeData>(n));
-        node_reference_map[n] = inf_node;
+        node_reference_map_[n] = inf_node;
     }
 
     LOG(logINFO) << "Creating DPCT arcs";
@@ -197,8 +196,8 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
     // add all transition arcs
     for (HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a)
     {
-        dpct::Graph::NodePtr source = node_reference_map[graph->source(a)];
-        dpct::Graph::NodePtr target = node_reference_map[graph->target(a)];
+        dpct::Graph::NodePtr source = node_reference_map_[graph->source(a)];
+        dpct::Graph::NodePtr target = node_reference_map_[graph->target(a)];
 
         double perturbed_score = getTransitionArcScore(*graph, a);
 
@@ -241,8 +240,8 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                     LOG(logDEBUG3) << "Adding possible division from " << tr << " with score: "
                                    << perturbed_move_score << "(move) + " << division_score << "(div)" << std::endl;
 
-                    inference_graph_.allowMitosis(node_reference_map[n],
-                                                  node_reference_map[graph->target(a)],
+                    inference_graph_.allowMitosis(node_reference_map_[n],
+                                                  node_reference_map_[graph->target(a)],
                                                   perturbed_move_score + division_score - perturb_div);
                 }
             }
@@ -258,7 +257,56 @@ void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(
         const HypothesesGraph &tracklet_graph,
         std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_map)
 {
-    throw std::runtime_error("Fixing node values does not work for magnusson yet!");
+    double forbidden_cost = -10000000;
+
+    assert(g.has_property(appearance_label()));
+    property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
+
+    if(!param_.with_tracklets)
+    {
+        property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = g.get(node_timestep());
+        int earliest_timestep = *(timestep_map.beginValue());
+
+        for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+        {
+            if(timestep_map[n] == earliest_timestep)
+            {
+                dpct::Graph::NodePtr node = node_reference_map_[n];
+                int desired_state = appearance_labels[n];
+
+                for(size_t state = 0; state < node->getNumStates(); state++)
+                {
+                    node->addToCellCountScore(state, abs(desired_state-state) * forbidden_cost);
+                }
+            }
+        }
+    }
+    else
+    {
+        // in the tracklet graph, the respective label is overwritten by later traxels in the tracklet,
+        // get the first original node and use its label
+        property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = tracklet_graph.get(node_timestep());
+        int earliest_timestep = *(timestep_map.beginValue());
+
+        size_t fixed = 0;
+        for (HypothesesGraph::NodeIt n(tracklet_graph); n != lemon::INVALID; ++n)
+        {
+            if(timestep_map[n] == earliest_timestep)
+            {
+                dpct::Graph::NodePtr node = node_reference_map_[n];
+                HypothesesGraph::Node orig_n = tracklet2traxel_map[n][0];
+                int desired_state = appearance_labels[orig_n];
+
+                for(size_t state = 0; state < node->getNumStates(); state++)
+                {
+                    node->addToCellCountScore(state, abs(desired_state-state) * forbidden_cost);
+                }
+                LOG(logINFO) << "Fixing node " << g.id(orig_n) << " to " << desired_state;
+                fixed++;
+            }
+        }
+        LOG(logINFO) << "Fixed " << fixed << " nodes per constraint";
+    }
 }
 
 double DynProgConsTrackInferenceModel::generateRandomOffset(EnergyType parameterIndex, double energy, Traxel tr, Traxel tr2, size_t state)

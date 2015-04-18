@@ -63,6 +63,7 @@ protected:
     // dpct inference members
     dpct::Graph inference_graph_;
     std::vector<dpct::TrackingAlgorithm::Path> solution_paths_;
+    std::map<HypothesesGraph::Node, dpct::Graph::NodePtr> node_reference_map_;
 };
 
 template<class ArcIterator>
