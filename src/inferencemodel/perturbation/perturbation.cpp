@@ -22,4 +22,13 @@ size_t Perturbation::add_div_m_best_perturbation(marray::Marray<double>& energie
     return factorIndex;
 }
 
+double Perturbation::getDivMBestOffset(EnergyType energy_type,
+                                       const HypothesesGraph &g,
+                                       HypothesesGraph::Node n,
+                                       HypothesesGraph::Arc a,
+                                       size_t state)
+{
+    return 0.0;
+}
+
 } // namespace pgmlink

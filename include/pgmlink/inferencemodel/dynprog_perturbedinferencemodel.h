@@ -29,11 +29,11 @@ public: // API
                                         Traxel tr2 = 0,
                                         size_t state = 0);
 
-//    virtual size_t add_div_m_best_perturbation(marray::Marray<double> &energies,
-//            EnergyType energy_type,
-//            size_t factorIndex);
-
-//    void perturb(Perturbation::DeterministicOffset* det_off);
+    virtual double getDivMBestOffset(EnergyType energy_type,
+                                     const HypothesesGraph& g,
+                                     HypothesesGraph::Node n,
+                                     HypothesesGraph::Arc a,
+                                     size_t state);
 
 protected:
     boost::shared_ptr<Perturbation> perturbation_;

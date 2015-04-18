@@ -121,6 +121,8 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                 energy += generateRandomOffset(Detection, energy, traxel_map[n], 0, state);
             }
 
+            energy += getDivMBestOffset(Detection, g, n, HypothesesGraph::Arc(), state);
+
             scoreDeltas.push_back(-1.0 * energy);
 
             LOG(logDEBUG3) << "\tstate " << state << " has score " << scoreDeltas.back() << std::endl;
@@ -199,7 +201,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
         dpct::Graph::NodePtr source = node_reference_map_[graph->source(a)];
         dpct::Graph::NodePtr target = node_reference_map_[graph->target(a)];
 
-        double perturbed_score = getTransitionArcScore(*graph, a);
+        double perturbed_score = getTransitionArcScore(*graph, a) - getDivMBestOffset(Transition, g, HypothesesGraph::Node(), a, size_t(true));
 
         dpct::Graph::ArcPtr inf_arc = inference_graph_.addMoveArc(source,
                                                                   target,
@@ -237,6 +239,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                     // division arc score = division score + move score
                     double perturbed_move_score = getTransitionArcScore(*graph, a);
                     double perturb_div = generateRandomOffset(Division, -division_score, tr);
+                    perturb_div += getDivMBestOffset(Division, g, n, HypothesesGraph::Arc(), size_t(true));
                     LOG(logDEBUG3) << "Adding possible division from " << tr << " with score: "
                                    << perturbed_move_score << "(move) + " << division_score << "(div)" << std::endl;
 
@@ -309,7 +312,20 @@ void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(
     }
 }
 
-double DynProgConsTrackInferenceModel::generateRandomOffset(EnergyType parameterIndex, double energy, Traxel tr, Traxel tr2, size_t state)
+double DynProgConsTrackInferenceModel::generateRandomOffset(EnergyType parameterIndex,
+                                                            double energy,
+                                                            Traxel tr,
+                                                            Traxel tr2,
+                                                            size_t state)
+{
+    return 0.0;
+}
+
+double DynProgConsTrackInferenceModel::getDivMBestOffset(EnergyType energy_type,
+                                                         const HypothesesGraph &g,
+                                                         HypothesesGraph::Node n,
+                                                         HypothesesGraph::Arc a,
+                                                         size_t state)
 {
     return 0.0;
 }

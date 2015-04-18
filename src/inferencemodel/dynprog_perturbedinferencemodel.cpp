@@ -25,6 +25,15 @@ double DynProgPerturbedInferenceModel::generateRandomOffset(EnergyType parameter
     return perturbation_->generateRandomOffset(parameterIndex, energy, tr, tr2, state, transition_predictions_);
 }
 
+double DynProgPerturbedInferenceModel::getDivMBestOffset(EnergyType energy_type,
+                                                         const HypothesesGraph& g,
+                                                         HypothesesGraph::Node n,
+                                                         HypothesesGraph::Arc a,
+                                                         size_t state)
+{
+    return perturbation_->getDivMBestOffset(energy_type, g, n, a, state);
+}
+
 } // namespace pgmlink
 
 #endif // WITH_DPCT

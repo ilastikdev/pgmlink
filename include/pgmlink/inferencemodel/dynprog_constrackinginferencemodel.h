@@ -59,6 +59,12 @@ public:
                                         Traxel tr = 0,
                                         Traxel tr2 = 0,
                                         size_t state = 0);
+
+    virtual double getDivMBestOffset(EnergyType energy_type,
+                                     const HypothesesGraph &g,
+                                     HypothesesGraph::Node n,
+                                     HypothesesGraph::Arc a,
+                                     size_t state);
 protected:
     // dpct inference members
     dpct::Graph inference_graph_;

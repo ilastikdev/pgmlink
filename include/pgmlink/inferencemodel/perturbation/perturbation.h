@@ -57,6 +57,12 @@ public: // API
                                                EnergyType energy_type,
                                                size_t factorIndex);
 
+    virtual double getDivMBestOffset(EnergyType energy_type,
+                                     const HypothesesGraph& g,
+                                     HypothesesGraph::Node n,
+                                     HypothesesGraph::Arc a,
+                                     size_t state);
+
 protected: // Members
     boost::math::normal standard_gaussian_distribution;
     Parameter perturbation_param_;

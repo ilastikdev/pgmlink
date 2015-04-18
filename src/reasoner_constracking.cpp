@@ -147,8 +147,6 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
             return boost::make_shared<PerturbAndMapPerturbation>(perturbed_inference_model_param_, inference_model_param_);
             break;
         case DiverseMbest:
-            if(solver_ == DynProgSolver)
-                throw std::runtime_error("Diverse M Best perturbation does not work with Magnusson yet");
             return boost::make_shared<DivMBestPerturbation>(perturbed_inference_model_param_, inference_model_param_);
             break;
         case ClassifierUncertainty:
@@ -295,11 +293,17 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
         {
             LOG(logINFO) << "------------> Beginning Iteration " << iterStep << " <-----------\n";
-            if (uncertainty_param_.distributionId == DiverseMbest && solver_ == CplexSolver)
+            if (uncertainty_param_.distributionId == DiverseMbest)
             {
-                boost::static_pointer_cast<DivMBestPerturbation>(perturbation)->push_away_from_solution(
-                            boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->get_model(),
-                            solutions_.back());
+                if(solver_ == CplexSolver)
+                {
+                    boost::static_pointer_cast<DivMBestPerturbation>(perturbation)->push_away_from_solution(
+                                boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->get_model(),
+                                solutions_.back());
+                }
+
+                boost::static_pointer_cast<DivMBestPerturbation>(perturbation)->registerOriginalGraph(&hypotheses,
+                                                                                                      &tracklet2traxel_node_map_);
             }
 
             perturbed_inference_model = create_perturbed_inference_model(perturbation);

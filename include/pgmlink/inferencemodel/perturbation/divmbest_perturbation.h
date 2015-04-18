@@ -44,6 +44,14 @@ public: // API
                                                EnergyType energy_type,
                                                size_t factorIndex);
 
+    virtual double getDivMBestOffset(EnergyType energy_type,
+                                     const HypothesesGraph &g,
+                                     HypothesesGraph::Node n,
+                                     HypothesesGraph::Arc a,
+                                     size_t state);
+
+    void registerOriginalGraph(const HypothesesGraph *g,
+                               std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > *tracklet2traxel_node_map);
 protected: // Methods
     double weightedNegLog(double prob, double weight);
     double inverseWeightedNegLog(double energy, double weight);
@@ -56,6 +64,8 @@ protected: // Methods
 
 protected: // Members
     DeterministicOffset deterministic_offset_;
+    const HypothesesGraph* original_graph_;
+    std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >* tracklet2traxel_node_map_;
 };
 
 } // namespace pgmlink
