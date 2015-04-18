@@ -241,6 +241,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         numberOfSolutions = uncertainty_param_.numberOfIterations;
     }
 
+    LOG(logINFO) << "------------> Beginning Iteration 0 <-----------\n";
+
     // instanciate inference model
     boost::shared_ptr<InferenceModel> inference_model = create_inference_model();
 
@@ -292,6 +294,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 
         for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
         {
+            LOG(logINFO) << "------------> Beginning Iteration " << iterStep << " <-----------\n";
             if (uncertainty_param_.distributionId == DiverseMbest && solver_ == CplexSolver)
             {
                 boost::static_pointer_cast<DivMBestPerturbation>(perturbation)->push_away_from_solution(
@@ -303,6 +306,12 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 
             perturbed_inference_model->use_transition_prediction_cache(inference_model.get());
             perturbed_inference_model->build_from_graph(*graph);
+
+            // fix some node values beforehand
+            if(use_app_node_labels_to_fix_values_)
+            {
+                perturbed_inference_model->fixFirstDisappearanceNodesToLabels(*graph);
+            }
 
             if(solver_ == CplexSolver)
             {
