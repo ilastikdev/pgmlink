@@ -218,9 +218,18 @@ void export_track()
                                   "fov",
                                   "event_vector_dump_filename",
                                   "solver_type")))
+    .def(init<boost::shared_ptr<HypothesesGraph>,
+         TraxelStore&,
+         ConservationTracking::Parameter,
+         FieldOfView,
+         bool,
+         double,
+         double,
+         double>())
     .def("__call__", &pythonConsTracking)
     .def("buildGraph", &ConsTracking::build_hypo_graph)
     .def("track", &ConsTracking::track)
+    .def("track", &ConsTracking::track_from_param)
     .def("resolve_mergers", &python_resolve_mergers)
     .def("detections", &ConsTracking::detections)
     .def("get_hypotheses_graph", &ConsTracking::get_hypo_graph)

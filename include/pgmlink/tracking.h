@@ -179,6 +179,32 @@ public:
           traxel_store_(nullptr)
     {}
 
+    PGMLINK_EXPORT
+    ConsTracking(boost::shared_ptr<HypothesesGraph> g,
+                 TraxelStore& ts,
+                 ConservationTracking::Parameter param,
+                 FieldOfView fov = FieldOfView(),
+                 bool size_dependent_detection_prob = false,
+                 double avg_obj_size = 30.0,
+                 double max_neighbor_distance = 20,
+                 double division_threshold = 0.3):
+        max_number_objects_(param.max_number_objects),
+        max_dist_(max_neighbor_distance),
+        with_divisions_(param.with_divisions),
+        division_threshold_(division_threshold),
+        detection_rf_fn_("none"),
+        use_size_dependent_detection_(size_dependent_detection_prob),
+        avg_obj_size_(avg_obj_size),
+        means_(std::vector<double>()),
+        sigmas_(std::vector<double>()),
+        fov_(fov),
+        event_vector_dump_filename_("none"),
+        with_optical_correction_(false),
+        solver_(param.solver_),
+        traxel_store_(&ts),
+        hypotheses_graph_(g)
+    {}
+
 
     PGMLINK_EXPORT EventVectorVectorVector operator()(TraxelStore& ts,
             double forbidden_cost = 0,
@@ -225,6 +251,9 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
+
+    PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
+                                                            bool fixLabeledNodes = false);
 
     PGMLINK_EXPORT ConservationTracking::Parameter get_conservation_tracking_parameters(double forbidden_cost = 0,
             double ep_gap = 0.01,
@@ -305,7 +334,7 @@ protected:
     boost::shared_ptr<ConservationTracking> pgm_;
 
     bool with_optical_correction_;
-
+    UncertaintyParameter uncertainty_param_;
     ConservationTracking::SolverType solver_;
 };
 

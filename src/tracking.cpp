@@ -562,12 +562,6 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         double cplex_timeout,
         boost::python::object transition_classifier)
 {
-    original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
-    HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
-
-//	PyEval_InitThreads();
-//	PyGILState_STATE gilstate = PyGILState_Ensure();
-
     ConservationTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
             ep_gap,
@@ -586,23 +580,31 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             cplex_timeout,
             transition_classifier,
             solver_);
+    uncertainty_param_ = uncertaintyParam;
+
+    return track_from_param(param);
+}
+
+EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
+                                                       bool fixLabeledNodes)
+{
+    original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
+    HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+
+//	PyEval_InitThreads();
+//	PyGILState_STATE gilstate = PyGILState_Ensure();
+
+
     ConservationTracking pgm(param);
 
     pgm.labels_export_file_name_ = tracking_labels_export_file_name_;
-
-//    // needed for diverse M best when extracting weights
-//    if(uncertaintyParam.distributionId == DiverseMbest && uncertaintyParam.numberOfIterations > 1)
-//    {
-//        if(!ilp_solutions_.size() > 0)
-//        {
-//            throw std::runtime_error("cannot inject solutions into tracker, solutions are empty! Run proper inference first.");
-//        }
-//        pgm.set_ilp_solutions(ilp_solutions_);
-//    }
-
+    if(fixLabeledNodes)
+    {
+        pgm.enableFixingLabeledAppearanceNodes();
+    }
     pgm.perturbedInference(*hypotheses_graph_);
 
-    size_t num_solutions = uncertaintyParam.numberOfIterations;
+    size_t num_solutions = uncertainty_param_.numberOfIterations;
     if (num_solutions == 1)
     {
         cout << "-> storing state of detection vars" << endl;
@@ -611,15 +613,6 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 
     //	PyGILState_Release(gilstate);
 
-//    // copy solutions
-//    ilp_solutions_.clear();
-//    const std::vector<ConservationTracking::IlpSolution>& pgm_solution = pgm.get_ilp_solutions();
-//    for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = pgm_solution.begin();
-//            sol_it != pgm_solution.end();
-//            ++sol_it)
-//    {
-//        ilp_solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
-//    }
 
     //TODO: conceptual problem here:
     //revise prune_inactive//events
