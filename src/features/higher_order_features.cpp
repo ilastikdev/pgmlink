@@ -2071,8 +2071,19 @@ void ChildDeceleration::calculate(
                       feature_matrix.bind<0>(2 * depth)
                   );
         using namespace vigra::linalg;
-        return_matrix(0, 0) = dot(temp_b1, temp_b1) / dot(temp_a1, temp_a1);
-        return_matrix(1, 0) = dot(temp_b2, temp_b2) / dot(temp_a2, temp_a2);
+        //return_matrix(0, 0) = dot(temp_b1, temp_b1) / dot(temp_a1, temp_a1);
+        //return_matrix(1, 0) = dot(temp_b2, temp_b2) / dot(temp_a2, temp_a2);
+	FeatureScalar denominator = dot(temp_a1, temp_a1);
+	if(denominator != 0.0)
+		return_matrix(0, 0) = dot(temp_b1, temp_b1) / denominator;
+	else
+		return_matrix(0, 0) = 0.0;
+
+	denominator = dot(temp_a2, temp_a2);
+	if(denominator != 0.0)
+		return_matrix(1, 0) = dot(temp_b2, temp_b2) / denominator;
+	else
+		return_matrix(1, 0) = 0.0;
     }
 }
 

@@ -17,7 +17,13 @@ template<typename T>
 void set_feature(FeatureMap& feature_map, const std::string& name, T value)
 {
     feature_map[name].clear();
-    feature_map[name].push_back(feature_type(value));
+    if(std::isnan(value))
+    {
+	LOG(logWARNING) << "Found NAN feature value for " << name << " replacing with 0!";
+        feature_map[name].push_back(feature_type(0));
+    }
+    else
+        feature_map[name].push_back(feature_type(value));
 }
 
 template<>
