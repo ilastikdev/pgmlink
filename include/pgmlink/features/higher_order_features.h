@@ -888,6 +888,45 @@ protected:
 };
 
 ////
+//// class DivAngleCosineCalculator
+////
+/**
+\brief calculates the cosine of the angle between two children of a dividing
+    cell
+
+DivAngleCosineCalculator returns the cosine of the angle between the points
+\f$ \vec{x_1}, \vec{x_2} and \vec{x_3} \f$. It is calculated with:
+\f[
+  \cos(\alpha) =
+  \frac{(\vec{x_2} - \vec{x_1}) \cdot (\vec{x_3} - \vec{x_1})}
+       {\Vert\vec{x_2} - \vec{x_1}\Vert \cdot \Vert\vec{x_3} - \vec{x_1}\Vert}
+\f]
+The 2-norm is taken as the norm.
+\code
+ x_1 ----- x_3
+   \ )
+    \
+     x_2
+\endcode
+*/
+class DivAngleCosineCalculator : public TraxelsFeatureCalculator
+{
+public:
+    DivAngleCosineCalculator() {};
+    virtual ~DivAngleCosineCalculator() {};
+    virtual const std::string& name() const;
+    virtual void calculate(
+        const FeatureMatrix& feature_matrix,
+        FeatureMatrix& return_matrix
+    ) const;
+protected:
+    ChildParentDiffCalculator diff_calculator_;
+    EuclideanNormCalculator norm_calculator_;
+    DotProductCalculator dot_product_calculator_;
+    static const std::string name_;
+};
+
+////
 //// class ChildDeceleration
 ////
 /**

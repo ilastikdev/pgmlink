@@ -408,7 +408,8 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
-    child_decel_calc_ptr_(new ChildDeceleration)
+    child_decel_calc_ptr_(new ChildDeceleration),
+    div_angle_calc_ptr_(new DivAngleCosineCalculator)
 {}
 
 TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
@@ -427,7 +428,8 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
     sq_norm_calc_ptr_(new SquaredNormCalculator<0>),
-    child_decel_calc_ptr_(new ChildDeceleration)
+    child_decel_calc_ptr_(new ChildDeceleration),
+    div_angle_calc_ptr_(new DivAngleCosineCalculator)
 {}
 
 void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::JointFeatureVector &feature_vector) const
@@ -604,6 +606,8 @@ void TrackingFeatureExtractor::compute_all_division_features()
     compute_division_sq_diff_outlier(div_1_traxels, "Count");
     compute_division_sq_diff_outlier(div_1_traxels, "Mean");
     compute_division_sq_diff_outlier(div_1_traxels, "Variance");
+    compute_division_angle_features(div_1_traxels, "RegionCenter");
+    compute_division_angle_outlier(div_1_traxels, "RegionCenter");
     compute_child_deceleration_features(div_2_traxels, "RegionCenter");
     compute_child_deceleration_features(div_2_traxels, "Count");
     compute_child_deceleration_features(div_2_traxels, "Mean");
@@ -1142,6 +1146,70 @@ void TrackingFeatureExtractor::compute_child_deceleration_outlier(
         outlier /= static_cast<double>(division_count);
     }
     push_back_feature("Outlier in child " + feature_name + " decelerations", outlier);
+}
+
+void TrackingFeatureExtractor::compute_division_angle_features(
+    ConstTraxelRefVectors& div_traxels,
+    std::string feature_name)
+{
+    MinMaxMeanVarCalculator div_angle_mmmv;
+//    child_decel_mmmv.set_max(0.0);
+
+    size_t division_id = 0;
+    for (auto div : div_traxels)
+    {
+        // extract features
+        FeatureMatrix feature_matrix;
+        TraxelsFeaturesIdentity feature_extractor(feature_name);
+        feature_extractor.extract(div, feature_matrix);
+
+        // calculate the child angles
+        FeatureMatrix div_angle_mat;
+        div_angle_calc_ptr_->calculate(feature_matrix, div_angle_mat);
+
+        div_angle_mmmv.add_values(div_angle_mat);
+        save_features_to_h5(division_id++, "div_angle_" + feature_name, div_angle_mat, false);
+    }
+    push_back_feature("div " + feature_name + " angle", div_angle_mmmv);
+}
+
+void TrackingFeatureExtractor::compute_division_angle_outlier(
+    ConstTraxelRefVectors& div_traxels,
+    std::string feature_name)
+{
+    // extract all child decelerations
+    boost::shared_ptr<TraxelsFeaturesIdentity> feature_extractor_ptr(
+        new TraxelsFeaturesIdentity(feature_name));
+    FeatureMatrix div_angle_mat;
+    div_angle_calc_ptr_->calculate_for_all(
+        div_traxels,
+        div_angle_mat,
+        feature_extractor_ptr);
+    double outlier = 0.0;
+    if (div_angle_mat.size(0) > div_angle_mat.size(1))
+    {
+        FeatureMatrix score_matrix;
+        sq_mahal_calc_ptr_->calculate(div_angle_mat, score_matrix);
+        assert(score_matrix.size(0) == div_angle_mat.size(0));
+        size_t division_count = score_matrix.size(0);
+
+        // get the outlier count and save the outlier scores
+        for (size_t col = 0; col < division_count; col++)
+        {
+            if (score_matrix(col, 0) > 3.0 * 3.0)
+            {
+                outlier += 1.0;
+            }
+            FeatureMatrix score(vigra::Shape2(1, 1), score_matrix(col, 0));
+            save_features_to_h5(
+                col,
+                "div_angle_" + feature_name + "_outlier_score",
+                score,
+                false);
+        }
+        outlier /= static_cast<double>(division_count);
+    }
+    push_back_feature("Outlier in div " + feature_name + " angle", outlier);
 }
 
 void TrackingFeatureExtractor::compute_svm_division_feature_outlier(

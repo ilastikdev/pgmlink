@@ -1926,7 +1926,7 @@ void AngleCosineCalculator::calculate(
     size_t row_count = feature_matrix.shape(1);
     if (col_count <= 2 or row_count == 0)
     {
-        LOG(logDEBUG) << "In ChildParentDiffCalculator: Invalid division depth";
+        LOG(logDEBUG) << "In AngleCosineCalculator: Not enough column vectors";
         LOG(logDEBUG) << "Returning zero";
         return_matrix.reshape(vigra::Shape2(1, 1));
         return_matrix.init(0);
@@ -1954,6 +1954,52 @@ void AngleCosineCalculator::calculate(
         }
     }
 }
+
+////
+//// class DivAngleCosineCalculator
+////
+const std::string DivAngleCosineCalculator::name_ = "DivAngleCosineCalculator";
+
+const std::string& DivAngleCosineCalculator::name() const
+{
+    return name_;
+}
+
+void DivAngleCosineCalculator::calculate(
+    const FeatureMatrix& feature_matrix,
+    FeatureMatrix& return_matrix
+) const
+{
+    size_t col_count = feature_matrix.shape(0);
+    size_t row_count = feature_matrix.shape(1);
+    if (col_count != 3 or row_count == 0)
+    {
+        LOG(logDEBUG) << "In DivAngleCosineCalculator: Invalid division depth";
+        LOG(logDEBUG) << "Returning zero";
+        return_matrix.reshape(vigra::Shape2(1, 1));
+        return_matrix.init(0);
+    }
+    else
+    {
+        return_matrix.reshape(vigra::Shape2(1, 1));
+        FeatureMatrix diff_matrix;
+        FeatureMatrix dot_matrix;
+        FeatureMatrix norm_matrix;
+        diff_calculator_.calculate(feature_matrix, diff_matrix);
+        dot_product_calculator_.calculate(diff_matrix, dot_matrix);
+        norm_calculator_.calculate(diff_matrix, norm_matrix);
+        if (norm_matrix(0, 0) != 0 and norm_matrix(1, 0) != 0)
+        {
+            return_matrix(0, 0) = dot_matrix(0, 0);
+            return_matrix(0, 0) /= (norm_matrix(0, 0) * norm_matrix(1, 0));
+        }
+        else
+        {
+            return_matrix(0, 0) = 0;
+        }
+    }
+}
+
 
 ////
 //// class ChildParentDiffCalculator
