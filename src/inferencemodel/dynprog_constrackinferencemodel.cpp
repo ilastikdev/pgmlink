@@ -145,6 +145,11 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
         bool in_first_frame = node_begin_time == first_timestep;
         bool in_last_frame = node_end_time == last_timestep;
 
+        if(in_first_frame && in_last_frame && param_.with_tracklets)
+        {
+            LOG(logINFO) << "Node " << graph->id(n) << " is full timespan tracklet with state 0 score: " << scoreDeltas[0];
+        }
+
         // for merger resolving: paths can start and end at other timeframes!
         if(!inference_graph_.getConfig().withAppearance)
         {
@@ -286,6 +291,9 @@ void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(
     }
     else
     {
+//        property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = tracklet_graph.get(node_tracklet());
+//        size_t last_timestep = tracklet_graph.latest_timestep();
+
         // in the tracklet graph, the respective label is overwritten by later traxels in the tracklet,
         // get the first original node and use its label
         property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = tracklet_graph.get(node_timestep());
@@ -304,8 +312,28 @@ void DynProgConsTrackInferenceModel::fixFirstDisappearanceNodesToLabels(
                 {
                     node->addToCellCountScore(state, abs(desired_state-state) * forbidden_cost);
                 }
-                LOG(logINFO) << "Fixing node " << g.id(orig_n) << " to " << desired_state;
+
+//                if(g.id(orig_n) == 3069)
+//                {
+//                    LOG(logWARNING) << "Problems with: " << *node << ", whose tracklet has length: " << tracklet2traxel_map[n].size();
+//                }
+//                LOG(logINFO) << "Fixing node " << g.id(orig_n) << " to " << desired_state;
                 fixed++;
+
+//                int node_begin_time = -1;
+//                int node_end_time = -1;
+
+//                node_begin_time = tracklet_map[n].front().Timestep;
+//                node_end_time = tracklet_map[n].back().Timestep;
+
+//                bool in_first_frame = node_begin_time == earliest_timestep;
+//                bool in_last_frame = node_end_time == last_timestep;
+
+//                if(in_first_frame && in_last_frame)
+//                {
+//                    LOG(logINFO) << "TG Node " << tracklet_graph.id(n) << " subgraph-node= " << g.id(tracklet2traxel_map[n].front())
+//                                 << " is full timespan tracklet";
+//                }
             }
         }
         LOG(logINFO) << "Fixed " << fixed << " nodes per constraint";
@@ -516,6 +544,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
 
                     LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;
                     active_divisions.set(parent, true);
+                    active_divisions_count.get_value(parent)[iterStep] = true;
                     increase_object_count(a->getTargetNode());
                     first_arc_on_path = false;
 
