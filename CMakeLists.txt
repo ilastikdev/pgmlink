@@ -62,6 +62,11 @@ if(WITH_DPCT)
     add_definitions(-DWITH_DPCT)
 endif(WITH_DPCT)
 
+SET(WITH_MODIFIED_OPENGM false CACHE BOOL "Use the modified version op OpenGM to support constraint file output, etc")
+if(WITH_MODIFIED_OPENGM)
+    add_definitions(-DWITH_MODIFIED_OPENGM)
+endif(WITH_MODIFIED_OPENGM)
+
 if(WIN32)
   # FindHDF5 is broken on Windows
   # it wrongly discovers the dlls instead of the lib files

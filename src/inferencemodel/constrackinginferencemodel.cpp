@@ -632,16 +632,21 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
         const std::string &constraints_filename,
         const std::string &ground_truth_filename)
 {
+    ground_truth_filename_ = ground_truth_filename;
+
+#ifdef WITH_MODIFIED_OPENGM
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
                  cplex_param_,
                  numberOfSolutions,
                  feature_filename,
                  constraints_filename,
                  ground_truth_filename));
-    ground_truth_filename_ = ground_truth_filename;
 
     cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
     cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
+#else
+    optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
+#endif
 
     if(param_.with_constraints)
     {
@@ -678,7 +683,9 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extractSolut
         const std::string &ground_truth_filename)
 {
     IlpSolution solution;
+#ifdef WITH_MODIFIED_OPENGM
     optimizer_->set_export_file_names("", "", ground_truth_filename);
+#endif
     opengm::InferenceTermination status = optimizer_->arg(solution, k);
 
     if (status != opengm::NORMAL)

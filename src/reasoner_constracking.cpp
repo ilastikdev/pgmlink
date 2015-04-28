@@ -237,6 +237,9 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     if (uncertainty_param_.distributionId == MbestCPLEX)
     {
         numberOfSolutions = uncertainty_param_.numberOfIterations;
+#ifndef WITH_MODIFIED_OPENGM
+        throw std::runtime_error("PGMlink needs to be compiled against a modified OpenGM to support MbestCPLEX!");
+#endif
     }
 
     LOG(logINFO) << "------------> Beginning Iteration 0 <-----------\n";
