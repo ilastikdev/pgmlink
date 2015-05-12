@@ -571,6 +571,9 @@ void TrackingFeatureExtractor::compute_all_track_features()
     compute_sq_accel_features(track_traxels, "Variance");
     compute_angle_features(track_traxels, "RegionCenter");
     compute_track_length_features(track_traxels);
+    compute_id_features(track_traxels, "detProb");
+    compute_id_features(track_traxels, "divProb");
+
     //compute_track_id_outlier(track_traxels, "RegionCenter");
     compute_track_id_outlier(track_traxels, "Count");
     compute_track_id_outlier(track_traxels, "Mean");
@@ -617,6 +620,8 @@ void TrackingFeatureExtractor::compute_all_division_features()
     compute_child_deceleration_outlier(div_2_traxels, "Mean");
     compute_child_deceleration_outlier(div_2_traxels, "Variance");
     compute_svm_division_feature_outlier(div_1_traxels);
+    compute_id_features(div_1_traxels, "divProb", false);
+    compute_id_features(div_1_traxels, "detProb", false);
 
     save_division_traxels_to_h5(div_1_traxels);
 }
@@ -845,6 +850,30 @@ void TrackingFeatureExtractor::compute_track_length_features(
         save_features_to_h5(track_id++, "track_length", m);
     }
     push_back_feature("track length", track_length_mmmv);
+}
+
+void TrackingFeatureExtractor::compute_id_features(
+    ConstTraxelRefVectors& track_traxels,
+    const std::string& feature_name,
+    bool is_track)
+{
+    MinMaxMeanVarCalculator track_id_feat_mmmv;
+
+    size_t track_id = 0;
+    for (auto track : track_traxels)
+    {
+        track_id_feat_mmmv.add_value(static_cast<double>(track.size()));
+        FeatureMatrix m(vigra::Shape2(1, 1));
+        m(0, 0) = track.size();
+        save_features_to_h5(track_id++, feature_name, m, is_track);
+    }
+
+    std::string name;
+    if(is_track)
+        name = "track_" + feature_name;
+    else
+        name = "division_" + feature_name;
+    push_back_feature(name, track_id_feat_mmmv);
 }
 
 void TrackingFeatureExtractor::compute_track_id_outlier(
