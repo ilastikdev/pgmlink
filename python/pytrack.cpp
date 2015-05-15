@@ -9,6 +9,7 @@
 #include "../include/pgmlink/features/feature_extraction.h"
 #include "../include/pgmlink/reasoner_constracking.h"
 #include "../include/pgmlink/tracking.h"
+#include "../include/pgmlink/structuredLearningTracking.h"
 #include "../include/pgmlink/log.h"
 #include <boost/utility.hpp>
 #include <boost/python/suite/indexing/map_indexing_suite.hpp>
@@ -89,6 +90,56 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 }
 
 
+vector<vector<vector<Event> > > pythonStructuredLearningTracking(
+    StructuredLearningTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
+    double forbidden_cost,
+    double ep_gap,
+    bool   with_tracklets,
+    double division_weight,
+    double transition_weight,
+    double disappearance_cost,
+    double appearance_cost,
+    bool   with_merger_resolution,
+    int    n_dim,
+    double transition_parameter,
+    double border_width,
+    UncertaintyParameter& uncertaintyParam,
+    bool   with_constraints,
+    double cplex_timeout,
+    object transition_classifier)
+{
+    vector<vector<vector<Event> > > result;
+//    // release the GIL
+//    Py_BEGIN_ALLOW_THREADS
+//    try
+//    {
+//        result = tr(ts,
+//                    forbidden_cost,
+//                    ep_gap,
+//                    with_tracklets,
+//                    division_weight,
+//                    transition_weight,
+//                    disappearance_cost,
+//                    appearance_cost,
+//                    with_merger_resolution,
+//                    n_dim,
+//                    transition_parameter,
+//                    border_width,
+//                    with_constraints,
+//                    uncertaintyParam,
+//                    cplex_timeout,
+//                    coordinates,
+//                    transition_classifier);
+//    }
+//    catch (std::exception& e)
+//    {
+//        Py_BLOCK_THREADS
+//        throw;
+//    }
+//    Py_END_ALLOW_THREADS
+    return result;
+}
+
 EventVectorVector python_resolve_mergers(ConsTracking& tracker,
         EventVectorVector& events,
         TimestepIdCoordinateMapPtr& coordinates,
@@ -160,6 +211,7 @@ std::vector<double> pyextractor_get_feature_vector(pgmlink::features::TrackingFe
 
 void export_track()
 {
+
     class_<vector<Event> >("EventVector")
     .def(vector_indexing_suite<vector<Event> >())
     .def_pickle(TemplatedPickleSuite<EventVector>() )
@@ -205,6 +257,7 @@ void export_track()
     ;
 
     class_<ConservationTracking::Parameter>("ConservationTrackingParameter");
+
 
     class_<ConsTracking>("ConsTracking",
                          init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType>(
@@ -302,4 +355,50 @@ void export_track()
     .add_property("energy", &Event::energy)
     .def_pickle(TemplatedPickleSuite<Event>() )
     ;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    class_<StructuredLearningTracking>("StructuredLearningTracking",
+                                       init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType>(
+                             args("hypotheses_graph",
+                                  "max_number_objects",
+                                  "size_dependent_detection_prob",
+                                  "avg_obj_size",
+                                  "max_neighbor_distance",
+                                  "with_division",
+                                  "division_threshold",
+                                  "detection_rf_filename",
+                                  "fov",
+                                  "event_vector_dump_filename",
+                                  "solver_type")))
+    .def(init<boost::shared_ptr<HypothesesGraph>,
+         TraxelStore&,
+         ConservationTracking::Parameter,
+         UncertaintyParameter,
+         FieldOfView,
+         bool,
+         double,
+         double,
+         double>())
+    // .def("__call__", &pythonStructuredLearningTracking)
+    //.def("buildGraph", &StructuredLearningTracking::build_hypo_graph)
+    // .def("track", &StructuredLearningTracking::track)
+    // .def("track", &StructuredLearningTracking::track_from_param)
+    // .def("resolve_mergers", &python_resolve_mergers)
+    // .def("detections", &StructuredLearningTracking::detections)
+    // .def("get_hypotheses_graph", &StructuredLearningTracking::get_hypo_graph)
+    // .def("get_resolved_hypotheses_graph", &StructuredLearningTracking::get_resolved_hypotheses_graph)
+    // .def("createStructuredLearningFiles", &StructuredLearningTracking::createStructuredLearningFiles)
+    // .def("setTrackLabelingExportFile", &StructuredLearningTracking::setTrackLabelingExportFile)
+    // // .def("writeAllFunkeyFeatures", &pywrite_all_funkey_features)
+    // .def("writeStructuredLearningFiles", &StructuredLearningTracking::writeStructuredLearningFiles)
+    // .def("learnTrackingWeights", &StructuredLearningTracking::learnTrackingWeights)
+    // .def("HamminglossOfFiles", &StructuredLearningTracking::hammingloss_of_files)
+    // .def("save_ilp_solutions", &StructuredLearningTracking::save_ilp_solutions)
+    // .def("get_conservation_tracking_parameters", &StructuredLearningTracking::get_conservation_tracking_parameters)
+    //.def("exportCrops", &StructuredLearningTracking::exportCrops)
+    .def("exportCrop", &StructuredLearningTracking::exportCrop)
+    ;
+
 }

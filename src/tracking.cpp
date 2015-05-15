@@ -411,7 +411,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             for(int i = 0; i < max_number_objects_ + 1; ++i)
             {
                 means.push_back(i * avg_obj_size_);
-                LOG(logINFO) << "mean[" << i << "] = " << means[i];
+                LOG(logDEBUG4) << "mean[" << i << "] = " << means[i];
             }
         }
         else
@@ -420,7 +420,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             for(int i = 0; i < max_number_objects_ + 1; ++i)
             {
                 means.push_back(means_[i]);
-                LOG(logINFO) << "mean[" << i << "] = " << means[i];
+                LOG(logDEBUG4) << "mean[" << i << "] = " << means[i];
             }
         }
 
@@ -435,7 +435,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             for(int i = 0; i < max_number_objects_ + 1; ++i)
             {
                 sigma2.push_back(s2);
-                LOG(logINFO) << "sigma2[" << i << "] = "  << sigma2[i];
+                LOG(logDEBUG4) << "sigma2[" << i << "] = "  << sigma2[i];
             }
         }
         else
@@ -443,7 +443,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             for (int i = 0; i < max_number_objects_ + 1; ++i)
             {
                 sigma2.push_back(sigmas_[i]);
-                LOG(logINFO) << "sigma2[" << i << "] = "  << sigma2[i];
+                LOG(logDEBUG4) << "sigma2[" << i << "] = "  << sigma2[i];
             }
         }
 
