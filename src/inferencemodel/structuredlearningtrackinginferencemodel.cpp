@@ -8,17 +8,17 @@ namespace pgmlink
 StructuredLearningTrackingInferenceModel::StructuredLearningTrackingInferenceModel(const Parameter& param,
         double ep_gap,
         double cplex_timeout):
-    InferenceModel(param),
-    number_of_transition_nodes_(0),
-    number_of_division_nodes_(0),
-    number_of_appearance_nodes_(0),
-    number_of_disappearance_nodes_(0),
-    ground_truth_filename_("")
+    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)//,
+    //number_of_transition_nodes_(0),
+    //number_of_division_nodes_(0),
+    //number_of_appearance_nodes_(0),
+    //number_of_disappearance_nodes_(0),
+    //ground_truth_filename_("")
 {
-    cplex_param_.verbose_ = true;
-    cplex_param_.integerConstraint_ = true;
-    cplex_param_.epGap_ = ep_gap;
-    cplex_param_.timeLimit_ = cplex_timeout;
+    //cplex_param_.verbose_ = true;
+    //cplex_param_.integerConstraint_ = true;
+    //cplex_param_.epGap_ = ep_gap;
+    //cplex_param_.timeLimit_ = cplex_timeout;
 }
 
   /*
@@ -121,7 +121,7 @@ std::map<HypothesesGraph::Node, size_t>& ConsTrackingInferenceModel::get_detecti
 }
   */
 
-void ConsTrackingInferenceModel::add_appearance_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_appearance_node(const HypothesesGraph& g)
 {
   /*
     size_t count = 0;
@@ -138,10 +138,10 @@ void ConsTrackingInferenceModel::add_appearance_node(const HypothesesGraph& g)
     }
     number_of_appearance_nodes_ = count;
 */
-  cout << "I am alive!!!" << endln;
+  std::cout << "I am alive!!!" << std::endl;
 }
 
-void ConsTrackingInferenceModel::add_disappearance_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_disappearance_node(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -158,7 +158,7 @@ void ConsTrackingInferenceModel::add_disappearance_node(const HypothesesGraph& g
     number_of_disappearance_nodes_ = count;
 }
 
-void ConsTrackingInferenceModel::add_transition_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_transition_node(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
@@ -180,7 +180,7 @@ void ConsTrackingInferenceModel::add_transition_node(const HypothesesGraph& g)
     number_of_transition_nodes_ = count;
 }
 
-void ConsTrackingInferenceModel::add_division_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_division_node(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -268,7 +268,7 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
 }
   */
 
-size_t ConsTrackingInferenceModel::add_detection_factor(const HypothesesGraph& g, size_t factorIndex)
+size_t StructuredLearningTrackingInferenceModel::add_detection_factor(const HypothesesGraph& g, size_t factorIndex)
 {
     ////
     //// add detection factors
@@ -441,7 +441,7 @@ size_t ConsTrackingInferenceModel::add_detection_factor(const HypothesesGraph& g
     return factorIndex;
 }
 
-size_t ConsTrackingInferenceModel::add_transition_factor(const HypothesesGraph& g, size_t factorIndex)
+size_t StructuredLearningTrackingInferenceModel::add_transition_factor(const HypothesesGraph& g, size_t factorIndex)
 {
     ////
     //// add transition factors
@@ -491,7 +491,7 @@ size_t ConsTrackingInferenceModel::add_transition_factor(const HypothesesGraph& 
     return factorIndex;
 }
 
-size_t ConsTrackingInferenceModel::add_division_factor(const HypothesesGraph& g, size_t factorIndex)
+size_t StructuredLearningTrackingInferenceModel::add_division_factor(const HypothesesGraph& g, size_t factorIndex)
 {
     if(!param_.with_divisions)
     {
@@ -549,7 +549,7 @@ size_t ConsTrackingInferenceModel::add_division_factor(const HypothesesGraph& g,
     return factorIndex;
 }
 
-void ConsTrackingInferenceModel::add_finite_factor(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_finite_factor(const HypothesesGraph& g)
 {
     // refactor this:
 
