@@ -21,6 +21,7 @@
 #include "pgmlink/tracking.h"
 #include "pgmlink/field_of_view.h"
 #include "pgmlink/merger_resolving.h"
+#include "pgmlink/hypotheses.h"
 #include <boost/python.hpp>
 
 namespace pgmlink
@@ -112,6 +113,9 @@ public:
         boost::python::object transition_classifier = boost::python::object());
 
     PGMLINK_EXPORT bool exportCrop(FieldOfView);//, const std::string& );
+
+    PGMLINK_EXPORT void hypothesesGraphTest( const HypothesesGraph& );
+    PGMLINK_EXPORT void addAppearanceNode( boost::shared_ptr<HypothesesGraph> );
 
 
 

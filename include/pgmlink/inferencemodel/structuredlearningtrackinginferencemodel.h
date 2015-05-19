@@ -23,7 +23,7 @@ namespace pgmlink
  * The general usage is to set up this inference model from a hypotheses graph, retrieve the OpenGM model, create
  * an optimizer, add the constraints, and run inference.
  */
-  class StructuredLearningTrackingInferenceModel : ConsTrackingInferenceModel
+  class StructuredLearningTrackingInferenceModel : public ConsTrackingInferenceModel
 {
 public: // typedefs
   //typedef double ValueType;

@@ -399,6 +399,8 @@ void export_track()
     // .def("get_conservation_tracking_parameters", &StructuredLearningTracking::get_conservation_tracking_parameters)
     //.def("exportCrops", &StructuredLearningTracking::exportCrops)
     .def("exportCrop", &StructuredLearningTracking::exportCrop)
+    .def("hypothesesGraphTest", &StructuredLearningTracking::hypothesesGraphTest)
+    .def("addAppearanceNode", &StructuredLearningTracking::addAppearanceNode)
     ;
 
 }

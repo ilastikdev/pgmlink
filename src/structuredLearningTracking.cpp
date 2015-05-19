@@ -134,6 +134,58 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
 }
 }
 
+void StructuredLearningTracking::hypothesesGraphTest(const HypothesesGraph& g)
+{
+    //boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > stateOfNodes = state_of_nodes(g);
+    HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
+
+    size_t count = 0;
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        //model_.addVariable(param_.max_number_objects + 1);
+        //app_node_map_[n] = model_.numberOfVariables() - 1;
+
+        timestep_map[n];
+
+        //assert(model_.numberOfLabels(app_node_map_[n]) == param_.max_number_objects + 1);
+
+        //std::cout << count << " : " << timestep_map[n] << std::endl;
+        ++count;
+    }
+    std::cout << "TOTAL NUMBER OF NODES: " << count << std::endl;
+
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
+    {
+        std::cout << "TIME: " << t << std::endl;
+
+        count = 0;
+        for(node_timestep_map_t::ItemIt node_at(timestep_map, t); node_at != lemon::INVALID; ++node_at)
+        {
+            ++count;
+        }
+        std::cout << "   Number of Nodes : " << count << std::endl;
+    }
+
+    count = 0;
+    for(HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+    {
+        HypothesesGraph::Node from = (&g)->source(a);
+        HypothesesGraph::Node to = (&g)->target(a);
+//        Traxel from_tr = traxel_map[from];
+//        Traxel to_tr = traxel_map[to];
+
+        ++count;
+    }
+    std::cout << "TOTAL NUMBER OF ARCS: " << count << std::endl;
+
+}
+
+void StructuredLearningTracking::addAppearanceNode(boost::shared_ptr<HypothesesGraph> g)
+{
+  std::cout << "Working!" << std::endl;
+}
+
 
 bool StructuredLearningTracking::exportCrop(FieldOfView crop)//, const std::string& name)
 {
