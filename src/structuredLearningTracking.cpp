@@ -155,16 +155,23 @@ void StructuredLearningTracking::hypothesesGraphTest(const HypothesesGraph& g)
     std::cout << "TOTAL NUMBER OF NODES: " << count << std::endl;
 
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
-    for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    typedef property_map<disappearance_label, HypothesesGraph::base_graph>::type disappearance_label_map;
+    node_traxel_map& traxel_map = g.get(node_traxel());
+    //disappearance_label_map& disappearance_labels_map = g.get(disappearance_label());
+
+    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
     {
         std::cout << "TIME: " << t << std::endl;
 
         count = 0;
         for(node_timestep_map_t::ItemIt node_at(timestep_map, t); node_at != lemon::INVALID; ++node_at)
         {
+            std::cout << "   Traxel Id: " << traxel_map[node_at].Id << "   Center: (" << traxel_map[node_at].X() << "," << traxel_map[node_at].Y() << "," << traxel_map[node_at].Z() << ")" << std::endl;
+            //std::cout << "   Dissappearance Label: " << disappearance_labels_map[node_at] << std::endl;
             ++count;
         }
-        std::cout << "   Number of Nodes : " << count << std::endl;
+        std::cout << "   Number of Nodes: " << count << std::endl;
     }
 
     count = 0;
