@@ -400,7 +400,11 @@ void export_track()
     //.def("exportCrops", &StructuredLearningTracking::exportCrops)
     .def("exportCrop", &StructuredLearningTracking::exportCrop)
     .def("hypothesesGraphTest", &StructuredLearningTracking::hypothesesGraphTest)
-    .def("addAppearanceNode", &StructuredLearningTracking::addAppearanceNode)
+    .def("addLabels", &StructuredLearningTracking::addLabels)
+    .def("addFirstLabels", &StructuredLearningTracking::addFirstLabels)
+    .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
+    .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
+    .def("addSingletonLabels", &StructuredLearningTracking::addSingletonLabels)
     ;
 
 }
