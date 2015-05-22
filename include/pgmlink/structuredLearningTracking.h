@@ -116,6 +116,10 @@ public:
 
     PGMLINK_EXPORT void hypothesesGraphTest( const HypothesesGraph& );
     PGMLINK_EXPORT void addLabels( HypothesesGraph& );
+    PGMLINK_EXPORT void addAppearanceLabel( HypothesesGraph&, int, int, double );
+    PGMLINK_EXPORT void addDisappearanceLabel( HypothesesGraph&, int, int, double );
+    PGMLINK_EXPORT void addDivisionLabel( HypothesesGraph&, int, int, double );
+    PGMLINK_EXPORT void addArcLabel( HypothesesGraph&, int, int, int, double );
     PGMLINK_EXPORT void addFirstLabels( HypothesesGraph&, int, int, double );
     PGMLINK_EXPORT void addLastLabels( HypothesesGraph&, int, int, double );
     PGMLINK_EXPORT void addSingletonLabels( HypothesesGraph&, int, int, double );
