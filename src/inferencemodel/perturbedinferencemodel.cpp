@@ -6,8 +6,9 @@ namespace pgmlink
 PerturbedInferenceModel::PerturbedInferenceModel(const ConsTrackingInferenceModel::Parameter& param,
                                                  boost::shared_ptr<Perturbation> perturbation,
                                                  double ep_gap,
-                                                 double cplex_timeout):
-    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout),
+                                                 double cplex_timeout,
+                                                 unsigned int num_threads):
+    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout, num_threads),
     perturbation_(perturbation)
 {
 }

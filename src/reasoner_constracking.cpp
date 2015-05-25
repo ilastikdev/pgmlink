@@ -67,6 +67,7 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       with_constraints_(param.with_constraints),
       uncertainty_param_(param.uncertainty_param),
       cplex_timeout_(param.cplex_timeout),
+      num_threads_(param.num_threads),
       isMAP_(true),
       division_weight_(param.division_weight),
       detection_weight_(param.detection_weight),
@@ -164,7 +165,8 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
     {
         return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
                                                               ep_gap_,
-                                                              cplex_timeout_);
+                                                              cplex_timeout_,
+                                                              num_threads_);
     }
 #ifdef WITH_DPCT
     else if(solver_ == DynProgSolver)
@@ -187,7 +189,8 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inferen
                     inference_model_param_,
                     perturb,
                     ep_gap_,
-                    cplex_timeout_);
+                    cplex_timeout_,
+                    num_threads_);
     }
 #ifdef WITH_DPCT
     else if (solver_ == DynProgSolver)

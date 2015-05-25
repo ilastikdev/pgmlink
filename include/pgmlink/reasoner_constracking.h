@@ -60,7 +60,8 @@ public:
             double border_width = 0,
             boost::python::object transition_classifier = boost::python::object(),
             bool with_optical_correction = false,
-            SolverType solver = CplexSolver):
+            SolverType solver = CplexSolver,
+            unsigned int num_threads = 0):
             max_number_objects(max_number_objects),
             detection(detection),
             division(division),
@@ -84,7 +85,8 @@ public:
             transition_weight(transition_weight),
             transition_classifier(transition_classifier),
             with_optical_correction(with_optical_correction),
-            solver_(solver)
+            solver_(solver),
+            num_threads(num_threads)
         {}
 
         // empty parameter needed for python
@@ -115,6 +117,7 @@ public:
         boost::python::object transition_classifier;
         bool with_optical_correction;
         SolverType solver_;
+        unsigned int num_threads;
     };
 
 public:
@@ -180,6 +183,7 @@ protected: // members
     Perturbation::Parameter perturbed_inference_model_param_;
 
     double cplex_timeout_;
+    unsigned int num_threads_;
     bool isMAP_;
     SolverType solver_;
 
