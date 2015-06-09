@@ -196,7 +196,7 @@ void StructuredLearningTracking::addLabels(HypothesesGraph& g)
     g.add(arc_label());
 }
 
-void StructuredLearningTracking::addAppearanceLabel(HypothesesGraph& g, int time, int label, double detectionProbability)
+void StructuredLearningTracking::addAppearanceLabel(HypothesesGraph& g, int time, int label, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -205,12 +205,12 @@ void StructuredLearningTracking::addAppearanceLabel(HypothesesGraph& g, int time
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_appearance_label(node, detectionProbability);
+            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_appearance_label(node, cellCount);
         }
 }
 
-void StructuredLearningTracking::addDisappearanceLabel(HypothesesGraph& g, int time, int label, double detectionProbability)
+void StructuredLearningTracking::addDisappearanceLabel(HypothesesGraph& g, int time, int label, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -219,12 +219,12 @@ void StructuredLearningTracking::addDisappearanceLabel(HypothesesGraph& g, int t
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_disappearance_label(node, detectionProbability);
+            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_disappearance_label(node, cellCount);
         }
 }
 
-void StructuredLearningTracking::addDivisionLabel(HypothesesGraph& g, int time, int label, double detectionProbability)
+void StructuredLearningTracking::addDivisionLabel(HypothesesGraph& g, int time, int label, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -233,12 +233,12 @@ void StructuredLearningTracking::addDivisionLabel(HypothesesGraph& g, int time, 
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_division_label(node, detectionProbability);
+            std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_division_label(node, cellCount);
         }
 }
 
-void StructuredLearningTracking::addArcLabel(HypothesesGraph& g, int time, int startLabel, int endLabel, double detectionProbability)
+void StructuredLearningTracking::addArcLabel(HypothesesGraph& g, int startTime, int startLabel, int endLabel, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -248,19 +248,19 @@ void StructuredLearningTracking::addArcLabel(HypothesesGraph& g, int time, int s
     //traxel_arc_id_map& arc_id_map = g.get(traxel_arc_id());
 
     HypothesesGraph::Node to;
-    for(node_timestep_map_t::ItemIt node(timestep_map, time-1); node != lemon::INVALID; ++node)
+    for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == startLabel){
             for(HypothesesGraph::base_graph::OutArcIt arc(g, node); arc != lemon::INVALID; ++arc){
                 to = (&g)->target(arc);
                 if (traxel_map[to].Id == endLabel){
-                    std::cout << " ARC Label          : [" << time-1 << "," << time << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << detectionProbability << std::endl;
-                    g.add_arc_label(arc, detectionProbability);
+                    std::cout << " ARC Label          : [" << startTime << "," << startTime+1 << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
+                    g.add_arc_label(arc, cellCount);
                 }
             }
         }
 }
 
-void StructuredLearningTracking::addFirstLabels(HypothesesGraph& g, int time, int label, double detectionProbability)
+void StructuredLearningTracking::addFirstLabels(HypothesesGraph& g, int time, int label, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -269,14 +269,14 @@ void StructuredLearningTracking::addFirstLabels(HypothesesGraph& g, int time, in
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_appearance_label(node, detectionProbability);
             std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             g.add_disappearance_label(node,0);
+            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_appearance_label(node, cellCount);
         }
 }
 
-void StructuredLearningTracking::addLastLabels(HypothesesGraph& g, int time, int label, double detectionProbability)
+void StructuredLearningTracking::addLastLabels(HypothesesGraph& g, int time, int label, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -285,14 +285,14 @@ void StructuredLearningTracking::addLastLabels(HypothesesGraph& g, int time, int
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
+            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_disappearance_label(node,cellCount);
             std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             g.add_appearance_label(node,0);
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_disappearance_label(node,detectionProbability);
         }
 }
 
-void StructuredLearningTracking::addSingletonLabels(HypothesesGraph& g, int time, int label, double detectionProbability)
+void StructuredLearningTracking::addIntermediateLabels(HypothesesGraph& g, int time, int label, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -301,26 +301,10 @@ void StructuredLearningTracking::addSingletonLabels(HypothesesGraph& g, int time
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_appearance_label(node,detectionProbability);
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_disappearance_label(node,detectionProbability);
-        }
-}
-
-void StructuredLearningTracking::addIntermediateLabels(HypothesesGraph& g, int time, int label, double detectionProbability)
-{
-    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
-    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
-    node_traxel_map& traxel_map = g.get(node_traxel());
-    HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
-
-    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
-        if (traxel_map[node].Id == label){
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_appearance_label(node,detectionProbability);
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << detectionProbability << std::endl;
-            g.add_disappearance_label(node,detectionProbability);
+            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_disappearance_label(node,cellCount);
+            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            g.add_appearance_label(node,cellCount);
         }
 }
 

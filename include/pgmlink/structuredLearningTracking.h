@@ -122,7 +122,6 @@ public:
     PGMLINK_EXPORT void addArcLabel( HypothesesGraph&, int, int, int, double );
     PGMLINK_EXPORT void addFirstLabels( HypothesesGraph&, int, int, double );
     PGMLINK_EXPORT void addLastLabels( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void addSingletonLabels( HypothesesGraph&, int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels( HypothesesGraph&, int, int, double );
 
 

@@ -408,7 +408,6 @@ void export_track()
     .def("addFirstLabels", &StructuredLearningTracking::addFirstLabels)
     .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
     .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
-    .def("addSingletonLabels", &StructuredLearningTracking::addSingletonLabels)
     ;
 
 }
