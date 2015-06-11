@@ -20,6 +20,7 @@
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/structuredLearningTracking.h"
+#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
 #include "pgmlink/field_of_view.h"
@@ -133,6 +134,105 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
     return result;
 }
 }
+
+void StructuredLearningTracking::initializeOpenGM(
+        HypothesesGraph& g,
+        double forbidden_cost,
+        double ep_gap,
+        bool with_tracklets,
+        double detection_weight,
+        double division_weight,
+        double transition_weight,
+        double disappearance_cost,
+        double appearance_cost,
+        bool with_merger_resolution,
+        int n_dim,
+        double transition_parameter,
+        double border_width,
+        bool with_constraints,
+        UncertaintyParameter uncertaintyParam,
+        double cplex_timeout,
+        boost::python::object transition_classifier)
+{
+    std::cout << " ===> in initializeOpenGM" << std::endl;
+
+
+    ConservationTracking::Parameter conservation_tracking_param = get_conservation_tracking_parameters(
+            forbidden_cost,
+            ep_gap,
+            with_tracklets,
+            detection_weight,
+            division_weight,
+            transition_weight,
+            disappearance_cost,
+            appearance_cost,
+            with_merger_resolution,
+            n_dim,
+            transition_parameter,
+            border_width,
+            with_constraints,
+            uncertaintyParam,
+            cplex_timeout,
+            transition_classifier,
+            solver_);
+
+    // set inference model parameters
+    StructuredLearningTrackingInferenceModel::Parameter inference_model_param;
+
+    inference_model_param.max_number_objects = conservation_tracking_param.max_number_objects;
+
+    inference_model_param.with_constraints = conservation_tracking_param.with_constraints;
+    inference_model_param.with_tracklets = conservation_tracking_param.with_tracklets;
+    inference_model_param.with_divisions = conservation_tracking_param.with_divisions;
+    inference_model_param.with_appearance = conservation_tracking_param.with_appearance;
+    inference_model_param.with_disappearance = conservation_tracking_param.with_disappearance;
+    inference_model_param.with_misdetections_allowed = conservation_tracking_param.with_misdetections_allowed;
+    inference_model_param.with_optical_correction = conservation_tracking_param.with_optical_correction;
+
+    inference_model_param.detection = conservation_tracking_param.detection;
+    inference_model_param.division = conservation_tracking_param.division;
+    inference_model_param.transition = conservation_tracking_param.transition;
+    inference_model_param.transition_parameter = conservation_tracking_param.transition_parameter;
+    inference_model_param.transition_classifier = conservation_tracking_param.transition_classifier;
+
+    inference_model_param.forbidden_cost = conservation_tracking_param.forbidden_cost;
+    inference_model_param.appearance_cost = conservation_tracking_param.appearance_cost_fn;
+    inference_model_param.disappearance_cost = conservation_tracking_param.disappearance_cost_fn;
+
+    // instanciate inference model
+    boost::shared_ptr<StructuredLearningTrackingInferenceModel> inference_model = create_inference_model(
+            inference_model_param);
+
+    // build inference model
+    std::cout << " ===> call build_from_graph" << std::endl;
+    inference_model->build_from_graph(g);
+
+}
+
+boost::shared_ptr<StructuredLearningTrackingInferenceModel> StructuredLearningTracking::create_inference_model(
+        StructuredLearningTrackingInferenceModel::Parameter inference_model_param)
+{
+    std::cout << " ===> in create_inference_model" << std::endl;
+    //if(solver_ == CplexSolver)
+    //{
+        return boost::make_shared<StructuredLearningTrackingInferenceModel>(inference_model_param,
+                                                              ep_gap_,
+                                                              cplex_timeout_);
+    //}
+
+        //#ifdef WITH_DPCT
+        //    else if(solver_ == DynProgSolver)
+        //    {
+        //        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+        //    }
+        //#else
+        //    else if(solver_ == DynProgSolver)
+        //    {
+        //        throw std::runtime_error("Support for dynamic programming solver not built!");
+        //    }
+        //#endif // WITH_DPCT
+}
+
 
 void StructuredLearningTracking::hypothesesGraphTest(const HypothesesGraph& g)
 {
@@ -307,6 +407,8 @@ void StructuredLearningTracking::addIntermediateLabels(HypothesesGraph& g, int t
             g.add_appearance_label(node,cellCount);
         }
 }
+
+
 
 
 bool StructuredLearningTracking::exportCrop(FieldOfView crop)//, const std::string& name)

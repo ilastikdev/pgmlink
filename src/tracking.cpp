@@ -562,6 +562,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         double cplex_timeout,
         boost::python::object transition_classifier)
 {
+    cout << "----> entering track" << endl;
+
     ConservationTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
             ep_gap,
@@ -580,14 +582,17 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             cplex_timeout,
             transition_classifier,
             solver_);
+    cout << "----> before uncertaintyParam" << endl;
     uncertainty_param_ = uncertaintyParam;
+    cout << "----> after uncertaintyParam" << endl;
 
     return track_from_param(param);
 }
 
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
                                                        bool fixLabeledNodes)
-{
+{   cout << "----> entering track_from_param" << endl;
+
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
 

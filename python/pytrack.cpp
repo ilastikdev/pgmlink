@@ -383,7 +383,7 @@ void export_track()
          double>())
     // .def("__call__", &pythonStructuredLearningTracking)
     //.def("buildGraph", &StructuredLearningTracking::build_hypo_graph)
-    // .def("track", &StructuredLearningTracking::track)
+    .def("track", &StructuredLearningTracking::track)
     // .def("track", &StructuredLearningTracking::track_from_param)
     // .def("resolve_mergers", &python_resolve_mergers)
     // .def("detections", &StructuredLearningTracking::detections)
@@ -408,6 +408,7 @@ void export_track()
     .def("addFirstLabels", &StructuredLearningTracking::addFirstLabels)
     .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
     .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
+    .def("initializeOpenGM", &StructuredLearningTracking::initializeOpenGM)
     ;
 
 }

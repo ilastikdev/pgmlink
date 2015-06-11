@@ -5,25 +5,26 @@
 namespace pgmlink
 {
 
-StructuredLearningTrackingInferenceModel::StructuredLearningTrackingInferenceModel(const Parameter& param,
-        double ep_gap,
-        double cplex_timeout):
-    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)//,
-    //number_of_transition_nodes_(0),
-    //number_of_division_nodes_(0),
-    //number_of_appearance_nodes_(0),
-    //number_of_disappearance_nodes_(0),
-    //ground_truth_filename_("")
-{
-    //cplex_param_.verbose_ = true;
-    //cplex_param_.integerConstraint_ = true;
-    //cplex_param_.epGap_ = ep_gap;
-    //cplex_param_.timeLimit_ = cplex_timeout;
-}
+//StructuredLearningTrackingInferenceModel::StructuredLearningTrackingInferenceModel(const Parameter& param,
+//        double ep_gap,
+//        double cplex_timeout):
+//    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)//,
+//    //number_of_transition_nodes_(0),
+//    //number_of_division_nodes_(0),
+//    //number_of_appearance_nodes_(0),
+//    //number_of_disappearance_nodes_(0),
+//    //ground_truth_filename_("")
+//{
+//    //cplex_param_.verbose_ = true;
+//    //cplex_param_.integerConstraint_ = true;
+//    //cplex_param_.epGap_ = ep_gap;
+//    //cplex_param_.timeLimit_ = cplex_timeout;
+//}
 
-  /*
-void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
+
+void StructuredLearningTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
 {
+    std::cout << "______________________________IN____________________________________build_from_graph!!!" << std::endl;
     LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: entered";
 
     LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_transition_nodes";
@@ -46,8 +47,9 @@ void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypothe
 
     add_finite_factors(hypotheses);
     add_constraints_to_pool(hypotheses);
+    std::cout << "________________________________OUT__________________________________build_from_graph!!!" << std::endl;
 }
-
+/*
 void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
         const HypothesesGraph &g,
         const HypothesesGraph& tracklet_graph,
@@ -121,9 +123,8 @@ std::map<HypothesesGraph::Node, size_t>& ConsTrackingInferenceModel::get_detecti
 }
   */
 
-void StructuredLearningTrackingInferenceModel::add_appearance_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_appearance_nodes(const HypothesesGraph& g)
 {
-  /*
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -137,11 +138,9 @@ void StructuredLearningTrackingInferenceModel::add_appearance_node(const Hypothe
         ++count;
     }
     number_of_appearance_nodes_ = count;
-*/
-  std::cout << "I am alive!!!" << std::endl;
 }
 
-void StructuredLearningTrackingInferenceModel::add_disappearance_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_disappearance_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -158,7 +157,7 @@ void StructuredLearningTrackingInferenceModel::add_disappearance_node(const Hypo
     number_of_disappearance_nodes_ = count;
 }
 
-void StructuredLearningTrackingInferenceModel::add_transition_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_transition_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
@@ -180,7 +179,7 @@ void StructuredLearningTrackingInferenceModel::add_transition_node(const Hypothe
     number_of_transition_nodes_ = count;
 }
 
-void StructuredLearningTrackingInferenceModel::add_division_node(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -204,71 +203,7 @@ void StructuredLearningTrackingInferenceModel::add_division_node(const Hypothese
     number_of_division_nodes_ = count;
 }
 
-  /*
-void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
-{
-    //very verbose print of solution
-    property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
-        g.get(arc_active_count());
-    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
-        g.get(node_active_count());
-    property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
-        g.get(division_active_count());
-
-    int c = 0;
-    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
-    {
-        c = 0;
-        for( std::vector<bool>::const_iterator i = active_arcs_count[a].begin();
-                i != active_arcs_count[a].end();
-                ++i)
-        {
-            LOG(logDEBUG4) << *i;
-            if (*i)
-            {
-                c++;
-            }
-        }
-        LOG(logDEBUG4) << "total= " << c;
-    }
-
-    for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
-            it != app_node_map_.end(); ++it)
-    {
-        c = 0;
-        for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin();
-                i != active_nodes_count[it->first].end();
-                ++i)
-        {
-            LOG(logINFO) << *i;
-            if (*i > 0)
-            {
-                c++;
-            }
-        }
-        LOG(logINFO) << "total= " << c << std::endl;
-    }
-    LOG(logDEBUG4) << "division nodes " << c << std::endl;
-    for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
-            it != app_node_map_.end(); ++it)
-    {
-        c = 0;
-        for( std::vector<bool>::const_iterator i = active_divisions_count[it->first].begin();
-                i != active_divisions_count[it->first].end();
-                ++i)
-        {
-            LOG(logDEBUG4) << *i << " ";
-            if (*i > 0)
-            {
-                c++;
-            }
-        }
-        LOG(logDEBUG4) << "total= " << c << std::endl;
-    }
-}
-  */
-
-size_t StructuredLearningTrackingInferenceModel::add_detection_factor(const HypothesesGraph& g, size_t factorIndex)
+size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
     ////
     //// add detection factors
@@ -441,7 +376,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factor(const Hypo
     return factorIndex;
 }
 
-size_t StructuredLearningTrackingInferenceModel::add_transition_factor(const HypothesesGraph& g, size_t factorIndex)
+size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
     ////
     //// add transition factors
@@ -491,7 +426,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factor(const Hyp
     return factorIndex;
 }
 
-size_t StructuredLearningTrackingInferenceModel::add_division_factor(const HypothesesGraph& g, size_t factorIndex)
+size_t StructuredLearningTrackingInferenceModel::add_division_factors(const HypothesesGraph& g, size_t factorIndex)
 {
     if(!param_.with_divisions)
     {
@@ -549,7 +484,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factor(const Hypot
     return factorIndex;
 }
 
-void StructuredLearningTrackingInferenceModel::add_finite_factor(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
 {
     // refactor this:
 
@@ -570,9 +505,9 @@ void StructuredLearningTrackingInferenceModel::add_finite_factor(const Hypothese
     factorIndex = add_division_factors(g, factorIndex);
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: finished";
 }
-  /*
+
 //set up optimizer from constraints by reading from formulated gm
-void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
+void StructuredLearningTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_constraints: entered";
 
@@ -633,7 +568,71 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
+/*
+void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
+{
+  //very verbose print of solution
+  property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
+      g.get(arc_active_count());
+  property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
+      g.get(node_active_count());
+  property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
+      g.get(division_active_count());
 
+  int c = 0;
+  for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+  {
+      c = 0;
+      for( std::vector<bool>::const_iterator i = active_arcs_count[a].begin();
+              i != active_arcs_count[a].end();
+              ++i)
+      {
+          LOG(logDEBUG4) << *i;
+          if (*i)
+          {
+              c++;
+          }
+      }
+      LOG(logDEBUG4) << "total= " << c;
+  }
+
+  for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
+          it != app_node_map_.end(); ++it)
+  {
+      c = 0;
+      for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin();
+              i != active_nodes_count[it->first].end();
+              ++i)
+      {
+          LOG(logINFO) << *i;
+          if (*i > 0)
+          {
+              c++;
+          }
+      }
+      LOG(logINFO) << "total= " << c << std::endl;
+  }
+  LOG(logDEBUG4) << "division nodes " << c << std::endl;
+  for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = app_node_map_.begin();
+          it != app_node_map_.end(); ++it)
+  {
+      c = 0;
+      for( std::vector<bool>::const_iterator i = active_divisions_count[it->first].begin();
+              i != active_divisions_count[it->first].end();
+              ++i)
+      {
+          LOG(logDEBUG4) << *i << " ";
+          if (*i > 0)
+          {
+              c++;
+          }
+      }
+      LOG(logDEBUG4) << "total= " << c << std::endl;
+  }
+}
+*/
+
+/*
 void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
         const std::string &feature_filename,
         const std::string &constraints_filename,

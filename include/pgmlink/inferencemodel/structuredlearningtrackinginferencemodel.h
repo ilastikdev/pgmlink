@@ -38,10 +38,12 @@ public: // typedefs
 
 public: // API
     // constructor
-    StructuredLearningTrackingInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout);
+    StructuredLearningTrackingInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout):
+        ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)
+    {}
 
     // build the inference model from the given graph
-    //virtual void build_from_graph(const HypothesesGraph&);
+    virtual void build_from_graph(const HypothesesGraph&);
 
     /*
     virtual void fixFirstDisappearanceNodesToLabels(
@@ -81,17 +83,17 @@ public: // API
     */
 
 protected: // methods
-    void add_appearance_node( const HypothesesGraph& );
-    void add_disappearance_node( const HypothesesGraph& );
-    void add_transition_node( const HypothesesGraph& );
-    void add_division_node(const HypothesesGraph& );
+    void add_appearance_nodes( const HypothesesGraph& );
+    void add_disappearance_nodes( const HypothesesGraph& );
+    void add_transition_nodes( const HypothesesGraph& );
+    void add_division_nodes(const HypothesesGraph& );
 
-    void add_finite_factor(const HypothesesGraph& );
-    size_t add_division_factor(const HypothesesGraph &g, size_t factorIndex);
-    size_t add_transition_factor(const HypothesesGraph &g, size_t factorIndex);
-    size_t add_detection_factor(const HypothesesGraph &g, size_t factorIndex);
+    void add_finite_factors(const HypothesesGraph& );
+    size_t add_division_factors(const HypothesesGraph &g, size_t factorIndex);
+    size_t add_transition_factors(const HypothesesGraph &g, size_t factorIndex);
+    size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
 
-    //void add_constraints_to_pool(const HypothesesGraph& );
+    void add_constraints_to_pool(const HypothesesGraph& );
 
     // retrieve node and arc maps
     //HypothesesGraphNodeMap& get_division_node_map();
