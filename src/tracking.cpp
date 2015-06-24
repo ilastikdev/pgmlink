@@ -11,8 +11,13 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+// include the LPDef symbols only once!
+#undef OPENGM_LPDEF_NO_SYMBOLS
+#include <opengm/inference/auxiliary/lpdef.hxx>
+
 #include "pgmlink/randomforest.h"
 #include "pgmlink/features/feature.h"
+#include "pgmlink/feature.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
@@ -24,6 +29,7 @@
 
 #include <stdio.h>
 
+using namespace std;
 using boost::shared_ptr;
 using boost::shared_array;
 
