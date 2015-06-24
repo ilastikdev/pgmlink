@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <pgmlink/ext_opengm/loss_hamming.hxx>
+#include <opengm/functions/learnable/lsum_of_experts.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <pgmlink/ext_opengm/loglinearmodel.hxx>
 #include <opengm/inference/inference.hxx>
@@ -51,8 +52,10 @@ public:
     typedef OutgoingNoDivConstraintFunction<Energy, size_t, size_t> OutNoDivConsFunc;
     typedef DetectionConstraintFunction<Energy, size_t, size_t> DetConsFunc;
     typedef FixNodeValueConstraintFunction<Energy, size_t, size_t> FixNodeValConsFunc;
+    typedef opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> LSumOfExpertsFunc;
 
-    typedef OPENGM_TYPELIST_7(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>) ogmFunctionsTypelist;
+//    typedef OPENGM_TYPELIST_8(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>, LSumOfExpertsFunc) ogmFunctionsTypelist;
+    typedef opengm::meta::TypeListGenerator<ExplicitFunction, LSumOfExpertsFunc, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
     typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
     typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
     typedef opengm::Minimizer ogmAccumulator;
@@ -404,7 +407,7 @@ typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
 typedef opengm::GraphicalModel
 <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType> >::type,
+<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType>, pgm::OpengmModelDeprecated::LSumOfExpertsFunc>::type,
 opengm::DiscreteSpace<IndexType, LabelType> >
 PertGmType;
 

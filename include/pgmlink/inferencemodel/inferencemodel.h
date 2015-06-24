@@ -34,6 +34,7 @@ public: // Parameter object
         bool with_disappearance;
 
         boost::function<double (const Traxel&, const size_t)> detection;
+        boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
         boost::function<double (const double)> transition;
         double transition_parameter;

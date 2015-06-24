@@ -12,7 +12,7 @@
 #include "pgmlink/features/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
-#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
+//#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbation/perturbation.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
@@ -40,6 +40,7 @@ public:
         Parameter(
             unsigned int max_number_objects,
             boost::function<double (const Traxel&, const size_t)> detection,
+            //boost::function<double (const Traxel&, const size_t)> detectionNoWeight,
             boost::function<double (const Traxel&, const size_t)> division,
             boost::function<double (const double)> transition,
             double forbidden_cost = 0,
@@ -64,6 +65,7 @@ public:
             SolverType solver = CplexSolver):
             max_number_objects(max_number_objects),
             detection(detection),
+            detectionNoWeight(0),
             division(division),
             transition(transition),
             border_width(border_width),
@@ -94,6 +96,7 @@ public:
         // settings
         unsigned int max_number_objects;
         boost::function<double (const Traxel&, const size_t)> detection;
+        boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
         boost::function<double (const double)> transition;
         double forbidden_cost;
@@ -158,6 +161,7 @@ protected: // members
 
     // energy functions
     boost::function<double (const Traxel&, const size_t)> detection_;
+    boost::function<double (const Traxel&, const size_t)> detectionNoWeight_;
     boost::function<double (const Traxel&, const size_t)> division_;
     boost::function<double (const double)> transition_;
 

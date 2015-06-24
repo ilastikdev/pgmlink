@@ -132,6 +132,19 @@ double NegLnDetection::operator ()(const Traxel& tr, size_t state) const
     }
     return w_ * -1 * log(arg);
 }
+
+////
+//// class NegLnDetectionNoWeight
+////
+double NegLnDetectionNoWeight::operator ()(const Traxel& tr, size_t state) const
+{
+    double arg = get_detection_prob(tr, state);
+    if(arg < 0.0000000001)
+    {
+        arg = 0.0000000001;
+    }
+    return -1 * log(arg);
+}
 double NegLnDetection::getw()
 {
     return w_;
@@ -202,7 +215,23 @@ double NegLnConstant::operator ()(size_t state) const
     return w_ * -1 * log(arg);
 }
 
-
+////
+//// class NegLnConstantNoWeight
+////
+double NegLnConstantNoWeight::operator ()(size_t state) const
+{
+    if (state > sizeof(prob_vector_) / sizeof(double))
+    {
+        throw runtime_error("NegLnConstantNoWeight(): state must not be larger than the size of the prob. vector");
+    }
+    double arg = prob_vector_[state];
+    LOG(logDEBUG3) << "NegLnConstantNoWeight(): arg = " << arg;
+    if(arg == 0)
+    {
+        arg = 0.0000000001;
+    }
+    return -1 * log(arg);
+}
 
 ////
 //// class SquaredDistance

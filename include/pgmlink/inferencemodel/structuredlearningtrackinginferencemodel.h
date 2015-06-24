@@ -11,6 +11,7 @@
 #include "pgmlink/pgm.h"
 #include "pgmlink/inferencemodel/constraint_pool.hxx"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/reasoner_constracking.h"
 
 #include "inferencemodel.h"
 
@@ -38,13 +39,21 @@ public: // typedefs
 
 public: // API
     // constructor
-    StructuredLearningTrackingInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout):
-        ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)
+    StructuredLearningTrackingInferenceModel(
+        const Parameter& inferenceParam,
+        double ep_gap,
+        double cplex_timeout,
+        const ConservationTracking::Parameter& conservationParam):
+        ConsTrackingInferenceModel(inferenceParam, ep_gap, cplex_timeout),
+        conservationParam_ (conservationParam),
+        weights_((size_t)5)//weights_(numWeights_)// Weights: 0 = detection, 1 = appearance, 2 = dissappearance, 3 = transition, 4 = division
     {}
 
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&);
 
+    opengm::learning::Weights<double> weights_;
+    void setWeight ( size_t, double);
     /*
     virtual void fixFirstDisappearanceNodesToLabels(
             const HypothesesGraph& g,
@@ -107,6 +116,9 @@ protected: // methods
     //void add_constraints(INF& optimizer);
 
 protected: // members
+    ConservationTracking::Parameter conservationParam_;
+
+
     //GraphicalModelType model_;
 
     //HypothesesGraphNodeMap div_node_map_;

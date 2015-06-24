@@ -727,6 +727,7 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
 void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
 {
 
+    std::cout << " I am here 0" << std::endl;
     param.detection_weight  =weights[0];
     param.division_weight   =weights[1];
     param.transition_weight =weights[2];
@@ -738,11 +739,15 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     {
         LOG(logINFO) << "Using classifier prior";
         param.detection = NegLnDetection(weights[0]);
+        std::cout << " I am here 1" << std::endl;
+        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
         param.detection = NegLnDetection(weights[0]); // weight
+        std::cout << " I am here 2" << std::endl;
+        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
@@ -760,6 +765,8 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
         prob_vector.insert(prob_vector.begin(), 1 - sum);
 
         param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
+        std::cout << " I am here 3" << std::endl;
+        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
     }
 
     param.division = NegLnDivision(weights[1]);

@@ -52,6 +52,7 @@ typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
 ConservationTracking::ConservationTracking(const Parameter &param)
     : max_number_objects_(param.max_number_objects),
       detection_(param.detection),
+      detectionNoWeight_(param.detectionNoWeight),
       division_(param.division),
       transition_(param.transition),
       forbidden_cost_(param.forbidden_cost),
@@ -87,6 +88,7 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     inference_model_param_.with_optical_correction = with_optical_correction_;
 
     inference_model_param_.detection = detection_;
+    inference_model_param_.detectionNoWeight = detectionNoWeight_;
     inference_model_param_.division = division_;
     inference_model_param_.transition = transition_;
     inference_model_param_.transition_parameter = transition_parameter_;

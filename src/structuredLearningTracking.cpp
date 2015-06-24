@@ -135,8 +135,8 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
 }
 }
 
-void StructuredLearningTracking::initializeOpenGM(
-        HypothesesGraph& g,
+EventVectorVector StructuredLearningTracking::initializeOpenGM(
+        HypothesesGraph& hypothesesGraph,
         double forbidden_cost,
         double ep_gap,
         bool with_tracklets,
@@ -155,7 +155,6 @@ void StructuredLearningTracking::initializeOpenGM(
         boost::python::object transition_classifier)
 {
     std::cout << " ===> in initializeOpenGM" << std::endl;
-
 
     ConservationTracking::Parameter conservation_tracking_param = get_conservation_tracking_parameters(
             forbidden_cost,
@@ -176,7 +175,6 @@ void StructuredLearningTracking::initializeOpenGM(
             transition_classifier,
             solver_);
 
-    // set inference model parameters
     StructuredLearningTrackingInferenceModel::Parameter inference_model_param;
 
     inference_model_param.max_number_objects = conservation_tracking_param.max_number_objects;
@@ -189,7 +187,12 @@ void StructuredLearningTracking::initializeOpenGM(
     inference_model_param.with_misdetections_allowed = conservation_tracking_param.with_misdetections_allowed;
     inference_model_param.with_optical_correction = conservation_tracking_param.with_optical_correction;
 
+    std::cout << conservation_tracking_param.detection << std::endl;
+    std::cout << conservation_tracking_param.division << std::endl;
+    std::cout << conservation_tracking_param.transition << std::endl;
+
     inference_model_param.detection = conservation_tracking_param.detection;
+    inference_model_param.detectionNoWeight = conservation_tracking_param.detectionNoWeight;
     inference_model_param.division = conservation_tracking_param.division;
     inference_model_param.transition = conservation_tracking_param.transition;
     inference_model_param.transition_parameter = conservation_tracking_param.transition_parameter;
@@ -199,25 +202,79 @@ void StructuredLearningTracking::initializeOpenGM(
     inference_model_param.appearance_cost = conservation_tracking_param.appearance_cost_fn;
     inference_model_param.disappearance_cost = conservation_tracking_param.disappearance_cost_fn;
 
-    // instanciate inference model
-    boost::shared_ptr<StructuredLearningTrackingInferenceModel> inference_model = create_inference_model(
-            inference_model_param);
+    std::cout << inference_model_param.max_number_objects << std::endl;
+    std::cout << inference_model_param.with_constraints << std::endl;
+    std::cout << inference_model_param.with_tracklets << std::endl;
+    std::cout << inference_model_param.with_divisions << std::endl;
+    std::cout << inference_model_param.with_appearance << std::endl;
+    std::cout << inference_model_param.with_disappearance << std::endl;
+    std::cout << inference_model_param.with_misdetections_allowed << std::endl;
+    std::cout << inference_model_param.with_optical_correction << std::endl;
+    std::cout << inference_model_param.detection << std::endl;
+    std::cout << inference_model_param.detectionNoWeight << std::endl;
+    std::cout << inference_model_param.division << std::endl;
+    std::cout << inference_model_param.transition << std::endl;
+    std::cout << inference_model_param.transition_parameter << std::endl;
+    std::cout << inference_model_param.forbidden_cost << std::endl;
+    std::cout << inference_model_param.appearance_cost << std::endl;
+    std::cout << inference_model_param.disappearance_cost << std::endl;
 
-    // build inference model
+    boost::shared_ptr<StructuredLearningTrackingInferenceModel> inference_model =
+        create_inference_model(
+            inference_model_param, conservation_tracking_param);
+
+//    inference_model->setWeight((size_t)0,detection_weight);
+//    inference_model->setWeight((size_t)1,appearance_cost);
+//    inference_model->setWeight((size_t)2,disappearance_cost);
+//    inference_model->setWeight((size_t)3,transition_weight);
+//    inference_model->setWeight((size_t)4,division_weight);
+
+    std::cout << "detection_weight" << detection_weight<< std::endl;
+    std::cout << "appearance_cost" << appearance_cost<< std::endl;
+    std::cout << "disappearance_cost" << disappearance_cost<< std::endl;
+    std::cout << "transition_weight" << transition_weight<< std::endl;
+    std::cout << "division_weight" << division_weight<< std::endl;
+
     std::cout << " ===> call build_from_graph" << std::endl;
-    inference_model->build_from_graph(g);
+
+    //ConservationTracking conservationTracking(conservation_tracking_param);
+    //HypothesesGraph *preparedGraph = conservationTracking.get_prepared_graph(hypothesesGraph);
+
+    inference_model->build_from_graph(hypothesesGraph);
+
+    inference_model->set_inference_params(
+        1,//numberOfSolutions,
+        "",//get_export_filename(0, features_file_),
+        "",//constraints_file_,
+        "");//get_export_filename(0, labels_export_file_name_));
+
+    std::vector<size_t> solution;
+    std::cout << " start INFERENCE " << std::endl;
+    solution = inference_model->infer();
+    std::cout << "end of INFERENCE " << std::endl;
+
+    //inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solution);
+    std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
+    inference_model->conclude(hypothesesGraph, hypothesesGraph, tracklet2traxel_node_map_, solution);
+
+    EventVectorVector event = *events(hypothesesGraph, 0);
+
+    return event;
 
 }
 
 boost::shared_ptr<StructuredLearningTrackingInferenceModel> StructuredLearningTracking::create_inference_model(
-        StructuredLearningTrackingInferenceModel::Parameter inference_model_param)
+        StructuredLearningTrackingInferenceModel::Parameter inference_model_param,
+        ConservationTracking::Parameter conservation_tracking_param)
 {
-    std::cout << " ===> in create_inference_model" << std::endl;
+    std::cout << " ===> in create_inference_model:" << solver_ << std::endl;
     //if(solver_ == CplexSolver)
     //{
-        return boost::make_shared<StructuredLearningTrackingInferenceModel>(inference_model_param,
-                                                              ep_gap_,
-                                                              cplex_timeout_);
+        return boost::make_shared<StructuredLearningTrackingInferenceModel>(
+            inference_model_param,
+            ep_gap_,
+            cplex_timeout_,
+            conservation_tracking_param);
     //}
 
         //#ifdef WITH_DPCT
@@ -305,7 +362,7 @@ void StructuredLearningTracking::addAppearanceLabel(HypothesesGraph& g, int time
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_appearance_label(node, cellCount);
         }
 }
@@ -319,7 +376,7 @@ void StructuredLearningTracking::addDisappearanceLabel(HypothesesGraph& g, int t
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_disappearance_label(node, cellCount);
         }
 }
@@ -333,7 +390,7 @@ void StructuredLearningTracking::addDivisionLabel(HypothesesGraph& g, int time, 
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_division_label(node, cellCount);
         }
 }
@@ -353,7 +410,7 @@ void StructuredLearningTracking::addArcLabel(HypothesesGraph& g, int startTime, 
             for(HypothesesGraph::base_graph::OutArcIt arc(g, node); arc != lemon::INVALID; ++arc){
                 to = (&g)->target(arc);
                 if (traxel_map[to].Id == endLabel){
-                    std::cout << " ARC Label          : [" << startTime << "," << startTime+1 << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
+                    //std::cout << " ARC Label          : [" << startTime << "," << startTime+1 << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
                     g.add_arc_label(arc, cellCount);
                 }
             }
@@ -369,9 +426,9 @@ void StructuredLearningTracking::addFirstLabels(HypothesesGraph& g, int time, in
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             g.add_disappearance_label(node,0);
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_appearance_label(node, cellCount);
         }
 }
@@ -385,9 +442,9 @@ void StructuredLearningTracking::addLastLabels(HypothesesGraph& g, int time, int
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_disappearance_label(node,cellCount);
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             g.add_appearance_label(node,0);
         }
 }
@@ -401,9 +458,9 @@ void StructuredLearningTracking::addIntermediateLabels(HypothesesGraph& g, int t
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_disappearance_label(node,cellCount);
-            std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             g.add_appearance_label(node,cellCount);
         }
 }

@@ -97,10 +97,36 @@ private:
     double w_;
 };
 
+class NegLnDetectionNoWeight
+{
+public:
+    PGMLINK_EXPORT NegLnDetectionNoWeight(double weight)
+        : w_(weight)
+    {}
+
+    PGMLINK_EXPORT double operator()( const Traxel&, const size_t state ) const;
+    PGMLINK_EXPORT double getw();
+private:
+    double w_;
+};
+
 class NegLnConstant
 {
 public:
     PGMLINK_EXPORT NegLnConstant(double weight, std::vector<double> prob_vector)
+        : w_(weight), prob_vector_(prob_vector)
+    {}
+
+    PGMLINK_EXPORT double operator()(const size_t state ) const;
+private:
+    double w_;
+    std::vector<double> prob_vector_;
+};
+
+class NegLnConstantNoWeight
+{
+public:
+    PGMLINK_EXPORT NegLnConstantNoWeight(double weight, std::vector<double> prob_vector)
         : w_(weight), prob_vector_(prob_vector)
     {}
 

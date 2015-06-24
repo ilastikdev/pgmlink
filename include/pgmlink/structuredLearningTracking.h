@@ -23,6 +23,7 @@
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/hypotheses.h"
 #include <boost/python.hpp>
+#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 
 namespace pgmlink
 {
@@ -115,7 +116,7 @@ public:
     PGMLINK_EXPORT void addFirstLabels( HypothesesGraph&, int, int, double );
     PGMLINK_EXPORT void addLastLabels( HypothesesGraph&, int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void initializeOpenGM(
+    PGMLINK_EXPORT EventVectorVector initializeOpenGM(
             HypothesesGraph&,
             double forbidden_cost = 0,
             double ep_gap = 0.01,
@@ -133,7 +134,9 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
-    PGMLINK_EXPORT boost::shared_ptr<StructuredLearningTrackingInferenceModel> create_inference_model(StructuredLearningTrackingInferenceModel::Parameter);
+    PGMLINK_EXPORT boost::shared_ptr<StructuredLearningTrackingInferenceModel> create_inference_model(
+        StructuredLearningTrackingInferenceModel::Parameter,
+        ConservationTracking::Parameter);
 
 
 
