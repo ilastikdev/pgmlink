@@ -17,7 +17,7 @@
 
 #include "pgmlink/randomforest.h"
 #include "pgmlink/features/feature.h"
-#include "pgmlink/feature.h"
+//#include "pgmlink/feature.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
@@ -329,6 +329,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         TimestepIdCoordinateMapPtr coordinates,
         boost::python::object transition_classifier)
 {
+    std::cout << "Constructor ConsTracking" << std::endl;
 
     build_hypo_graph(ts);
 
@@ -381,6 +382,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 
 boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts)
 {
+    std::cout << "ConsTracking::build_hypo_graph" << std::endl;
 
     LOG(logDEBUG3) << "entering build_hypo_graph" << endl;;
 
@@ -568,7 +570,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         double cplex_timeout,
         boost::python::object transition_classifier)
 {
-    cout << "----> entering track" << endl;
+    cout << "----> ConsTracking::track" << endl;
 
     ConservationTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
@@ -595,6 +597,14 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     return track_from_param(param);
 }
 
+void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
+{
+//    boost::shared_ptr<InferenceModel> inference_model =
+//        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model());
+//    ConservationTracking conservationTracking(&ctParam);
+//    conservationTracking.setInferenceModel(inference_model);
+}
+
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
                                                        bool fixLabeledNodes)
 {   cout << "----> entering track_from_param" << endl;
@@ -613,6 +623,9 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
     {
         pgm.enableFixingLabeledAppearanceNodes();
     }
+
+    prepareTracking(pgm, param);
+
     pgm.perturbedInference(*hypotheses_graph_);
 
     size_t num_solutions = uncertainty_param_.numberOfIterations;
@@ -746,14 +759,14 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
         LOG(logINFO) << "Using classifier prior";
         param.detection = NegLnDetection(weights[0]);
         std::cout << " I am here 1" << std::endl;
-        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        //param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
         param.detection = NegLnDetection(weights[0]); // weight
         std::cout << " I am here 2" << std::endl;
-        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        //param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
@@ -772,7 +785,7 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
 
         param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
         std::cout << " I am here 3" << std::endl;
-        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
+        //param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
     }
 
     param.division = NegLnDivision(weights[1]);

@@ -147,7 +147,11 @@ public:
     static std::string get_export_filename(size_t iteration, const std::string &orig_file_name);
 
     HypothesesGraph *get_prepared_graph(HypothesesGraph &hypotheses);
-    boost::shared_ptr<InferenceModel> create_inference_model();
+    //boost::shared_ptr<InferenceModel> create_inference_model();
+    virtual boost::shared_ptr<InferenceModel> create_inference_model();
+    //virtual boost::shared_ptr<ConsTrackingInferenceModel> create_inference_model(ConsTracking&);
+    //virtual boost::shared_ptr<StructuredLearningTrackingInferenceModel> create_inference_model(StructuredLearningTracking&);
+    void setInferenceModel(boost::shared_ptr<InferenceModel>);
 
 protected: // methods
     void reset();
@@ -199,6 +203,7 @@ protected: // members
 
     HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
+    boost::shared_ptr<InferenceModel> inference_model_;
 };
 
 

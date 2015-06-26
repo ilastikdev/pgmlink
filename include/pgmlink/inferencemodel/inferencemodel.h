@@ -90,8 +90,9 @@ protected: // methods
     bool callable(boost::python::object object);
 
 protected: // members
-    Parameter param_;
     boost::shared_ptr<TransitionPredictionsMap> transition_predictions_;
+public:
+    Parameter param_;
 };
 
 } // namespace pgmlink

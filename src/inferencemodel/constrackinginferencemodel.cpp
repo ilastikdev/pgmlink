@@ -14,6 +14,7 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     number_of_disappearance_nodes_(0),
     ground_truth_filename_("")
 {
+    std::cout << " Constructor ConsTrackingInferenceModel" << std::endl;
     cplex_param_.verbose_ = true;
     cplex_param_.integerConstraint_ = true;
     cplex_param_.epGap_ = ep_gap;
@@ -263,6 +264,8 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
 
 size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
+    std::cout<< "====================================================================ConsTrackingInferenceModel::add_detection_factors" << std::endl;
+
     ////
     //// add detection factors
     ////
@@ -436,6 +439,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
 
 size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
+    std::cout<< "====================================================================ConsTrackingInferenceModel::add_transition_factors" << std::endl;
     ////
     //// add transition factors
     ////
@@ -491,6 +495,7 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
         return factorIndex;
     }
 
+    std::cout<< "====================================================================ConsTrackingInferenceModel::add_division_factors" << std::endl;
     ////
     //// add division factors
     ////
@@ -644,7 +649,10 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
 
     cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
     cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
+    std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
 #else
+    std::cout << "==============>ELSE:" << new cplex_optimizer(get_model()) << std::endl;
+    std::cout << "==============>ELSE:" << &cplex_param_ << std::endl;
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
@@ -663,6 +671,9 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
 
 ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
 {
+    std::cout << "optimizer_->graphicalModel().numberOfVariables() = " << optimizer_->graphicalModel().numberOfVariables() << std::endl;
+    std::cout << "optimizer_->graphicalModel().numberOfFactors()   = " << optimizer_->graphicalModel().numberOfFactors() << std::endl;
+
     opengm::InferenceTermination status = optimizer_->infer();
     if (status != opengm::NORMAL)
     {

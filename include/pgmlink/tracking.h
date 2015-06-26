@@ -310,6 +310,7 @@ public:
 
     /// Return reference to the ilp solutions
     PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
+    PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
 
 protected:
     int max_number_objects_;

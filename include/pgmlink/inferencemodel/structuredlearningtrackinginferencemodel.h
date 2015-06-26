@@ -42,15 +42,18 @@ public: // API
     StructuredLearningTrackingInferenceModel(
         const Parameter& inferenceParam,
         double ep_gap,
-        double cplex_timeout,
-        const ConservationTracking::Parameter& conservationParam):
+        double cplex_timeout)://,
+        //const ConservationTracking::Parameter& conservationParam):
         ConsTrackingInferenceModel(inferenceParam, ep_gap, cplex_timeout),
-        conservationParam_ (conservationParam),
+        //conservationParam_ (conservationParam),
         weights_((size_t)5)//weights_(numWeights_)// Weights: 0 = detection, 1 = appearance, 2 = dissappearance, 3 = transition, 4 = division
-    {}
+
+    {
+        std::cout << "Constructor StructuredLearningTrackingInferenceModel" << std::endl;
+    }
 
     // build the inference model from the given graph
-    virtual void build_from_graph(const HypothesesGraph&);
+    //virtual void build_from_graph(const HypothesesGraph&);
 
     opengm::learning::Weights<double> weights_;
     void setWeight ( size_t, double);
@@ -91,18 +94,26 @@ public: // API
                                     const std::string &ground_truth_filename);
     */
 
-protected: // methods
-    void add_appearance_nodes( const HypothesesGraph& );
+//protected: // methods
+/*    void add_appearance_nodes( const HypothesesGraph& );
     void add_disappearance_nodes( const HypothesesGraph& );
     void add_transition_nodes( const HypothesesGraph& );
     void add_division_nodes(const HypothesesGraph& );
+*/
 
-    void add_finite_factors(const HypothesesGraph& );
-    size_t add_division_factors(const HypothesesGraph &g, size_t factorIndex);
-    size_t add_transition_factors(const HypothesesGraph &g, size_t factorIndex);
-    size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
 
-    void add_constraints_to_pool(const HypothesesGraph& );
+
+
+    void add_finite_factors(const HypothesesGraph&);
+    virtual size_t add_division_factors(const HypothesesGraph&, size_t);
+    virtual size_t add_transition_factors(const HypothesesGraph&, size_t);
+    virtual size_t add_detection_factors(const HypothesesGraph&, size_t);
+    void add_constraints_to_pool(const HypothesesGraph&);
+
+
+
+
+
 
     // retrieve node and arc maps
     //HypothesesGraphNodeMap& get_division_node_map();
@@ -117,6 +128,8 @@ protected: // methods
 
 protected: // members
     ConservationTracking::Parameter conservationParam_;
+public:
+    StructuredLearningTrackingInferenceModel::Parameter param_;
 
 
     //GraphicalModelType model_;

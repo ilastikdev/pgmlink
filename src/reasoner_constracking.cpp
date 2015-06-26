@@ -14,8 +14,11 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_constracking.h"
+#include "pgmlink/tracking.h"
 #include "pgmlink/traxels.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
+#include "pgmlink/structuredLearningTracking.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_perturbedinferencemodel.h"
@@ -160,7 +163,37 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
     }
 }
 
+void ConservationTracking::setInferenceModel(boost::shared_ptr<InferenceModel> inference_model)
+{
+    inference_model_ = inference_model;
+}
+
 boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
+//boost::shared_ptr<ConsTrackingInferenceModel> ConservationTracking::create_inference_model()
+{
+    if(solver_ == CplexSolver)
+    {
+        if (inference_model_)
+            return inference_model_;
+        else
+            return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
+                                                              ep_gap_,
+                                                              cplex_timeout_);
+    }
+#ifdef WITH_DPCT
+    else if(solver_ == DynProgSolver)
+    {
+        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+    }
+#else
+    else if(solver_ == DynProgSolver)
+    {
+        throw std::runtime_error("Support for dynamic programming solver not built!");
+    }
+#endif // WITH_DPCT
+}
+/*
+boost::shared_ptr<ConsTrackingInferenceModel> ConservationTracking::create_inference_model(ConsTracking& tracker)
 {
     if(solver_ == CplexSolver)
     {
@@ -181,6 +214,27 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
 #endif // WITH_DPCT
 }
 
+boost::shared_ptr<StructuredLearningTrackingInferenceModel> ConservationTracking::create_inference_model(StructuredLearningTracking& tracker)
+{
+    if(solver_ == CplexSolver)
+    {
+        return boost::make_shared<StructuredLearningTrackingInferenceModel>(inference_model_param_,
+                                                              ep_gap_,
+                                                              cplex_timeout_);
+    }
+#ifdef WITH_DPCT
+    else if(solver_ == DynProgSolver)
+    {
+        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+    }
+#else
+    else if(solver_ == DynProgSolver)
+    {
+        throw std::runtime_error("Support for dynamic programming solver not built!");
+    }
+#endif // WITH_DPCT
+}
+*/
 boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
 {
     if(solver_ == CplexSolver)
@@ -249,6 +303,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     // instanciate inference model
     boost::shared_ptr<InferenceModel> inference_model = create_inference_model();
 
+    string s = typeid(inference_model).name();
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << s << std::endl;
     // build inference model
     inference_model->build_from_graph(*graph);
 
@@ -265,7 +321,10 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             get_export_filename(0, features_file_),
             constraints_file_,
             get_export_filename(0, labels_export_file_name_));
-    }    
+    }
+
+    s = typeid(inference_model).name();
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << s << std::endl;
 
     // run inference & conclude
     solutions_.push_back(inference_model->infer());

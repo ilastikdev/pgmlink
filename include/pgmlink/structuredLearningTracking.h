@@ -58,6 +58,7 @@ public:
             event_vector_dump_filename,
             solver)
     {
+        std::cout << "Constructor StructuredLearningTracking" << std::endl;
         hypotheses_graph_ = hypotheses_graph;
     }
 
@@ -108,16 +109,15 @@ public:
     PGMLINK_EXPORT bool exportCrop(FieldOfView);//, const std::string& );
 
     PGMLINK_EXPORT void hypothesesGraphTest( const HypothesesGraph& );
-    PGMLINK_EXPORT void addLabels( HypothesesGraph& );
-    PGMLINK_EXPORT void addAppearanceLabel( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void addDisappearanceLabel( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void addDivisionLabel( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void addArcLabel( HypothesesGraph&, int, int, int, double );
-    PGMLINK_EXPORT void addFirstLabels( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void addLastLabels( HypothesesGraph&, int, int, double );
-    PGMLINK_EXPORT void addIntermediateLabels( HypothesesGraph&, int, int, double );
+    PGMLINK_EXPORT void addLabels();
+    PGMLINK_EXPORT void addAppearanceLabel(int, int, double );
+    PGMLINK_EXPORT void addDisappearanceLabel(int, int, double );
+    PGMLINK_EXPORT void addDivisionLabel(int, int, double );
+    PGMLINK_EXPORT void addArcLabel(int, int, int, double );
+    PGMLINK_EXPORT void addFirstLabels(int, int, double );
+    PGMLINK_EXPORT void addLastLabels(int, int, double );
+    PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT EventVectorVector initializeOpenGM(
-            HypothesesGraph&,
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
@@ -134,10 +134,10 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
-    PGMLINK_EXPORT boost::shared_ptr<StructuredLearningTrackingInferenceModel> create_inference_model(
-        StructuredLearningTrackingInferenceModel::Parameter,
-        ConservationTracking::Parameter);
-
+    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model();
+        //StructuredLearningTrackingInferenceModel::Parameter);//,
+        //ConservationTracking::Parameter);
+    PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
 
 
 

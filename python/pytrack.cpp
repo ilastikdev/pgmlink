@@ -281,7 +281,7 @@ void export_track()
          double,
          double>())
     .def("__call__", &pythonConsTracking)
-    .def("buildGraph", &ConsTracking::build_hypo_graph)
+    .def("build_hypo_graph", &ConsTracking::build_hypo_graph)
     .def("track", &ConsTracking::track)
     .def("track", &ConsTracking::track_from_param)
     .def("resolve_mergers", &python_resolve_mergers)
