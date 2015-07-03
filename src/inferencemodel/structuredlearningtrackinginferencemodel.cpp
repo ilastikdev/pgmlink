@@ -51,7 +51,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         }
 
 
-        double energy, e;//, f, w;
+        double energy, e, f, w;
         if (app_node_map_.count(n) > 0)
         {
             vi.push_back(app_node_map_[n]);
@@ -103,17 +103,14 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             ++num_vars;
         }
         // convert vector to array
-        std::vector<size_t> coords(num_vars, 0); // number of variables
-        // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
-        //pgm::OpengmExplicitFactor<double> table(vi.begin(), vi.end(),
-        // param_.forbidden_cost, (param_.max_number_objects + 1));
+        std::vector<size_t> coords(num_vars, 0);
         std::vector<size_t> shape(num_vars, (param_.max_number_objects + 1));
-        marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
-        //marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
-        //marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
-        //marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
-        //marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
-        //marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
+        //marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
+        marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
+        marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
+        marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
+        marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
+        marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
 
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
@@ -156,13 +153,13 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             {
                 e = param_.detection(traxel_map_[n], state);
                 //std::cout << "detection=e   >" << e << std::endl;
-                //f = param_.detectionNoWeight(traxel_map_[n], state);
+                f = param_.detectionNoWeight(traxel_map_[n], state);
                 //std::cout << "detection=e/w >" << f << std::endl;
 
-                //w = conservationParam_.detection_weight;
+                //w = param_.detection_weight;
                 //std::cout << "detection=w   >" << w << std::endl;
 
-                energy = e;//f
+                energy = f;
 
                 energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
             }
@@ -177,21 +174,20 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 // to the detection cost
 
 
-                energies(coords.begin()) = energy + state * cost[var_idx]; // state == m
                 //energies(coords.begin()) = conservationParam_.detection_weight * energy + state * cost[var_idx]; // state == m
 
 
 
                 //std::cout << "___> " << conservationParam_.detection_weight << "   " << energy << "   " << state << "    " << cost[var_idx] << "   " << var_idx <<std::endl;
-                //energiesP(coords.begin()) = energy;
+                energiesP(coords.begin()) = energy;
 
 
 
 
-                //if (var_idx == 0) // A
-                //    energiesA(coords.begin()) = state;// * cost[var_idx];
-                //else // D
-                //    energiesD(coords.begin()) = state;// * cost[var_idx];
+                if (var_idx == 0) // A
+                    energiesA(coords.begin()) = state;// * cost[var_idx];
+                else // D
+                    energiesD(coords.begin()) = state;// * cost[var_idx];
 
 
 
@@ -211,10 +207,9 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
 
 
-                energies(coords.begin()) = energy;
                 //energies(coords.begin()) = conservationParam_.detection_weight * energy;
 
-                //energiesP(coords.begin()) = energy;
+                energiesP(coords.begin()) = energy;
                 coords[0] = 0;
                 coords[1] = 0;
 
@@ -270,7 +265,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         // w_appearance = cost[0]
         // w_disappearance = cost[1]
 
-        // set up a LEARNABLE OpenGM function to learn weights=(w_detection,w_appearance,w_disappearance) for functions (energiesP,energiesA,energiesD)
 
 //        std::cout << "errorMA ................." << std::endl;
 //        for (size_t state = 0; state <= param_.max_number_objects; ++state){
@@ -283,47 +277,35 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 //        }
 
 
-        //for (size_t state = 0; state <= param_.max_number_objects; ++state){
-        //    for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-        //        coords[0] = state;
-        //        coords[1] = state2;
-        //        if (errorMA(coords.begin()) > 0.001 )
-        //            std::cout << " We have a problem!!!";
-        //    }
-        //    //std::cout << std::endl;
-        //}
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                if (errorMA(coords.begin()) > 0.001 )
+//                    std::cout << " We have a problem!!!";
+//            }
+//            //std::cout << std::endl;
+//        }
 
         LOG(logDEBUG3) << "ConsTrackingInferenceModel::add_finite_factors: adding table to pgm";
         //functor add detection table
-        factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
+        //factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
 
 
-//        std::vector<size_t> weightIDs;
-//        weightIDs.push_back((size_t)0);
-//        weightIDs.push_back((size_t)1);
-//        weightIDs.push_back((size_t)2);
-//        //for(int i=0;i<3;i++)
-//        //    std::cout << weights_[weightIDs[i]] << std::endl;
+        std::vector<size_t> weightIDs;
+        weightIDs.push_back((size_t)0);
+        weightIDs.push_back((size_t)3);
+        weightIDs.push_back((size_t)4);
+        std::vector<marray::Marray<double>> features;
+        features.push_back(energiesP);
+        features.push_back(energiesA);
+        features.push_back(energiesD);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
 
-//        std::vector<marray::Marray<double>> features;
-//        features.push_back(energiesP);
-//        features.push_back(energiesA);
-//        features.push_back(energiesD);
-//        //features.push_back(energiesT);
-//        //features.push_back(energiesDiv);
-//        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
-
-
-
-
-
-
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
-        //typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
+        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
 
         sort(vi.begin(), vi.end());
         model_.addFactor(funcId, vi.begin(), vi.end());
-//        if (not perturb)
         detection_f_node_map_[n] = model_.numberOfFactors() - 1;
     } // end for node n
 
@@ -345,7 +327,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
         size_t vi[] = { arc_map_[a] };
-        std::vector<size_t> coords(1, 0); // number of variables
+        std::vector<size_t> coords(1, 0);
 
         std::vector<size_t> shape(1, (param_.max_number_objects + 1));
         marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
@@ -376,25 +358,13 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
 
 
-//        std::vector<size_t> weightIDs;
-//        weightIDs.push_back((size_t)3);
-//        //for(int i=0;i<1;i++)
-//        //    std::cout << weights_[weightIDs[i]] << std::endl;
-//        std::vector<marray::Marray<double>> features;
-//        //features.push_back(energiesP);
-//        //features.push_back(energiesA);
-//        //features.push_back(energiesD);
-//        features.push_back(energies);
-//        //features.push_back(energiesDiv);
-//        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
+        std::vector<size_t> weightIDs;
+        weightIDs.push_back((size_t)2);
+        std::vector<marray::Marray<double>> features;
+        features.push_back(energies);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
 
-
-
-
-
-//        //typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
-
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 
@@ -424,7 +394,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
             continue;
         }
         size_t vi[] = { div_node_map_[n] };
-        std::vector<size_t> coords(1, 0); // number of variables
+        std::vector<size_t> coords(1, 0);
         std::vector<size_t> shape(1, 2);
         marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
 
@@ -446,35 +416,19 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
             LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: division[" << state
                            << "] = " << energy;
             coords[0] = state;
-            //table.set_value(coords, energy);
             energies(coords.begin()) = energy;
             coords[0] = 0;
         }
-        //table.add_to(model);
         factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
 
 
-//        std::vector<size_t> weightIDs;
-//        weightIDs.push_back((size_t)4);
-//        //for(int i=0;i<1;i++)
-//        //    std::cout << weights_[weightIDs[i]] << std::endl;
-//        std::vector<marray::Marray<double>> features;
-//        //features.push_back(energiesP);
-//        //features.push_back(energiesA);
-//        //features.push_back(energiesD);
-//        //features.push_back(energiesT);
-//        features.push_back(energies);
-//        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
+        std::vector<size_t> weightIDs;
+        weightIDs.push_back((size_t)4);
+        std::vector<marray::Marray<double>> features;
+        features.push_back(energies);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
 
-
-
-
-
-
-
-
-//        //typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 
