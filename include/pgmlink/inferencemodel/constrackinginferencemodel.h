@@ -83,9 +83,9 @@ protected: // methods
     void add_division_nodes(const HypothesesGraph& );
 
     void add_finite_factors(const HypothesesGraph& );
-    size_t add_division_factors(const HypothesesGraph &g, size_t factorIndex);
-    size_t add_transition_factors(const HypothesesGraph &g, size_t factorIndex);
-    size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
+    virtual size_t add_division_factors(const HypothesesGraph &g, size_t factorIndex);
+    virtual size_t add_transition_factors(const HypothesesGraph &g, size_t factorIndex);
+    virtual size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
 
     void add_constraints_to_pool(const HypothesesGraph& );
 

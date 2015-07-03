@@ -164,7 +164,13 @@ void StructuredLearningTracking::prepareTracking(ConservationTracking& pgm, Cons
     boost::shared_ptr<InferenceModel> inference_model =
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param));
 
-//    inference_model->param_.max_number_objects = param.max_number_objects;
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)0,param.detection_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)1,param.division_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)2,param.transition_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)3,param.appearance_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)4,param.disappearance_weight);
+    numWeights_ = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.size();
+    //    inference_model->param_.max_number_objects = param.max_number_objects;
 //    inference_model->param_.with_constraints = param.with_constraints;
 //    inference_model->param_.with_tracklets = param.with_tracklets;
 //    inference_model->param_.with_divisions = param.with_divisions;

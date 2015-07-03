@@ -12,7 +12,6 @@
 #include "pgmlink/features/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
-//#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbation/perturbation.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
@@ -115,6 +114,8 @@ public:
         double division_weight;
         double detection_weight;
         double transition_weight;
+        double appearance_weight;
+        double disappearance_weight;
         double border_width;
         boost::python::object transition_classifier;
         bool with_optical_correction;
@@ -192,8 +193,8 @@ protected: // members
     bool isMAP_;
     SolverType solver_;
 
-    double division_weight_; // these cannot be read from the division/detection variable since
-    double detection_weight_;// those were converted to boost::function objects in tracking
+    double division_weight_;
+    double detection_weight_;
     double transition_weight_;
 
     boost::python::object transition_classifier_;

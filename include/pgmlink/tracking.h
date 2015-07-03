@@ -256,23 +256,6 @@ public:
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
 
-    PGMLINK_EXPORT virtual EventVectorVectorVector tracking(double forbidden_cost = 0,
-            double ep_gap = 0.01,
-            bool with_tracklets = true,
-            double detection_weight = 10.,
-            double division_weight = 10.0,
-            double transition_weight = 10.0,
-            double disappearance_cost = 0,
-            double appearance_cost = 0,
-            bool with_merger_resolution = true,
-            int n_dim = 3,
-            double transition_parameter = 5.,
-            double border_width = 0,
-            bool with_constraints = true,
-            UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
-            double cplex_timeout = 1e+75,
-            boost::python::object TransitionClassifier = boost::python::object());
-
     PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
                                                             bool fixLabeledNodes = false);
 
@@ -361,13 +344,6 @@ protected:
     ConservationTracking::SolverType solver_;
 
     int ndim_;
-
-    // structured learning members
-//    bool with_structured_learning_;
-//    int numCrops_;
-//    int numWeights_;
-//    int numLabels_;
-//    std::vector<FieldOfView> crops_;
 };
 
 } // end namespace pgmlink

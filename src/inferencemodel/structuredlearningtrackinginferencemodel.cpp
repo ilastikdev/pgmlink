@@ -8,57 +8,15 @@
 namespace pgmlink
 {
 
-//StructuredLearningTrackingInferenceModel::StructuredLearningTrackingInferenceModel(const Parameter& param,
-//        double ep_gap,
-//        double cplex_timeout):
-//    ConsTrackingInferenceModel(param, ep_gap, cplex_timeout)//,
-//    //number_of_transition_nodes_(0),
-//    //number_of_division_nodes_(0),
-//    //number_of_appearance_nodes_(0),
-//    //number_of_disappearance_nodes_(0),
-//    //ground_truth_filename_("")
-//{
-//    //cplex_param_.verbose_ = true;
-//    //cplex_param_.integerConstraint_ = true;
-//    //cplex_param_.epGap_ = ep_gap;
-//    //cplex_param_.timeLimit_ = cplex_timeout;
-//}
-
-//void StructuredLearningTrackingInferenceModel::setWeight(size_t index, double val){
-//    weights_[index] = val;
-//    std::cout << " ===================================================" << weights_[index] << std::endl;
-//}
-/*
-void StructuredLearningTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
-{
-    std::cout << "______________________________IN____________________________________build_from_graph!!!" << std::endl;
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: entered";
-
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_transition_nodes";
-    add_transition_nodes(hypotheses);
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_appearance_nodes";
-    add_appearance_nodes(hypotheses);
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_disappearance_nodes";
-    add_disappearance_nodes(hypotheses);
-
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_division_nodes";
-    if (param_.with_divisions)
-    {
-        add_division_nodes(hypotheses);
-    }
-
-    LOG(logINFO) << "number_of_transition_nodes_ = " << number_of_transition_nodes_;
-    LOG(logINFO) << "number_of_appearance_nodes_ = " << number_of_appearance_nodes_;
-    LOG(logINFO) << "number_of_disappearance_nodes_ = " << number_of_disappearance_nodes_;
-    LOG(logINFO) << "number_of_division_nodes_ = " << number_of_division_nodes_;
-
-    add_finite_factors(hypotheses);
-    add_constraints_to_pool(hypotheses);
-    std::cout << "________________________________OUT__________________________________build_from_graph!!!" << std::endl;
+void StructuredLearningTrackingInferenceModel::setWeight(size_t index, double val){
+    weights_[index] = val;
+    std::cout << " ===================================================" << weights_[index] << std::endl;
 }
-*/
+double StructuredLearningTrackingInferenceModel::weight(size_t index){
+    std::cout << " ===================================================" << weights_[index] << std::endl;
+    return weights_[index];
+}
 
-/*
 
 size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
@@ -523,101 +481,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     return factorIndex;
 }
 
-*/
 
-/*
-void StructuredLearningTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
-{
-    std::cout << "-------------------------------StructuredLearningTrackingInferenceModel::add_finite_factors" << std::endl;
-    // refactor this:
 
-    // we could use this method to calculate the label-specific offset, also.
-    // in order to do so, we would have to write a functor that assigns
-    // either the energy or the offset to a table
-    // this table is than treated either as an explicit factor table
-    // or as an offset marray.
-    //
-    // Note that this makes it necessary to ensure that factors are added nowhere else in the code
-    //
-    // Also, this implies that there is some functor choosing either energy or offset
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: entered";
-    size_t factorIndex = 0;
-    factorIndex = add_detection_factors(g, factorIndex);
-    factorIndex = add_transition_factors(g, factorIndex);
-    factorIndex = add_division_factors(g, factorIndex);
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: finished";
-}
-*/
-/*
-//set up optimizer from constraints by reading from formulated gm
-void StructuredLearningTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
-{
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_constraints: entered";
-
-    constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
-                                           param_.with_divisions,
-                                           param_.with_appearance,
-                                           param_.with_disappearance,
-                                           param_.with_misdetections_allowed);
-
-    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
-    node_traxel_map& traxel_map = g.get(node_traxel());
-
-    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
-    HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
-
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
-    {
-        std::cout << "add_constraints_to_pool - Time: " << timestep_map[n] << " Node: " << traxel_map[n].Id << std::endl;
-        ////
-        //// outgoing transitions
-        ////
-        {
-            std::vector<size_t> transition_nodes;
-            for (HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a)
-            {
-                transition_nodes.push_back(arc_map_[a]);
-            }
-
-            int division_node = -1;
-            if(div_node_map_.count(n) > 0)
-            {
-                division_node = div_node_map_[n];
-            }
-            size_t appearance_node = app_node_map_[n];
-
-            constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node,
-                                            division_node,
-                                            transition_nodes));
-        }
-
-        ////
-        //// incoming transitions
-        ////
-        {
-            std::vector<size_t> transition_nodes;
-            for (HypothesesGraph::InArcIt a(g, n); a != lemon::INVALID; ++a)
-            {
-                transition_nodes.push_back(arc_map_[a]);
-            }
-            size_t disappearance_node = dis_node_map_[n];
-
-            constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes,
-                                            disappearance_node));
-        }
-
-        ////
-        //// disappearance/appearance coupling
-        ////
-        if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
-        {
-            constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n],
-                                            (size_t)app_node_map_[n]));
-        }
-    }
-
-    constraint_pool_.force_softconstraint(!param_.with_constraints);
-}
-*/
 } // namespace pgmlink

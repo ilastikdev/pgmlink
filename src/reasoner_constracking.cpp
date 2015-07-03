@@ -78,7 +78,8 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       transition_classifier_(param.transition_classifier),
       with_optical_correction_(param.with_optical_correction),
       solver_(param.solver_),
-      use_app_node_labels_to_fix_values_(false)
+      use_app_node_labels_to_fix_values_(false),
+      with_structured_learning_(false)
 {
     inference_model_param_.max_number_objects = max_number_objects_;
 
@@ -173,17 +174,11 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(C
     if(solver_ == CplexSolver)
     {
         if (inference_model_){
-            std::cout << "????????????????????????????????with SLT TRACKING - with_tracklets = " << inference_model_param_.with_tracklets << std::endl;
             with_structured_learning_ = true;
             return inference_model_;
         }
-        else{
-            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!with CONS TRACKING" << std::endl;
-            with_structured_learning_ = false;
-            return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
-                                                              ep_gap_,
-                                                              cplex_timeout_);
-        }
+        else
+            return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,ep_gap_,cplex_timeout_);
     }
 #ifdef WITH_DPCT
     else if(solver_ == DynProgSolver)
@@ -291,9 +286,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     inference_model->param_.division_weight = division_weight_;
     inference_model->param_.transition_weight = transition_weight_;
 
-
-    string str = typeid(inference_model).name();
-    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++1 =" << inference_model->param_.with_tracklets << "  " << str << std::endl;
     // build inference model
     inference_model->build_from_graph(*graph);
 
@@ -306,8 +298,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 
     if(solver_ == CplexSolver)
     {
-        std::cout << "in if CplexSolver" << std::endl;
-
         if(with_structured_learning_){
             boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
                 numberOfSolutions,
@@ -323,22 +313,8 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         }
     }
 
-    str = typeid(inference_model).name();
-    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << str << std::endl;
-
     // run inference & conclude
     solutions_.push_back(inference_model->infer());
-
-//    {
-//        std::cout << "___________________________________________________________________________________" << std::endl;
-//        std::vector<size_t> coords(1, 0); // number of variables
-//        for(int i=0;i<5;++i)
-//        {
-//            coords[0] = i;
-//            std::cout << "--->" << boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->weights_(coords.begin()) << std::endl;
-//        }
-//        std::cout << "___________________________________________________________________________________" << std::endl;
-//    }
 
     LOG(logINFO) << "conclude MAP";
     inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());

@@ -284,7 +284,7 @@ void export_track()
     .def("__call__", &pythonConsTracking)
     .def("build_hypo_graph", &ConsTracking::build_hypo_graph)
     .def("track", &ConsTracking::track)
-    .def("tracking", &ConsTracking::tracking)
+//    .def("tracking", &ConsTracking::tracking)
     .def("track", &ConsTracking::track_from_param)
     .def("resolve_mergers", &python_resolve_mergers)
     .def("detections", &ConsTracking::detections)
@@ -292,7 +292,6 @@ void export_track()
     .def("get_resolved_hypotheses_graph", &ConsTracking::get_resolved_hypotheses_graph)
     .def("createStructuredLearningFiles", &ConsTracking::createStructuredLearningFiles)
     .def("setTrackLabelingExportFile", &ConsTracking::setTrackLabelingExportFile)
-    // .def("writeAllFunkeyFeatures", &pywrite_all_funkey_features)
     .def("writeStructuredLearningFiles", &ConsTracking::writeStructuredLearningFiles)
     .def("learnTrackingWeights", &ConsTracking::learnTrackingWeights)
     .def("HamminglossOfFiles", &ConsTracking::hammingloss_of_files)
@@ -375,31 +374,7 @@ void export_track()
                                   "event_vector_dump_filename",
                                   "solver_type",
                                   "spatial dimension")))
-//    .def(init<boost::shared_ptr<HypothesesGraph>,
-//         TraxelStore&,
-//         ConservationTracking::Parameter,
-//         UncertaintyParameter,
-//         FieldOfView,
-//         bool,
-//         double,
-//         double,
-//         double>())
-    // .def("__call__", &pythonStructuredLearningTracking)
-    //.def("buildGraph", &StructuredLearningTracking::build_hypo_graph)
     .def("track", &StructuredLearningTracking::track)
-    // .def("track", &StructuredLearningTracking::track_from_param)
-    // .def("resolve_mergers", &python_resolve_mergers)
-    // .def("detections", &StructuredLearningTracking::detections)
-    // .def("get_hypotheses_graph", &StructuredLearningTracking::get_hypo_graph)
-    // .def("get_resolved_hypotheses_graph", &StructuredLearningTracking::get_resolved_hypotheses_graph)
-    // .def("createStructuredLearningFiles", &StructuredLearningTracking::createStructuredLearningFiles)
-    // .def("setTrackLabelingExportFile", &StructuredLearningTracking::setTrackLabelingExportFile)
-    // // .def("writeAllFunkeyFeatures", &pywrite_all_funkey_features)
-    // .def("writeStructuredLearningFiles", &StructuredLearningTracking::writeStructuredLearningFiles)
-    // .def("learnTrackingWeights", &StructuredLearningTracking::learnTrackingWeights)
-    // .def("HamminglossOfFiles", &StructuredLearningTracking::hammingloss_of_files)
-    // .def("save_ilp_solutions", &StructuredLearningTracking::save_ilp_solutions)
-    // .def("get_conservation_tracking_parameters", &StructuredLearningTracking::get_conservation_tracking_parameters)
     .def("exportCrop", &StructuredLearningTracking::exportCrop)
     .def("hypothesesGraphTest", &StructuredLearningTracking::hypothesesGraphTest)
     .def("addLabels", &StructuredLearningTracking::addLabels)
@@ -411,7 +386,6 @@ void export_track()
     .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
     .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
     .def("makeStructuredLearningTrackingDataset", &StructuredLearningTracking::makeStructuredLearningTrackingDataset)
-    //.def("initializeOpenGM", &StructuredLearningTracking::initializeOpenGM)
     ;
 
 }

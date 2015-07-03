@@ -598,49 +598,6 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     return track_from_param(param);
 }
 
-EventVectorVectorVector ConsTracking::tracking(double forbidden_cost,
-        double ep_gap,
-        bool with_tracklets,
-        double detection_weight,
-        double division_weight,
-        double transition_weight,
-        double disappearance_cost,
-        double appearance_cost,
-        bool with_merger_resolution,
-        int n_dim,
-        double transition_parameter,
-        double border_width,
-        bool with_constraints,
-        UncertaintyParameter uncertaintyParam,
-        double cplex_timeout,
-        boost::python::object transition_classifier)
-{
-    cout << "----> ConsTracking::track" << endl;
-    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
-            forbidden_cost,
-            ep_gap,
-            with_tracklets,
-            detection_weight,
-            division_weight,
-            transition_weight,
-            disappearance_cost,
-            appearance_cost,
-            with_merger_resolution,
-            n_dim,
-            transition_parameter,
-            border_width,
-            with_constraints,
-            uncertaintyParam,
-            cplex_timeout,
-            transition_classifier,
-            solver_);
-    cout << "----> before uncertaintyParam" << endl;
-    uncertainty_param_ = uncertaintyParam;
-    cout << "----> after uncertaintyParam" << endl;
-
-    return track_from_param(param);
-}
-
 void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
 {
     std::cout << " ---------------------------------->I should NOT be here if I am doing SLT tracking" << std::endl;
@@ -791,6 +748,8 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     param.detection_weight  =weights[0];
     param.division_weight   =weights[1];
     param.transition_weight =weights[2];
+    param.appearance_weight = weights[3];
+    param.disappearance_weight = weights[4];
 
     size_t tmin = hypotheses_graph_->earliest_timestep();
     size_t tmax = hypotheses_graph_->latest_timestep();
