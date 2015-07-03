@@ -12,7 +12,8 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     number_of_division_nodes_(0),
     number_of_appearance_nodes_(0),
     number_of_disappearance_nodes_(0),
-    ground_truth_filename_("")
+    ground_truth_filename_(""),
+    weights_(5)
 {
     std::cout << " Constructor ConsTrackingInferenceModel" << std::endl;
     cplex_param_.verbose_ = true;
@@ -23,6 +24,8 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
 
 void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
 {
+    std::cout << "in build_from_graph param_.with_tracklets" << param_.with_tracklets << std::endl;
+
     LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: entered";
 
     LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_transition_nodes";
@@ -264,7 +267,7 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
 
 size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout<< "====================================================================ConsTrackingInferenceModel::add_detection_factors" << std::endl;
+    std::cout<< "========ConsTrackingInferenceModel::add_detection_factors" << std::endl;
 
     ////
     //// add detection factors
@@ -294,7 +297,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         }
 
 
-        double energy, e;
+        double energy, e, f, w;
         if (app_node_map_.count(n) > 0)
         {
             vi.push_back(app_node_map_[n]);
@@ -353,6 +356,12 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         std::vector<size_t> shape(num_vars, (param_.max_number_objects + 1));
         marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
 
+//        marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
+
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
             if (param_.with_tracklets)
@@ -392,8 +401,22 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
             else
             {
                 e = param_.detection(traxel_map_[n], state);
-                energy = e;
-                energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
+
+//                if(param_.with_structured_learning)
+//                {
+//                    std::cout << "detection=e   >" << e << std::endl;
+//                    f = param_.detectionNoWeight(traxel_map_[n], state);
+//                    std::cout << "detection=e/w >" << f << std::endl;
+
+//                    w = param_.detection_weight;
+//                    std::cout << "detection=w   >" << w << std::endl;
+
+//                    energy = f;
+//                }else
+//                {
+                    energy = e;
+                    energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
+//                }
             }
             LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: detection[" << state
                            << "] = " << energy;
@@ -403,7 +426,21 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
                 // if only one of the variables is > 0, then it is an appearance in this time frame
                 // or a disappearance in the next timeframe. Hence, add the cost of appearance/disappearance
                 // to the detection cost
-                energies(coords.begin()) = energy + state * cost[var_idx];
+//                if(param_.with_structured_learning)
+//                {
+//                    //energies(coords.begin()) = param_.detection * energy + state * cost[var_idx]; // state == m
+//                    energies(coords.begin()) = param_.detection_weight * energy + state * cost[var_idx]; // state == m
+//                    std::cout << "___> " << param_.detection << "   " << energy << "   " << state << "    " << cost[var_idx] << "   " << var_idx <<std::endl;
+//                    energiesP(coords.begin()) = energy;
+//                    if (var_idx == 0) // A
+//                        energiesA(coords.begin()) = state;// * cost[var_idx];
+//                    else // D
+//                        energiesD(coords.begin()) = state;// * cost[var_idx];
+//                }else
+//                {
+                    energies(coords.begin()) = energy + state * cost[var_idx];
+//                }
+
                 coords[var_idx] = 0;
                 LOG(logDEBUG4) << "ConsTrackingInferenceModel::add_finite_factors: var_idx "
                                << var_idx << " = " << energy;
@@ -414,7 +451,16 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
                 coords[0] = state;
                 coords[1] = state;
                 // only pay detection energy if both variables are on
-                energies(coords.begin()) = energy;
+//                if(param_.with_structured_learning)
+//                {
+//                    energies(coords.begin()) = param_.detection_weight * energy;
+//                    //energies(coords.begin()) = param_.detection * energy;
+//                    energiesP(coords.begin()) = energy;
+//                }else
+//                {
+                    energies(coords.begin()) = energy;
+//                }
+
                 coords[0] = 0;
                 coords[1] = 0;
 
@@ -423,9 +469,117 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
             }
         }
 
+
+
+/*
+        if(param_.with_structured_learning)
+        {
+
+//            std::cout << "energies ==========================================================" << std::endl;
+//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                    coords[0] = state;
+//                    coords[1] = state2;
+//                    std::cout << energies(coords.begin()) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+//            std::cout << "energiesP ................." << std::endl;
+//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                    coords[0] = state;
+//                    coords[1] = state2;
+//                    std::cout << energiesP(coords.begin()) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+//            std::cout << "energiesA ................." << std::endl;
+//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                    coords[0] = state;
+//                    coords[1] = state2;
+//                    std::cout << energiesA(coords.begin()) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+//            std::cout << "energiesD ................." << std::endl;
+//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                    coords[0] = state;
+//                    coords[1] = state2;
+//                    std::cout << energiesD(coords.begin()) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+
+            marray::Marray<double> errorMA(shape.begin(), shape.end(), param_.forbidden_cost);
+            errorMA = energies - param_.detection_weight * energiesP - cost[0]*energiesA - cost[1]*energiesD;
+            //errorMA = energies - param_.detection * energiesP - cost[0]*energiesA - cost[1]*energiesD;
+
+//            std::cout << "errorMA ................." << std::endl;
+//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                    coords[0] = state;
+//                    coords[1] = state2;
+//                    std::cout << errorMA(coords.begin()) << " ";
+//                }
+//                std::cout << std::endl;
+//            }
+            for (size_t state = 0; state <= param_.max_number_objects; ++state){
+                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                    coords[0] = state;
+                    coords[1] = state2;
+                    if (errorMA(coords.begin()) > 0.001 )
+                        std::cout << " We have a problem!!!";
+                }
+                //std::cout << std::endl;
+            }
+        }
+
+*/
+
+
+
+
+
+
+
+
+
         LOG(logDEBUG3) << "ConsTrackingInferenceModel::add_finite_factors: adding table to pgm";
         //functor add detection table
         factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
+
+/*
+        //         energy weights:
+         //param_.detection_weight;
+         param_.appearance_weight = cost[0];
+         param_.disappearance_weight = cost[1];
+
+        //         set up a LEARNABLE OpenGM function to learn weights=(w_detection,w_appearance,w_disappearance) for functions (energiesP,energiesA,energiesD)
+
+        std::vector<size_t> weightIDs;//enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
+
+        weightIDs.push_back((size_t)2);
+        weightIDs.push_back((size_t)0);
+        weightIDs.push_back((size_t)1);
+        //for(int i=0;i<3;i++)
+        //    std::cout << weights_[weightIDs[i]] << std::endl;
+
+        std::vector<marray::Marray<double>> features;
+        features.push_back(energiesP);
+        features.push_back(energiesA);
+        features.push_back(energiesD);
+        //features.push_back(energiesT);
+        //features.push_back(energiesDiv);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funcEnergies (shape,weights_,weightIDs,features);
+
+        typename GraphicalModelType::FunctionIdentifier funcId;
+
+        if(param_.with_structured_learning)
+            funcId = model_.addFunction(funcEnergies);
+        else
+            */
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
 
         sort(vi.begin(), vi.end());
@@ -436,6 +590,14 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
 
     return factorIndex;
 }
+
+//void ConsTrackingInferenceModel::setWeight(size_t index, double val)
+//{
+//    std::vector<size_t> coords(1, 0);
+//    coords[0]=index;
+//    weights_(coords.begin()) = val;
+//    std::cout << " ========>" << weights_(coords.begin()) << std::endl;
+//}
 
 size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
@@ -481,7 +643,21 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
             coords[0] = 0;
         }
         factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
+
+//        std::vector<size_t> weightIDs;
+//        // {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
+//        weightIDs.push_back((size_t)3);
+//        std::vector<marray::Marray<double>> features;
+//        features.push_back(energies);
+//        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
+
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+
+//        if(param_.with_structured_learning)
+//            funcId = model_.addFunction(funEnergies);
+//        else
+//            funcId = model_.addFunction(energies);
+
         model_.addFactor(funcId, vi, vi + 1);
     }
 
@@ -540,7 +716,20 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
         //table.add_to(model);
         factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
 
+//        std::vector<size_t> weightIDs;
+//        // {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
+//        weightIDs.push_back((size_t)4);
+//        std::vector<marray::Marray<double>> features;
+//        features.push_back(energies);
+//        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (shape,weights_,weightIDs,features);
+
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+
+//        if(param_.with_structured_learning)
+//            funcId = model_.addFunction(funEnergies);
+//        else
+//            funcId = model_.addFunction(energies);
+
         model_.addFactor(funcId, vi, vi + 1);
     }
 
@@ -562,6 +751,7 @@ void ConsTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
     // Also, this implies that there is some functor choosing either energy or offset
 
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: entered";
+    std::cout << "ConsTrackingInferenceModel::add_finite_factors: entered " << param_.with_tracklets << std::endl;
     size_t factorIndex = 0;
     factorIndex = add_detection_factors(g, factorIndex);
     factorIndex = add_transition_factors(g, factorIndex);
@@ -637,9 +827,11 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
         const std::string &constraints_filename,
         const std::string &ground_truth_filename)
 {
+    std::cout << "===========================in set_inference_params======================================================" << std::endl;
     ground_truth_filename_ = ground_truth_filename;
 
 #ifdef WITH_MODIFIED_OPENGM
+    std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
                  cplex_param_,
                  numberOfSolutions,
@@ -651,8 +843,9 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
     cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
     std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
 #else
-    std::cout << "==============>ELSE:" << new cplex_optimizer(get_model()) << std::endl;
+    std::cout << "==============>ELSE:" << std::endl;
     std::cout << "==============>ELSE:" << &cplex_param_ << std::endl;
+    std::cout << "==============>ELSE:" << &get_model() << std::endl;
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
@@ -673,6 +866,23 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
 {
     std::cout << "optimizer_->graphicalModel().numberOfVariables() = " << optimizer_->graphicalModel().numberOfVariables() << std::endl;
     std::cout << "optimizer_->graphicalModel().numberOfFactors()   = " << optimizer_->graphicalModel().numberOfFactors() << std::endl;
+
+    std::cout << " PARAMETERS: InferenceModel: " << param_.appearance_cost << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.detection << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.detectionNoWeight << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.disappearance_cost << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.division << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.forbidden_cost << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.max_number_objects<< std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.transition << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.transition_parameter << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_appearance << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_constraints << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_disappearance << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_divisions << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_misdetections_allowed << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_optical_correction << std::endl;
+    std::cout << " PARAMETERS: InferenceModel: " << param_.with_tracklets << std::endl;
 
     opengm::InferenceTermination status = optimizer_->infer();
     if (status != opengm::NORMAL)

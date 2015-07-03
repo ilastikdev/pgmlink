@@ -43,7 +43,8 @@ public:
         const std::string& random_forest_filename = "none",
         FieldOfView fov = FieldOfView(),
         const std::string& event_vector_dump_filename = "none",
-        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver
+        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+        int ndim = 2
         ):
 
         ConsTracking(
@@ -56,12 +57,17 @@ public:
             random_forest_filename,
             fov,
             event_vector_dump_filename,
-            solver)
+            solver,
+            ndim),
+          numWeights_(5),
+          numLabels_(max_number_objects)
     {
         std::cout << "Constructor StructuredLearningTracking" << std::endl;
         hypotheses_graph_ = hypotheses_graph;
+        //with_structured_learning_(false),
     }
 
+    /*
     PGMLINK_EXPORT
     StructuredLearningTracking(
         boost::shared_ptr<HypothesesGraph> g,
@@ -85,7 +91,7 @@ public:
             max_neighbor_distance,
             division_threshold)
     {}
-
+*/
 
     PGMLINK_EXPORT EventVectorVectorVector operator()(
         TraxelStore& ts,
@@ -106,7 +112,7 @@ public:
         TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
         boost::python::object transition_classifier = boost::python::object());
 
-    PGMLINK_EXPORT bool exportCrop(FieldOfView);//, const std::string& );
+    PGMLINK_EXPORT bool exportCrop(FieldOfView);
 
     PGMLINK_EXPORT void hypothesesGraphTest( const HypothesesGraph& );
     PGMLINK_EXPORT void addLabels();
@@ -117,6 +123,7 @@ public:
     PGMLINK_EXPORT void addFirstLabels(int, int, double );
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
+    /*
     PGMLINK_EXPORT EventVectorVector initializeOpenGM(
             double forbidden_cost = 0,
             double ep_gap = 0.01,
@@ -134,10 +141,12 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
-    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model();
+            */
+    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
         //StructuredLearningTrackingInferenceModel::Parameter);//,
         //ConservationTracking::Parameter);
     PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
+    PGMLINK_EXPORT void makeStructuredLearningTrackingDataset();
 
 
 
@@ -236,14 +245,19 @@ public:
     /// Return reference to the ilp solutions
     PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
 */
+public:
+    int numCrops_;
+    std::vector<FieldOfView> crops_;
+    bool with_structured_learning_;
+    int numWeights_;
+    int numLabels_;
+
 protected:
     StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;
     double ep_gap_;
     double cplex_timeout_;
 
 
-    int numCrops_;
-    std::vector<FieldOfView> crops_;
 //    int max_number_objects_;
 //    double max_dist_;
 //    bool with_divisions_;

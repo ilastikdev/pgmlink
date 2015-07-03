@@ -24,10 +24,10 @@ namespace pgmlink
 //    //cplex_param_.timeLimit_ = cplex_timeout;
 //}
 
-void StructuredLearningTrackingInferenceModel::setWeight(size_t index, double val){
-    weights_[index] = val;
-    std::cout << " ===================================================" << weights_[index] << std::endl;
-}
+//void StructuredLearningTrackingInferenceModel::setWeight(size_t index, double val){
+//    weights_[index] = val;
+//    std::cout << " ===================================================" << weights_[index] << std::endl;
+//}
 /*
 void StructuredLearningTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
 {
@@ -57,9 +57,12 @@ void StructuredLearningTrackingInferenceModel::build_from_graph(const Hypotheses
     std::cout << "________________________________OUT__________________________________build_from_graph!!!" << std::endl;
 }
 */
+
+/*
+
 size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
+    std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << param_.with_tracklets << std::endl;
     ////
     //// add detection factors
     ////
@@ -67,76 +70,56 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
     std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
-    std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
+    //std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
 
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: add detection factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
-        std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node" << std::endl;
         size_t num_vars = 0;
         std::vector<size_t> vi;
         std::vector<double> cost;
 
         int node_begin_time = -1;
         int node_end_time = -1;
-        std::cout << ".......0" << std::endl;
         if (param_.with_tracklets)
         {
-            std::cout << ".......00" << std::endl;
             node_begin_time = tracklet_map_[n].front().Timestep;
-            std::cout << ".......001" << std::endl;
             node_end_time = tracklet_map_[n].back().Timestep;
-            std::cout << ".......002" << std::endl;
         }
         else
         {
-            std::cout << ".......000" << std::endl;
             node_begin_time = traxel_map_[n].Timestep;
             node_end_time = traxel_map_[n].Timestep;
         }
 
 
-        std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node 1" << std::endl;
-        double energy, e, f, w;
+        double energy, e;//, f, w;
         if (app_node_map_.count(n) > 0)
         {
-            std::cout << ".......1" << std::endl;
             vi.push_back(app_node_map_[n]);
-            std::cout << ".......2" << std::endl;
             // "<" holds if there are only tracklets in the first frame
             if (node_begin_time <= g.earliest_timestep())
             {
-                std::cout << ".......3" << std::endl;
                 // pay no appearance costs in the first timestep
                 cost.push_back(0.);
-                std::cout << ".......4" << std::endl;
             }
             else
             {
                 if (param_.with_tracklets)
                 {
-                    std::cout << ".......5" << std::endl;
                     energy = param_.appearance_cost(tracklet_map_[n].front());
-                    std::cout << ".......6" << std::endl;
                 }
                 else
                 {
-                    std::cout << ".......7" << std::endl;
                     energy = param_.appearance_cost(traxel_map_[n]);
-                    std::cout << ".......8" << std::endl;
                 }
 
-                std::cout << ".......8.0" << std::endl;
                 energy += generateRandomOffset(Appearance);
-                std::cout << ".......8.1" << std::endl;
                 cost.push_back(energy);
-                std::cout << ".......8.2" << std::endl;
             }
-            std::cout << ".......9" << std::endl;
             ++num_vars;
         }
 
-        std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node 2" << std::endl;
         if (dis_node_map_.count(n) > 0)
         {
             vi.push_back(dis_node_map_[n]);
@@ -161,7 +144,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             }
             ++num_vars;
         }
-        std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node 3" << std::endl;
         // convert vector to array
         std::vector<size_t> coords(num_vars, 0); // number of variables
         // ITER first_ogm_idx, ITER last_ogm_idx, VALUE init, size_t states_per_var
@@ -175,10 +157,9 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         //marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
         //marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
 
-        std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node 4" << std::endl;
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
-            std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node state" << std::endl;
+            //std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors node state" << std::endl;
             if (param_.with_tracklets)
             {
                 energy = 0;
@@ -203,7 +184,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     {
                         e = param_.transition( get_transition_probability(tr_prev, tr, state) );
                         energy += e;
-                        //energy += generateRandomOffset(Transition, e, tr_prev, tr);
+                        energy += generateRandomOffset(Transition, e, tr_prev, tr);
                     }
                     else
                     {
@@ -216,18 +197,18 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             else
             {
                 e = param_.detection(traxel_map_[n], state);
-                std::cout << "detection=e   >" << e << std::endl;
-                f = param_.detectionNoWeight(traxel_map_[n], state);
-                std::cout << "detection=e/w >" << f << std::endl;
+                //std::cout << "detection=e   >" << e << std::endl;
+                //f = param_.detectionNoWeight(traxel_map_[n], state);
+                //std::cout << "detection=e/w >" << f << std::endl;
 
-                w = conservationParam_.detection_weight;
-                std::cout << "detection=w   >" << w << std::endl;
+                //w = conservationParam_.detection_weight;
+                //std::cout << "detection=w   >" << w << std::endl;
 
                 energy = e;//f
 
-                //energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
+                energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
             }
-            std::cout << "===>" << energy << std::endl;
+            //std::cout << "===>" << energy << std::endl;
             LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: detection[" << state
                            << "] = " << energy;
             for (size_t var_idx = 0; var_idx < num_vars; ++var_idx)
@@ -238,7 +219,11 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 // to the detection cost
 
 
-                energies(coords.begin()) = conservationParam_.detection_weight * energy + state * cost[var_idx]; // state == m
+                energies(coords.begin()) = energy + state * cost[var_idx]; // state == m
+                //energies(coords.begin()) = conservationParam_.detection_weight * energy + state * cost[var_idx]; // state == m
+
+
+
                 //std::cout << "___> " << conservationParam_.detection_weight << "   " << energy << "   " << state << "    " << cost[var_idx] << "   " << var_idx <<std::endl;
                 //energiesP(coords.begin()) = energy;
 
@@ -265,7 +250,11 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 coords[0] = state;
                 coords[1] = state;
                 // only pay detection energy if both variables are on
-                energies(coords.begin()) = conservationParam_.detection_weight * energy;
+
+
+
+                energies(coords.begin()) = energy;
+                //energies(coords.begin()) = conservationParam_.detection_weight * energy;
 
                 //energiesP(coords.begin()) = energy;
                 coords[0] = 0;
@@ -276,7 +265,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             }
         } // end for state
 
-        std::cout << "energies ==========================================================" << std::endl;
+        //std::cout << "energies ==========================================================" << std::endl;
 //        for (size_t state = 0; state <= param_.max_number_objects; ++state){
 //            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
 //                coords[0] = state;
@@ -534,6 +523,9 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     return factorIndex;
 }
 
+*/
+
+/*
 void StructuredLearningTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
 {
     std::cout << "-------------------------------StructuredLearningTrackingInferenceModel::add_finite_factors" << std::endl;
@@ -556,7 +548,8 @@ void StructuredLearningTrackingInferenceModel::add_finite_factors(const Hypothes
     factorIndex = add_division_factors(g, factorIndex);
     LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: finished";
 }
-
+*/
+/*
 //set up optimizer from constraints by reading from formulated gm
 void StructuredLearningTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
@@ -626,5 +619,5 @@ void StructuredLearningTrackingInferenceModel::add_constraints_to_pool(const Hyp
 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
-
+*/
 } // namespace pgmlink

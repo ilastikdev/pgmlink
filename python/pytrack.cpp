@@ -260,7 +260,7 @@ void export_track()
 
 
     class_<ConsTracking>("ConsTracking",
-                         init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType>(
+                         init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType,int>(
                              args("max_number_objects",
                                   "size_dependent_detection_prob",
                                   "avg_obj_size",
@@ -270,7 +270,8 @@ void export_track()
                                   "detection_rf_filename",
                                   "fov",
                                   "event_vector_dump_filename",
-                                  "solver_type")))
+                                  "solver_type",
+                                  "spatial dimension")))
     .def(init<boost::shared_ptr<HypothesesGraph>,
          TraxelStore&,
          ConservationTracking::Parameter,
@@ -283,6 +284,7 @@ void export_track()
     .def("__call__", &pythonConsTracking)
     .def("build_hypo_graph", &ConsTracking::build_hypo_graph)
     .def("track", &ConsTracking::track)
+    .def("tracking", &ConsTracking::tracking)
     .def("track", &ConsTracking::track_from_param)
     .def("resolve_mergers", &python_resolve_mergers)
     .def("detections", &ConsTracking::detections)
@@ -360,7 +362,7 @@ void export_track()
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     class_<StructuredLearningTracking>("StructuredLearningTracking",
-                                       init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType>(
+                                       init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType,int>(
                              args("hypotheses_graph",
                                   "max_number_objects",
                                   "size_dependent_detection_prob",
@@ -371,16 +373,17 @@ void export_track()
                                   "detection_rf_filename",
                                   "fov",
                                   "event_vector_dump_filename",
-                                  "solver_type")))
-    .def(init<boost::shared_ptr<HypothesesGraph>,
-         TraxelStore&,
-         ConservationTracking::Parameter,
-         UncertaintyParameter,
-         FieldOfView,
-         bool,
-         double,
-         double,
-         double>())
+                                  "solver_type",
+                                  "spatial dimension")))
+//    .def(init<boost::shared_ptr<HypothesesGraph>,
+//         TraxelStore&,
+//         ConservationTracking::Parameter,
+//         UncertaintyParameter,
+//         FieldOfView,
+//         bool,
+//         double,
+//         double,
+//         double>())
     // .def("__call__", &pythonStructuredLearningTracking)
     //.def("buildGraph", &StructuredLearningTracking::build_hypo_graph)
     .def("track", &StructuredLearningTracking::track)
@@ -397,7 +400,6 @@ void export_track()
     // .def("HamminglossOfFiles", &StructuredLearningTracking::hammingloss_of_files)
     // .def("save_ilp_solutions", &StructuredLearningTracking::save_ilp_solutions)
     // .def("get_conservation_tracking_parameters", &StructuredLearningTracking::get_conservation_tracking_parameters)
-    //.def("exportCrops", &StructuredLearningTracking::exportCrops)
     .def("exportCrop", &StructuredLearningTracking::exportCrop)
     .def("hypothesesGraphTest", &StructuredLearningTracking::hypothesesGraphTest)
     .def("addLabels", &StructuredLearningTracking::addLabels)
@@ -408,7 +410,8 @@ void export_track()
     .def("addFirstLabels", &StructuredLearningTracking::addFirstLabels)
     .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
     .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
-    .def("initializeOpenGM", &StructuredLearningTracking::initializeOpenGM)
+    .def("makeStructuredLearningTrackingDataset", &StructuredLearningTracking::makeStructuredLearningTrackingDataset)
+    //.def("initializeOpenGM", &StructuredLearningTracking::initializeOpenGM)
     ;
 
 }

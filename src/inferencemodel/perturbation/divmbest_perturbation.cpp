@@ -21,7 +21,7 @@ void DivMBestPerturbation::push_away_from_solution(const PertGmType &model, std:
     for (size_t factorId = 0; factorId < num_factors; ++factorId)
     {
         PertGmType::FactorType factor = model[factorId];
-        vector<size_t> varIndices;
+        std::vector<size_t> varIndices;
         for (PertGmType::FactorType::VariablesIteratorType ind = factor.variableIndicesBegin();
                 ind != factor.variableIndicesEnd();
                 ++ind)

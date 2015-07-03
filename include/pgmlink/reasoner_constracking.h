@@ -148,10 +148,9 @@ public:
 
     HypothesesGraph *get_prepared_graph(HypothesesGraph &hypotheses);
     //boost::shared_ptr<InferenceModel> create_inference_model();
-    virtual boost::shared_ptr<InferenceModel> create_inference_model();
-    //virtual boost::shared_ptr<ConsTrackingInferenceModel> create_inference_model(ConsTracking&);
-    //virtual boost::shared_ptr<StructuredLearningTrackingInferenceModel> create_inference_model(StructuredLearningTracking&);
-    void setInferenceModel(boost::shared_ptr<InferenceModel>);
+    virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
+    boost::shared_ptr<InferenceModel> create_inference_model();
+    void setInferenceModel(boost::shared_ptr<InferenceModel> inference_model);
 
 protected: // methods
     void reset();
@@ -173,7 +172,8 @@ protected: // members
     std::vector<IlpSolution> solutions_;
 
     double ep_gap_;
-    bool with_tracklets_, with_divisions_;
+    bool with_tracklets_;
+    bool with_divisions_;
     boost::function<double (const Traxel&)> disappearance_cost_;
     boost::function<double (const Traxel&)> appearance_cost_;
 
@@ -203,7 +203,9 @@ protected: // members
 
     HypothesesGraph tracklet_graph_;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_node_map_;
+
     boost::shared_ptr<InferenceModel> inference_model_;
+    bool with_structured_learning_;
 };
 
 

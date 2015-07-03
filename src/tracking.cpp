@@ -24,6 +24,7 @@
 #include "pgmlink/reasoner_pgm.h"
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/merger_resolving.h"
+#include "pgmlink/structured_learning_tracking_dataset.h"
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
 
@@ -597,12 +598,52 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     return track_from_param(param);
 }
 
+EventVectorVectorVector ConsTracking::tracking(double forbidden_cost,
+        double ep_gap,
+        bool with_tracklets,
+        double detection_weight,
+        double division_weight,
+        double transition_weight,
+        double disappearance_cost,
+        double appearance_cost,
+        bool with_merger_resolution,
+        int n_dim,
+        double transition_parameter,
+        double border_width,
+        bool with_constraints,
+        UncertaintyParameter uncertaintyParam,
+        double cplex_timeout,
+        boost::python::object transition_classifier)
+{
+    cout << "----> ConsTracking::track" << endl;
+    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+            forbidden_cost,
+            ep_gap,
+            with_tracklets,
+            detection_weight,
+            division_weight,
+            transition_weight,
+            disappearance_cost,
+            appearance_cost,
+            with_merger_resolution,
+            n_dim,
+            transition_parameter,
+            border_width,
+            with_constraints,
+            uncertaintyParam,
+            cplex_timeout,
+            transition_classifier,
+            solver_);
+    cout << "----> before uncertaintyParam" << endl;
+    uncertainty_param_ = uncertaintyParam;
+    cout << "----> after uncertaintyParam" << endl;
+
+    return track_from_param(param);
+}
+
 void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
 {
-//    boost::shared_ptr<InferenceModel> inference_model =
-//        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model());
-//    ConservationTracking conservationTracking(&ctParam);
-//    conservationTracking.setInferenceModel(inference_model);
+    std::cout << " ---------------------------------->I should NOT be here if I am doing SLT tracking" << std::endl;
 }
 
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
@@ -614,7 +655,6 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
 
 //	PyEval_InitThreads();
 //	PyGILState_STATE gilstate = PyGILState_Ensure();
-
 
     ConservationTracking pgm(param);
 
@@ -661,7 +701,8 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
 
 }
 
-ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(double forbidden_cost,
+ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(
+        double forbidden_cost,
         double ep_gap,
         bool with_tracklets,
         double detection_weight,
@@ -759,14 +800,14 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
         LOG(logINFO) << "Using classifier prior";
         param.detection = NegLnDetection(weights[0]);
         std::cout << " I am here 1" << std::endl;
-        //param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
         param.detection = NegLnDetection(weights[0]); // weight
         std::cout << " I am here 2" << std::endl;
-        //param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
@@ -785,7 +826,7 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
 
         param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
         std::cout << " I am here 3" << std::endl;
-        //param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
+        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
     }
 
     param.division = NegLnDivision(weights[1]);
@@ -1072,5 +1113,6 @@ double ConsTracking::hammingloss_of_files(std::string f1, std::string f2)
     }
     return loss;
 }
+
 
 } // namespace tracking

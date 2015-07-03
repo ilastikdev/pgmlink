@@ -70,6 +70,12 @@ public: // API
     void write_labeledgraph_to_file(const HypothesesGraph & g,
                                     const std::string &ground_truth_filename);
 
+    // structured learning tracking inference model
+    opengm::learning::Weights<double> weights_;
+    // weights in the same order as in:
+    // enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
+    void setWeight ( size_t, double);
+
 protected: // methods
     void add_appearance_nodes( const HypothesesGraph& );
     void add_disappearance_nodes( const HypothesesGraph& );
@@ -77,9 +83,9 @@ protected: // methods
     void add_division_nodes(const HypothesesGraph& );
 
     void add_finite_factors(const HypothesesGraph& );
-    virtual size_t add_division_factors(const HypothesesGraph &g, size_t factorIndex);
-    virtual size_t add_transition_factors(const HypothesesGraph &g, size_t factorIndex);
-    virtual size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
+    size_t add_division_factors(const HypothesesGraph &g, size_t factorIndex);
+    size_t add_transition_factors(const HypothesesGraph &g, size_t factorIndex);
+    size_t add_detection_factors(const HypothesesGraph &g, size_t factorIndex);
 
     void add_constraints_to_pool(const HypothesesGraph& );
 
@@ -119,6 +125,7 @@ protected: // members
     std::string ground_truth_filename_;
     std::map<std::pair<size_t, size_t>, size_t > cplex_variable_id_map_;
     std::map<std::pair<size_t, std::pair<size_t, size_t> >, size_t> cplex_factor_id_map_;
+
 };
 
 template<class INF>

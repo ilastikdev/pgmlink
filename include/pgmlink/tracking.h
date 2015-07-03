@@ -21,6 +21,7 @@
 #include "pgmlink/field_of_view.h"
 #include "pgmlink/merger_resolving.h"
 #include <boost/python.hpp>
+#include "pgmlink/structured_learning_tracking_dataset.h"
 
 namespace pgmlink
 {
@@ -161,7 +162,8 @@ public:
                  const std::string& random_forest_filename = "none",
                  FieldOfView fov = FieldOfView(),
                  const std::string& event_vector_dump_filename = "none",
-                 ConservationTracking::SolverType solver = ConservationTracking::CplexSolver
+                 ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+                 int ndim = 2
                 )
         : max_number_objects_(max_number_objects),
           max_dist_(max_neighbor_distance),
@@ -176,7 +178,8 @@ public:
           event_vector_dump_filename_(event_vector_dump_filename),
           with_optical_correction_(false),
           solver_(solver),
-          traxel_store_(nullptr)
+          traxel_store_(nullptr),
+          ndim_(ndim)
     {}
 
     PGMLINK_EXPORT
@@ -206,7 +209,6 @@ public:
         hypotheses_graph_(g),
         uncertainty_param_(uncertainty_param)
     {}
-
 
     PGMLINK_EXPORT EventVectorVectorVector operator()(TraxelStore& ts,
             double forbidden_cost = 0,
@@ -254,10 +256,28 @@ public:
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
 
+    PGMLINK_EXPORT virtual EventVectorVectorVector tracking(double forbidden_cost = 0,
+            double ep_gap = 0.01,
+            bool with_tracklets = true,
+            double detection_weight = 10.,
+            double division_weight = 10.0,
+            double transition_weight = 10.0,
+            double disappearance_cost = 0,
+            double appearance_cost = 0,
+            bool with_merger_resolution = true,
+            int n_dim = 3,
+            double transition_parameter = 5.,
+            double border_width = 0,
+            bool with_constraints = true,
+            UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+            double cplex_timeout = 1e+75,
+            boost::python::object TransitionClassifier = boost::python::object());
+
     PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
                                                             bool fixLabeledNodes = false);
 
-    PGMLINK_EXPORT ConservationTracking::Parameter get_conservation_tracking_parameters(double forbidden_cost = 0,
+    PGMLINK_EXPORT ConservationTracking::Parameter get_conservation_tracking_parameters(
+            double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
             double detection_weight = 10.,
@@ -301,7 +321,7 @@ public:
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
                                       ConservationTracking::Parameter param);
-    PGMLINK_EXPORT vector<double> learnTrackingWeights(std::string feature_file_name,
+    PGMLINK_EXPORT std::vector<double> learnTrackingWeights(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
                                       std::string lossweights = "",
@@ -339,6 +359,15 @@ protected:
     bool with_optical_correction_;
     UncertaintyParameter uncertainty_param_;
     ConservationTracking::SolverType solver_;
+
+    int ndim_;
+
+    // structured learning members
+//    bool with_structured_learning_;
+//    int numCrops_;
+//    int numWeights_;
+//    int numLabels_;
+//    std::vector<FieldOfView> crops_;
 };
 
 } // end namespace pgmlink

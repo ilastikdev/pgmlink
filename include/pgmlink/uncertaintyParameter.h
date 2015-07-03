@@ -12,7 +12,7 @@
 #include "pgmlink/pgmlink_export.h"
 #include "pgmlink/log.h"
 
-using namespace std;
+//using namespace std;
 
 namespace pgmlink
 {

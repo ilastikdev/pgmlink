@@ -11,6 +11,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <opengm/learning/loss/hammingloss.hxx>
+
 #include "pgmlink/randomforest.h"
 #include "pgmlink/features/feature.h"
 #include "pgmlink/pgm.h"
@@ -136,50 +138,102 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
 }
 void StructuredLearningTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
 {
+    std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << std::endl;
+    //StructuredLearningTrackingInferenceModel::Parameter inference_model_param;
+
+    inference_model_param_.max_number_objects = param.max_number_objects;
+    inference_model_param_.with_constraints = param.with_constraints;
+    inference_model_param_.with_tracklets = param.with_tracklets;
+    inference_model_param_.with_divisions = param.with_divisions;
+    inference_model_param_.with_appearance = param.with_appearance;
+    inference_model_param_.with_disappearance = param.with_disappearance;
+    inference_model_param_.with_misdetections_allowed = param.with_misdetections_allowed;
+    inference_model_param_.with_optical_correction = param.with_optical_correction;
+    inference_model_param_.detection = param.detection;
+    inference_model_param_.detectionNoWeight = param.detectionNoWeight;
+    inference_model_param_.division = param.division;
+    inference_model_param_.transition = param.transition;
+    inference_model_param_.transition_parameter = param.transition_parameter;
+    inference_model_param_.transition_classifier = param.transition_classifier;
+    inference_model_param_.forbidden_cost = param.forbidden_cost;
+    inference_model_param_.appearance_cost = param.appearance_cost_fn;
+    inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
+
+    //inference_model_param_ = inference_model_param;
 
     boost::shared_ptr<InferenceModel> inference_model =
-        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model());
+        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param));
 
-    inference_model->param_.max_number_objects = param.max_number_objects;
-    inference_model->param_.with_constraints = param.with_constraints;
-    inference_model->param_.with_tracklets = param.with_tracklets;
-    inference_model->param_.with_divisions = param.with_divisions;
-    inference_model->param_.with_appearance = param.with_appearance;
-    inference_model->param_.with_disappearance = param.with_disappearance;
-    inference_model->param_.with_misdetections_allowed = param.with_misdetections_allowed;
-    inference_model->param_.with_optical_correction = param.with_optical_correction;
-    inference_model->param_.detection = param.detection;
-    inference_model->param_.detectionNoWeight = param.detectionNoWeight;
-    inference_model->param_.division = param.division;
-    inference_model->param_.transition = param.transition;
-    inference_model->param_.transition_parameter = param.transition_parameter;
-    inference_model->param_.transition_classifier = param.transition_classifier;
-    inference_model->param_.forbidden_cost = param.forbidden_cost;
-    inference_model->param_.appearance_cost = param.appearance_cost_fn;
-    inference_model->param_.disappearance_cost = param.disappearance_cost_fn;
+//    inference_model->param_.max_number_objects = param.max_number_objects;
+//    inference_model->param_.with_constraints = param.with_constraints;
+//    inference_model->param_.with_tracklets = param.with_tracklets;
+//    inference_model->param_.with_divisions = param.with_divisions;
+//    inference_model->param_.with_appearance = param.with_appearance;
+//    inference_model->param_.with_disappearance = param.with_disappearance;
+//    inference_model->param_.with_misdetections_allowed = param.with_misdetections_allowed;
+//    inference_model->param_.with_optical_correction = param.with_optical_correction;
+//    inference_model->param_.detection = param.detection;
+//    inference_model->param_.detectionNoWeight = param.detectionNoWeight;
+//    inference_model->param_.division = param.division;
+//    inference_model->param_.transition = param.transition;
+//    inference_model->param_.transition_parameter = param.transition_parameter;
+//    inference_model->param_.transition_classifier = param.transition_classifier;
+//    inference_model->param_.forbidden_cost = param.forbidden_cost;
+//    inference_model->param_.appearance_cost = param.appearance_cost_fn;
+//    inference_model->param_.disappearance_cost = param.disappearance_cost_fn;
 
-    inference_model_param_ = (inference_model->param_);
+//    inference_model_param_ = (inference_model->param_);
+/*
+    inference_model_param_.max_number_objects = param.max_number_objects;
+    inference_model_param_.with_constraints = param.with_constraints;
+    inference_model_param_.with_tracklets = param.with_tracklets;
+    inference_model_param_.with_divisions = param.with_divisions;
+    inference_model_param_.with_appearance = param.with_appearance;
+    inference_model_param_.with_disappearance = param.with_disappearance;
+    inference_model_param_.with_misdetections_allowed = param.with_misdetections_allowed;
+    inference_model_param_.with_optical_correction = param.with_optical_correction;
+    inference_model_param_.detection = param.detection;
+    inference_model_param_.detectionNoWeight = param.detectionNoWeight;
+    inference_model_param_.division = param.division;
+    inference_model_param_.transition = param.transition;
+    inference_model_param_.transition_parameter = param.transition_parameter;
+    inference_model_param_.transition_classifier = param.transition_classifier;
+    inference_model_param_.forbidden_cost = param.forbidden_cost;
+    inference_model_param_.appearance_cost = param.appearance_cost_fn;
+    inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
+*/
 
-    std::cout << inference_model_param_.max_number_objects << std::endl;
-    std::cout << inference_model_param_.with_constraints << std::endl;
-    std::cout << inference_model_param_.with_tracklets << std::endl;
-    std::cout << inference_model_param_.with_divisions << std::endl;
-    std::cout << inference_model_param_.with_appearance << std::endl;
-    std::cout << inference_model_param_.with_disappearance << std::endl;
-    std::cout << inference_model_param_.with_misdetections_allowed << std::endl;
-    std::cout << inference_model_param_.with_optical_correction << std::endl;
-    std::cout << inference_model_param_.detection << std::endl;
-    std::cout << inference_model_param_.detectionNoWeight << std::endl;
-    std::cout << inference_model_param_.division << std::endl;
-    std::cout << inference_model_param_.transition << std::endl;
-    std::cout << inference_model_param_.transition_parameter << std::endl;
-    std::cout << inference_model_param_.forbidden_cost << std::endl;
-    std::cout << inference_model_param_.appearance_cost << std::endl;
-    std::cout << inference_model_param_.disappearance_cost << std::endl;
 
+    std::cout << inference_model->param_.max_number_objects << std::endl;
+    std::cout << inference_model->param_.with_constraints << std::endl;
+    std::cout << inference_model->param_.with_tracklets << " " << inference_model_param_.with_tracklets << std::endl;
+    std::cout << inference_model->param_.with_divisions << std::endl;
+    std::cout << inference_model->param_.with_appearance << std::endl;
+    std::cout << inference_model->param_.with_disappearance << std::endl;
+    std::cout << inference_model->param_.with_misdetections_allowed << std::endl;
+    std::cout << inference_model->param_.with_optical_correction << std::endl;
+    std::cout << inference_model->param_.detection << std::endl;
+    std::cout << inference_model->param_.detectionNoWeight << std::endl;
+    std::cout << inference_model->param_.division << std::endl;
+    std::cout << inference_model->param_.transition << std::endl;
+    std::cout << inference_model->param_.transition_parameter << std::endl;
+    std::cout << inference_model->param_.forbidden_cost << std::endl;
+    std::cout << inference_model->param_.appearance_cost << std::endl;
+    std::cout << inference_model->param_.disappearance_cost << std::endl;
+
+    std::cout << " BEFORE --------------------- setInferenceModel" << std::endl;
     pgm.setInferenceModel(inference_model);
+    std::cout << " AFTER  --------------------- setInferenceModel" << std::endl;
+//    std::cout << " BEFORE --------------------- set_inference_params" << std::endl;
+//    boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
+//        1,//numberOfSolutions,
+//        "",//get_export_filename(0, features_file_),
+//        "",//constraints_file_,
+//        "");//get_export_filename(0, labels_export_file_name_));
+//    std::cout << " AFTER  --------------------- set_inference_params" << std::endl;
 }
 
+/*
 EventVectorVector StructuredLearningTracking::initializeOpenGM(
         double forbidden_cost,
         double ep_gap,
@@ -318,12 +372,42 @@ EventVectorVector StructuredLearningTracking::initializeOpenGM(
     return event;
 
 }
+*/
 
-boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model()
+
+boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(ConservationTracking::Parameter& param)
         //StructuredLearningTrackingInferenceModel::Parameter inference_model_param)//,
         //ConservationTracking::Parameter conservation_tracking_param)
 {
-    std::cout << " ===> in create_inference_model:" << solver_ << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << ep_gap_ << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << cplex_timeout_ << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << &inference_model_param_ << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.appearance_cost << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.appearance_weight << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.detection << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.detectionNoWeight << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.detection_weight << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.disappearance_cost << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.disappearance_weight << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.division << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.division_weight << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.forbidden_cost << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.max_number_objects << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.transition << std::endl;
+    //std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.transition_classifier << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.transition_parameter << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.transition_weight << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_appearance << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_constraints << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_disappearance << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_divisions << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_misdetections_allowed << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_optical_correction << std::endl;
+    std::cout << " ===> in StructuredLearningTracking::create_inference_model:" << inference_model_param_.with_tracklets << std::endl;
+
+    ep_gap_ = param.ep_gap;
+    cplex_timeout_ = param.cplex_timeout;
+
     //if(solver_ == CplexSolver)
     //{
         return boost::make_shared<StructuredLearningTrackingInferenceModel>(
@@ -522,16 +606,130 @@ void StructuredLearningTracking::addIntermediateLabels(int time, int label, doub
         }
 }
 
-
-
-
 bool StructuredLearningTracking::exportCrop(FieldOfView crop)//, const std::string& name)
 {
     crops_.push_back(crop);
-    cout << "C++   ====> Crop starts: " << crops_.back().lower_bound()[0] << " " << crops_.back().lower_bound()[1] << " " << crops_.back().lower_bound()[2] << " " << crops_.back().lower_bound()[3] << endl;
-    cout << "                 stops : " << crops_.back().upper_bound()[0] << " " << crops_.back().upper_bound()[1] << " " << crops_.back().upper_bound()[2] << " " << crops_.back().upper_bound()[3] << endl;
+    std::cout << "C++   ====> Crop starts: " << crops_.back().lower_bound()[0] << " " << crops_.back().lower_bound()[1] << " " << crops_.back().lower_bound()[2] << " " << crops_.back().lower_bound()[3] << std::endl;
+    std::cout << "                 stops : " << crops_.back().upper_bound()[0] << " " << crops_.back().upper_bound()[1] << " " << crops_.back().upper_bound()[2] << " " << crops_.back().upper_bound()[3] << std::endl;
+
+    numCrops_ = crops_.size();
 
     return true;
+}
+
+void StructuredLearningTracking::makeStructuredLearningTrackingDataset()
+{
+    std::cout << "C++  makeStructuredLearningTrackingDataset IN" << std::endl;
+    opengm::datasets::StructuredLearningTrackingDataset<ConsTrackingInferenceModel::GraphicalModelType,opengm::learning::HammingLoss> sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_);
+
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(size_t m=0; m<numCrops_; ++m){
+        std::cout << "___________________________________________________MODEL/CROP: " << m << std::endl;
+
+        boost::shared_ptr<HypothesesGraph> hypothesesSubGraph = boost::make_shared<HypothesesGraph>();
+        // boost::shared_ptr<HypothesesGraph> other = boost::make_shared<HypothesesGraph>();
+
+        HypothesesGraph::base_graph::NodeMap<bool> selected_nodes(*hypotheses_graph_);
+        for (HypothesesGraph::NodeIt n(*hypotheses_graph_); n != lemon::INVALID; ++n)
+            selected_nodes[n] = false;
+
+        //for(int t = hypothesesGraph.earliest_timestep(); t <= hypothesesGraph.latest_timestep(); ++t)
+        for(int t = crops_[m].lower_bound()[0]; t <= crops_[m].upper_bound()[0]; ++t)
+        {
+            std::cout << "TIME: " << t << std::endl;
+
+            //count = 0;
+            for(node_timestep_map_t::ItemIt node(timestep_map, t); node != lemon::INVALID; ++node){
+
+                if(ndim_==2 and
+                   crops_[m].lower_bound()[1] <= traxel_map[node].X() and traxel_map[node].X() <= crops_[m].upper_bound()[1] and
+                   crops_[m].lower_bound()[2] <= traxel_map[node].Y() and traxel_map[node].Y() <= crops_[m].upper_bound()[2] or
+                   ndim_==3 and
+                   crops_[m].lower_bound()[1] <= traxel_map[node].X() and traxel_map[node].X() <= crops_[m].upper_bound()[1] and
+                   crops_[m].lower_bound()[2] <= traxel_map[node].Y() and traxel_map[node].Y() <= crops_[m].upper_bound()[2] and
+                   crops_[m].lower_bound()[3] <= traxel_map[node].Z() and traxel_map[node].Z() <= crops_[m].upper_bound()[3] ){
+
+                    // selected_nodes
+                    std::cout << " Node:" << traxel_map[node].Id << std::endl;
+                    selected_nodes[node] = true;
+                }
+            }
+        }
+
+        std::cout << "______________" << std::endl;
+        HypothesesGraph::base_graph::ArcMap<bool> selected_arcs(*hypotheses_graph_);
+        for(HypothesesGraph::ArcIt a(*hypotheses_graph_); a != lemon::INVALID; ++a)
+        {
+            HypothesesGraph::Node from = hypotheses_graph_->source(a);
+            HypothesesGraph::Node to = hypotheses_graph_->target(a);
+
+            if(selected_nodes[from] and selected_nodes[to])
+                selected_arcs[a] = true;
+            else
+                selected_arcs[a] = false;
+        }
+
+        HypothesesGraph::copy_subgraph(*hypotheses_graph_, *hypothesesSubGraph,selected_nodes,selected_arcs);
+
+        size_t numNodes = 0;
+        for (HypothesesGraph::NodeIt n(*hypothesesSubGraph); n != lemon::INVALID; ++n)
+        {
+            std::cout << " Node:" << traxel_map[n].Id << std::endl;
+            ++numNodes;
+        }
+        std::cout << "TOTAL NUMBER OF NODES: " << numNodes << std::endl;
+
+        size_t numArcs = 0;
+        for(HypothesesGraph::ArcIt a(*hypothesesSubGraph); a != lemon::INVALID; ++a)
+        {
+            std::cout << " Arc:  ( " << traxel_map[hypothesesSubGraph->source(a)].Id << " ---> " << traxel_map[hypothesesSubGraph->target(a)].Id << " ) " << std::endl;
+            ++numArcs;
+        }
+        std::cout << "TOTAL NUMBER OF ARCS: " << numArcs << std::endl;
+
+
+        sltDataset.setGraphicalModel(m, numNodes);
+
+//          // function
+//          const size_t numExperts = 2;
+//          const std::vector<size_t> shape(1,numberOfLabels);
+//          std::vector<marray::Marray<ValueType> > feat(numExperts,marray::Marray<ValueType>(shape.begin(), shape.end()));
+//          ValueType val0 = 0.5;
+//          feat[0](0) = val0;
+//          feat[0](1) = val0-1;
+//          ValueType val1 = -0.25;
+//          feat[1](0) = val1;
+//          feat[1](1) = val1-1;
+//          std::vector<size_t> wID(2);
+//          wID[0]=0;  wID[1]=1;
+//          opengm::functions::learnable::LSumOfExperts<ValueType,IndexType,LabelType> f(shape,sltDataset.weights_, wID, feat);
+//          typename GM::FunctionIdentifier fid =  sltDataset.gms_[m].addFunction(f);
+
+       // factor
+//          size_t variableIndices[] = {0};
+//          sltDataset.gms_[m].addFactor(fid, variableIndices, variableIndices + 1);
+
+//          sltDataset.buildModelWithLoss(m);
+    } // for m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    std::cout << "C++  makeStructuredLearningTrackingDataset OUT" << std::endl;
 }
 
 /*
@@ -1250,4 +1448,212 @@ double StructuredLearningTracking::hammingloss_of_files(std::string f1, std::str
     return loss;
 }
 */
+
+
+
+
+//// JUST a COPY
+///
+///
+/*
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Structured Learning Tracking methods
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void ConsTracking::hypothesesGraphTest(const HypothesesGraph& g)
+{
+    //boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > stateOfNodes = state_of_nodes(g);
+    HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
+
+    size_t count = 0;
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        //model_.addVariable(param_.max_number_objects + 1);
+        //app_node_map_[n] = model_.numberOfVariables() - 1;
+
+        timestep_map[n];
+
+        //assert(model_.numberOfLabels(app_node_map_[n]) == param_.max_number_objects + 1);
+
+        //std::cout << count << " : " << timestep_map[n] << std::endl;
+        ++count;
+    }
+    std::cout << "TOTAL NUMBER OF NODES: " << count << std::endl;
+
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    typedef property_map<disappearance_label, HypothesesGraph::base_graph>::type disappearance_label_map;
+    node_traxel_map& traxel_map = g.get(node_traxel());
+    //disappearance_label_map& disappearance_labels_map = g.get(disappearance_label());
+
+    for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
+    {
+        std::cout << "TIME: " << t << std::endl;
+
+        count = 0;
+        for(node_timestep_map_t::ItemIt node(timestep_map, t); node != lemon::INVALID; ++node)
+        {
+            std::cout << "   Traxel Id: " << traxel_map[node].Id << "   Center: (" << traxel_map[node].X() << "," << traxel_map[node].Y() << "," << traxel_map[node].Z() << ")" << std::endl;
+            //std::cout << "   Dissappearance Label: " << disappearance_labels_map[node] << std::endl;
+            ++count;
+        }
+        std::cout << "   Number of Nodes: " << count << std::endl;
+    }
+
+    count = 0;
+    for(HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+    {
+        HypothesesGraph::Node from = (&g)->source(a);
+        HypothesesGraph::Node to = (&g)->target(a);
+//        Traxel from_tr = traxel_map[from];
+//        Traxel to_tr = traxel_map[to];
+
+        ++count;
+    }
+    std::cout << "TOTAL NUMBER OF ARCS: " << count << std::endl;
+
+}
+
+void ConsTracking::addLabels()
+{
+    hypotheses_graph_->add(appearance_label());
+    hypotheses_graph_->add(disappearance_label());
+    hypotheses_graph_->add(division_label());
+    hypotheses_graph_->add(arc_label());
+}
+
+void ConsTracking::addAppearanceLabel(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_appearance_label(node, cellCount);
+        }
+}
+
+void ConsTracking::addDisappearanceLabel(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_disappearance_label(node, cellCount);
+        }
+}
+
+void ConsTracking::addDivisionLabel(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_division_label(node, cellCount);
+        }
+}
+
+void ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    //typedef property_map<traxel_arc_id, HypothesesGraph::base_graph>::type traxel_arc_id_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+    //traxel_arc_id_map& arc_id_map = g.get(traxel_arc_id());
+
+    HypothesesGraph::Node to;
+    for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == startLabel){
+            for(HypothesesGraph::base_graph::OutArcIt arc(*hypotheses_graph_, node); arc != lemon::INVALID; ++arc){
+                to = hypotheses_graph_->target(arc);
+                if (traxel_map[to].Id == endLabel){
+                    //std::cout << " ARC Label          : [" << startTime << "," << startTime+1 << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
+                    hypotheses_graph_->add_arc_label(arc, cellCount);
+                }
+            }
+        }
+}
+
+void ConsTracking::addFirstLabels(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            hypotheses_graph_->add_disappearance_label(node,0);
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_appearance_label(node, cellCount);
+        }
+}
+
+void ConsTracking::addLastLabels(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_disappearance_label(node,cellCount);
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            hypotheses_graph_->add_appearance_label(node,0);
+        }
+}
+
+void ConsTracking::addIntermediateLabels(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_disappearance_label(node,cellCount);
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_appearance_label(node,cellCount);
+        }
+}
+
+
+
+
+
+bool ConsTracking::exportCrop(FieldOfView crop)
+{
+    crops_.push_back(crop);
+    cout << "C++   ====> Crop starts: " << crops_.back().lower_bound()[0] << " " << crops_.back().lower_bound()[1] << " " << crops_.back().lower_bound()[2] << " " << crops_.back().lower_bound()[3] << endl;
+    cout << "                 stops : " << crops_.back().upper_bound()[0] << " " << crops_.back().upper_bound()[1] << " " << crops_.back().upper_bound()[2] << " " << crops_.back().upper_bound()[3] << endl;
+
+    numCrops_ = crops_.size();
+
+    return true;
+}
+*/
+
+
+
 } // namespace tracking

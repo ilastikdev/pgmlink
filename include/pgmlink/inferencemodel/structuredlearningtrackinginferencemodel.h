@@ -44,9 +44,9 @@ public: // API
         double ep_gap,
         double cplex_timeout)://,
         //const ConservationTracking::Parameter& conservationParam):
-        ConsTrackingInferenceModel(inferenceParam, ep_gap, cplex_timeout),
+        ConsTrackingInferenceModel(inferenceParam, ep_gap, cplex_timeout)//,
         //conservationParam_ (conservationParam),
-        weights_((size_t)5)//weights_(numWeights_)// Weights: 0 = detection, 1 = appearance, 2 = dissappearance, 3 = transition, 4 = division
+        //weights_((size_t)5)//weights_(numWeights_)// Weights: 0 = detection, 1 = appearance, 2 = dissappearance, 3 = transition, 4 = division
 
     {
         std::cout << "Constructor StructuredLearningTrackingInferenceModel" << std::endl;
@@ -55,8 +55,9 @@ public: // API
     // build the inference model from the given graph
     //virtual void build_from_graph(const HypothesesGraph&);
 
-    opengm::learning::Weights<double> weights_;
-    void setWeight ( size_t, double);
+    //opengm::learning::Weights<double> weights_;
+    // void setWeight ( size_t, double);
+
     /*
     virtual void fixFirstDisappearanceNodesToLabels(
             const HypothesesGraph& g,
@@ -104,11 +105,19 @@ public: // API
 
 
 
-    void add_finite_factors(const HypothesesGraph&);
-    virtual size_t add_division_factors(const HypothesesGraph&, size_t);
-    virtual size_t add_transition_factors(const HypothesesGraph&, size_t);
-    virtual size_t add_detection_factors(const HypothesesGraph&, size_t);
-    void add_constraints_to_pool(const HypothesesGraph&);
+    //void add_finite_factors(const HypothesesGraph&);
+
+
+
+
+//    virtual size_t add_division_factors(const HypothesesGraph&, size_t);
+//    virtual size_t add_transition_factors(const HypothesesGraph&, size_t);
+//    virtual size_t add_detection_factors(const HypothesesGraph&, size_t);
+
+
+
+
+    //void add_constraints_to_pool(const HypothesesGraph&);
 
 
 
@@ -127,9 +136,9 @@ public: // API
     //void add_constraints(INF& optimizer);
 
 protected: // members
-    ConservationTracking::Parameter conservationParam_;
+    //ConservationTracking::Parameter conservationParam_;
 public:
-    StructuredLearningTrackingInferenceModel::Parameter param_;
+    //StructuredLearningTrackingInferenceModel::Parameter param_;
 
 
     //GraphicalModelType model_;
@@ -157,14 +166,13 @@ public:
     //std::map<std::pair<size_t, size_t>, size_t > cplex_variable_id_map_;
     //std::map<std::pair<size_t, std::pair<size_t, size_t> >, size_t> cplex_factor_id_map_;
 };
-  /*
+/*
 template<class INF>
-void ConsTrackingInferenceModel::add_constraints(INF &optimizer)
+void StructuredLearningTrackingInferenceModel::add_constraints(INF &optimizer)
 {
     constraint_pool_.add_constraints_to_problem(model_, optimizer);
 }
-  */
-
+*/
 } // namespace pgmlink
 
 #endif // STRUCTUREDLEARNINGTRACKINGINFERENCEMODEL_H

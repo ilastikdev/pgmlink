@@ -3,7 +3,9 @@
 
 #include <opengm/learning/dataset/dataset.hxx>
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/tracking.h"
 #include "pgmlink/hypotheses.h"
+#include "pgmlink/graph.h"
 #include "pgmlink/field_of_view.h"
 
 namespace opengm {
@@ -21,19 +23,42 @@ public:
    typedef opengm::learning::Weights<ValueType> Weights;
 
    StructuredLearningTrackingDataset()
-   {
-       std::cout << "StructuredLearningTrackingDataset DEFAULT constructor 0 param" << std::endl;
-   }
+   {}
 
    StructuredLearningTrackingDataset(
-       pgmlink::ConsTrackingInferenceModel::IndexType numModels=0,
-       //std::vector<pgmlink::FieldOfView> crops,
-       pgmlink::ConsTrackingInferenceModel::IndexType numWeights=0,
-       pgmlink::ConsTrackingInferenceModel::LabelType numLabels=0//,
-       //boost::shared_ptr<pgmlink::HypothesesGraph> hypothesesGraph
+       pgmlink::ConsTrackingInferenceModel::IndexType numModels,
+       std::vector<pgmlink::FieldOfView> crops,
+       pgmlink::ConsTrackingInferenceModel::IndexType numWeights,
+       pgmlink::ConsTrackingInferenceModel::LabelType numLabels,
+       int ndim,
+       boost::shared_ptr<pgmlink::HypothesesGraph> hypothesesGraph
    )
-   {};
+   {
+       std::cout << "numModels = " << numModels << " crops.size() = " << crops.size() << std::endl;
+       if(numModels!=crops.size()){
+           std::cout << "Number of crops and crops size do not match!!!" << std::endl;
+           return;
+       }
+
+       using namespace pgmlink;
+
+       this->lossParams_.resize(numModels);
+       this->isCached_.resize(numModels);
+       this->count_.resize(numModels,0);
+       this->weights_ = Weights(numWeights);
+
+       this->gms_.resize(numModels);
+       this->gmsWithLoss_.resize(numModels);
+   }
+
+   void setGraphicalModel(size_t modelIndex, size_t numVariables){
+       this->gms_[modelIndex].addVariable(numVariables);
+   }
 };
+
+
+
+
 
 } // datasets
 } // opengm

@@ -65,7 +65,7 @@ private:
 
 namespace pgmlink
 {
-using namespace std;
+//using namespace std;
 using namespace boost;
 
 template <typename InputIt>

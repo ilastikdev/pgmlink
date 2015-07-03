@@ -168,14 +168,40 @@ void ConservationTracking::setInferenceModel(boost::shared_ptr<InferenceModel> i
     inference_model_ = inference_model;
 }
 
-boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
-//boost::shared_ptr<ConsTrackingInferenceModel> ConservationTracking::create_inference_model()
+boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(ConservationTracking::Parameter& param)
 {
     if(solver_ == CplexSolver)
     {
-        if (inference_model_)
+        if (inference_model_){
+            std::cout << "????????????????????????????????with SLT TRACKING - with_tracklets = " << inference_model_param_.with_tracklets << std::endl;
+            with_structured_learning_ = true;
             return inference_model_;
-        else
+        }
+        else{
+            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!with CONS TRACKING" << std::endl;
+            with_structured_learning_ = false;
+            return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
+                                                              ep_gap_,
+                                                              cplex_timeout_);
+        }
+    }
+#ifdef WITH_DPCT
+    else if(solver_ == DynProgSolver)
+    {
+        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+    }
+#else
+    else if(solver_ == DynProgSolver)
+    {
+        throw std::runtime_error("Support for dynamic programming solver not built!");
+    }
+#endif // WITH_DPCT
+}
+
+boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
+{
+    if(solver_ == CplexSolver)
+    {
             return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
                                                               ep_gap_,
                                                               cplex_timeout_);
@@ -192,49 +218,7 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
     }
 #endif // WITH_DPCT
 }
-/*
-boost::shared_ptr<ConsTrackingInferenceModel> ConservationTracking::create_inference_model(ConsTracking& tracker)
-{
-    if(solver_ == CplexSolver)
-    {
-        return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
-                                                              ep_gap_,
-                                                              cplex_timeout_);
-    }
-#ifdef WITH_DPCT
-    else if(solver_ == DynProgSolver)
-    {
-        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
-    }
-#else
-    else if(solver_ == DynProgSolver)
-    {
-        throw std::runtime_error("Support for dynamic programming solver not built!");
-    }
-#endif // WITH_DPCT
-}
 
-boost::shared_ptr<StructuredLearningTrackingInferenceModel> ConservationTracking::create_inference_model(StructuredLearningTracking& tracker)
-{
-    if(solver_ == CplexSolver)
-    {
-        return boost::make_shared<StructuredLearningTrackingInferenceModel>(inference_model_param_,
-                                                              ep_gap_,
-                                                              cplex_timeout_);
-    }
-#ifdef WITH_DPCT
-    else if(solver_ == DynProgSolver)
-    {
-        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
-    }
-#else
-    else if(solver_ == DynProgSolver)
-    {
-        throw std::runtime_error("Support for dynamic programming solver not built!");
-    }
-#endif // WITH_DPCT
-}
-*/
 boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
 {
     if(solver_ == CplexSolver)
@@ -303,31 +287,58 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     // instanciate inference model
     boost::shared_ptr<InferenceModel> inference_model = create_inference_model();
 
-    string s = typeid(inference_model).name();
-    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << s << std::endl;
+    inference_model->param_.detection_weight = detection_weight_;
+    inference_model->param_.division_weight = division_weight_;
+    inference_model->param_.transition_weight = transition_weight_;
+
+
+    string str = typeid(inference_model).name();
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++1 =" << inference_model->param_.with_tracklets << "  " << str << std::endl;
     // build inference model
     inference_model->build_from_graph(*graph);
 
     // fix some node values beforehand
     if(use_app_node_labels_to_fix_values_)
     {
+        std::cout << "use_app_node_labels_to_fix_values_"<< use_app_node_labels_to_fix_values_ << std::endl;
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 
     if(solver_ == CplexSolver)
     {
-        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
-            numberOfSolutions,
-            get_export_filename(0, features_file_),
-            constraints_file_,
-            get_export_filename(0, labels_export_file_name_));
+        std::cout << "in if CplexSolver" << std::endl;
+
+        if(with_structured_learning_){
+            boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
+                numberOfSolutions,
+                "",//get_export_filename(0, features_file_),
+                "",//constraints_file_,
+                "");//get_export_filename(0, labels_export_file_name_));
+        }else{
+            boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
+                numberOfSolutions,
+                get_export_filename(0, features_file_),
+                constraints_file_,
+                get_export_filename(0, labels_export_file_name_));
+        }
     }
 
-    s = typeid(inference_model).name();
-    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << s << std::endl;
+    str = typeid(inference_model).name();
+    std::cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << str << std::endl;
 
     // run inference & conclude
     solutions_.push_back(inference_model->infer());
+
+//    {
+//        std::cout << "___________________________________________________________________________________" << std::endl;
+//        std::vector<size_t> coords(1, 0); // number of variables
+//        for(int i=0;i<5;++i)
+//        {
+//            coords[0] = i;
+//            std::cout << "--->" << boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->weights_(coords.begin()) << std::endl;
+//        }
+//        std::cout << "___________________________________________________________________________________" << std::endl;
+//    }
 
     LOG(logINFO) << "conclude MAP";
     inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());

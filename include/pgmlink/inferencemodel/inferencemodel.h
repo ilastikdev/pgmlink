@@ -43,6 +43,12 @@ public: // Parameter object
         boost::function<double (const Traxel&)> disappearance_cost;
         boost::function<double (const Traxel&)> appearance_cost;
         double forbidden_cost;
+
+        double detection_weight;
+        double appearance_weight;
+        double disappearance_weight;
+        double division_weight;
+        double transition_weight;
     };
 
     typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
