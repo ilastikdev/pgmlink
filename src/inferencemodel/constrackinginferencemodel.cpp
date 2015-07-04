@@ -1279,5 +1279,8 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     }
 }
 
+ConsTrackingInferenceModel::GraphicalModelType ConsTrackingInferenceModel::model(){
+    return model_;
+}
 
 } // namespace pgmlink

@@ -164,11 +164,6 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
     }
 }
 
-void ConservationTracking::setInferenceModel(boost::shared_ptr<InferenceModel> inference_model)
-{
-    inference_model_ = inference_model;
-}
-
 boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(ConservationTracking::Parameter& param)
 {
     if(solver_ == CplexSolver)
@@ -466,6 +461,15 @@ boost::python::dict convertFeatureMapToPyDict(FeatureMap map)
         dictionary[iter->first] = iter->second;
     }
     return dictionary;
+}
+
+void ConservationTracking::setInferenceModel(boost::shared_ptr<InferenceModel> inference_model)
+{
+    inference_model_ = inference_model;
+}
+
+boost::shared_ptr<InferenceModel> ConservationTracking::getInferenceModel(){
+    return inference_model_;
 }
 
 } /* namespace pgmlink */

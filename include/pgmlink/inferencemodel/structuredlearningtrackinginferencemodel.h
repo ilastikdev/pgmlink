@@ -10,10 +10,10 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/inferencemodel/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/inferencemodel.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/reasoner_constracking.h"
 
-#include "inferencemodel.h"
 
 namespace pgmlink
 {

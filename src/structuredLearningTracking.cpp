@@ -315,16 +315,34 @@ bool StructuredLearningTracking::exportCrop(FieldOfView crop)//, const std::stri
     return true;
 }
 
-void StructuredLearningTracking::makeStructuredLearningTrackingDataset()
+void StructuredLearningTracking::makeStructuredLearningTrackingDataset(
+        double forbidden_cost,
+        double ep_gap,
+        bool with_tracklets,
+        double detection_weight,
+        double division_weight,
+        double transition_weight,
+        double disappearance_cost,
+        double appearance_cost,
+        bool with_merger_resolution,
+        int n_dim,
+        double transition_parameter,
+        double border_width,
+        bool with_constraints,
+        UncertaintyParameter uncertaintyParam,
+        double cplex_timeout,
+        boost::python::object transition_classifier
+        )
 {
     std::cout << "C++  makeStructuredLearningTrackingDataset IN" << std::endl;
-    opengm::datasets::StructuredLearningTrackingDataset<ConsTrackingInferenceModel::GraphicalModelType,opengm::learning::HammingLoss> sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_);
+    opengm::datasets::StructuredLearningTrackingDataset<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::learning::HammingLoss> sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_);
 
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
     HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
 
+    // set up graphical models
     for(size_t m=0; m<numCrops_; ++m){
         std::cout << "___________________________________________________MODEL/CROP: " << m << std::endl;
 
@@ -373,46 +391,114 @@ void StructuredLearningTracking::makeStructuredLearningTrackingDataset()
 
         HypothesesGraph::copy_subgraph(*hypotheses_graph_, *hypothesesSubGraph,selected_nodes,selected_arcs);
 
+        // structured learning tracking inference model
+        // from ConsTracking::track
+        ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+                forbidden_cost,
+                ep_gap,
+                with_tracklets,
+                detection_weight,
+                division_weight,
+                transition_weight,
+                disappearance_cost,
+                appearance_cost,
+                with_merger_resolution,
+                n_dim,
+                transition_parameter,
+                border_width,
+                with_constraints,
+                uncertaintyParam,
+                cplex_timeout,
+                transition_classifier,
+                solver_);
+        uncertainty_param_ = uncertaintyParam;
+
+        // from ConsTracking::track_from_param
+        ConservationTracking pgm(param);
+
+
+
+        // from ConservationTracking::perturbedInference
+        HypothesesGraph *graph = pgm.get_prepared_graph(*hypothesesSubGraph);
+
+        //traxel_map = graph->get(node_traxel());
+
         size_t numNodes = 0;
-        for (HypothesesGraph::NodeIt n(*hypothesesSubGraph); n != lemon::INVALID; ++n)
+        for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n)
         {
             std::cout << " Node:" << traxel_map[n].Id << std::endl;
             ++numNodes;
         }
-        std::cout << "TOTAL NUMBER OF NODES: " << numNodes << std::endl;
+        std::cout << "TOTAL NUMBER OF NODES prepared_graph: " << numNodes << std::endl;
 
         size_t numArcs = 0;
-        for(HypothesesGraph::ArcIt a(*hypothesesSubGraph); a != lemon::INVALID; ++a)
+        for(HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a)
         {
-            std::cout << " Arc:  ( " << traxel_map[hypothesesSubGraph->source(a)].Id << " ---> " << traxel_map[hypothesesSubGraph->target(a)].Id << " ) " << std::endl;
+            std::cout << " Arc (" << traxel_map[graph->source(a)].Id << " ---> " << traxel_map[graph->target(a)].Id << " ) " << std::endl;
             ++numArcs;
         }
-        std::cout << "TOTAL NUMBER OF ARCS: " << numArcs << std::endl;
+        std::cout << "TOTAL NUMBER OF ARCS prepared_graph: " << numArcs << std::endl;
+
+        prepareTracking(pgm, param);
+        boost::shared_ptr<InferenceModel> inference_model = pgm.getInferenceModel();
+        inference_model->build_from_graph(*graph);
+        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->set_inference_params(
+            1,//numberOfSolutions,
+            "",//get_export_filename(0, features_file_),
+            "",//constraints_file_,
+            "");//get_export_filename(0, labels_export_file_name_));
+        //inference_model->infer();
+
+        sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->model());
 
 
-        sltDataset.setGraphicalModel(m, numNodes);
 
-//          // function
-//          const size_t numExperts = 2;
-//          const std::vector<size_t> shape(1,numberOfLabels);
-//          std::vector<marray::Marray<ValueType> > feat(numExperts,marray::Marray<ValueType>(shape.begin(), shape.end()));
-//          ValueType val0 = 0.5;
-//          feat[0](0) = val0;
-//          feat[0](1) = val0-1;
-//          ValueType val1 = -0.25;
-//          feat[1](0) = val1;
-//          feat[1](1) = val1-1;
-//          std::vector<size_t> wID(2);
-//          wID[0]=0;  wID[1]=1;
-//          opengm::functions::learnable::LSumOfExperts<ValueType,IndexType,LabelType> f(shape,sltDataset.weights_, wID, feat);
-//          typename GM::FunctionIdentifier fid =  sltDataset.gms_[m].addFunction(f);
+        //sltDataset.build_model_with_loss(m);  // <--- THIS NEEDS to be called, but: ARE my factors set up properly with LEARNABLE functions???
 
-       // factor
-//          size_t variableIndices[] = {0};
-//          sltDataset.gms_[m].addFactor(fid, variableIndices, variableIndices + 1);
+        //set up ground truth
+        LabelType numberOfLabels = max_number_objects_;
+        sltDataset.resizeGTS(numCrops_);
 
-//          sltDataset.buildModelWithLoss(m);
-    } // for m
+
+
+
+        typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+        node_traxel_map& traxel_map = graph->get(node_traxel());
+        HypothesesGraph::node_timestep_map& timestep_map = graph->get(node_timestep());
+
+        property_map< appearance_label, HypothesesGraph::base_graph>::type& appearance_labels = graph->get(appearance_label());
+        property_map< disappearance_label, HypothesesGraph::base_graph>::type& disappearance_labels = graph->get(disappearance_label());
+        property_map< division_label, HypothesesGraph::base_graph>::type& division_labels = graph->get(division_label());
+        property_map< arc_label, HypothesesGraph::base_graph>::type& arc_labels = graph->get(arc_label());
+        //property_map< appearance_label, HypothesesGraph::base_graph>::type& detection_labels = graph->get(detection_label());
+
+        numNodes = 0;
+        for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
+            LabelType appearance_label=-1, disappearance_label=-1, division_label=-1;
+
+            appearance_label = appearance_labels[n];
+            disappearance_label = disappearance_labels[n];
+            division_label = division_labels[n];
+
+            std::cout << "t= " << timestep_map[n] << "   " << traxel_map[n].Id <<" (appearance, disappearance, division) = (" << appearance_label << "," << disappearance_label << "," << division_label << ")" << std::endl;
+
+            //sltDataset.setGTS(m,traxel_map[n].Id,label);
+            ++numNodes;
+        }
+        std::cout << " Total number of nodes in the subgraph = " << numNodes << std::endl;
+
+        numArcs = 0;
+        for(HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a)
+        {
+            LabelType arc_label=-1;
+
+            arc_label = arc_labels[a];
+            std::cout << "t= (" << timestep_map[graph->source(a)] << "," << timestep_map[graph->target(a)] << ")   Arc:  ( " << traxel_map[graph->source(a)].Id << " ---> " << traxel_map[graph->target(a)].Id << " ) " << arc_label << std::endl;
+            ++numArcs;
+        }
+        std::cout << "TOTAL NUMBER OF ARCS in the subgraph = " << numArcs << std::endl;
+    } // for model m
+
 
     std::cout << "C++  makeStructuredLearningTrackingDataset OUT" << std::endl;
 }

@@ -10,8 +10,7 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/inferencemodel/constraint_pool.hxx"
-
-#include "inferencemodel.h"
+#include "pgmlink/inferencemodel/inferencemodel.h"
 
 namespace pgmlink
 {
@@ -75,6 +74,7 @@ public: // API
     // weights in the same order as in:
     // enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
     void setWeight ( size_t, double);
+    GraphicalModelType model();
 
 protected: // methods
     void add_appearance_nodes( const HypothesesGraph& );

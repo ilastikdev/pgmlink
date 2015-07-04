@@ -21,7 +21,6 @@
 #include "pgmlink/field_of_view.h"
 #include "pgmlink/merger_resolving.h"
 #include <boost/python.hpp>
-#include "pgmlink/structured_learning_tracking_dataset.h"
 
 namespace pgmlink
 {

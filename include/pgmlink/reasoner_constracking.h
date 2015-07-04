@@ -152,6 +152,7 @@ public:
     virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
     boost::shared_ptr<InferenceModel> create_inference_model();
     void setInferenceModel(boost::shared_ptr<InferenceModel> inference_model);
+    boost::shared_ptr<InferenceModel> getInferenceModel();
 
 protected: // methods
     void reset();

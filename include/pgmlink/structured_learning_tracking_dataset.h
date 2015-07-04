@@ -2,7 +2,8 @@
 #define OPENGM_DATASET_H
 
 #include <opengm/learning/dataset/dataset.hxx>
-#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+
+#include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/tracking.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/graph.h"
@@ -26,10 +27,10 @@ public:
    {}
 
    StructuredLearningTrackingDataset(
-       pgmlink::ConsTrackingInferenceModel::IndexType numModels,
+       pgmlink::StructuredLearningTrackingInferenceModel::IndexType numModels,
        std::vector<pgmlink::FieldOfView> crops,
-       pgmlink::ConsTrackingInferenceModel::IndexType numWeights,
-       pgmlink::ConsTrackingInferenceModel::LabelType numLabels,
+       pgmlink::StructuredLearningTrackingInferenceModel::IndexType numWeights,
+       pgmlink::StructuredLearningTrackingInferenceModel::LabelType numLabels,
        int ndim,
        boost::shared_ptr<pgmlink::HypothesesGraph> hypothesesGraph
    )
@@ -40,8 +41,6 @@ public:
            return;
        }
 
-       using namespace pgmlink;
-
        this->lossParams_.resize(numModels);
        this->isCached_.resize(numModels);
        this->count_.resize(numModels,0);
@@ -51,9 +50,31 @@ public:
        this->gmsWithLoss_.resize(numModels);
    }
 
-   void setGraphicalModel(size_t modelIndex, size_t numVariables){
-       this->gms_[modelIndex].addVariable(numVariables);
+//   void addVariables(size_t m, size_t numVariables){
+//       this->gms_[m].addVariable(numVariables);
+//   }
+
+   void setGraphicalModel(size_t m, GMType model){
+       this->gms_[m] = model;
    }
+
+   void build_model_with_loss(size_t m){
+       this->buildModelWithLoss(m);
+   }
+
+   GMType graphicalModel(size_t m){
+       return this->gms_[m];
+   }
+
+   void resizeGTS(size_t numModels){
+       for(size_t m=0;m<numModels;++m)
+           this->gts_.resize(m,std::vector<LabelType>(this->gms_[m].numberOfVariables(),0));
+   }
+
+   void setGTS(size_t modelIndex, size_t variableIndex, LabelType label){
+       this->gts_[modelIndex][variableIndex] = label;
+   }
+
 };
 
 

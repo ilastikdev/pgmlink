@@ -24,6 +24,7 @@
 #include "pgmlink/hypotheses.h"
 #include <boost/python.hpp>
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
+#include "pgmlink/structured_learning_tracking_dataset.h"
 
 namespace pgmlink
 {
@@ -98,7 +99,23 @@ public:
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
     PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
-    PGMLINK_EXPORT void makeStructuredLearningTrackingDataset();
+    PGMLINK_EXPORT void makeStructuredLearningTrackingDataset(
+            double forbidden_cost = 0,
+            double ep_gap = 0.01,
+            bool with_tracklets = true,
+            double detection_weight = 10.,
+            double division_weight = 10.0,
+            double transition_weight = 10.0,
+            double disappearance_cost = 0,
+            double appearance_cost = 0,
+            bool with_merger_resolution = true,
+            int n_dim = 3,
+            double transition_parameter = 5.,
+            double border_width = 0,
+            bool with_constraints = true,
+            UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+            double cplex_timeout = 1e+75,
+            boost::python::object TransitionClassifier = boost::python::object());
 
 public:
     int numCrops_;
@@ -110,6 +127,9 @@ protected:
     StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;
     double ep_gap_;
     double cplex_timeout_;
+    double division_weight_;
+    double detection_weight_;
+    double transition_weight_;
 };
 
 } // end namespace pgmlink
