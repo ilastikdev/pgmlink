@@ -47,6 +47,7 @@ public:
        this->weights_ = Weights(numWeights);
 
        this->gms_.resize(numModels);
+       this->gts_.resize(numModels);
        this->gmsWithLoss_.resize(numModels);
    }
 
@@ -66,13 +67,21 @@ public:
        return this->gms_[m];
    }
 
-   void resizeGTS(size_t numModels){
-       for(size_t m=0;m<numModels;++m)
-           this->gts_.resize(m,std::vector<LabelType>(this->gms_[m].numberOfVariables(),0));
+   void resizeGTS(size_t m){
+//       size_t length = numNodes+numNodes*numNodes; //arcs are represented with the (source(a),target(a)) pairs <----- REVISE THIS
+//       std::cout << "resizeGTS : m " << m << "  " << length << std::endl;
+//       std::cout << "numNodes = " << numNodes << "  numVars = " << this->gms_[m].numberOfVariables() << std::endl;
+//       std::cout << "numArcs  = " << numArcs << "  numFactors = " << this->gms_[m].numberOfFactors() << std::endl;
+//       this->gts_[m].resize(length, 0);
+
+       this->gts_[m].resize(this->gms_[m].numberOfVariables(), 0);
+
+       //std::cout << "resizeGTS : " << this->gts_[m].size() << std::endl;
    }
 
-   void setGTS(size_t modelIndex, size_t variableIndex, LabelType label){
-       this->gts_[modelIndex][variableIndex] = label;
+   void setGTS(size_t modelIndex, size_t labelIndex, LabelType label){
+       std::cout << "modelIndex = " << modelIndex << " labelIndex = " << labelIndex << " label = " << label << std::endl;
+       this->gts_[modelIndex][labelIndex] = label;
    }
 
 };

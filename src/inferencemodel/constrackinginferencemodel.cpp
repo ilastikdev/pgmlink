@@ -202,6 +202,9 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
     number_of_division_nodes_ = count;
 }
 
+unsigned int ConsTrackingInferenceModel::get_number_of_division_nodes(){
+    return number_of_division_nodes_;
+}
 
 void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
 {

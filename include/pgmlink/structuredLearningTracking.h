@@ -61,6 +61,7 @@ public:
             solver,
             ndim),
           numWeights_(5),
+          weights_(5),
           numLabels_(max_number_objects)
     {
         std::cout << "Constructor StructuredLearningTracking" << std::endl;
@@ -99,7 +100,8 @@ public:
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
     PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
-    PGMLINK_EXPORT void makeStructuredLearningTrackingDataset(
+    PGMLINK_EXPORT double weights(int);
+    PGMLINK_EXPORT void structuredLearning(
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
@@ -130,6 +132,7 @@ protected:
     double division_weight_;
     double detection_weight_;
     double transition_weight_;
+    std::vector<double> weights_;
 };
 
 } // end namespace pgmlink

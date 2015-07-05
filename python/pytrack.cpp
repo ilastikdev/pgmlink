@@ -284,7 +284,6 @@ void export_track()
     .def("__call__", &pythonConsTracking)
     .def("build_hypo_graph", &ConsTracking::build_hypo_graph)
     .def("track", &ConsTracking::track)
-//    .def("tracking", &ConsTracking::tracking)
     .def("track", &ConsTracking::track_from_param)
     .def("resolve_mergers", &python_resolve_mergers)
     .def("detections", &ConsTracking::detections)
@@ -357,9 +356,6 @@ void export_track()
     .def_pickle(TemplatedPickleSuite<Event>() )
     ;
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     class_<StructuredLearningTracking>("StructuredLearningTracking",
                                        init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType,int>(
                              args("hypotheses_graph",
@@ -385,7 +381,8 @@ void export_track()
     .def("addFirstLabels", &StructuredLearningTracking::addFirstLabels)
     .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
     .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
-    .def("makeStructuredLearningTrackingDataset", &StructuredLearningTracking::makeStructuredLearningTrackingDataset)
+    .def("structuredLearning", &StructuredLearningTracking::structuredLearning)
+    .def("weights", &StructuredLearningTracking::weights)
     ;
 
 }

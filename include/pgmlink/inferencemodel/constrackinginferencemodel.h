@@ -75,6 +75,7 @@ public: // API
     // enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
     void setWeight ( size_t, double);
     GraphicalModelType model();
+    unsigned int get_number_of_division_nodes();
 
 protected: // methods
     void add_appearance_nodes( const HypothesesGraph& );
