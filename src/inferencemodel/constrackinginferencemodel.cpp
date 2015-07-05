@@ -134,6 +134,9 @@ void ConsTrackingInferenceModel::add_appearance_nodes(const HypothesesGraph& g)
         nodes_per_timestep_[timestep_map[n]].push_back(model_.numberOfVariables() - 1);
 
         assert(model_.numberOfLabels(app_node_map_[n]) == param_.max_number_objects + 1);
+
+        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+        std::cout << " APPEARANCE count: " << count << " node: " << app_node_map_[n] << "   " << traxel_map[n]<< std::endl;
         ++count;
     }
     number_of_appearance_nodes_ = count;
@@ -151,6 +154,9 @@ void ConsTrackingInferenceModel::add_disappearance_nodes(const HypothesesGraph& 
         nodes_per_timestep_[timestep_map[n]].push_back(model_.numberOfVariables() - 1);
 
         assert(model_.numberOfLabels(dis_node_map_[n]) == param_.max_number_objects + 1);
+
+        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+        std::cout << " DISAPPEARANCE count: " << count << " node: " << app_node_map_[n] << "   " << traxel_map[n]<< std::endl;
         ++count;
     }
     number_of_disappearance_nodes_ = count;
@@ -173,6 +179,10 @@ void ConsTrackingInferenceModel::add_transition_nodes(const HypothesesGraph& g)
         nodes_per_timestep_[timestep_map[n]].push_back(model_.numberOfVariables() - 1);
 
         assert(model_.numberOfLabels(arc_map_[a]) == param_.max_number_objects + 1);
+
+        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+        std::cout << " ARC map count: " << count << "   arc: " << arc_map_[a] << "   (" << traxel_map[g.source(a)]<< "," << traxel_map[g.target(a)]<< ") " << std::endl;
+
         ++count;
     }
     number_of_transition_nodes_ = count;
@@ -196,6 +206,9 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
             nodes_per_timestep_[timestep_map[n]].push_back(model_.numberOfVariables() - 1);
 
             assert(model_.numberOfLabels(div_node_map_[n]) == 2);
+
+            property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+            std::cout << " DIVISION count: " << count << " node: " << div_node_map_[n] << "   " << traxel_map[n]<< std::endl;
             ++count;
         }
     }

@@ -336,9 +336,6 @@ void StructuredLearningTracking::structuredLearning(
         )
 {
 
-    // ARC/TRANSITION GROUND TRUTH IS NOT INDEXED YET!!!
-
-
     std::cout << "C++  makeStructuredLearningTrackingDataset IN" << std::endl;
     typedef opengm::datasets::StructuredLearningTrackingDataset<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::learning::HammingLoss> DSS;
     DSS sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_);
@@ -463,7 +460,7 @@ void StructuredLearningTracking::structuredLearning(
 
 
         //set up ground truth
-        LabelType numberOfLabels = max_number_objects_;
+        //LabelType numberOfLabels = max_number_objects_;
         sltDataset.resizeGTS(m);
 
         //typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -478,34 +475,40 @@ void StructuredLearningTracking::structuredLearning(
 
         property_map< traxel_arc_id, HypothesesGraph::base_graph>::type& arc_id_map_sub = graph->get(traxel_arc_id());
 
-        for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
-            std::cout << "t= " << timestep_map[n] << "   " << traxel_map_sub_graph[n].Id <<"   " << traxel_map[n].Id <<" (appearance, disappearance) = (" << appearance_labels[n] << "," << disappearance_labels[n] << ")" << std::endl;
-
-            sltDataset.setGTS(
-                m,
-                (size_t) traxel_map[n].Id-1,
-                (size_t)appearance_labels[n]);
-
-            sltDataset.setGTS(
-                m,
-                (size_t) numNodes + traxel_map[n].Id-1,
-                (size_t)disappearance_labels[n]);
-        }
-
+        size_t indexArcs=0;
         for(HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a)
         {
             LabelType arc_label = arc_labels[a];
 
-            std::cout << "t= (" << timestep_map[graph->source(a)] << "," << timestep_map[graph->target(a)] << ")   Arc: " << arc_id_map[a] << " =?= " << arc_id_map_sub[a] << " = ( " << traxel_map[graph->source(a)].Id << " ---> " << traxel_map[graph->target(a)].Id << " ) " << arc_label << std::endl;
+            std::cout << "t= (" << timestep_map[graph->source(a)] << "," << timestep_map[graph->target(a)] << ")   Arc: (" << traxel_map_sub_graph[graph->source(a)].Id << "," << traxel_map_sub_graph[graph->target(a)].Id << " = ( " << traxel_map[graph->source(a)].Id << " ---> " << traxel_map[graph->target(a)].Id << " ) " << arc_label << std::endl;
             //std::cout << "t= (" << timestep_map[graph->source(a)] << "," << timestep_map[graph->target(a)] << ")   Arc: " << " = ( " << traxel_map[graph->source(a)].Id << " ---> " << traxel_map[graph->target(a)].Id << " ) " << arc_label << std::endl;
             sltDataset.setGTS(
                 m,
-                (size_t) 2*numNodes + arc_id_map[a], // arc_id_map is NOT working!!!
-                (size_t)arc_label);
+                (size_t) indexArcs, // CHECK the order of arc/transition related variables in model!!!
+                (size_t) arc_label);
+            ++indexArcs;
         }
 
-        size_t number_of_division_nodes_ = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->get_number_of_division_nodes();
-        std::vector<size_t> division_var_to_node_fun (number_of_division_nodes_);
+        for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
+            std::cout << "t= " << timestep_map[n] << "   " << traxel_map_sub_graph[n].Id <<"   " << numNodes - traxel_map[n].Id <<" (appearance) = (" << appearance_labels[n] << ")" << std::endl;
+
+            sltDataset.setGTS(
+                m,
+                (size_t) numArcs + numNodes - traxel_map[n].Id,
+                (size_t)appearance_labels[n]); // CHECK the order of appearance variables in model!!!
+        }
+
+        for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
+            std::cout << "t= " << timestep_map[n] << "   " << traxel_map_sub_graph[n].Id <<"   " << numNodes - traxel_map[n].Id <<" (disappearance) = (" << disappearance_labels[n] << ")" << std::endl;
+
+            sltDataset.setGTS(
+                m,
+                (size_t) numArcs + numNodes + numNodes - traxel_map[n].Id, // CHECK the order of disappearance variables in model!!!
+                (size_t)disappearance_labels[n]);
+        }
+
+        size_t number_of_division_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->get_number_of_division_nodes();
+        std::vector<size_t> division_var_to_node_fun (number_of_division_nodes);
         size_t indexDivNodes=0;
         for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
             std::cout << traxel_map[n].Id << "division_labels[n]" << (size_t)division_labels[n] << std::endl;
@@ -516,19 +519,21 @@ void StructuredLearningTracking::structuredLearning(
                 division_var_to_node_fun[indexDivNodes] = traxel_map[n].Id;
                 std::cout << "t= " << timestep_map[n] << "   " << traxel_map_sub_graph[n].Id <<"   " << traxel_map[n].Id << "    " << division_var_to_node_fun[indexDivNodes] << std::endl;
 
-                sltDataset.setGTS(m,(size_t) 2*numNodes + numArcs + indexDivNodes,(size_t)division_labels[n]);
+                sltDataset.setGTS(
+                    m,
+                    (size_t) numArcs + 2*numNodes + indexDivNodes, // CHECK the order of division variables in model!!!
+                    (size_t)division_labels[n]);
                 ++indexDivNodes;
             }
         }
-        assert ( indexDivNodes == number_of_division_nodes_);
+        assert ( indexDivNodes == number_of_division_nodes);
 
-//        for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n){
-//            std::cout << "t= " << timestep_map[n] << "   " << traxel_map_sub_graph[n].Id <<"   " << traxel_map[n].Id <<" (division) = (" <<  division_labels[n] << ")" << std::endl;
+        std::cout << "GTS:" << std::endl;
+        for(size_t i=0; i<sltDataset.getModel(m).numberOfVariables();++i)
+            std::cout << sltDataset.getGT(m)[i];
+        std::cout << std::endl;
 
-//            // only if more than one arc out
-//        }
-
-        sltDataset.build_model_with_loss(m);  // <--- THIS NEEDS to be called, but: ARE my factors set up properly with LEARNABLE functions???
+        sltDataset.build_model_with_loss(m);
         std::cout << "TOTAL NUMBER OF ARCS in the subgraph = " << numArcs << std::endl;
 
     } // for model m
