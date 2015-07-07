@@ -61,7 +61,8 @@ public:
             boost::python::object transition_classifier = boost::python::object(),
             bool with_optical_correction = false,
             SolverType solver = CplexSolver,
-            unsigned int num_threads = 0):
+            unsigned int num_threads = 0,
+            bool with_cross_timestep_constraint = false):
             max_number_objects(max_number_objects),
             detection(detection),
             division(division),
@@ -86,7 +87,8 @@ public:
             transition_classifier(transition_classifier),
             with_optical_correction(with_optical_correction),
             solver_(solver),
-            num_threads(num_threads)
+            num_threads(num_threads),
+            with_cross_timestep_constraint(with_cross_timestep_constraint)
         {}
 
         // empty parameter needed for python
@@ -118,6 +120,7 @@ public:
         bool with_optical_correction;
         SolverType solver_;
         unsigned int num_threads;
+        bool with_cross_timestep_constraint;
     };
 
 public:

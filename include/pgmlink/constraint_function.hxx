@@ -342,6 +342,29 @@ protected:
     size_t value;
 };
 
+//------------------------------------------------------------------------
+// SumEqualityConstraintFunction
+//------------------------------------------------------------------------
+/// expects a configuration of size 1, containing a disappearance node
+template<class T, class I, class L>
+class SumEqualityConstraintFunction: public ConstraintFunction<T, I, L>
+{
+public:
+    template<class SHAPE_ITERATOR>
+    SumEqualityConstraintFunction(SHAPE_ITERATOR shape_begin,
+                                SHAPE_ITERATOR shape_end):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end)
+    {}
+
+    SumEqualityConstraintFunction() {}
+
+protected:
+    virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
+    {
+        throw new std::runtime_error("Not yet implemented");
+    }
+};
+
 } // namespace pgm
 } // namespace pgmlink
 
@@ -364,6 +387,7 @@ using pgmlink::pgm::OutgoingConstraintFunction;
 using pgmlink::pgm::OutgoingNoDivConstraintFunction;
 using pgmlink::pgm::DetectionConstraintFunction;
 using pgmlink::pgm::FixNodeValueConstraintFunction;
+using pgmlink::pgm::SumEqualityConstraintFunction;
 
 //------------------------------------------------------------------------
 /// \cond HIDDEN_SYMBOLS
@@ -412,6 +436,16 @@ struct FunctionRegistration< FixNodeValueConstraintFunction<T, I, L> >
         Id = opengm::FUNCTION_TYPE_ID_OFFSET
     };
 };
+
+template<class T, class I, class L>
+struct FunctionRegistration< SumEqualityConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
 
 template<>
 struct FunctionRegistration< marray::Marray<double> >
@@ -778,6 +812,67 @@ void FunctionSerialization<FixNodeValueConstraintFunction<T, I, L> >::deserializ
     INDEX_INPUT_ITERATOR indexOutIterator,
     VALUE_INPUT_ITERATOR valueOutIterator,
     FixNodeValueConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+//------------------------------------------------------------------------
+/// Serialization for the Sum Equality constraint function
+template<class T, class I, class L>
+class FunctionSerialization< SumEqualityConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const SumEqualityConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const SumEqualityConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const SumEqualityConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, SumEqualityConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<SumEqualityConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const SumEqualityConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<SumEqualityConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const SumEqualityConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< SumEqualityConstraintFunction<T, I, L> >::serialize
+(
+    const SumEqualityConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<SumEqualityConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    SumEqualityConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me

@@ -626,6 +626,66 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
         }
     }
 
+    if(param_.with_cross_timestep_constraint)
+    {
+        // does not work with tracklets at the moment
+        assert(!param_.with_tracklets);
+
+        ////
+        //// timestep-pairwise conservation law
+        ////
+        typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+        node_timestep_map_t& node_timestep_map = g.get(node_timestep());
+        std::vector<size_t> appearance_and_division_nodes;
+        std::vector<size_t> disappearance_nodes;
+        std::vector<size_t> transition_nodes;
+
+        for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
+        {
+            disappearance_nodes.clear();
+            appearance_and_division_nodes.clear();
+
+            // use transition nodes from previous timestep and connect them with disappearance nodes of this timestep
+            if(transition_nodes.size() > 0)
+            {
+                for(node_timestep_map_t::ItemIt n(node_timestep_map, t); n != lemon::INVALID; ++n)
+                {
+                    disappearance_nodes.push_back(dis_node_map_[n]);
+                }
+
+                constraint_pool_.add_constraint(pgm::ConstraintPool::SumEqualityConstraint(transition_nodes,
+                                                                                           disappearance_nodes));
+            }
+            transition_nodes.clear();
+
+            // create sets of appearance+division nodes and outgoing transition nodes and ensure equal flow
+            for(node_timestep_map_t::ItemIt n(node_timestep_map, t); n != lemon::INVALID; ++n)
+            {
+                // appearance node
+                appearance_and_division_nodes.push_back(app_node_map_[n]);
+
+                // division node if present
+                if(div_node_map_.count(n) > 0)
+                {
+                    appearance_and_division_nodes.push_back(div_node_map_[n]);
+                }
+
+                // connected outgoing transitions
+                for(HypothesesGraph::base_graph::OutArcIt a(g, n); a != lemon::INVALID; ++a)
+                {
+                    transition_nodes.push_back(arc_map_[a]);
+                }
+            }
+
+            // don't add constraint for last frame
+            if(transition_nodes.size() > 0)
+            {
+                constraint_pool_.add_constraint(pgm::ConstraintPool::SumEqualityConstraint(appearance_and_division_nodes,
+                                                                                           transition_nodes));
+            }
+        }
+    }
+
     constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
 

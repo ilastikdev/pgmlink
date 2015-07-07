@@ -565,7 +565,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::object transition_classifier,
-        unsigned int num_threads)
+        unsigned int num_threads,
+        bool with_cross_timestep_constraint)
 {
     ConservationTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
@@ -585,7 +586,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             cplex_timeout,
             transition_classifier,
             solver_,
-            num_threads);
+            num_threads,
+            with_cross_timestep_constraint);
     uncertainty_param_ = uncertaintyParam;
 
     return track_from_param(param);
@@ -660,7 +662,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         double cplex_timeout,
         boost::python::api::object transition_classifier,
         ConservationTracking::SolverType solver,
-        unsigned int num_threads)
+        unsigned int num_threads,
+        bool with_cross_timestep_constraint)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
@@ -718,7 +721,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         transition_classifier,
         with_optical_correction_,
         solver,
-        num_threads
+        num_threads,
+        with_cross_timestep_constraint
     );
 
     std::vector<double> model_weights = {detection_weight, division_weight, transition_weight, disappearance_cost, appearance_cost};

@@ -51,8 +51,9 @@ public:
     typedef OutgoingNoDivConstraintFunction<Energy, size_t, size_t> OutNoDivConsFunc;
     typedef DetectionConstraintFunction<Energy, size_t, size_t> DetConsFunc;
     typedef FixNodeValueConstraintFunction<Energy, size_t, size_t> FixNodeValConsFunc;
+    typedef SumEqualityConstraintFunction<Energy, size_t, size_t> SumEqConsFunc;
 
-    typedef OPENGM_TYPELIST_7(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>) ogmFunctionsTypelist;
+    typedef OPENGM_TYPELIST_8(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, SumEqConsFunc, marray::Marray<Energy>) ogmFunctionsTypelist;
     typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
     typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
     typedef opengm::Minimizer ogmAccumulator;

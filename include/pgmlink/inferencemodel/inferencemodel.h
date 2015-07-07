@@ -32,6 +32,7 @@ public: // Parameter object
         bool with_misdetections_allowed;
         bool with_appearance;
         bool with_disappearance;
+        bool with_cross_timestep_constraint;
 
         boost::function<double (const Traxel&, const size_t)> detection;
         boost::function<double (const Traxel&, const size_t)> division;
