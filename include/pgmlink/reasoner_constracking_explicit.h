@@ -1,5 +1,5 @@
-#ifndef CONSTRACKING_REASONER_H
-#define CONSTRACKING_REASONER_H
+#ifndef CONSTRACKING_REASONER_EXPLICIT_H
+#define CONSTRACKING_REASONER_EXPLICIT_H
 
 #include <map>
 #include <boost/function.hpp>
@@ -11,7 +11,7 @@
 #include "pgmlink/reasoner.h"
 #include "pgmlink/features/feature.h"
 #include "pgmlink/uncertaintyParameter.h"
-#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
 #include "pgmlink/inferencemodel/perturbation/perturbation.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
@@ -23,7 +23,7 @@ namespace pgmlink
 
 class Traxel;
 
-class ConservationTracking : public Reasoner
+class ConservationExplicitTracking : public Reasoner
 {
 public:
     enum SolverType
@@ -125,8 +125,8 @@ public:
 public:
     typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
 
-    ConservationTracking(const Parameter& param);
-    ~ConservationTracking();
+    ConservationExplicitTracking(const Parameter& param);
+    ~ConservationExplicitTracking();
 
     virtual void infer();
     virtual void conclude(HypothesesGraph&);
@@ -149,7 +149,7 @@ public:
 
     HypothesesGraph *get_prepared_graph(HypothesesGraph &hypotheses);
     //boost::shared_ptr<InferenceModel> create_inference_model();
-    virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
+    virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationExplicitTracking::Parameter& param);
     boost::shared_ptr<InferenceModel> create_inference_model();
     void setInferenceModel(boost::shared_ptr<InferenceModel> inference_model);
     boost::shared_ptr<InferenceModel> getInferenceModel();
@@ -217,7 +217,7 @@ protected: // members
 /******************/
 
 // template< typename table_t, typename const_iter >
-//   void ConservationTracking::add_factor( const table_t& table, const_iter first_idx, const_iter last_idx ){
+//   void ConservationExplicitTracking::add_factor( const table_t& table, const_iter first_idx, const_iter last_idx ){
 //   OpengmModelDeprecated::FunctionIdentifier id=pgm_->Model()->addFunction(table);
 //   pgm_->Model()->addFactor(id, first_idx, last_idx);
 // }

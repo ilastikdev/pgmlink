@@ -13,10 +13,10 @@
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
-#include "pgmlink/reasoner_constracking.h"
+#include "pgmlink/reasoner_constracking_explicit.h"
 #include "pgmlink/tracking.h"
 #include "pgmlink/traxels.h"
-#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/structuredLearningTracking.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
@@ -52,7 +52,7 @@ typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
         pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
 
 
-ConservationTracking::ConservationTracking(const Parameter &param)
+ConservationExplicitTracking::ConservationExplicitTracking(const Parameter &param)
     : max_number_objects_(param.max_number_objects),
       detection_(param.detection),
       detectionNoWeight_(param.detectionNoWeight),
@@ -109,17 +109,17 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     perturbed_inference_model_param_.transition_weight = transition_weight_;
 }
 
-ConservationTracking::~ConservationTracking()
+ConservationExplicitTracking::~ConservationExplicitTracking()
 {
 }
 
-double ConservationTracking::forbidden_cost() const
+double ConservationExplicitTracking::forbidden_cost() const
 {
     return forbidden_cost_;
 }
 
 
-std::string ConservationTracking::get_export_filename(size_t iteration, const std::string& orig_file_name)
+std::string ConservationExplicitTracking::get_export_filename(size_t iteration, const std::string& orig_file_name)
 {
     std::stringstream export_filename;
     if(!orig_file_name.empty())
@@ -141,7 +141,7 @@ std::string ConservationTracking::get_export_filename(size_t iteration, const st
     return export_filename.str();
 }
 
-boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
+boost::shared_ptr<Perturbation> ConservationExplicitTracking::create_perturbation()
 {
     // instanciate perturbation depending on distribution type
     switch(perturbed_inference_model_param_.distributionId)
@@ -164,7 +164,7 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
     }
 }
 
-boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(ConservationTracking::Parameter& param)
+boost::shared_ptr<InferenceModel> ConservationExplicitTracking::create_inference_model(ConservationExplicitTracking::Parameter& param)
 {
     if(solver_ == CplexSolver)
     {
@@ -188,7 +188,7 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(C
 #endif // WITH_DPCT
 }
 
-boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
+boost::shared_ptr<InferenceModel> ConservationExplicitTracking::create_inference_model()
 {
     if(solver_ == CplexSolver)
     {
@@ -209,7 +209,7 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
 #endif // WITH_DPCT
 }
 
-boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
+boost::shared_ptr<InferenceModel> ConservationExplicitTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
 {
     if(solver_ == CplexSolver)
     {
@@ -229,14 +229,14 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inferen
 #endif
 }
 
-HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypotheses)
+HypothesesGraph* ConservationExplicitTracking::get_prepared_graph(HypothesesGraph & hypotheses)
 {
     HypothesesGraph *graph;
 
     // for formulate, add_constraints, add_finite_factors: distinguish graph & tracklet_graph
     if (with_tracklets_)
     {
-        LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
+        LOG(logINFO) << "ConservationExplicitTracking::perturbedInference: generating tracklet graph";
 //        tracklet_graph_.clear();
         tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
         graph = &tracklet_graph_;
@@ -251,15 +251,15 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
     return graph;
 }
 
-void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
+void ConservationExplicitTracking::perturbedInference(HypothesesGraph & hypotheses)
 {
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
-    LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
-    LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
+    LOG(logINFO) << "ConservationExplicitTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
+    LOG(logINFO) << "ConservationExplicitTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
+    LOG(logDEBUG) << "ConservationExplicitTracking::perturbedInference: formulate ";
 
-    LOG(logDEBUG) << "ConservationTracking::perturbedInference: uncertainty parameter print";
+    LOG(logDEBUG) << "ConservationExplicitTracking::perturbedInference: uncertainty parameter print";
     uncertainty_param_.print();
 
     //m-best: if perturbation is set to m-best, specify number of solutions. Otherwise, we expect only one solution.
@@ -383,13 +383,13 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     compute_relative_uncertainty(graph);
 }
 
-void ConservationTracking::enableFixingLabeledAppearanceNodes()
+void ConservationExplicitTracking::enableFixingLabeledAppearanceNodes()
 {
     // use all active nodes and fix them to the active value in the respective inference model
     use_app_node_labels_to_fix_values_ = true;
 }
 
-void ConservationTracking::compute_relative_uncertainty(HypothesesGraph* graph)
+void ConservationExplicitTracking::compute_relative_uncertainty(HypothesesGraph* graph)
 {
     graph->add(relative_uncertainty());
 
@@ -411,27 +411,27 @@ void ConservationTracking::compute_relative_uncertainty(HypothesesGraph* graph)
     }
 }
 
-void ConservationTracking::infer()
+void ConservationExplicitTracking::infer()
 {
     throw std::runtime_error("Not implemented");
 }
 
-void ConservationTracking::conclude(HypothesesGraph &)
+void ConservationExplicitTracking::conclude(HypothesesGraph &)
 {
     throw std::runtime_error("Not implemented");
 }
 
-void ConservationTracking::formulate(const HypothesesGraph &)
+void ConservationExplicitTracking::formulate(const HypothesesGraph &)
 {
     // nothing to do
 }
 
-const std::vector<ConservationTracking::IlpSolution> &ConservationTracking::get_ilp_solutions() const
+const std::vector<ConservationExplicitTracking::IlpSolution> &ConservationExplicitTracking::get_ilp_solutions() const
 {
     return solutions_;
 }
 
-void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTracking::IlpSolution>& solutions)
+void ConservationExplicitTracking::set_ilp_solutions(const std::vector<ConservationExplicitTracking::IlpSolution>& solutions)
 {
     if(solutions.size() == 0)
     {
@@ -440,35 +440,35 @@ void ConservationTracking::set_ilp_solutions(const std::vector<ConservationTrack
     }
 
     solutions_.clear();
-    for(std::vector<ConservationTracking::IlpSolution>::const_iterator sol_it = solutions.begin();
+    for(std::vector<ConservationExplicitTracking::IlpSolution>::const_iterator sol_it = solutions.begin();
             sol_it != solutions.end();
             ++sol_it)
     {
-        solutions_.push_back(ConservationTracking::IlpSolution(*sol_it));
+        solutions_.push_back(ConservationExplicitTracking::IlpSolution(*sol_it));
     }
 }
 
-void ConservationTracking::reset()
+void ConservationExplicitTracking::reset()
 {
 //    solutions_.clear();
 }
 
-boost::python::dict convertFeatureMapToPyDict(FeatureMap map)
-{
-    boost::python::dict dictionary;
-    for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter)
-    {
-        dictionary[iter->first] = iter->second;
-    }
-    return dictionary;
-}
+//boost::python::dict convertFeatureMapToPyDict(FeatureMap map)
+//{
+//    boost::python::dict dictionary;
+//    for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter)
+//    {
+//        dictionary[iter->first] = iter->second;
+//    }
+//    return dictionary;
+//}
 
-void ConservationTracking::setInferenceModel(boost::shared_ptr<InferenceModel> inference_model)
+void ConservationExplicitTracking::setInferenceModel(boost::shared_ptr<InferenceModel> inference_model)
 {
     inference_model_ = inference_model;
 }
 
-boost::shared_ptr<InferenceModel> ConservationTracking::getInferenceModel(){
+boost::shared_ptr<InferenceModel> ConservationExplicitTracking::getInferenceModel(){
     return inference_model_;
 }
 

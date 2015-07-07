@@ -12,7 +12,10 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <opengm/learning/loss/hammingloss.hxx>
-#include <opengm/learning/subgradient_ssvm.hxx>
+//#include <opengm/learning/solver/CplexBackend.h>
+#include <opengm/learning/solver/QuadraticSolverBackend.h>
+#include <opengm/learning/struct-max-margin.hxx>
+//#include <opengm/learning/subgradient_ssvm.hxx>
 
 #include "pgmlink/randomforest.h"
 #include "pgmlink/features/feature.h"
@@ -20,7 +23,7 @@
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_pgm.h"
-#include "pgmlink/reasoner_constracking.h"
+#include "pgmlink/reasoner_constracking_explicit.h"
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/structuredLearningTracking.h"
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
@@ -83,7 +86,7 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
     return result;
 }
 }
-void StructuredLearningTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
+void StructuredLearningTracking::prepareTracking(ConservationExplicitTracking& pgm, ConservationExplicitTracking::Parameter& param)
 {
     inference_model_param_.max_number_objects = param.max_number_objects;
     inference_model_param_.with_constraints = param.with_constraints;
@@ -106,18 +109,18 @@ void StructuredLearningTracking::prepareTracking(ConservationTracking& pgm, Cons
     boost::shared_ptr<InferenceModel> inference_model =
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param));
 
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)0,param.detection_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)1,param.division_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)2,param.transition_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)3,param.appearance_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->setWeight((size_t)4,param.disappearance_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.setWeight((size_t)0,param.detection_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.setWeight((size_t)1,param.division_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.setWeight((size_t)2,param.transition_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.setWeight((size_t)3,param.appearance_weight);
+    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.setWeight((size_t)4,param.disappearance_weight);
     numWeights_ = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->weights_.size();
 
     pgm.setInferenceModel(inference_model);
     std::cout << " AFTER  --------------------- setInferenceModel" << std::endl;
 }
 
-boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(ConservationTracking::Parameter& param)
+boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(ConservationExplicitTracking::Parameter& param)
 {
 
     ep_gap_ = param.ep_gap;
@@ -398,7 +401,7 @@ void StructuredLearningTracking::structuredLearning(
 
         // structured learning tracking inference model
         // from ConsTracking::track
-        ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+        ConservationExplicitTracking::Parameter param = get_conservation_tracking_parameters(
                 forbidden_cost,
                 ep_gap,
                 with_tracklets,
@@ -419,11 +422,11 @@ void StructuredLearningTracking::structuredLearning(
         uncertainty_param_ = uncertaintyParam;
 
         // from ConsTracking::track_from_param
-        ConservationTracking pgm(param);
+        ConservationExplicitTracking pgm(param);
 
 
 
-        // from ConservationTracking::perturbedInference
+        // from ConservationExplicitTracking::perturbedInference
         HypothesesGraph *graph = pgm.get_prepared_graph(*hypothesesSubGraph);
 
         //traxel_map = graph->get(node_traxel());
@@ -538,19 +541,26 @@ void StructuredLearningTracking::structuredLearning(
 
     } // for model m
 
-    std::cout << "................................................ SubgradientSSVM :" << std::endl;
-    opengm::learning::SubgradientSSVM<DSS>::Parameter para;
-    para.maxIterations_ = 50;
-    para.C_ = 100.0;
-    para.learningRate_ = 0.1;
-    opengm::learning::SubgradientSSVM<DSS> learner(sltDataset,para);
+//    std::cout << "................................................ SubgradientSSVM :" << std::endl;
+//    opengm::learning::SubgradientSSVM<DSS>::Parameter para;
+//    opengm::learning::SubgradientSSVM<DSS> learner(sltDataset,para);
+//    para.maxIterations_ = 50;
+//    para.C_ = 100.0;
+//    para.learningRate_ = 0.1;
+
+    std::cout << "................................................ StructMaxMargin :" << std::endl;
+    opengm::learning::StructMaxMargin<DSS>::Parameter para;
+    opengm::learning::StructMaxMargin<DSS> learner(sltDataset,para);
 
     typedef opengm::LPCplex<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::Minimizer> INFCPLEX;
     INFCPLEX::Parameter infPara;
     infPara.integerConstraint_ = true;
 
-    //learner.learn<INFCPLEX>(infPara);
+    std::cout << "................................................ SubgradientSSVM :4" << std::endl;
+    learner.learn<INFCPLEX>(infPara);
+    std::cout << "................................................ SubgradientSSVM :5" << std::endl;
     const DSS::Weights& weights = learner.getWeights();
+    std::cout << "................................................ SubgradientSSVM :6" << std::endl;
     std::cout <<"C++ Weights: ";
     for (size_t i=0; i<weights.numberOfWeights(); ++i){
        std::cout << weights[i] <<" ";

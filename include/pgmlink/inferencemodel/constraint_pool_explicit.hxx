@@ -1,5 +1,5 @@
-#ifndef CONSTRAINT_POOL_HXX
-#define CONSTRAINT_POOL_HXX
+#ifndef CONSTRAINT_POOL_EXPLICIT_HXX
+#define CONSTRAINT_POOL_EXPLICIT_HXX
 
 #include <map>
 #include <vector>
@@ -16,34 +16,27 @@ namespace pgmlink
 namespace pgm
 {
 
-//typedef OpengmModelDeprecated::ogmGraphicalModel ConstraintPoolOpengmModel;
-//typedef opengm::LPCplex<ConstraintPoolConstraintPoolOpengmModel,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
-typedef PertGmType ConstraintPoolOpengmModel;
-typedef opengm::LPCplex<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
-
+//typedef OpengmModelDeprecated::ogmGraphicalModel ConstraintPoolExplicitOpengmModel;
+//typedef opengm::LPCplex<ConstraintPoolExplicitOpengmModel,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolExplicitCplexOptimizer;
 typedef PertExplicitGmType ConstraintPoolExplicitOpengmModel;
 typedef opengm::LPCplex<pgmlink::PertExplicitGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolExplicitCplexOptimizer;
 
 //------------------------------------------------------------------------
-// ConstraintPool
+// ConstraintPoolExplicit
 //------------------------------------------------------------------------
 /// Of the incoming and outgoing constraint type, we will have instatiations of different order.
 /// The constraint pool contains a map indexed by the "constraint-function-signatures",
 /// pointing to the function object. When adding functions to the model we look up
 /// whether it is already present in here and just get the function identifier to create a factor.
-class ConstraintPool
+class ConstraintPoolExplicit
 {
 public:
-    typedef ConstraintPoolOpengmModel::ValueType ValueType;
-    typedef ConstraintPoolOpengmModel::LabelType LabelType;
-    typedef ConstraintPoolOpengmModel::IndexType IndexType;
-
-    typedef ConstraintPoolExplicitOpengmModel::ValueType ValueExplicitType;
-    typedef ConstraintPoolExplicitOpengmModel::LabelType LabelExplicitType;
-    typedef ConstraintPoolExplicitOpengmModel::IndexType IndexExplicitType;
+    typedef ConstraintPoolExplicitOpengmModel::ValueType ValueType;
+    typedef ConstraintPoolExplicitOpengmModel::LabelType LabelType;
+    typedef ConstraintPoolExplicitOpengmModel::IndexType IndexType;
 
 public:
-    ConstraintPool(ValueType big_m = 200.0,
+    ConstraintPoolExplicit(ValueType big_m = 200.0,
                    bool with_divisions = true,
                    bool with_appearance = true,
                    bool with_disappearance = true,
@@ -78,7 +71,7 @@ public:
     {
         if(enable)
         {
-            LOG(logWARNING) << "[ConstraintPool]: Forcing soft constraint not yet implemented";
+            LOG(logWARNING) << "[ConstraintPoolExplicit]: Forcing soft constraint not yet implemented";
         }
         force_softconstraint_ = enable;
     }
@@ -209,30 +202,30 @@ private:
 
 
 //------------------------------------------------------------------------
-// ConstraintPool - Implementation
+// ConstraintPoolExplicit - Implementation
 //------------------------------------------------------------------------
 
 template<class CONSTRAINT_TYPE>
-void ConstraintPool::add_constraint(const CONSTRAINT_TYPE&)
+void ConstraintPoolExplicit::add_constraint(const CONSTRAINT_TYPE&)
 {
     throw std::logic_error("only template specializations of this method should be called");
 }
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::IncomingConstraint& constraint);
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::IncomingConstraint& constraint);
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& constraint);
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::OutgoingConstraint& constraint);
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& constraint);
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::DetectionConstraint& constraint);
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint& constraint);
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::FixNodeValueConstraint& constraint);
 
 //------------------------------------------------------------------------
 template<class GM, class INF>
-void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
+void ConstraintPoolExplicit::add_constraints_to_problem(GM& model, INF& inf)
 {
     // TODO: handle force_softconstraint_
 
@@ -244,7 +237,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 }
 
 template<class GM, class INF>
-void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<size_t, size_t>& index_mapping)
+void ConstraintPoolExplicit::add_constraints_to_problem(GM& model, INF& inf, std::map<size_t, size_t>& index_mapping)
 {
     std::vector<IncomingConstraint> remapped_incoming_constraints;
     std::vector<OutgoingConstraint> remapped_outgoing_constraints;
@@ -332,9 +325,9 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
-void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
+void ConstraintPoolExplicit::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
-    LOG(logINFO) << "[ConstraintPool]: Using soft constraints";
+    LOG(logINFO) << "[ConstraintPoolExplicit]: Using soft constraints";
     std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
     for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -369,143 +362,88 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
 //------------------------------------------------------------------------
 // specialization for IncomingConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::IncomingConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::IncomingConstraint>& constraints
-     );
-
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::IncomingConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     IncomingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::IncomingConstraint>
      (
          ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::IncomingConstraint>& constraints
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::IncomingConstraint>& constraints
      );
 
 //------------------------------------------------------------------------
 // specialization for OutgoingConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::OutgoingConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
-     );
-
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::OutgoingConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     OutgoingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::OutgoingConstraint>
      (
          ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
      );
 
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::OutgoingConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
-     );
-
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::OutgoingConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     OutgoingNoDivConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::OutgoingConstraint>
      (
          ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
      );
 
 //------------------------------------------------------------------------
 // specialization for DetectionConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::DetectionConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::DetectionConstraint>& constraints
-     );
-
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::DetectionConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     DetectionConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::DetectionConstraint>
      (
          ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::DetectionConstraint>& constraints
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::DetectionConstraint>& constraints
      );
 
 //------------------------------------------------------------------------
 // specialization for FixNodeValueConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     FixNodeValueConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::FixNodeValueConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
-     );
-
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     FixNodeValueConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::FixNodeValueConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     FixNodeValueConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::FixNodeValueConstraint>
      (
          ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::FixNodeValueConstraint>& constraints
      );
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>&, const CONSTRAINT_TYPE&)
 {
     throw std::logic_error("only template specializations of this method should be called");
 }
 
 template<>
-void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint);
+void ConstraintPoolExplicit::constraint_indices<ConstraintPoolExplicit::IncomingConstraint>(std::vector<ConstraintPoolExplicit::IndexType>& indices, const IncomingConstraint& constraint);
 
 template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const OutgoingConstraint& constraint);
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const OutgoingConstraint& constraint);
 
 template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const DetectionConstraint& constraint);
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const DetectionConstraint& constraint);
 
 template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const FixNodeValueConstraint& constraint);
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const FixNodeValueConstraint& constraint);
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
-bool ConstraintPool::check_all_constraint_vars_in_mapping(std::map<size_t, size_t>& index_mapping, const CONSTRAINT_TYPE& constraint)
+bool ConstraintPoolExplicit::check_all_constraint_vars_in_mapping(std::map<size_t, size_t>& index_mapping, const CONSTRAINT_TYPE& constraint)
 {
     std::vector<size_t> indices;
     constraint_indices(indices, constraint);
@@ -523,31 +461,31 @@ bool ConstraintPool::check_all_constraint_vars_in_mapping(std::map<size_t, size_
 
 //------------------------------------------------------------------------
 template<class FUNCTION_TYPE, class CONSTRAINT_TYPE>
-void ConstraintPool::configure_function(FUNCTION_TYPE* func, CONSTRAINT_TYPE constraint)
+void ConstraintPoolExplicit::configure_function(FUNCTION_TYPE* func, CONSTRAINT_TYPE constraint)
 {
     throw std::logic_error("only template specializations of this method should be called");
 }
 
 template<>
-void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPool::IncomingConstraint);
+void ConstraintPoolExplicit::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPoolExplicit::IncomingConstraint);
 
 template<>
-void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPool::OutgoingConstraint);
+void ConstraintPoolExplicit::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPoolExplicit::OutgoingConstraint);
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::IncomingConstraint);
+void ConstraintPoolExplicit::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPoolExplicit::IncomingConstraint);
 
 template<>
-void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::DetectionConstraint);
+void ConstraintPoolExplicit::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPoolExplicit::DetectionConstraint);
 
 template<>
-void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint constraint);
+void ConstraintPoolExplicit::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPoolExplicit::FixNodeValueConstraint constraint);
 
 //------------------------------------------------------------------------
 // Serialization
 //------------------------------------------------------------------------
 template<class Archive>
-void ConstraintPool::serialize(Archive & ar, const unsigned int)
+void ConstraintPoolExplicit::serialize(Archive & ar, const unsigned int)
 {
     // config first
     ar & big_m_;
@@ -566,14 +504,14 @@ void ConstraintPool::serialize(Archive & ar, const unsigned int)
 }
 
 template<class Archive>
-void ConstraintPool::IncomingConstraint::serialize(Archive & ar, const unsigned int)
+void ConstraintPoolExplicit::IncomingConstraint::serialize(Archive & ar, const unsigned int)
 {
     ar & transition_nodes;
     ar & disappearance_node;
 }
 
 template<class Archive>
-void ConstraintPool::OutgoingConstraint::serialize(Archive & ar, const unsigned int)
+void ConstraintPoolExplicit::OutgoingConstraint::serialize(Archive & ar, const unsigned int)
 {
     ar & appearance_node;
     ar & division_node;
@@ -581,14 +519,14 @@ void ConstraintPool::OutgoingConstraint::serialize(Archive & ar, const unsigned 
 }
 
 template<class Archive>
-void ConstraintPool::DetectionConstraint::serialize(Archive & ar, const unsigned int)
+void ConstraintPoolExplicit::DetectionConstraint::serialize(Archive & ar, const unsigned int)
 {
     ar & appearance_node;
     ar & disappearance_node;
 }
 
 template<class Archive>
-void ConstraintPool::FixNodeValueConstraint::serialize(Archive & ar, const unsigned int)
+void ConstraintPoolExplicit::FixNodeValueConstraint::serialize(Archive & ar, const unsigned int)
 {
     ar & value;
     ar & node;
@@ -597,4 +535,4 @@ void ConstraintPool::FixNodeValueConstraint::serialize(Archive & ar, const unsig
 } // namespace pgm
 } // namespace pgmlink
 
-#endif // CONSTRAINT_POOL_HXX
+#endif // CONSTRAINT_POOL_EXPLICIT_HXX

@@ -405,16 +405,16 @@ typedef double ValueType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
-//typedef opengm::GraphicalModel
-//<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-//<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType>, pgm::OpengmModelDeprecated::LSumOfExpertsFunc>::type,
-//opengm::DiscreteSpace<IndexType, LabelType> >
-//PertGmType;
 typedef opengm::GraphicalModel
 <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-<opengm::ExplicitFunction<ValueType, IndexType, LabelType>, opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType>, pgm::OpengmModelDeprecated::LSumOfExpertsFunc>::type,
+<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType>, pgm::OpengmModelDeprecated::LSumOfExpertsFunc>::type,
 opengm::DiscreteSpace<IndexType, LabelType> >
 PertGmType;
+typedef opengm::GraphicalModel
+<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
+<opengm::ExplicitFunction<ValueType, IndexType, LabelType>, opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , pgm::OpengmModelDeprecated::LSumOfExpertsFunc>::type,
+opengm::DiscreteSpace<IndexType, LabelType> >
+PertExplicitGmType;
 
 } /* namespace pgmlink */
 

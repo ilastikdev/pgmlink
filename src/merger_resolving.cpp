@@ -894,6 +894,138 @@ void resolve_graph(const HypothesesGraph& src,
     translate_property_bool_map<arc_active, HypothesesGraph::Arc>(dest, src, acr);
 }
 
+void resolve_graph_explicit(const HypothesesGraph& src,
+                   HypothesesGraph& dest,
+                   boost::function<double(const double)> transition,
+                   double ep_gap,
+                   bool with_tracklets,
+                   const double transition_parameter,
+                   const bool with_constraints,
+                   boost::python::object transitionClassifier,
+                   ConservationExplicitTracking::SolverType solver)
+{
+
+    // Optimize the graph built by the class MergerResolver.
+    // Up to here everything is only graph (nodes, arcs) based
+    // in this function this generality is lost by
+    // introducing the traxel and division property
+    // In general this should not matter as keys
+    // not present in a lemon::IterableBool/ValueMap
+    // will be default constructed.
+    // Nonetheless an approach that is free of using
+    // those properties unless you explicitly say so
+    // is desirable.
+
+    LOG(logDEBUG) << "resolve_graph() entered";
+
+    // add properties
+    if (!dest.has_property(node_traxel()))
+    {
+        dest.add(node_traxel());
+    }
+    if (!dest.has_property(node_tracklet()))
+    {
+        dest.add(node_tracklet());
+    }
+    if (!dest.has_property(tracklet_intern_dist()))
+    {
+        dest.add(tracklet_intern_dist());
+    }
+    if (!dest.has_property(arc_distance()))
+    {
+        dest.add(arc_distance());
+    }
+    if (!dest.has_property(node_originated_from()))
+    {
+        dest.add(node_originated_from());
+    }
+
+//  src.add(division_active()).add(arc_active()).add(node_active2());
+    dest.add(division_active()).add(arc_active()).add(node_active2());
+
+
+    // Storing references in nr and ar, cross references in
+    // ncr and acr.
+    std::map<HypothesesGraph::Node, HypothesesGraph::Node> nr;
+    std::map<HypothesesGraph::Arc, HypothesesGraph::Arc> ar;
+    std::map<HypothesesGraph::Node, HypothesesGraph::Node> ncr;
+    std::map<HypothesesGraph::Arc, HypothesesGraph::Arc> acr;
+    copy_hypotheses_graph_subset<node_resolution_candidate, arc_resolution_candidate>(src, dest, nr, ar, ncr, acr);
+
+    // if resulting graph is empty, nothing to be done here; return
+    if (lemon::countNodes(dest) == 0)
+    {
+        return;
+    }
+
+
+    // Setup parameters for conservation tracking
+    // to run as a global (== not greedy) nearest neighbor
+    // on the subgraph
+    std::vector<double> prob;
+    prob.push_back(0.0);
+    prob.push_back(1.0);
+    boost::function<double(const Traxel&, const size_t)> division = NegLnDivision(1); // weight 1
+    // boost::function<double(const double)> transition = NegLnTransition(1); // weight 1
+    boost::function<double(const Traxel&, const size_t)> detection = boost::bind<double>(NegLnConstant(1, prob), _2);
+    translate_property_value_map<node_traxel, HypothesesGraph::Node>(src, dest, nr);
+    translate_property_value_map<arc_distance, HypothesesGraph::Arc>(src, dest, ar);
+    translate_property_value_map<node_originated_from, HypothesesGraph::Node>(src, dest, nr);
+    translate_property_bool_map<division_active, HypothesesGraph::Node>(src, dest, nr);
+
+    // Storing original division nodes and their clones (pairwise)
+    std::map<HypothesesGraph::Node, HypothesesGraph::Node> division_splits;
+
+    // Store a mapping from outgoing arcs from the clone to
+    // outgoing arcs of the original division node
+    std::map<HypothesesGraph::Arc, HypothesesGraph::Arc> arc_cross_reference_divisions;
+
+    duplicate_division_nodes(dest, division_splits, arc_cross_reference_divisions);
+
+    boost::function<double(const Traxel&)> appearance_cost = ConstantFeature(0.0);
+    boost::function<double(const Traxel&)> disappearance_cost = ConstantFeature(0.0);
+
+    LOG(logDEBUG) << "resolve_graph(): calling conservation tracking";
+
+    // Construct conservation tracking and
+    // do inference.
+    ConservationExplicitTracking::Parameter param(
+        1, //max_number_objects_,
+        detection, //detection,
+        division, // division
+        transition, // transition
+        0, // forbidden_cost_,
+        ep_gap, // ep_gap_
+        with_tracklets, // with_tracklets_
+        false, // with_divisions_
+        disappearance_cost, // disappearance_cost_
+        appearance_cost, // appearance_cost
+        false, // with_misdetections_allowed
+        false, // with appearance
+        false, // with disappearance
+        transition_parameter,
+        true,// with_constraints,
+        UncertaintyParameter(),// uncertaintyParam,
+        1e75,// cplex_timeout,
+        0.,//division_weight,
+        0.,//detection_weight,
+        1.,//transition_weight
+        0.,//border_width
+        transitionClassifier,
+        false,
+        solver);
+
+    ConservationExplicitTracking pgm(param);
+
+    pgm.perturbedInference(dest);
+
+    // Remap results from clones to original nodes.
+    merge_split_divisions(dest, division_splits, arc_cross_reference_divisions);
+
+    // Remap active maps from subgraph to original hypotheses graph.
+    translate_property_bool_map<arc_active, HypothesesGraph::Arc>(dest, src, acr);
+}
+
 
 double calculate_BIC(int k, int n_samples, double regularization_weight, const ClusteringMlpackBase& gmm)
 {

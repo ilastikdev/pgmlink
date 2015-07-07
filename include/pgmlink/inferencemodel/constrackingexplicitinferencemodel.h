@@ -1,5 +1,5 @@
-#ifndef CONSTRACKINGINFERENCEMODEL_H
-#define CONSTRACKINGINFERENCEMODEL_H
+#ifndef CONSTRACKINGEXPLICITINFERENCEMODEL_H
+#define CONSTRACKINGEXPLICITINFERENCEMODEL_H
 
 #include <boost/function.hpp>
 
@@ -9,19 +9,18 @@
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
-#include "pgmlink/inferencemodel/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool_explicit.hxx"
 #include "pgmlink/inferencemodel/inferencemodel.h"
 
 namespace pgmlink
 {
 
 /**
- * @brief The ConsTrackingInferenceModel class builds the OpenGM model needed to run basic conservation tracking.
- * Derived classes such as PerturbedInferenceModel can extend the functionality to support more advanced models.
+ * @brief The ConsTrackingExplicitInferenceModel class builds the OpenGM model needed to run basic conservation tracking with explicit functions.
  * The general usage is to set up this inference model from a hypotheses graph, retrieve the OpenGM model, create
  * an optimizer, add the constraints, and run inference.
  */
-class ConsTrackingInferenceModel : public InferenceModel
+class ConsTrackingExplicitInferenceModel : public InferenceModel
 {
 public: // typedefs
     typedef double ValueType;
@@ -29,14 +28,14 @@ public: // typedefs
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
     typedef std::vector<LabelType> IlpSolution;
-    typedef PertGmType GraphicalModelType;
-    typedef opengm::LPCplex<PertGmType, pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizer;
+    typedef PertExplicitGmType GraphicalModelType;
+    typedef opengm::LPCplex<PertExplicitGmType, pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizer;
     typedef std::map<HypothesesGraph::Node, size_t> HypothesesGraphNodeMap;
     typedef std::map<HypothesesGraph::Arc, size_t> HypothesesGraphArcMap;
 
 public: // API
     // constructor
-    ConsTrackingInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout);
+    ConsTrackingExplicitInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout);
 
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&);
@@ -73,7 +72,7 @@ public: // API
     opengm::learning::Weights<double> weights_;
     // weights in the same order as in:
     // enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
-    void setWeight ( size_t, double);
+    //void setWeight ( size_t, double);
     GraphicalModelType model();
     unsigned int get_number_of_division_nodes();
 
@@ -114,7 +113,7 @@ protected: // members
     // optimizer
     cplex_optimizer::Parameter cplex_param_;
     boost::shared_ptr<cplex_optimizer> optimizer_;
-    pgm::ConstraintPool constraint_pool_;
+    pgm::ConstraintPoolExplicit constraint_pool_;
 
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;
@@ -130,11 +129,11 @@ protected: // members
 };
 
 template<class INF>
-void ConsTrackingInferenceModel::add_constraints(INF &optimizer)
+void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
     constraint_pool_.add_constraints_to_problem(model_, optimizer);
 }
 
 } // namespace pgmlink
 
-#endif // CONSTRACKINGINFERENCEMODEL_H
+#endif // CONSTRACKINGEXPLICITINFERENCEMODEL_H

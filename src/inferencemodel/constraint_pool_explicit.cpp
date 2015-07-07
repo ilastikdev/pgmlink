@@ -1,4 +1,4 @@
-#include "pgmlink/inferencemodel/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool_explicit.hxx"
 
 namespace pgmlink
 {
@@ -6,13 +6,13 @@ namespace pgm
 {
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::IncomingConstraint& constraint)
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::IncomingConstraint& constraint)
 {
     incoming_constraints_.push_back(constraint);
 }
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& constraint)
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::OutgoingConstraint& constraint)
 {
     // here we separate the outgoing constraints with division node from those without,
     // such that the template specializations work
@@ -27,13 +27,13 @@ void ConstraintPool::add_constraint(const ConstraintPool::OutgoingConstraint& co
 }
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& constraint)
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::DetectionConstraint& constraint)
 {
     detection_constraints_.push_back(constraint);
 }
 
 template<>
-void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint& constraint)
+void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::FixNodeValueConstraint& constraint)
 {
     fix_node_value_constraints_.push_back(constraint);
 }
@@ -41,20 +41,20 @@ void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint
 //------------------------------------------------------------------------
 // specialization for IncomingConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     IncomingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::IncomingConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     IncomingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::IncomingConstraint>
      (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::IncomingConstraint>& constraints
+         ConstraintPoolExplicitOpengmModel& model,
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::IncomingConstraint>& constraints
      )
 {
-    LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for Incoming";
+    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
-        const ConstraintPool::IncomingConstraint& constraint = *it;
+        const ConstraintPoolExplicit::IncomingConstraint& constraint = *it;
 
         // nothing to do if no incoming
         if(constraint.transition_nodes.size() == 0)
@@ -94,20 +94,20 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 //------------------------------------------------------------------------
 // specialization for OutgoingConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     OutgoingConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::OutgoingConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     OutgoingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::OutgoingConstraint>
      (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+         ConstraintPoolExplicitOpengmModel& model,
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
      )
 {
-    LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for Outgoing";
+    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
-        const ConstraintPool::OutgoingConstraint& constraint = *it;
+        const ConstraintPoolExplicit::OutgoingConstraint& constraint = *it;
 
         // nothing to do if no outgoing
         if(constraint.transition_nodes.size() == 0)
@@ -261,19 +261,19 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 }
 
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     OutgoingNoDivConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::OutgoingConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     OutgoingNoDivConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::OutgoingConstraint>
      (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::OutgoingConstraint>& constraints
+         ConstraintPoolExplicitOpengmModel& model,
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
      )
 {
     // for the CPLEX specialization we do the same for with and without divisions
-    add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-                                   ConstraintPoolCplexOptimizer,
+    add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+                                   ConstraintPoolExplicitCplexOptimizer,
                                    OutgoingConstraintFunction<ValueType, IndexType, LabelType>,
                                    OutgoingConstraint>
                                    (model, optimizer, constraints);
@@ -282,20 +282,20 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 //------------------------------------------------------------------------
 // specialization for DetectionConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     DetectionConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::DetectionConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     DetectionConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::DetectionConstraint>
      (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::DetectionConstraint>& constraints
+         ConstraintPoolExplicitOpengmModel& model,
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::DetectionConstraint>& constraints
      )
 {
-    LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for Detection";
+    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
-        const ConstraintPool::DetectionConstraint& constraint = *it;
+        const ConstraintPoolExplicit::DetectionConstraint& constraint = *it;
 
         // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
         std::vector<size_t> cplex_idxs;
@@ -417,20 +417,20 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 //------------------------------------------------------------------------
 // specialization for FixNodeValueConstraintFunction
 template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     FixNodeValueConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::FixNodeValueConstraint>
+void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+     ConstraintPoolExplicitCplexOptimizer,
+     FixNodeValueConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+     ConstraintPoolExplicit::FixNodeValueConstraint>
      (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
+         ConstraintPoolExplicitOpengmModel& model,
+         ConstraintPoolExplicitCplexOptimizer& optimizer,
+         const std::vector<ConstraintPoolExplicit::FixNodeValueConstraint>& constraints
      )
 {
-    LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for FixNodeValue";
+    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
-        const ConstraintPool::FixNodeValueConstraint& constraint = *it;
+        const ConstraintPoolExplicit::FixNodeValueConstraint& constraint = *it;
 
         std::vector<size_t> cplex_idxs;
         std::vector<int> coeffs;
@@ -448,14 +448,14 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 
 //------------------------------------------------------------------------
 template<>
-void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint)
+void ConstraintPoolExplicit::constraint_indices<ConstraintPoolExplicit::IncomingConstraint>(std::vector<ConstraintPoolExplicit::IndexType>& indices, const IncomingConstraint& constraint)
 {
     indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
     indices.push_back(constraint.disappearance_node);
 }
 
 template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const OutgoingConstraint& constraint)
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const OutgoingConstraint& constraint)
 {
     indices.push_back(constraint.appearance_node);
 
@@ -469,39 +469,39 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 }
 
 template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const DetectionConstraint& constraint)
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const DetectionConstraint& constraint)
 {
     indices.push_back(constraint.disappearance_node);
     indices.push_back(constraint.appearance_node);
 }
 
 template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const FixNodeValueConstraint& constraint)
+void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const FixNodeValueConstraint& constraint)
 {
     indices.push_back(constraint.node);
 }
 
 //------------------------------------------------------------------------
 template<>
-void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, IncomingConstraint)
+void ConstraintPoolExplicit::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, IncomingConstraint)
 {
     // no flags needed
 }
 
 template<>
-void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, OutgoingConstraint)
+void ConstraintPoolExplicit::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, OutgoingConstraint)
 {
     // no flags needed
 }
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
+void ConstraintPoolExplicit::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
 {
     func->set_with_divisions(with_divisions_);
 }
 
 template<>
-void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, DetectionConstraint)
+void ConstraintPoolExplicit::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, DetectionConstraint)
 {
     func->set_with_appearance(with_appearance_);
     func->set_with_disappearance(with_disappearance_);
@@ -509,7 +509,7 @@ void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, I
 }
 
 template<>
-void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint constraint)
+void ConstraintPoolExplicit::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPoolExplicit::FixNodeValueConstraint constraint)
 {
     func->set_desired_value(constraint.value);
 }

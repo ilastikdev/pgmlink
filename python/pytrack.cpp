@@ -8,6 +8,7 @@
 #include "../include/pgmlink/features/tracking_feature_extractor.h"
 #include "../include/pgmlink/features/feature_extraction.h"
 #include "../include/pgmlink/reasoner_constracking.h"
+#include "../include/pgmlink/reasoner_constracking_explicit.h"
 #include "../include/pgmlink/tracking.h"
 #include "../include/pgmlink/structuredLearningTracking.h"
 #include "../include/pgmlink/log.h"
@@ -88,7 +89,6 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
     Py_END_ALLOW_THREADS
     return result;
 }
-
 
 vector<vector<vector<Event> > > pythonStructuredLearningTracking(
     StructuredLearningTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
@@ -257,6 +257,7 @@ void export_track()
     ;
 
     class_<ConservationTracking::Parameter>("ConservationTrackingParameter");
+    class_<ConservationExplicitTracking::Parameter>("ConservationExplicitTrackingParameter");
 
 
     class_<ConsTracking>("ConsTracking",
@@ -303,10 +304,19 @@ void export_track()
     .def("perturbedInference", &ConservationTracking::perturbedInference)
     .def("fixLabeledAppearanceNodes", &ConservationTracking::enableFixingLabeledAppearanceNodes)
     ;
+    class_<ConservationExplicitTracking, boost::noncopyable>("ConservationExplicitTracking",
+            init<ConservationExplicitTracking::Parameter>(args("parameters")))
+    .def("perturbedInference", &ConservationExplicitTracking::perturbedInference)
+    .def("fixLabeledAppearanceNodes", &ConservationExplicitTracking::enableFixingLabeledAppearanceNodes)
+    ;
 
     enum_<ConservationTracking::SolverType>("ConsTrackingSolverType")
     .value("CplexSolver", ConservationTracking::CplexSolver)
     .value("DynProgSolver", ConservationTracking::DynProgSolver)
+    ;
+    enum_<ConservationExplicitTracking::SolverType>("ConsExplicitTrackingSolverType")
+    .value("CplexSolver", ConservationExplicitTracking::CplexSolver)
+    .value("DynProgSolver", ConservationExplicitTracking::DynProgSolver)
     ;
 
     enum_<Event::EventType>("EventType")
@@ -357,7 +367,8 @@ void export_track()
     ;
 
     class_<StructuredLearningTracking>("StructuredLearningTracking",
-                                       init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType,int>(
+                                       init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double,
+                                       string, FieldOfView, string, ConservationExplicitTracking::SolverType,int>(
                              args("hypotheses_graph",
                                   "max_number_objects",
                                   "size_dependent_detection_prob",

@@ -11,7 +11,7 @@
 #include "pgmlink/pgm.h"
 #include "pgmlink/inferencemodel/constraint_pool.hxx"
 #include "pgmlink/inferencemodel/inferencemodel.h"
-#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
 #include "pgmlink/reasoner_constracking.h"
 
 
@@ -19,26 +19,32 @@ namespace pgmlink
 {
 
 /**
- * @brief The StructuredLearningTrackingInferenceModel inherits from ConsTrackingInferenceModel class which builds the OpenGM model needed to run basic conservation tracking.
+ * @brief The StructuredLearningTrackingInferenceModel inherits from ConsTrackingExplicitInferenceModel class which builds the OpenGM model needed to run basic conservation tracking.
  * StructuredLearningTrackingInferenceModel uses learnable functions in overrides of add_*_factor methods.
  */
-  class StructuredLearningTrackingInferenceModel : public ConsTrackingInferenceModel
+  class StructuredLearningTrackingInferenceModel : public ConsTrackingExplicitInferenceModel
 {
 public:
     StructuredLearningTrackingInferenceModel(
         const Parameter& inferenceParam,
         double ep_gap,
         double cplex_timeout):
-        ConsTrackingInferenceModel(inferenceParam, ep_gap, cplex_timeout),
-        weights_((size_t)5) // { [0]detection_weight,[1]division_weight,[2]transition_weight,[3]appearance_weight,[4]disappearance_weight}
-
+        ConsTrackingExplicitInferenceModel(inferenceParam, ep_gap, cplex_timeout)
+        //weights_(5)// { [0]detection_weight,[1]division_weight,[2]transition_weight,[3]appearance_weight,[4]disappearance_weight}
     {
         std::cout << "Constructor StructuredLearningTrackingInferenceModel" << std::endl;
+
+        // { [0]detection_weight,[1]division_weight,[2]transition_weight,[3]appearance_weight,[4]disappearance_weight}
+        weights_.setWeight((size_t)0, (double) 7);
+        weights_.setWeight((size_t)1, (double) 8);
+        weights_.setWeight((size_t)2, (double) 9);
+        weights_.setWeight((size_t)3, (double) 666);
+        weights_.setWeight((size_t)4, (double) 444);
     }
 
-    opengm::learning::Weights<double> weights_;
-     void setWeight ( size_t, double );
-     double weight ( size_t );
+//    opengm::learning::Weights<double> weights_;
+//     void setWeight ( size_t, double );
+//     double weight ( size_t );
 
     virtual size_t add_division_factors(const HypothesesGraph&, size_t);
     virtual size_t add_transition_factors(const HypothesesGraph&, size_t);

@@ -23,13 +23,15 @@
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/hypotheses.h"
 #include <boost/python.hpp>
+#include "pgmlink/reasoner_constracking_explicit.h"
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/structured_learning_tracking_dataset.h"
+
 
 namespace pgmlink
 {
 
-  class StructuredLearningTracking : public ConsTracking
+  class StructuredLearningTracking : public ConsExplicitTracking
 {
 public:
     PGMLINK_EXPORT
@@ -44,11 +46,11 @@ public:
         const std::string& random_forest_filename = "none",
         FieldOfView fov = FieldOfView(),
         const std::string& event_vector_dump_filename = "none",
-        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+        ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver,
         int ndim = 2
         ):
 
-        ConsTracking(
+        ConsExplicitTracking(
             max_number_objects,
             size_dependent_detection_prob,
             avg_obj_size,
@@ -98,8 +100,8 @@ public:
     PGMLINK_EXPORT void addFirstLabels(int, int, double );
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
-    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
-    PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
+    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationExplicitTracking::Parameter& param);
+    PGMLINK_EXPORT virtual void prepareTracking(ConservationExplicitTracking& pgm, ConservationExplicitTracking::Parameter& param);
     PGMLINK_EXPORT double weights(int);
     PGMLINK_EXPORT void structuredLearning(
             double forbidden_cost = 0,

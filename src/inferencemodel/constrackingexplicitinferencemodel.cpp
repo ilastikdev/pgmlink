@@ -1,10 +1,12 @@
-#include "pgmlink/inferencemodel/constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
 #include <boost/python.hpp>
+
+#include <opengm/functions/explicit_function.hxx>
 
 namespace pgmlink
 {
 
-ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
+ConsTrackingExplicitInferenceModel::ConsTrackingExplicitInferenceModel(const Parameter& param,
         double ep_gap,
         double cplex_timeout):
     InferenceModel(param),
@@ -15,27 +17,27 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     ground_truth_filename_(""),
     weights_(5)
 {
-    std::cout << " Constructor ConsTrackingInferenceModel" << std::endl;
+    std::cout << " Constructor ConsTrackingExplicitInferenceModel" << std::endl;
     cplex_param_.verbose_ = true;
     cplex_param_.integerConstraint_ = true;
     cplex_param_.epGap_ = ep_gap;
     cplex_param_.timeLimit_ = cplex_timeout;
 }
 
-void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
+void ConsTrackingExplicitInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
 {
     std::cout << "in build_from_graph param_.with_tracklets" << param_.with_tracklets << std::endl;
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: entered";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: entered";
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_transition_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_transition_nodes";
     add_transition_nodes(hypotheses);
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_appearance_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_appearance_nodes";
     add_appearance_nodes(hypotheses);
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_disappearance_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_disappearance_nodes";
     add_disappearance_nodes(hypotheses);
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::formulate: add_division_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_division_nodes";
     if (param_.with_divisions)
     {
         add_division_nodes(hypotheses);
@@ -50,7 +52,7 @@ void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypothe
     add_constraints_to_pool(hypotheses);
 }
 
-void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
+void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
         const HypothesesGraph &g,
         const HypothesesGraph& tracklet_graph,
         std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& traxel2tracklet_map
@@ -68,8 +70,8 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
         {
             if(timestep_map[n] == earliest_timestep)
             {
-                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
-                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
+                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
             }
         }
     }
@@ -85,44 +87,44 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
             if(timestep_map[n] == earliest_timestep)
             {
                 HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
-                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
-                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
+                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
             }
         }
     }
 }
 
-ConsTrackingInferenceModel::GraphicalModelType& ConsTrackingInferenceModel::get_model()
+ConsTrackingExplicitInferenceModel::GraphicalModelType& ConsTrackingExplicitInferenceModel::get_model()
 {
     return model_;
 }
 
-ConsTrackingInferenceModel::HypothesesGraphNodeMap &ConsTrackingInferenceModel::get_division_node_map()
+ConsTrackingExplicitInferenceModel::HypothesesGraphNodeMap &ConsTrackingExplicitInferenceModel::get_division_node_map()
 {
     return div_node_map_;
 }
 
-ConsTrackingInferenceModel::HypothesesGraphNodeMap &ConsTrackingInferenceModel::get_appearance_node_map()
+ConsTrackingExplicitInferenceModel::HypothesesGraphNodeMap &ConsTrackingExplicitInferenceModel::get_appearance_node_map()
 {
     return app_node_map_;
 }
 
-ConsTrackingInferenceModel::HypothesesGraphNodeMap &ConsTrackingInferenceModel::get_disappearance_node_map()
+ConsTrackingExplicitInferenceModel::HypothesesGraphNodeMap &ConsTrackingExplicitInferenceModel::get_disappearance_node_map()
 {
     return dis_node_map_;
 }
 
-ConsTrackingInferenceModel::HypothesesGraphArcMap &ConsTrackingInferenceModel::get_arc_map()
+ConsTrackingExplicitInferenceModel::HypothesesGraphArcMap &ConsTrackingExplicitInferenceModel::get_arc_map()
 {
     return arc_map_;
 }
 
-std::map<HypothesesGraph::Node, size_t>& ConsTrackingInferenceModel::get_detection_factor_node_map()
+std::map<HypothesesGraph::Node, size_t>& ConsTrackingExplicitInferenceModel::get_detection_factor_node_map()
 {
     return detection_f_node_map_;
 }
 
-void ConsTrackingInferenceModel::add_appearance_nodes(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::add_appearance_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -142,7 +144,7 @@ void ConsTrackingInferenceModel::add_appearance_nodes(const HypothesesGraph& g)
     number_of_appearance_nodes_ = count;
 }
 
-void ConsTrackingInferenceModel::add_disappearance_nodes(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::add_disappearance_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -162,7 +164,7 @@ void ConsTrackingInferenceModel::add_disappearance_nodes(const HypothesesGraph& 
     number_of_disappearance_nodes_ = count;
 }
 
-void ConsTrackingInferenceModel::add_transition_nodes(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::add_transition_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
@@ -188,7 +190,7 @@ void ConsTrackingInferenceModel::add_transition_nodes(const HypothesesGraph& g)
     number_of_transition_nodes_ = count;
 }
 
-void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::add_division_nodes(const HypothesesGraph& g)
 {
     size_t count = 0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
@@ -215,11 +217,11 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
     number_of_division_nodes_ = count;
 }
 
-unsigned int ConsTrackingInferenceModel::get_number_of_division_nodes(){
+unsigned int ConsTrackingExplicitInferenceModel::get_number_of_division_nodes(){
     return number_of_division_nodes_;
 }
 
-void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::printResults(const HypothesesGraph& g)
 {
     //very verbose print of solution
     property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
@@ -281,10 +283,10 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
     }
 }
 
-size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
+size_t ConsTrackingExplicitInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout<< "========ConsTrackingInferenceModel::add_detection_factors" << std::endl;
-
+    std::cout<< "========ConsTrackingExplicitInferenceModel::add_detection_factors" << std::endl;
+/*
     ////
     //// add detection factors
     ////
@@ -292,7 +294,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: add detection factors";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: add detection factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
         size_t num_vars = 0;
@@ -372,12 +374,6 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         std::vector<size_t> shape(num_vars, (param_.max_number_objects + 1));
         marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
 
-//        marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
-//        marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
-//        marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
-//        marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
-//        marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
-
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
             if (param_.with_tracklets)
@@ -417,24 +413,10 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
             else
             {
                 e = param_.detection(traxel_map_[n], state);
-
-//                if(param_.with_structured_learning)
-//                {
-//                    std::cout << "detection=e   >" << e << std::endl;
-//                    f = param_.detectionNoWeight(traxel_map_[n], state);
-//                    std::cout << "detection=e/w >" << f << std::endl;
-
-//                    w = param_.detection_weight;
-//                    std::cout << "detection=w   >" << w << std::endl;
-
-//                    energy = f;
-//                }else
-//                {
-                    energy = e;
-                    energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
-//                }
+                energy = e;
+                energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
             }
-            LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: detection[" << state
+            LOG(logDEBUG2) << "ConsTrackingExplicitInferenceModel::add_finite_factors: detection[" << state
                            << "] = " << energy;
             for (size_t var_idx = 0; var_idx < num_vars; ++var_idx)
             {
@@ -442,23 +424,10 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
                 // if only one of the variables is > 0, then it is an appearance in this time frame
                 // or a disappearance in the next timeframe. Hence, add the cost of appearance/disappearance
                 // to the detection cost
-//                if(param_.with_structured_learning)
-//                {
-//                    //energies(coords.begin()) = param_.detection * energy + state * cost[var_idx]; // state == m
-//                    energies(coords.begin()) = param_.detection_weight * energy + state * cost[var_idx]; // state == m
-//                    std::cout << "___> " << param_.detection << "   " << energy << "   " << state << "    " << cost[var_idx] << "   " << var_idx <<std::endl;
-//                    energiesP(coords.begin()) = energy;
-//                    if (var_idx == 0) // A
-//                        energiesA(coords.begin()) = state;// * cost[var_idx];
-//                    else // D
-//                        energiesD(coords.begin()) = state;// * cost[var_idx];
-//                }else
-//                {
-                    energies(coords.begin()) = energy + state * cost[var_idx];
-//                }
+                energies(coords.begin()) = energy + state * cost[var_idx];
 
                 coords[var_idx] = 0;
-                LOG(logDEBUG4) << "ConsTrackingInferenceModel::add_finite_factors: var_idx "
+                LOG(logDEBUG4) << "ConsTrackingExplicitInferenceModel::add_finite_factors: var_idx "
                                << var_idx << " = " << energy;
             }
             // also this energy if both variables have the same state
@@ -467,135 +436,20 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
                 coords[0] = state;
                 coords[1] = state;
                 // only pay detection energy if both variables are on
-//                if(param_.with_structured_learning)
-//                {
-//                    energies(coords.begin()) = param_.detection_weight * energy;
-//                    //energies(coords.begin()) = param_.detection * energy;
-//                    energiesP(coords.begin()) = energy;
-//                }else
-//                {
-                    energies(coords.begin()) = energy;
-//                }
+                energies(coords.begin()) = energy;
 
                 coords[0] = 0;
                 coords[1] = 0;
 
-                LOG(logDEBUG4) << "ConsTrackingInferenceModel::add_finite_factors: var_idxs 0 and var_idx 1 = "
+                LOG(logDEBUG4) << "ConsTrackingExplicitInferenceModel::add_finite_factors: var_idxs 0 and var_idx 1 = "
                                << energy;
             }
         }
 
-
-
-/*
-        if(param_.with_structured_learning)
-        {
-
-//            std::cout << "energies ==========================================================" << std::endl;
-//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                    coords[0] = state;
-//                    coords[1] = state2;
-//                    std::cout << energies(coords.begin()) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-//            std::cout << "energiesP ................." << std::endl;
-//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                    coords[0] = state;
-//                    coords[1] = state2;
-//                    std::cout << energiesP(coords.begin()) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-//            std::cout << "energiesA ................." << std::endl;
-//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                    coords[0] = state;
-//                    coords[1] = state2;
-//                    std::cout << energiesA(coords.begin()) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-//            std::cout << "energiesD ................." << std::endl;
-//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                    coords[0] = state;
-//                    coords[1] = state2;
-//                    std::cout << energiesD(coords.begin()) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-
-            marray::Marray<double> errorMA(shape.begin(), shape.end(), param_.forbidden_cost);
-            errorMA = energies - param_.detection_weight * energiesP - cost[0]*energiesA - cost[1]*energiesD;
-            //errorMA = energies - param_.detection * energiesP - cost[0]*energiesA - cost[1]*energiesD;
-
-//            std::cout << "errorMA ................." << std::endl;
-//            for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                    coords[0] = state;
-//                    coords[1] = state2;
-//                    std::cout << errorMA(coords.begin()) << " ";
-//                }
-//                std::cout << std::endl;
-//            }
-            for (size_t state = 0; state <= param_.max_number_objects; ++state){
-                for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                    coords[0] = state;
-                    coords[1] = state2;
-                    if (errorMA(coords.begin()) > 0.001 )
-                        std::cout << " We have a problem!!!";
-                }
-                //std::cout << std::endl;
-            }
-        }
-
-*/
-
-
-
-
-
-
-
-
-
-        LOG(logDEBUG3) << "ConsTrackingInferenceModel::add_finite_factors: adding table to pgm";
+        LOG(logDEBUG3) << "ConsTrackingExplicitInferenceModel::add_finite_factors: adding table to pgm";
         //functor add detection table
         factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
 
-/*
-        //         energy weights:
-         //param_.detection_weight;
-         param_.appearance_weight = cost[0];
-         param_.disappearance_weight = cost[1];
-
-        //         set up a LEARNABLE OpenGM function to learn weights=(w_detection,w_appearance,w_disappearance) for functions (energiesP,energiesA,energiesD)
-
-        std::vector<size_t> weightIDs;//enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
-
-        weightIDs.push_back((size_t)2);
-        weightIDs.push_back((size_t)0);
-        weightIDs.push_back((size_t)1);
-        //for(int i=0;i<3;i++)
-        //    std::cout << weights_[weightIDs[i]] << std::endl;
-
-        std::vector<marray::Marray<double>> features;
-        features.push_back(energiesP);
-        features.push_back(energiesA);
-        features.push_back(energiesD);
-        //features.push_back(energiesT);
-        //features.push_back(energiesDiv);
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funcEnergies (shape,weights_,weightIDs,features);
-
-        typename GraphicalModelType::FunctionIdentifier funcId;
-
-        if(param_.with_structured_learning)
-            funcId = model_.addFunction(funcEnergies);
-        else
-            */
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
 
         sort(vi.begin(), vi.end());
@@ -605,9 +459,11 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
     }
 
     return factorIndex;
+*/
+    return 0;
 }
 
-//void ConsTrackingInferenceModel::setWeight(size_t index, double val)
+//void ConsTrackingExplicitInferenceModel::setWeight(size_t index, double val)
 //{
 //    std::vector<size_t> coords(1, 0);
 //    coords[0]=index;
@@ -615,9 +471,10 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
 //    std::cout << " ========>" << weights_(coords.begin()) << std::endl;
 //}
 
-size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
+size_t ConsTrackingExplicitInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout<< "====================================================================ConsTrackingInferenceModel::add_transition_factors" << std::endl;
+    std::cout<< "====================================================================ConsTrackingExplicitInferenceModel::add_transition_factors" << std::endl;
+/*
     ////
     //// add transition factors
     ////
@@ -625,7 +482,7 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: add transition factors";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: add transition factors";
 
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
@@ -652,7 +509,7 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
             double energy = param_.transition(get_transition_probability(tr1, tr2, state));
             energy += generateRandomOffset(Transition, energy, tr1, tr2);
 
-            LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: transition[" << state
+            LOG(logDEBUG2) << "ConsTrackingExplicitInferenceModel::add_finite_factors: transition[" << state
                            << "] = " << energy;
             coords[0] = state;
             energies(coords.begin()) = energy;
@@ -678,16 +535,19 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
     }
 
     return factorIndex;
+    */
+    return 0;
 }
 
-size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g, size_t factorIndex)
+size_t ConsTrackingExplicitInferenceModel::add_division_factors(const HypothesesGraph& g, size_t factorIndex)
 {
     if(!param_.with_divisions)
     {
         return factorIndex;
     }
 
-    std::cout<< "====================================================================ConsTrackingInferenceModel::add_division_factors" << std::endl;
+    std::cout<< "====================================================================ConsTrackingExplicitInferenceModel::add_division_factors" << std::endl;
+/*
     ////
     //// add division factors
     ////
@@ -695,7 +555,7 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: add division factors";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: add division factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
         if (div_node_map_.count(n) == 0)
@@ -722,7 +582,7 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
             energy = param_.division(tr, state);
             energy += generateRandomOffset(Division, energy,  tr);
 
-            LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: division[" << state
+            LOG(logDEBUG2) << "ConsTrackingExplicitInferenceModel::add_finite_factors: division[" << state
                            << "] = " << energy;
             coords[0] = state;
             //table.set_value(coords, energy);
@@ -750,9 +610,11 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
     }
 
     return factorIndex;
+    */
+    return 0;
 }
 
-void ConsTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::add_finite_factors(const HypothesesGraph& g)
 {
     // refactor this:
 
@@ -766,21 +628,21 @@ void ConsTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
     //
     // Also, this implies that there is some functor choosing either energy or offset
 
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: entered";
-    std::cout << "ConsTrackingInferenceModel::add_finite_factors: entered " << param_.with_tracklets << std::endl;
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: entered";
+    std::cout << "ConsTrackingExplicitInferenceModel::add_finite_factors: entered " << param_.with_tracklets << std::endl;
     size_t factorIndex = 0;
     factorIndex = add_detection_factors(g, factorIndex);
     factorIndex = add_transition_factors(g, factorIndex);
     factorIndex = add_division_factors(g, factorIndex);
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_finite_factors: finished";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: finished";
 }
 
 //set up optimizer from constraints by reading from formulated gm
-void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
+void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_constraints: entered";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
 
-    constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
+    constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
                                            param_.with_divisions,
                                            param_.with_appearance,
                                            param_.with_disappearance,
@@ -805,7 +667,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
             }
             size_t appearance_node = app_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node,
+            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingConstraint(appearance_node,
                                             division_node,
                                             transition_nodes));
         }
@@ -821,7 +683,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
             }
             size_t disappearance_node = dis_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes,
+            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingConstraint(transition_nodes,
                                             disappearance_node));
         }
 
@@ -830,7 +692,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
         ////
         if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
         {
-            constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n],
+            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionConstraint((size_t)dis_node_map_[n],
                                             (size_t)app_node_map_[n]));
         }
     }
@@ -838,7 +700,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
 
-void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
+void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSolutions,
         const std::string &feature_filename,
         const std::string &constraints_filename,
         const std::string &ground_truth_filename)
@@ -878,7 +740,7 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
     }
 }
 
-ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
+ConsTrackingExplicitInferenceModel::IlpSolution ConsTrackingExplicitInferenceModel::infer()
 {
     std::cout << "optimizer_->graphicalModel().numberOfVariables() = " << optimizer_->graphicalModel().numberOfVariables() << std::endl;
     std::cout << "optimizer_->graphicalModel().numberOfFactors()   = " << optimizer_->graphicalModel().numberOfFactors() << std::endl;
@@ -916,7 +778,7 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::infer()
     return solution;
 }
 
-ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extractSolution(size_t k,
+ConsTrackingExplicitInferenceModel::IlpSolution ConsTrackingExplicitInferenceModel::extractSolution(size_t k,
         const std::string &ground_truth_filename)
 {
     IlpSolution solution;
@@ -933,7 +795,7 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extractSolut
     return solution;
 }
 
-void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGraph &g,
+void ConsTrackingExplicitInferenceModel::write_labeledgraph_to_file(const HypothesesGraph &g,
         const std::string &ground_truth_filename)
 {
     using namespace std;
@@ -1074,7 +936,7 @@ void ConsTrackingInferenceModel::write_labeledgraph_to_file(const HypothesesGrap
     ground_truth_file.close();
 }
 
-void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
+void ConsTrackingExplicitInferenceModel::conclude( HypothesesGraph& g,
         HypothesesGraph& tracklet_graph,
         std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& tracklet2traxel_node_map,
         IlpSolution& solution)
@@ -1295,7 +1157,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     }
 }
 
-ConsTrackingInferenceModel::GraphicalModelType ConsTrackingInferenceModel::model(){
+ConsTrackingExplicitInferenceModel::GraphicalModelType ConsTrackingExplicitInferenceModel::model(){
     return model_;
 }
 

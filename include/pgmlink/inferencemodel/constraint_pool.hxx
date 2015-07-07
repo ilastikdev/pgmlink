@@ -422,7 +422,6 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
          const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
      );
 
-
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
 void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
