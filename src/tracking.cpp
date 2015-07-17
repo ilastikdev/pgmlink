@@ -593,6 +593,53 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     return track_from_param(param);
 }
 
+void ConsTracking::plot_hypotheses_graph(
+        boost::shared_ptr<HypothesesGraph> g,
+        const std::string& filename,
+        bool with_tracklets,
+        bool with_divisions,
+        double detection_weight,
+        double division_weight,
+        double transition_weight,
+        double disappearance_cost,
+        double appearance_cost,
+        double transition_parameter,
+        double border_width)
+{
+    // reuse the parameter construction method to get configured functions
+    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+            0,
+            0,
+            with_tracklets,
+            detection_weight,
+            division_weight,
+            transition_weight,
+            disappearance_cost,
+            appearance_cost,
+            false,
+            3,
+            transition_parameter,
+            border_width,
+            true,
+            UncertaintyParameter(),
+            0.0,
+            boost::python::object(),
+            solver_,
+            0,
+            true);
+
+    g->save_to_graphviz_dot_file(filename,
+                                with_tracklets,
+                                with_divisions,
+                                param.detection,
+                                param.division,
+                                param.transition,
+                                param.disappearance_cost_fn,
+                                param.appearance_cost_fn,
+                                max_number_objects_,
+                                transition_parameter);
+}
+
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
                                                        bool fixLabeledNodes)
 {

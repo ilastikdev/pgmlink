@@ -229,6 +229,17 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 {
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
+//    graph->save_to_graphviz_dot_file("/Users/chaubold/Desktop/sabrina_mnd200_trackletgraph.dot",
+//                                     inference_model_param_.with_tracklets,
+//                                     inference_model_param_.with_divisions,
+//                                     inference_model_param_.detection,
+//                                     inference_model_param_.division,
+//                                     inference_model_param_.transition,
+//                                     inference_model_param_.disappearance_cost,
+//                                     inference_model_param_.appearance_cost,
+//                                     inference_model_param_.max_number_objects,
+//                                     inference_model_param_.transition_parameter);
+
     LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
     LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
     LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";

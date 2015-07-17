@@ -315,6 +315,18 @@ public:
     /// Return reference to the ilp solutions
     PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
 
+    /// for debugging purposes a labeled graph with energies etc can be exported
+    PGMLINK_EXPORT void plot_hypotheses_graph(boost::shared_ptr<HypothesesGraph> g,
+                               const std::string &filename,
+                               bool with_tracklets,
+                               bool with_divisions,
+                               double detection_weight,
+                               double division_weight,
+                               double transition_weight,
+                               double disappearance_cost,
+                               double appearance_cost,
+                               double transition_parameter,
+                               double border_width);
 protected:
     int max_number_objects_;
     double max_dist_;

@@ -9,6 +9,8 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/function.hpp>
+
 #include <lemon/lgf_reader.h>
 #include <lemon/lgf_writer.h>
 #include <lemon/maps.h>
@@ -2113,6 +2115,198 @@ void HypothesesGraph::copy_subgraph(HypothesesGraph &src,
     {
         dest.timesteps_.insert(timestep_map[n]);
     }
+}
+
+void HypothesesGraph::save_to_graphviz_dot_file(const std::string &filename,
+                                                bool with_tracklets,
+                                                bool with_divisions,
+                                                boost::function<double (const Traxel&, const size_t)> detection,
+                                                boost::function<double (const Traxel&, const size_t)> division,
+                                                boost::function<double (const double)> transition,
+                                                boost::function<double (const Traxel&)> disappearance_cost,
+                                                boost::function<double (const Traxel&)> appearance_cost,
+                                                size_t max_number_objects,
+                                                double transition_parameter) const
+{
+    std::ofstream out_file(filename.c_str());
+
+    if(!out_file.good())
+    {
+        throw std::runtime_error("Could not open file " + filename + " to save hypotheses graph to");
+    }
+
+    if(!has_property(node_traxel()))
+    {
+        throw std::runtime_error("graph has no node traxel map ");
+    }
+
+    if(with_tracklets && !has_property(node_tracklet()))
+    {
+        throw std::runtime_error("graph has no node tracklet map even though with_tracklets=true");
+    }
+
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = get(node_traxel());
+
+    out_file << "digraph G {\n";
+
+    // add all nodes
+    for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n)
+    {
+        if(with_tracklets)
+        {
+            property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+            // add all detection factors of the internal nodes
+            Traxel a = tracklet_map[n].front();
+            Traxel b = tracklet_map[n].back();
+
+            out_file << "\t" << id(n) << " [ label=\"timesteps : " << a.Timestep << " - " << b.Timestep << "\\nid : " << a.Id << std::flush;
+        }
+        else
+        {
+            Traxel t = traxel_map[n];
+            out_file << "\t" << id(n) << " [ label=\"timestep : " << t.Timestep << "\\nid : " << t.Id << std::flush;
+        }
+
+        for(size_t state = 0; state <= max_number_objects; state++)
+        {
+            double energy = 0.0;
+            if (with_tracklets)
+            {
+                property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+                // add all detection factors of the internal nodes
+                for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin(); trax_it != tracklet_map[n].end(); ++trax_it)
+                {
+                    energy += detection(*trax_it, state);
+                }
+
+                // add all transition factors of the internal arcs
+                Traxel tr_prev;
+                bool first = true;
+                for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin(); trax_it != tracklet_map[n].end(); ++trax_it)
+                {
+                    Traxel tr = *trax_it;
+                    if (!first)
+                    {
+                        // FIXME: hard coded choice here
+                        double distance = tr_prev.distance_to(tr);
+                        double prob = exp(-distance / transition_parameter);
+                        if (state == 0)
+                        {
+                            prob = 1 - prob;
+                        }
+                        energy += transition(prob);
+                    }
+                    else
+                    {
+                        first = false;
+                    }
+                    tr_prev = tr;
+                }
+            }
+            else
+            {
+                // only look at this single traxel
+                energy = detection(traxel_map[n], state);
+            }
+
+            out_file << "\\nstate " << state << " : " << energy << std::flush;
+        }
+
+        // add source and sink links
+        int node_begin_time = -1;
+        int node_end_time = -1;
+        if (with_tracklets)
+        {
+            property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+            node_begin_time = tracklet_map[n].front().Timestep;
+            node_end_time = tracklet_map[n].back().Timestep;
+        }
+        else
+        {
+            node_begin_time = traxel_map[n].Timestep;
+            node_end_time = traxel_map[n].Timestep;
+        }
+
+        // appearance and disappearance energies
+        Traxel tr;
+        if(with_tracklets)
+        {
+            property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+            tr = tracklet_map[n].front();
+        }
+        else
+        {
+            tr = traxel_map[n];
+        }
+
+        double app_score = appearance_cost(tr);
+        out_file << "\\napp : " << app_score << std::flush;
+
+        if(with_tracklets)
+        {
+            property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+            tr = tracklet_map[n].back();
+        }
+        double dis_score = disappearance_cost(tr);
+        out_file << "\\ndis : " << dis_score << std::flush;
+
+        // ------------------------------------------------------
+        // division energy
+        if(with_divisions)
+        {
+            size_t number_of_outarcs = 0;
+            for (HypothesesGraph::OutArcIt a(*this, n); a != lemon::INVALID; ++a)
+            {
+                ++number_of_outarcs;
+            }
+
+            if (number_of_outarcs > 1)
+            {
+                Traxel tr;
+                if (with_tracklets)
+                {
+                    property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+                    tr = tracklet_map[n].back();
+                }
+                else
+                {
+                    tr = traxel_map[n];
+                }
+                double energy = division(tr, 1);
+                out_file << "\\ndiv : " << energy << std::flush;
+            }
+        }
+
+        out_file << "\" ]; \n" << std::flush;
+    }
+
+    // add all transition arcs
+    for (HypothesesGraph::ArcIt a(*this); a != lemon::INVALID; ++a)
+    {
+        Traxel tr1, tr2;
+        if (with_tracklets)
+        {
+            property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map = get(node_tracklet());
+            tr1 = tracklet_map[source(a)].back();
+            tr2 = tracklet_map[target(a)].front();
+        }
+        else
+        {
+            tr1 = traxel_map[source(a)];
+            tr2 = traxel_map[target(a)];
+        }
+
+        // FIXME: hard coded choice here
+        double distance = tr1.distance_to(tr2);
+        double prob = exp(-distance / transition_parameter);
+        double energy = transition(prob);
+
+        out_file << "\t" << id(source(a)) << " -> " << id(target(a)) << " [ label=\" " << energy << " \" ];\n" << std::flush;
+    }
+
+    out_file << "}";
+
+    LOG(logINFO) << "Done saving hypotheses graph to graphviz dot" << std::endl;
 }
 
 } /* namespace pgmlink */

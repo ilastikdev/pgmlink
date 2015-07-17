@@ -14,6 +14,7 @@
 #include <map>
 #include <boost/serialization/set.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 #include <lemon/list_graph.h>
 #include <lemon/maps.h>
 
@@ -441,6 +442,17 @@ public:
     static void copy_subgraph(HypothesesGraph &src, HypothesesGraph &dest,
                               HypothesesGraph::base_graph::NodeMap<bool> &selected_nodes,
                               HypothesesGraph::base_graph::ArcMap<bool> &selected_arcs);
+
+    void save_to_graphviz_dot_file(const std::string& filename,
+                                   bool with_tracklets,
+                                   bool with_divisions,
+                                   boost::function<double (const Traxel&, const size_t)> detection,
+                                   boost::function<double (const Traxel&, const size_t)> division,
+                                   boost::function<double (const double)> transition,
+                                   boost::function<double (const Traxel&)> disappearance_cost,
+                                   boost::function<double (const Traxel&)> appearance_cost,
+                                   size_t max_number_objects,
+                                   double transition_parameter) const;
 private:
     // boost serialize
     friend class boost::serialization::access;
