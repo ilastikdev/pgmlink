@@ -1,4 +1,5 @@
 //#include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
+//#include <opengm/functions/learnable/lweightedsum_of_functions.hxx>
 #include <opengm/functions/learnable/lsum_of_experts.hxx>
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include <boost/python.hpp>
@@ -9,27 +10,29 @@ namespace pgmlink
 {
 
 //void StructuredLearningTrackingInferenceModel::setWeight(size_t index, double val){
-//    weights_[index] = val;
-//    std::cout << " ===================================================" << weights_[index] << std::endl;
+//    inferenceWeights_[index] = val;
+//    std::cout << " ===================================================" << inferenceWeights_[index] << std::endl;
 //}
 //double StructuredLearningTrackingInferenceModel::weight(size_t index){
-//    std::cout << " ===================================================" << weights_[index] << std::endl;
-//    return weights_[index];
+//    std::cout << " ===================================================" << inferenceWeights_[index] << std::endl;
+//    return inferenceWeights_[index];
 //}
 
 
 size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << weights_.getWeight((size_t) 0) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << weights_.getWeight((size_t) 1) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << weights_.getWeight((size_t) 2) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << weights_.getWeight((size_t) 3) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << weights_.getWeight((size_t) 4) << std::endl;
+  /*
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << inferenceWeights_.getWeight((size_t) 0) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << inferenceWeights_.getWeight((size_t) 1) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << inferenceWeights_.getWeight((size_t) 2) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << inferenceWeights_.getWeight((size_t) 3) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_detection_factors" << inferenceWeights_.getWeight((size_t) 4) << std::endl;
+  */
     ////
     //// add detection factors
     ////
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
-    std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
+    //std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
     //std::cout << "...........................................StructuredLearningTrackingInferenceModel::add_detection_factors" << std::endl;
@@ -308,8 +311,11 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         std::vector<size_t> varShape;
         varShape.push_back((size_t)param_.max_number_objects+1);
         varShape.push_back((size_t)param_.max_number_objects+1);
-        std::cout << varShape[0]*varShape[1] << " features[0].size()=" << features[0].size() << " numVar = " << num_vars << " maxnumobj+1= " << param_.max_number_objects + 1<< std::endl;
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,weights_,weightIDs,features);
+
+        //std::cout << varShape[0]*varShape[1] << " features[0].size()=" << features[0].size() << " numVar = " << num_vars << " maxnumobj+1= " << param_.max_number_objects + 1<< std::endl;
+
+        //opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
 
@@ -323,11 +329,13 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
 size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << weights_.getWeight((size_t) 0) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << weights_.getWeight((size_t) 1) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << weights_.getWeight((size_t) 2) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << weights_.getWeight((size_t) 3) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << weights_.getWeight((size_t) 4) << std::endl;
+  /*
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << inferenceWeights_.getWeight((size_t) 0) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << inferenceWeights_.getWeight((size_t) 1) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << inferenceWeights_.getWeight((size_t) 2) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << inferenceWeights_.getWeight((size_t) 3) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_transition_factors" << inferenceWeights_.getWeight((size_t) 4) << std::endl;
+  */
     ////
     //// add transition factors
     ////
@@ -378,8 +386,11 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 
         std::vector<size_t> varShape;
         varShape.push_back((size_t)1+param_.max_number_objects);
-        std::cout << varShape[0] << " features[0].size()=" << features[0].size() << " numVar = " << 1 << " maxnumobj+1= " << param_.max_number_objects + 1<< std::endl;
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,weights_,weightIDs,features);
+
+        //std::cout << varShape[0] << " features[0].size()=" << features[0].size() << " numVar = " << 1 << " maxnumobj+1= " << param_.max_number_objects + 1<< std::endl;
+
+        //opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
@@ -394,12 +405,13 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     {
         return factorIndex;
     }
-
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << weights_.getWeight((size_t) 0) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << weights_.getWeight((size_t) 1) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << weights_.getWeight((size_t) 2) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << weights_.getWeight((size_t) 3) << std::endl;
-    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << weights_.getWeight((size_t) 4) << std::endl;
+    /*
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << inferenceWeights_.getWeight((size_t) 0) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << inferenceWeights_.getWeight((size_t) 1) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << inferenceWeights_.getWeight((size_t) 2) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << inferenceWeights_.getWeight((size_t) 3) << std::endl;
+    std::cout << "...........................StructuredLearningTrackingInferenceModel::add_division_factors" << inferenceWeights_.getWeight((size_t) 4) << std::endl;
+*/
     ////
     //// add division factors
     ////
@@ -444,14 +456,18 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 
 
         std::vector<size_t> weightIDs;
-        weightIDs.push_back((size_t)4);
+        weightIDs.push_back((size_t)1);
         std::vector<marray::Marray<double>> features;
         features.push_back(energies);
 
         std::vector<size_t> varShape;
         varShape.push_back((size_t)2);
-        std::cout << varShape[0] << " features[0].size()=" << features[0].size() << " numVar = " << 1 << " maxnumobj+1= " << 1 + 1<< std::endl;
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,weights_,weightIDs,features);
+
+        //std::cout << varShape[0] << " features[0].size()=" << features[0].size() << " numVar = " << 1 << " maxnumobj+1= " << 1 + 1<< std::endl;
+        //std::cout << " division node=" <<traxel_map_[n].Id << std::endl;
+
+        //opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);

@@ -69,10 +69,7 @@ public: // API
                                     const std::string &ground_truth_filename);
 
     // structured learning tracking inference model
-    opengm::learning::Weights<double> weights_;
-    // weights in the same order as in:
-    // enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 3, Division = 4 };
-    //void setWeight ( size_t, double);
+    opengm::learning::Weights<double> inferenceWeights_;
     GraphicalModelType model();
     unsigned int get_number_of_division_nodes();
 

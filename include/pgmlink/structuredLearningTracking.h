@@ -15,6 +15,8 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
+#include <opengm/graphicalmodel/weights.hxx>
+
 #include "pgmlink/event.h"
 #include "pgmlink/pgmlink_export.h"
 #include "pgmlink/traxels.h"
@@ -62,11 +64,11 @@ public:
             event_vector_dump_filename,
             solver,
             ndim),
-          numWeights_(5),
-          weights_(5),
-          numLabels_(max_number_objects)
+        numLabels_(max_number_objects),
+	numWeights_(5),
+	  trackingWeights_((size_t)5)
     {
-        std::cout << "Constructor StructuredLearningTracking" << std::endl;
+      //std::cout << "Constructor StructuredLearningTracking" << std::endl;
         hypotheses_graph_ = hypotheses_graph;
     }
 
@@ -102,7 +104,8 @@ public:
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationExplicitTracking::Parameter& param);
     PGMLINK_EXPORT virtual void prepareTracking(ConservationExplicitTracking& pgm, ConservationExplicitTracking::Parameter& param);
-    PGMLINK_EXPORT double weights(int);
+    PGMLINK_EXPORT double weight(int);
+    PGMLINK_EXPORT void setWeight(int,double);
     PGMLINK_EXPORT void structuredLearning(
             double forbidden_cost = 0,
             double ep_gap = 0.01,
@@ -126,6 +129,8 @@ public:
     std::vector<FieldOfView> crops_;
     int numWeights_;
     int numLabels_;
+    opengm::learning::Weights<double> trackingWeights_;
+      //std::vector<double> weights_;
 
 protected:
     StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;
@@ -134,7 +139,7 @@ protected:
     double division_weight_;
     double detection_weight_;
     double transition_weight_;
-    std::vector<double> weights_;
+
 };
 
 } // end namespace pgmlink

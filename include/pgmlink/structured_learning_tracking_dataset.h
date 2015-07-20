@@ -32,12 +32,13 @@ public:
        pgmlink::StructuredLearningTrackingInferenceModel::IndexType numWeights,
        pgmlink::StructuredLearningTrackingInferenceModel::LabelType numLabels,
        int ndim,
-       boost::shared_ptr<pgmlink::HypothesesGraph> hypothesesGraph
+       boost::shared_ptr<pgmlink::HypothesesGraph> hypothesesGraph,
+       opengm::learning::Weights<double>& trackingWeights
    )
    {
-       std::cout << "numModels = " << numModels << " crops.size() = " << crops.size() << std::endl;
+     //std::cout << "numModels = " << numModels << " crops.size() = " << crops.size() << std::endl;
        if(numModels!=crops.size()){
-           std::cout << "Number of crops and crops size do not match!!!" << std::endl;
+	 std::cout << "Number of crops and crops size do not match!!!" << std::endl; // xxx: use assert
            return;
        }
 
@@ -45,6 +46,8 @@ public:
        this->isCached_.resize(numModels);
        this->count_.resize(numModels,0);
        this->weights_ = Weights(numWeights);
+       for(size_t i=0; i<numWeights; ++i)
+	   this->weights_.setWeight(i, trackingWeights.getWeight(i));
 
        this->gms_.resize(numModels);
        this->gts_.resize(numModels);
@@ -80,7 +83,7 @@ public:
    }
 
    void setGTS(size_t modelIndex, size_t labelIndex, LabelType label){
-       std::cout << "modelIndex = " << modelIndex << " labelIndex = " << labelIndex << " label = " << label << std::endl;
+     //std::cout << "modelIndex = " << modelIndex << " labelIndex = " << labelIndex << " label = " << label << std::endl;
        this->gts_[modelIndex][labelIndex] = label;
    }
 

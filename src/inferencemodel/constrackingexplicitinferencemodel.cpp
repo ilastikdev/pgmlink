@@ -15,9 +15,9 @@ ConsTrackingExplicitInferenceModel::ConsTrackingExplicitInferenceModel(const Par
     number_of_appearance_nodes_(0),
     number_of_disappearance_nodes_(0),
     ground_truth_filename_(""),
-    weights_(5)
+    inferenceWeights_(5)
 {
-    std::cout << " Constructor ConsTrackingExplicitInferenceModel" << std::endl;
+  //std::cout << " Constructor ConsTrackingExplicitInferenceModel" << std::endl;
     cplex_param_.verbose_ = true;
     cplex_param_.integerConstraint_ = true;
     cplex_param_.epGap_ = ep_gap;
@@ -26,7 +26,7 @@ ConsTrackingExplicitInferenceModel::ConsTrackingExplicitInferenceModel(const Par
 
 void ConsTrackingExplicitInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
 {
-    std::cout << "in build_from_graph param_.with_tracklets" << param_.with_tracklets << std::endl;
+  //std::cout << "in build_from_graph param_.with_tracklets" << param_.with_tracklets << std::endl;
 
     LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: entered";
 
@@ -138,7 +138,7 @@ void ConsTrackingExplicitInferenceModel::add_appearance_nodes(const HypothesesGr
         assert(model_.numberOfLabels(app_node_map_[n]) == param_.max_number_objects + 1);
 
         property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-        std::cout << " APPEARANCE count: " << count << " node: " << app_node_map_[n] << "   " << traxel_map[n]<< std::endl;
+      //std::cout << " APPEARANCE count: " << count << " node: " << app_node_map_[n] << "   " << traxel_map[n]<< std::endl;
         ++count;
     }
     number_of_appearance_nodes_ = count;
@@ -158,7 +158,7 @@ void ConsTrackingExplicitInferenceModel::add_disappearance_nodes(const Hypothese
         assert(model_.numberOfLabels(dis_node_map_[n]) == param_.max_number_objects + 1);
 
         property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-        std::cout << " DISAPPEARANCE count: " << count << " node: " << app_node_map_[n] << "   " << traxel_map[n]<< std::endl;
+      //std::cout << " DISAPPEARANCE count: " << count << " node: " << app_node_map_[n] << "   " << traxel_map[n]<< std::endl;
         ++count;
     }
     number_of_disappearance_nodes_ = count;
@@ -183,7 +183,7 @@ void ConsTrackingExplicitInferenceModel::add_transition_nodes(const HypothesesGr
         assert(model_.numberOfLabels(arc_map_[a]) == param_.max_number_objects + 1);
 
         property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-        std::cout << " ARC map count: " << count << "   arc: " << arc_map_[a] << "   (" << traxel_map[g.source(a)]<< "," << traxel_map[g.target(a)]<< ") " << std::endl;
+      //std::cout << " ARC map count: " << count << "   arc: " << arc_map_[a] << "   (" << traxel_map[g.source(a)]<< "," << traxel_map[g.target(a)]<< ") " << std::endl;
 
         ++count;
     }
@@ -210,7 +210,7 @@ void ConsTrackingExplicitInferenceModel::add_division_nodes(const HypothesesGrap
             assert(model_.numberOfLabels(div_node_map_[n]) == 2);
 
             property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
-            std::cout << " DIVISION count: " << count << " node: " << div_node_map_[n] << "   " << traxel_map[n]<< std::endl;
+          //std::cout << " DIVISION count: " << count << " node: " << div_node_map_[n] << "   " << traxel_map[n]<< std::endl;
             ++count;
         }
     }
@@ -285,7 +285,7 @@ void ConsTrackingExplicitInferenceModel::printResults(const HypothesesGraph& g)
 
 size_t ConsTrackingExplicitInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout<< "========ConsTrackingExplicitInferenceModel::add_detection_factors" << std::endl;
+  //std::cout<< "========ConsTrackingExplicitInferenceModel::add_detection_factors" << std::endl;
 /*
     ////
     //// add detection factors
@@ -468,12 +468,12 @@ size_t ConsTrackingExplicitInferenceModel::add_detection_factors(const Hypothese
 //    std::vector<size_t> coords(1, 0);
 //    coords[0]=index;
 //    weights_(coords.begin()) = val;
-//    std::cout << " ========>" << weights_(coords.begin()) << std::endl;
+//  //std::cout << " ========>" << weights_(coords.begin()) << std::endl;
 //}
 
 size_t ConsTrackingExplicitInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    std::cout<< "====================================================================ConsTrackingExplicitInferenceModel::add_transition_factors" << std::endl;
+  //std::cout<< "====================================================================ConsTrackingExplicitInferenceModel::add_transition_factors" << std::endl;
 /*
     ////
     //// add transition factors
@@ -546,7 +546,7 @@ size_t ConsTrackingExplicitInferenceModel::add_division_factors(const Hypotheses
         return factorIndex;
     }
 
-    std::cout<< "====================================================================ConsTrackingExplicitInferenceModel::add_division_factors" << std::endl;
+  //std::cout<< "====================================================================ConsTrackingExplicitInferenceModel::add_division_factors" << std::endl;
 /*
     ////
     //// add division factors
@@ -629,7 +629,7 @@ void ConsTrackingExplicitInferenceModel::add_finite_factors(const HypothesesGrap
     // Also, this implies that there is some functor choosing either energy or offset
 
     LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: entered";
-    std::cout << "ConsTrackingExplicitInferenceModel::add_finite_factors: entered " << param_.with_tracklets << std::endl;
+  //std::cout << "ConsTrackingExplicitInferenceModel::add_finite_factors: entered " << param_.with_tracklets << std::endl;
     size_t factorIndex = 0;
     factorIndex = add_detection_factors(g, factorIndex);
     factorIndex = add_transition_factors(g, factorIndex);
@@ -705,11 +705,11 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
         const std::string &constraints_filename,
         const std::string &ground_truth_filename)
 {
-    std::cout << "===========================in set_inference_params======================================================" << std::endl;
+  //std::cout << "===========================in set_inference_params======================================================" << std::endl;
     ground_truth_filename_ = ground_truth_filename;
 
 #ifdef WITH_MODIFIED_OPENGM
-    std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
+  //std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
                  cplex_param_,
                  numberOfSolutions,
@@ -719,16 +719,15 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
 
     cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
     cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
-    std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
+  //std::cout << "=================================================================================WITH_MODIFIED_OPENGM" << std::endl;
 #else
-    std::cout << "==============>ELSE:" << std::endl;
-    std::cout << "==============>ELSE:" << &cplex_param_ << std::endl;
-    std::cout << "==============>ELSE:" << &get_model() << std::endl;
+  //std::cout << "================================***===================================>CPLEX:" << std::endl;
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
     if(param_.with_constraints)
     {
+      //std::cout << "----->add_constraints";
         LOG(logINFO) << "add_constraints";
         add_constraints(*optimizer_);
     }
@@ -742,25 +741,25 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
 
 ConsTrackingExplicitInferenceModel::IlpSolution ConsTrackingExplicitInferenceModel::infer()
 {
-    std::cout << "optimizer_->graphicalModel().numberOfVariables() = " << optimizer_->graphicalModel().numberOfVariables() << std::endl;
-    std::cout << "optimizer_->graphicalModel().numberOfFactors()   = " << optimizer_->graphicalModel().numberOfFactors() << std::endl;
+  //std::cout << "optimizer_->graphicalModel().numberOfVariables() = " << optimizer_->graphicalModel().numberOfVariables() << std::endl;
+  //std::cout << "optimizer_->graphicalModel().numberOfFactors()   = " << optimizer_->graphicalModel().numberOfFactors() << std::endl;
 
-    std::cout << " PARAMETERS: InferenceModel: " << param_.appearance_cost << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.detection << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.detectionNoWeight << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.disappearance_cost << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.division << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.forbidden_cost << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.max_number_objects<< std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.transition << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.transition_parameter << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_appearance << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_constraints << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_disappearance << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_divisions << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_misdetections_allowed << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_optical_correction << std::endl;
-    std::cout << " PARAMETERS: InferenceModel: " << param_.with_tracklets << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.appearance_cost << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.detection << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.detectionNoWeight << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.disappearance_cost << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.division << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.forbidden_cost << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.max_number_objects<< std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.transition << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.transition_parameter << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_appearance << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_constraints << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_disappearance << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_divisions << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_misdetections_allowed << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_optical_correction << std::endl;
+  //std::cout << " PARAMETERS: InferenceModel: " << param_.with_tracklets << std::endl;
 
     opengm::InferenceTermination status = optimizer_->infer();
     if (status != opengm::NORMAL)

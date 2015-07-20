@@ -102,6 +102,7 @@ ADD_DEFINITIONS(-DHasHDF5)
 
 # opengm defines: do not include LPDef symbols everywhere
 ADD_DEFINITIONS(-DOPENGM_LPDEF_NO_SYMBOLS)
+ADD_DEFINITIONS(-DWITH_CPLEX)
 
 # print out the dependencies
 message(STATUS "Dependencies include dirs (you should check if they match the found libs):")

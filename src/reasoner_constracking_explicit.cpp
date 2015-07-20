@@ -272,7 +272,7 @@ void ConservationExplicitTracking::perturbedInference(HypothesesGraph & hypothes
 #endif
     }
 
-    LOG(logINFO) << "------------> Beginning Iteration 0 <-----------\n";
+    LOG(logDEBUG) << "------------> Beginning Iteration 0 <-----------\n";
 
     // instanciate inference model
     boost::shared_ptr<InferenceModel> inference_model = create_inference_model();
@@ -338,7 +338,7 @@ void ConservationExplicitTracking::perturbedInference(HypothesesGraph & hypothes
 
         for (size_t iterStep = 1; iterStep < numberOfIterations; ++iterStep)
         {
-            LOG(logINFO) << "------------> Beginning Iteration " << iterStep << " <-----------\n";
+            LOG(logDEBUG) << "------------> Beginning Iteration " << iterStep << " <-----------\n";
             if (uncertainty_param_.distributionId == DiverseMbest)
             {
                 if(solver_ == CplexSolver)
