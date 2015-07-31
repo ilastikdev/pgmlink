@@ -22,7 +22,7 @@ DynProgConsTrackInferenceModel::~DynProgConsTrackInferenceModel()
 std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
-    dpct::Magnusson tracker(&inference_graph_, true, true);
+    dpct::Magnusson tracker(&inference_graph_, true, true, false);
     double score = tracker.track(solution_paths_);
     LOG(logINFO) << "Done Tracking in " << tracker.getElapsedSeconds() << " secs with score " << score << " !";
 
@@ -194,7 +194,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                                                                  dis_score,
                                                                  in_first_frame,
                                                                  in_last_frame,
-                                                                 std::make_shared<ConservationTrackingNodeData>(n));
+                                                                 std::make_shared<ConservationTrackingNodeData>(n, tr));
         node_reference_map_[n] = inf_node;
     }
 

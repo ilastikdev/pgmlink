@@ -30,7 +30,23 @@ private:
     T ref_;
 };
 
-typedef ConservationTrackingUserData<HypothesesGraph::Node> ConservationTrackingNodeData;
+class ConservationTrackingNodeData : public ConservationTrackingUserData<HypothesesGraph::Node>
+{
+public:
+    ConservationTrackingNodeData(HypothesesGraph::Node& n, Traxel& t):
+        ConservationTrackingUserData<HypothesesGraph::Node>(n),
+        traxel_(t)
+    {}
+
+    Traxel getTraxel()
+    {
+        return traxel_;
+    }
+
+private:
+    Traxel traxel_;
+};
+
 typedef ConservationTrackingUserData<HypothesesGraph::Arc> ConservationTrackingArcData;
 
 class DynProgConsTrackInferenceModel : public InferenceModel
