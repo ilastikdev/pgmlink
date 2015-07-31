@@ -204,7 +204,13 @@ void export_track()
     .def("set_cplex_timeout", &ChaingraphTracking::set_cplex_timeout)
     ;
 
-    class_<ConservationTracking::Parameter>("ConservationTrackingParameter");
+    class_<ConservationTracking::Parameter>("ConservationTrackingParameter")
+    .def("register_detection_func", &ConservationTracking::Parameter::register_detection_func)
+    .def("register_division_func", &ConservationTracking::Parameter::register_division_func)
+    .def("register_transition_func", &ConservationTracking::Parameter::register_transition_func)
+    .def("register_appearance_func", &ConservationTracking::Parameter::register_appearance_func)
+    .def("register_disappearance_func", &ConservationTracking::Parameter::register_disappearance_func)
+    ;
 
     class_<ConsTracking>("ConsTracking",
                          init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType>(

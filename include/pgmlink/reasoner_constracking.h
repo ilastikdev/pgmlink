@@ -121,6 +121,68 @@ public:
         SolverType solver_;
         unsigned int num_threads;
         bool with_cross_timestep_constraint;
+
+    private:
+        // python extensions:
+        double python_caller_det_div(boost::python::object func, const Traxel& t, const size_t state)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object py_result = func(t, state);
+            double result = boost::python::extract<double>(py_result);
+            // PyGILState_Release(pygilstate);
+            return result;
+        }
+
+        double python_caller_dis_appear(boost::python::object func, const Traxel& t)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object py_result = func(t);
+            double result = boost::python::extract<double>(py_result);
+            // PyGILState_Release(pygilstate);
+            return result;
+        }
+
+        double python_caller_trans(boost::python::object func, double distance)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object py_result = func(distance);
+            double result = boost::python::extract<double>(py_result);
+            // PyGILState_Release(pygilstate);
+            return result;
+        }
+    public:
+        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
+        void register_detection_func(boost::python::object func)
+        {
+            detection = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
+        }
+
+        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
+        void register_division_func(boost::python::object func)
+        {
+            division = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
+        }
+
+        /// Expects a function with signature (double distance) -> double energy
+        void register_transition_func(boost::python::object func)
+        {
+            transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1);
+        }
+
+        /// Expects a function with signature (Traxel traxel) -> double energy
+        void register_appearance_func(boost::python::object func)
+        {
+            appearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+        }
+
+        /// Expects a function with signature (Traxel traxel) -> double energy
+        void register_disappearance_func(boost::python::object func)
+        {
+            disappearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+        }
     };
 
 public:
