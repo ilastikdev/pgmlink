@@ -9,8 +9,7 @@
 
 #include <vector>
 #include "pgmlink/pgmlink_export.h"
-
-
+#include <boost/serialization/vector.hpp>
 
 namespace pgmlink
 {
@@ -67,7 +66,20 @@ public:
 private:
     std::vector<double> lb_; // lower bound
     std::vector<double> ub_; // upper bound
+
+private:
+    // boost serialize
+    friend class boost::serialization::access;
+    template< typename Archive >
+    void serialize( Archive&, const unsigned int /*version*/ );
 };
+
+template< typename Archive >
+void FieldOfView::serialize( Archive& ar, const unsigned int /*version*/ )
+{
+    ar & lb_;
+    ar & ub_;
+}
 
 } /* namespace pgmlink */
 
