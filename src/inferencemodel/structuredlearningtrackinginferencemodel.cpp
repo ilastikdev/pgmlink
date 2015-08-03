@@ -112,12 +112,14 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         // convert vector to array
         std::vector<size_t> coords(num_vars, 0);
         std::vector<size_t> shape(num_vars, (param_.max_number_objects + 1));
-        //marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
+        
+	marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
+
         marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
         marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
         marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
-        marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
-        marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
+        //marray::Marray<double> energiesT(shape.begin(), shape.end(), param_.forbidden_cost);
+        //marray::Marray<double> energiesDiv(shape.begin(), shape.end(), param_.forbidden_cost);
 
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
@@ -181,11 +183,12 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 // to the detection cost
 
 
-                //energies(coords.begin()) = conservationParam_.detection_weight * energy + state * cost[var_idx]; // state == m
+                energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
 
 
-
-                //std::cout << "___> " << conservationParam_.detection_weight << "   " << energy << "   " << state << "    " << cost[var_idx] << "   " << var_idx <<std::endl;
+/*
+                std::cout << "___> " << inferenceWeights_.getWeight((size_t)0) << "   " << energy << "   " << state << "    " << cost[var_idx] << "   " << var_idx <<std::endl;
+                */
                 energiesP(coords.begin()) = energy;
 
 
@@ -214,7 +217,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
 
 
-                //energies(coords.begin()) = conservationParam_.detection_weight * energy;
+                energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy;
 
                 energiesP(coords.begin()) = energy;
                 coords[0] = 0;
@@ -224,46 +227,47 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                                << energy;
             }
         } // end for state
-
-        //std::cout << "energies ==========================================================" << std::endl;
-//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                coords[0] = state;
-//                coords[1] = state2;
-//                std::cout << energies(coords.begin()) << " ";
-//            }
-//            std::cout << std::endl;
-//        }
-//        std::cout << "energiesP ................." << std::endl;
-//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                coords[0] = state;
-//                coords[1] = state2;
-//                std::cout << energiesP(coords.begin()) << " ";
-//            }
-//            std::cout << std::endl;
-//        }
-//        std::cout << "energiesA ................." << std::endl;
-//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                coords[0] = state;
-//                coords[1] = state2;
-//                std::cout << energiesA(coords.begin()) << " ";
-//            }
-//            std::cout << std::endl;
-//        }
-//        std::cout << "energiesD ................." << std::endl;
-//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                coords[0] = state;
-//                coords[1] = state2;
-//                std::cout << energiesD(coords.begin()) << " ";
-//            }
-//            std::cout << std::endl;
-//        }
-
-//        marray::Marray<double> errorMA(shape.begin(), shape.end(), param_.forbidden_cost);
-//        errorMA = energies - conservationParam_.detection_weight * energiesP - cost[0]*energiesA - cost[1]*energiesD;
+/*
+        std::cout << "energies ==========================================================" << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                std::cout << energies(coords.begin()) << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "energiesP .........DETECTION........" << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                std::cout << energiesP(coords.begin()) << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "energiesA ..........APPEARANCE......." << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                std::cout << energiesA(coords.begin()) << " ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << "energiesD .........DISAPPEARANCE........" << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                std::cout << energiesD(coords.begin()) << " ";
+            }
+            std::cout << std::endl;
+        }
+	std::cout << "param_.detection_weight = " << param_.detection_weight << std::endl;
+*/
+        marray::Marray<double> errorMA(shape.begin(), shape.end(), param_.forbidden_cost);
+        errorMA = energies - inferenceWeights_.getWeight((size_t)0) * energiesP - cost[0]*energiesA - cost[1]*energiesD;
 
 
 
@@ -272,28 +276,28 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         // w_appearance = cost[0]
         // w_disappearance = cost[1]
 
+/*
+        std::cout << "errorMA ................." << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                std::cout << errorMA(coords.begin()) << " ";
+            }
+            std::cout << std::endl;
+        }
 
-//        std::cout << "errorMA ................." << std::endl;
-//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                coords[0] = state;
-//                coords[1] = state2;
-//                std::cout << errorMA(coords.begin()) << " ";
-//            }
-//            std::cout << std::endl;
-//        }
 
-
-//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-//                coords[0] = state;
-//                coords[1] = state2;
-//                if (errorMA(coords.begin()) > 0.001 )
-//                    std::cout << " We have a problem!!!";
-//            }
-//            //std::cout << std::endl;
-//        }
-
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                if (errorMA(coords.begin()) > 0.001 )
+                    std::cout << " We have a problem!!!";
+            }
+            //std::cout << std::endl;
+        }
+*/
         LOG(logDEBUG3) << "StructuredLearningTrackingInferenceModel::add_finite_factors: adding table to pgm";
         //functor add detection table
         //factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
@@ -384,6 +388,17 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         std::vector<marray::Marray<double>> features;
         features.push_back(energies);
 
+        /*
+        //std::cout << "energies ==========================TRANSITION================================" << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                //std::cout << energies(coords.begin()) << " ";
+            }
+            //std::cout << std::endl;
+        }
+*/
         std::vector<size_t> varShape;
         varShape.push_back((size_t)1+param_.max_number_objects);
 
@@ -459,7 +474,17 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         weightIDs.push_back((size_t)1);
         std::vector<marray::Marray<double>> features;
         features.push_back(energies);
-
+/*
+        //std::cout << "energies =========================DIVISION=================================" << std::endl;
+        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+                coords[0] = state;
+                coords[1] = state2;
+                //std::cout << energies(coords.begin()) << " ";
+            }
+            //std::cout << std::endl;
+        }
+*/
         std::vector<size_t> varShape;
         varShape.push_back((size_t)2);
 
