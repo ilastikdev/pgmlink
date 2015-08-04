@@ -331,8 +331,6 @@ double CellnessDivision::operator()(const Traxel& ancestor,
     double cellness = 0; // cellness of ancestor
     double dcellness12 = 0; // cellness difference child1-child2
 
-    //std::cout << "From " << ancestor.ID << " to " << child1.ID << " and " << child2.ID << "\n" ;
-
     if(cAncestor != ancestor.features.end() &&
             cChild1 != child1.features.end() &&
             cChild2 != child2.features.end() )
@@ -342,11 +340,7 @@ double CellnessDivision::operator()(const Traxel& ancestor,
 
         // squared difference
         dcellness12 = std::pow((*cChild1).second[0] - (*cChild2).second[0], 2);
-
-        //std::cout << "Cellness parent " << (*cAncestor).second[0] << " \n" ;
-        //std::cout << "Cellness children " << (*cChild1).second[0] << " , " << (*cChild2).second[0] << "\n" ;
     }
-
 
     // calculate costs of each term
 
@@ -413,12 +407,8 @@ double CellnessMove::operator()(const Traxel& from,
     //adjust cellness term accordingly
     double cost_dcellness = - param_diff_c * std::log((1 - dcellness + e) / (1. + e));
 
-    //std::cout << "From " << from.ID << " to " << to.ID << "\n" ;
-
     return cost_dist + cost_dcellness;
 }
-
-
 
 CellnessDisappearance::CellnessDisappearance(double disappWeight):
     param_abs_c(disappWeight)

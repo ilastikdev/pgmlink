@@ -30,21 +30,7 @@ public:
         double ep_gap,
         double cplex_timeout):
         ConsTrackingExplicitInferenceModel(inferenceParam, ep_gap, cplex_timeout)
-        //weights_(5)// { [0]detection_weight,[1]division_weight,[2]transition_weight,[3]appearance_weight,[4]disappearance_weight}
-    {
-      //std::cout << "Constructor StructuredLearningTrackingInferenceModel" << std::endl;
-
-        // { [0]detection_weight,[1]division_weight,[2]transition_weight,[3]appearance_weight,[4]disappearance_weight}
-        // inferenceWeights_.setWeight((size_t)0, (double) 7);
-        // inferenceWeights_.setWeight((size_t)1, (double) 8);
-        // inferenceWeights_.setWeight((size_t)2, (double) 9);
-        // inferenceWeights_.setWeight((size_t)3, (double) 666);
-        // inferenceWeights_.setWeight((size_t)4, (double) 444);
-    }
-
-//    opengm::learning::Weights<double> inferenceWeights_;
-//     void setWeight ( size_t, double );
-//     double weight ( size_t );
+    {}
 
     virtual size_t add_division_factors(const HypothesesGraph&, size_t);
     virtual size_t add_transition_factors(const HypothesesGraph&, size_t);

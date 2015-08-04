@@ -68,7 +68,6 @@ public:
 	numWeights_(5),
 	  trackingWeights_((size_t)5)
     {
-      //std::cout << "Constructor StructuredLearningTracking" << std::endl;
         hypotheses_graph_ = hypotheses_graph;
     }
 
@@ -130,7 +129,6 @@ public:
     int numWeights_;
     int numLabels_;
     opengm::learning::Weights<double> trackingWeights_;
-      //std::vector<double> weights_;
 
 protected:
     StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;

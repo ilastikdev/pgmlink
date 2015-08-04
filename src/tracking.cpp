@@ -17,7 +17,6 @@
 
 #include "pgmlink/randomforest.h"
 #include "pgmlink/features/feature.h"
-//#include "pgmlink/feature.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
@@ -331,7 +330,6 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         TimestepIdCoordinateMapPtr coordinates,
         boost::python::object transition_classifier)
 {
-  //std::cout << "Constructor ConsTracking" << std::endl;
 
     build_hypo_graph(ts);
 
@@ -384,7 +382,6 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 
 boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts)
 {
-  //std::cout << "ConsTracking::build_hypo_graph" << std::endl;
 
     LOG(logDEBUG3) << "entering build_hypo_graph" << endl;;
 
@@ -596,9 +593,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 }
 
 void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
-{
-  //std::cout << " ---------------------------------->I should NOT be here if I am doing SLT tracking" << std::endl;
-}
+{}
 
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
                                                        bool fixLabeledNodes)
@@ -741,7 +736,6 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
 void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
 {
 
-  //std::cout << " I am here 0" << std::endl;
     param.detection_weight  =weights[0];
     param.division_weight   =weights[1];
     param.transition_weight =weights[2];
@@ -755,14 +749,12 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     {
         LOG(logINFO) << "Using classifier prior";
         param.detection = NegLnDetection(weights[0]);
-      //std::cout << " I am here 1" << std::endl;
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
         param.detection = NegLnDetection(weights[0]); // weight
-      //std::cout << " I am here 2" << std::endl;
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
@@ -781,7 +773,6 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
         prob_vector.insert(prob_vector.begin(), 1 - sum);
 
         param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
-      //std::cout << " I am here 3" << std::endl;
         param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
     }
 
@@ -1094,8 +1085,6 @@ EventVectorVectorVector ConsExplicitTracking::operator()(TraxelStore& ts,
         TimestepIdCoordinateMapPtr coordinates,
         boost::python::object transition_classifier)
 {
-  //std::cout << "Constructor ConsExplicitTracking" << std::endl;
-
     build_hypo_graph(ts);
 
     // TODO need solution without copying the event vector
@@ -1147,8 +1136,6 @@ EventVectorVectorVector ConsExplicitTracking::operator()(TraxelStore& ts,
 
 boost::shared_ptr<HypothesesGraph> ConsExplicitTracking::build_hypo_graph(TraxelStore& ts)
 {
-  //std::cout << "ConsExplicitTracking::build_hypo_graph" << std::endl;
-
     LOG(logDEBUG3) << "entering build_hypo_graph" << endl;;
 
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
@@ -1335,8 +1322,6 @@ EventVectorVectorVector ConsExplicitTracking::track(double forbidden_cost,
         double cplex_timeout,
         boost::python::object transition_classifier)
 {
-    cout << "----> ConsExplicitTracking::track" << endl;
-
     ConservationExplicitTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
             ep_gap,
@@ -1355,9 +1340,7 @@ EventVectorVectorVector ConsExplicitTracking::track(double forbidden_cost,
             cplex_timeout,
             transition_classifier,
             solver_);
-    cout << "----> before uncertaintyParam" << endl;
     uncertainty_param_ = uncertaintyParam;
-    cout << "----> after uncertaintyParam" << endl;
 
     return ConsExplicitTracking::track_from_param(param);
 }
@@ -1368,7 +1351,7 @@ void ConsExplicitTracking::prepareTracking(ConservationExplicitTracking& pgm, Co
 
 EventVectorVectorVector ConsExplicitTracking::track_from_param(ConservationExplicitTracking::Parameter& param,
                                                        bool fixLabeledNodes)
-{   cout << "----> entering track_from_param" << endl;
+{
 
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
@@ -1506,8 +1489,6 @@ ConservationExplicitTracking::Parameter ConsExplicitTracking::get_conservation_t
 
 void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights)
 {
-
-  //std::cout << " I am here 0" << std::endl;
     param.detection_weight  =weights[0];
     param.division_weight   =weights[1];
     param.transition_weight =weights[2];
@@ -1521,14 +1502,12 @@ void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Par
     {
         LOG(logINFO) << "Using classifier prior";
         param.detection = NegLnDetection(weights[0]);
-      //std::cout << " I am here 1" << std::endl;
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
         param.detection = NegLnDetection(weights[0]); // weight
-      //std::cout << " I am here 2" << std::endl;
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
@@ -1547,7 +1526,6 @@ void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Par
         prob_vector.insert(prob_vector.begin(), 1 - sum);
 
         param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
-      //std::cout << " I am here 3" << std::endl;
         param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
     }
 
