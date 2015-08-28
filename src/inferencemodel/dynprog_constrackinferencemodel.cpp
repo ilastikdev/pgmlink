@@ -19,12 +19,54 @@ DynProgConsTrackInferenceModel::~DynProgConsTrackInferenceModel()
 {
 }
 
+double DynProgConsTrackInferenceModel::evaluate_motion_model(dpct::Node* a,
+                                                             dpct::Node* b, 
+                                                             dpct::Node* c) const
+{
+    // get the 3 nodes needed for the minimal motion model
+    typedef std::shared_ptr<ConservationTrackingNodeData> NDP;
+    NDP dataB = std::static_pointer_cast<ConservationTrackingNodeData>(a->getUserData());
+    NDP dataC = std::static_pointer_cast<ConservationTrackingNodeData>(b->getUserData());
+    NDP dataD = std::static_pointer_cast<ConservationTrackingNodeData>(c->getUserData());
+
+    // get one further predecessor if possible and if needed
+    NDP dataA;
+    if(param_.motion_model4 && a->getBestInArc() != nullptr && !inference_graph_.isSpecialNode(a->getBestInArc()->getSourceNode()))
+        dataA = std::static_pointer_cast<ConservationTrackingNodeData>(a->getBestInArc()->getSourceNode()->getUserData());
+
+    // evaluate both motion models if present
+    double result = 0.0;
+    if(param_.motion_model3)
+        result += param_.motion_model3(dataB->getTraxel(), dataC->getTraxel(), dataD->getTraxel());
+    if(param_.motion_model4 && dataA)
+        result += param_.motion_model4(dataA->getTraxel(), dataB->getTraxel(), dataC->getTraxel(), dataD->getTraxel());
+
+    return -1.0 * result;
+}
+
 std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
     dpct::Magnusson tracker(&inference_graph_, true, true, false);
+
+    // set up motion model function if one was specified
+    if(param_.motion_model3 || param_.motion_model4)
+    {
+        LOG(logINFO) << "Using Motion Model function";
+        tracker.setMotionModelScoreFunction(std::bind(&DynProgConsTrackInferenceModel::evaluate_motion_model, 
+                                                        this, 
+                                                        std::placeholders::_1, 
+                                                        std::placeholders::_2, 
+                                                        std::placeholders::_3));
+    }
+
     double score = tracker.track(solution_paths_);
     LOG(logINFO) << "Done Tracking in " << tracker.getElapsedSeconds() << " secs with score " << score << " !";
+
+    return std::vector<size_t>();
+}
+
+/* Fusion Move prototype code: 
 
 //    using namespace dpct;
 
@@ -61,8 +103,8 @@ std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 //    std::cout << "Original graph has " << inference_graph_.getNumArcs() << " arcs and " << inference_graph_.getNumNodes() << " nodes.\n";
 //    std::cout << "Union graph has " << unionGraph->getNumArcs()
 //              << " arcs and " << unionGraph->getNumNodes() << " nodes.\n" << std::endl;
-    return std::vector<size_t>();
-}
+
+*/
 
 void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 {

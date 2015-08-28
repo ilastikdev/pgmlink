@@ -38,7 +38,7 @@ public:
         traxel_(t)
     {}
 
-    Traxel getTraxel()
+    const Traxel& getTraxel() const
     {
         return traxel_;
     }
@@ -81,6 +81,12 @@ public:
                                      HypothesesGraph::Node n,
                                      HypothesesGraph::Arc a,
                                      size_t state);
+
+private:
+    double evaluate_motion_model(dpct::Node* a,
+                                dpct::Node* b, 
+                                dpct::Node* c) const;
+
 protected:
     // dpct inference members
     dpct::Graph inference_graph_;

@@ -99,6 +99,8 @@ public:
         boost::function<double (const Traxel&, const size_t)> detection;
         boost::function<double (const Traxel&, const size_t)> division;
         boost::function<double (const double)> transition;
+        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
+        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
         double forbidden_cost;
         double ep_gap;
         bool with_tracklets;
@@ -153,6 +155,22 @@ public:
             // PyGILState_Release(pygilstate);
             return result;
         }
+
+        double python_caller_motion_model3(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            boost::python::object py_result = func(a, b, c);
+            double result = boost::python::extract<double>(py_result);
+            return result;
+        }
+
+        double python_caller_motion_model4(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c, const Traxel& d)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            boost::python::object py_result = func(a, b, c, d);
+            double result = boost::python::extract<double>(py_result);
+            return result;
+        }
     public:
         /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
         void register_detection_func(boost::python::object func)
@@ -182,6 +200,18 @@ public:
         void register_disappearance_func(boost::python::object func)
         {
             disappearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+        }
+
+        /// Expects a function with signature (Traxel, Traxel, Traxel) -> double energy
+        void register_motion_model3_func(boost::python::object func)
+        {
+            motion_model3 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model3, this, func, _1, _2, _3);
+        }
+
+        /// Expects a function with signature (Traxel, Traxel, Traxel, Traxel) -> double energy
+        void register_motion_model4_func(boost::python::object func)
+        {
+            motion_model4 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model4, this, func, _1, _2, _3, _4);
         }
     };
 

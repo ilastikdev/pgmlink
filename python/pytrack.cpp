@@ -210,6 +210,8 @@ void export_track()
     .def("register_transition_func", &ConservationTracking::Parameter::register_transition_func)
     .def("register_appearance_func", &ConservationTracking::Parameter::register_appearance_func)
     .def("register_disappearance_func", &ConservationTracking::Parameter::register_disappearance_func)
+    .def("register_motion_model3_func", &ConservationTracking::Parameter::register_motion_model3_func)
+    .def("register_motion_model4_func", &ConservationTracking::Parameter::register_motion_model4_func)
     ;
 
     class_<ConsTracking>("ConsTracking",

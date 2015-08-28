@@ -98,6 +98,9 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     inference_model_param_.appearance_cost = appearance_cost_;
     inference_model_param_.disappearance_cost = disappearance_cost_;
 
+    inference_model_param_.motion_model3 = param.motion_model3;
+    inference_model_param_.motion_model4 = param.motion_model4;
+
     perturbed_inference_model_param_.distributionId = uncertainty_param_.distributionId;
     perturbed_inference_model_param_.distributionParam = uncertainty_param_.distributionParam;
     perturbed_inference_model_param_.detection_weight = detection_weight_;
