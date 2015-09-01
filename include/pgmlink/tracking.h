@@ -232,7 +232,7 @@ public:
      * refactoring of operator().
      */
 
-    PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts);
+    PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts, int max_nearest_neighbors=1);
 
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_resolved_hypotheses_graph();

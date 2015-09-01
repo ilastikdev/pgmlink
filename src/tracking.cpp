@@ -377,7 +377,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
     }
 }
 
-boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts)
+boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts, int max_nearest_neighbors)
 {
 
     LOG(logDEBUG3) << "entering build_hypo_graph" << endl;;
@@ -483,7 +483,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     }
 
     LOG(logDEBUG1) << "-> building hypotheses" << endl;
-    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
+    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(max_nearest_neighbors, // max_nearest_neighbors
             max_dist_,
             true, // forward_backward
             with_divisions_, // consider_divisions
