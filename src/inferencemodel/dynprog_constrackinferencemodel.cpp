@@ -23,31 +23,55 @@ double DynProgConsTrackInferenceModel::evaluate_motion_model(dpct::Node* a,
                                                              dpct::Node* b, 
                                                              dpct::Node* c) const
 {
-    // get the 3 nodes needed for the minimal motion model
-    typedef std::shared_ptr<ConservationTrackingNodeData> NDP;
-    NDP dataB = std::static_pointer_cast<ConservationTrackingNodeData>(a->getUserData());
-    NDP dataC = std::static_pointer_cast<ConservationTrackingNodeData>(b->getUserData());
-    NDP dataD = std::static_pointer_cast<ConservationTrackingNodeData>(c->getUserData());
-
-    // get one further predecessor if possible and if needed
-    NDP dataA;
-    if(param_.motion_model4 && a->getBestInArc() != nullptr && !inference_graph_.isSpecialNode(a->getBestInArc()->getSourceNode()))
-        dataA = std::static_pointer_cast<ConservationTrackingNodeData>(a->getBestInArc()->getSourceNode()->getUserData());
-
-    // evaluate both motion models if present
     double result = 0.0;
-    if(param_.motion_model3)
-        result += param_.motion_model3(dataB->getTraxel(), dataC->getTraxel(), dataD->getTraxel());
-    if(param_.motion_model4 && dataA)
-        result += param_.motion_model4(dataA->getTraxel(), dataB->getTraxel(), dataC->getTraxel(), dataD->getTraxel());
+    
+    // make sure we have enough nodes to evaluate
+    if(a == nullptr || b == nullptr || c == nullptr)
+    {
+        if(param_.motion_model3)
+            result += param_.motion_model3_default;
+        if(param_.motion_model4)
+            result += param_.motion_model4_default;
+    }
+    else
+    {
+        // get the 3 nodes needed for the minimal motion model
+        typedef std::shared_ptr<ConservationTrackingNodeData> NDP;
+        NDP dataB = std::static_pointer_cast<ConservationTrackingNodeData>(a->getUserData());
+        NDP dataC = std::static_pointer_cast<ConservationTrackingNodeData>(b->getUserData());
+        NDP dataD = std::static_pointer_cast<ConservationTrackingNodeData>(c->getUserData());
 
+        // evaluate 3-node motion model
+        if(param_.motion_model3)
+            result += param_.motion_model3(dataB->getTraxel(), dataC->getTraxel(), dataD->getTraxel());
+
+        // get one further predecessor if possible and if needed
+        NDP dataA;
+        if(param_.motion_model4 && a->getBestInArc() != nullptr)
+        {   
+            dpct::Node* pred = inference_graph_.isSpecialNode(a->getBestInArc()->getSourceNode()) ? nullptr : a->getBestInArc()->getSourceNode();
+            if(pred)
+            {
+                // found 4th predecessor, compute motion model cost
+                dataA = std::static_pointer_cast<ConservationTrackingNodeData>(pred->getUserData());
+                result += param_.motion_model4(dataA->getTraxel(), dataB->getTraxel(), dataC->getTraxel(), dataD->getTraxel());
+            }
+            else
+            {
+                // if we cannot find a valid further predecessor, use default value for that motion model
+                result += param_.motion_model4_default;
+            }
+        }
+    }
+
+    // motion model functions return a cost, but magnusson works on scores -> flip sign
     return -1.0 * result;
 }
 
 std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
-    dpct::Magnusson tracker(&inference_graph_, true, true, false);
+    dpct::Magnusson tracker(&inference_graph_, false, true, false);
 
     // set up motion model function if one was specified
     if(param_.motion_model3 || param_.motion_model4)

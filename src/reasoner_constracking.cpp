@@ -100,6 +100,8 @@ ConservationTracking::ConservationTracking(const Parameter &param)
 
     inference_model_param_.motion_model3 = param.motion_model3;
     inference_model_param_.motion_model4 = param.motion_model4;
+    inference_model_param_.motion_model3_default = param.motion_model3_default;
+    inference_model_param_.motion_model4_default = param.motion_model4_default;
 
     perturbed_inference_model_param_.distributionId = uncertainty_param_.distributionId;
     perturbed_inference_model_param_.distributionParam = uncertainty_param_.distributionParam;

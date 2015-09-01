@@ -101,6 +101,8 @@ public:
         boost::function<double (const double)> transition;
         boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
         boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
+        double motion_model3_default;
+        double motion_model4_default;
         double forbidden_cost;
         double ep_gap;
         bool with_tracklets;
@@ -203,15 +205,17 @@ public:
         }
 
         /// Expects a function with signature (Traxel, Traxel, Traxel) -> double energy
-        void register_motion_model3_func(boost::python::object func)
+        void register_motion_model3_func(boost::python::object func, double default_value)
         {
             motion_model3 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model3, this, func, _1, _2, _3);
+            motion_model3_default = default_value;
         }
 
         /// Expects a function with signature (Traxel, Traxel, Traxel, Traxel) -> double energy
-        void register_motion_model4_func(boost::python::object func)
+        void register_motion_model4_func(boost::python::object func, double default_value)
         {
             motion_model4 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model4, this, func, _1, _2, _3, _4);
+            motion_model4_default = default_value;
         }
     };
 
