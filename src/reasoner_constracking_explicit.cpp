@@ -450,18 +450,7 @@ void ConservationExplicitTracking::set_ilp_solutions(const std::vector<Conservat
 
 void ConservationExplicitTracking::reset()
 {
-//    solutions_.clear();
 }
-
-//boost::python::dict convertFeatureMapToPyDict(FeatureMap map)
-//{
-//    boost::python::dict dictionary;
-//    for (FeatureMap::iterator iter = map.begin(); iter != map.end(); ++iter)
-//    {
-//        dictionary[iter->first] = iter->second;
-//    }
-//    return dictionary;
-//}
 
 void ConservationExplicitTracking::setInferenceModel(boost::shared_ptr<InferenceModel> inference_model)
 {

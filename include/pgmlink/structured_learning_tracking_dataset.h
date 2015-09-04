@@ -36,7 +36,6 @@ public:
        opengm::learning::Weights<double>& trackingWeights
    )
    {
-     //std::cout << "numModels = " << numModels << " crops.size() = " << crops.size() << std::endl;
        if(numModels!=crops.size()){
 	 std::cout << "Number of crops and crops size do not match!!!" << std::endl; // xxx: use assert
            return;
@@ -54,10 +53,6 @@ public:
        this->gmsWithLoss_.resize(numModels);
    }
 
-//   void addVariables(size_t m, size_t numVariables){
-//       this->gms_[m].addVariable(numVariables);
-//   }
-
    void setGraphicalModel(size_t m, GMType model){
        this->gms_[m] = model;
    }
@@ -71,28 +66,15 @@ public:
    }
 
    void resizeGTS(size_t m){
-//       size_t length = numNodes+numNodes*numNodes; //arcs are represented with the (source(a),target(a)) pairs <----- REVISE THIS
-//       std::cout << "resizeGTS : m " << m << "  " << length << std::endl;
-//       std::cout << "numNodes = " << numNodes << "  numVars = " << this->gms_[m].numberOfVariables() << std::endl;
-//       std::cout << "numArcs  = " << numArcs << "  numFactors = " << this->gms_[m].numberOfFactors() << std::endl;
-//       this->gts_[m].resize(length, 0);
 
        this->gts_[m].resize(this->gms_[m].numberOfVariables(), 0);
-
-       //std::cout << "resizeGTS : " << this->gts_[m].size() << std::endl;
    }
 
    void setGTS(size_t modelIndex, size_t labelIndex, LabelType label){
-     //std::cout << "modelIndex = " << modelIndex << " labelIndex = " << labelIndex << " label = " << label << std::endl;
        this->gts_[modelIndex][labelIndex] = label;
    }
 
 };
-
-
-
-
-
 } // datasets
 } // opengm
 
