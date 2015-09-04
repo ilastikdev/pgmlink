@@ -45,6 +45,7 @@ public: // API
             const HypothesesGraph& g,
             const HypothesesGraph &tracklet_graph,
             std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &traxel2tracklet_map);
+    void fixNodesToLabels( HypothesesGraph& hypothesesGraph );
 
     // extract the model
     GraphicalModelType& get_model();

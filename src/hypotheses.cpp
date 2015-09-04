@@ -1675,6 +1675,7 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
         // make sure that each potentially dividing cell has 2 nearest neighbors
         // (but only if we go through the graph forward in time)
         unsigned int max_nn = options_.max_nearest_neighbors;
+
         if (options_.consider_divisions && !reverse && max_nn < 2)
         {
             double div_prob = getDivisionProbability(traxelmap[curr_node]);

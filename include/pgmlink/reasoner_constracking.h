@@ -61,7 +61,8 @@ public:
             double border_width = 0,
             boost::python::object transition_classifier = boost::python::object(),
             bool with_optical_correction = false,
-            SolverType solver = CplexSolver):
+            SolverType solver = CplexSolver,
+            bool trainingToHardConstraints = false):
             max_number_objects(max_number_objects),
             detection(detection),
             detectionNoWeight(0),
@@ -86,7 +87,8 @@ public:
             transition_weight(transition_weight),
             transition_classifier(transition_classifier),
             with_optical_correction(with_optical_correction),
-            solver_(solver)
+            solver_(solver),
+            training_to_hard_constraints(trainingToHardConstraints)
         {}
 
         // empty parameter needed for python
@@ -120,6 +122,7 @@ public:
         boost::python::object transition_classifier;
         bool with_optical_correction;
         SolverType solver_;
+        bool training_to_hard_constraints;
     };
 
 public:
@@ -153,6 +156,8 @@ public:
     boost::shared_ptr<InferenceModel> create_inference_model();
     void setInferenceModel(boost::shared_ptr<InferenceModel> inference_model);
     boost::shared_ptr<InferenceModel> getInferenceModel();
+    //void fixNodeToAppearanceLabel( HypothesesGraph& hypothesesGraph, int node, double label);
+    bool training_to_hard_constraints_;
 
 protected: // methods
     void reset();

@@ -297,6 +297,15 @@ void export_track()
     .def("HamminglossOfFiles", &ConsTracking::hammingloss_of_files)
     .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
     .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
+    //.def("fixNodeToAppearanceLabel", &ConsTracking::fixNodeToAppearanceLabel)
+    .def("addLabels", &ConsTracking::addLabels)
+    .def("addAppearanceLabel", &ConsTracking::addAppearanceLabel)
+    .def("addDisappearanceLabel", &ConsTracking::addDisappearanceLabel)
+    .def("addDivisionLabel", &ConsTracking::addDivisionLabel)
+    .def("addArcLabel", &ConsTracking::addArcLabel)
+    .def("addFirstLabels", &ConsTracking::addFirstLabels)
+    .def("addLastLabels", &ConsTracking::addLastLabels)
+    .def("addIntermediateLabels", &ConsTracking::addIntermediateLabels)
     ;
 
     class_<ConservationTracking, boost::noncopyable>("ConservationTracking",

@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
 
-    vector<double> sigmas(5);
+    std::vector<double> sigmas(5);
     sigmas[0] = 0;
     sigmas[1] = 0;
     sigmas[2] = 10;
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
     FeatureMatrix results;
     extractor.compute_features(traxelref_vecs, results);
     std::cout << "Features:\n" << results << std::endl;
-    std::vector<string> descriptions;
+    std::vector<std::string> descriptions;
     extractor.get_feature_descriptions(descriptions);
     for(auto description : descriptions)
     {
@@ -484,7 +484,7 @@ BOOST_AUTO_TEST_CASE(DivisionFeatureExtractor_CplexMBest)
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
 
-    vector<double> sigmas(5);
+    std::vector<double> sigmas(5);
     sigmas[0] = 0;
     sigmas[1] = 0;
     sigmas[2] = 10;
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(DivisionFeatureExtractor_CplexMBest)
     FeatureMatrix results;
     extractor.compute_features(traxelref_vecs, results);
     std::cout << "Division features:\n" << results << std::endl;
-    std::vector<string> descriptions;
+    std::vector<std::string> descriptions;
     extractor.get_feature_descriptions(descriptions);
     for(auto description : descriptions)
     {
@@ -666,7 +666,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
 
-    vector<double> sigmas(5);
+    std::vector<double> sigmas(5);
     sigmas[0] = 0;
     sigmas[1] = 0;
     sigmas[2] = 10;
@@ -870,7 +870,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
 
-    vector<double> sigmas(5);
+    std::vector<double> sigmas(5);
     sigmas[0] = 0;
     sigmas[1] = 0;
     sigmas[2] = 10;
@@ -1092,7 +1092,7 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
     std::cout << "Initialize Conservation tracking" << std::endl;
     std::cout << std::endl;
 
-    vector<double> sigmas(5);
+    std::vector<double> sigmas(5);
     sigmas[0] = 0;
     sigmas[1] = 0;
     sigmas[2] = 10;

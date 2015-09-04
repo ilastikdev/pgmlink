@@ -79,7 +79,8 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       with_optical_correction_(param.with_optical_correction),
       solver_(param.solver_),
       use_app_node_labels_to_fix_values_(false),
-      with_structured_learning_(false)
+      with_structured_learning_(false),
+      training_to_hard_constraints_(param.training_to_hard_constraints)
 {
     inference_model_param_.max_number_objects = max_number_objects_;
 
@@ -117,8 +118,14 @@ double ConservationTracking::forbidden_cost() const
 {
     return forbidden_cost_;
 }
+/*
+void ConservationTracking::fixNodeToAppearanceLabel( HypothesesGraph& hypothesesGraph, int node, double label)
+{
+    std::cout << "in ConservationTracking::fixNodeToAppearanceLabe " << std::endl;
+    boost::static_pointer_cast<ConsTrackingInferenceModel>(getInferenceModel())->fixNodeToAppearanceLabel( hypothesesGraph, node, label);
 
-
+}
+*/
 std::string ConservationTracking::get_export_filename(size_t iteration, const std::string& orig_file_name)
 {
     std::stringstream export_filename;
@@ -290,6 +297,15 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         std::cout << "use_app_node_labels_to_fix_values_"<< use_app_node_labels_to_fix_values_ << std::endl;
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
+
+    if(training_to_hard_constraints_)
+    {
+        std::cout << "---------------------------------->ConsTracking::Adding Training to Node Variables" << std::endl;
+        boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->fixNodesToLabels(hypotheses);
+
+    }
+
+
 
     if(solver_ == CplexSolver)
     {

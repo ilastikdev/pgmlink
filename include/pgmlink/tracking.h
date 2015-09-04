@@ -254,7 +254,8 @@ public:
             bool with_constraints = true,
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
-            boost::python::object TransitionClassifier = boost::python::object());
+            boost::python::object TransitionClassifier = boost::python::object(),
+            bool trainingToHardConstraints = false);
 
     PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
                                                             bool fixLabeledNodes = false);
@@ -276,7 +277,8 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
-            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver);
+            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+            bool trainingToHardConstraints = false);
 
     PGMLINK_EXPORT void setTrackLabelingExportFile(std::string file_name);
 
@@ -314,6 +316,16 @@ public:
     /// Return reference to the ilp solutions
     PGMLINK_EXPORT void save_ilp_solutions(const std::string& filename);
     PGMLINK_EXPORT virtual void prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param);
+    //PGMLINK_EXPORT void fixNodeToAppearanceLabel( HypothesesGraph& hypothesesGraph, int node, double label);
+    boost::shared_ptr<ConservationTracking> getPGM();
+    PGMLINK_EXPORT void addLabels();
+    PGMLINK_EXPORT void addAppearanceLabel(int, int, double );
+    PGMLINK_EXPORT void addDisappearanceLabel(int, int, double );
+    PGMLINK_EXPORT void addDivisionLabel(int, int, double );
+    PGMLINK_EXPORT void addArcLabel(int, int, int, double );
+    PGMLINK_EXPORT void addFirstLabels(int, int, double );
+    PGMLINK_EXPORT void addLastLabels(int, int, double );
+    PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
 
 protected:
     int max_number_objects_;

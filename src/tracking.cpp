@@ -7,6 +7,7 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
+#include <stdio.h>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -28,8 +29,6 @@
 #include "pgmlink/structured_learning_tracking_dataset.h"
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
-
-#include <stdio.h>
 
 using namespace std;
 using boost::shared_ptr;
@@ -489,7 +488,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
     }
 
     LOG(logDEBUG1) << "-> building hypotheses" << endl;
-    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
+    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(2, // max_nearest_neighbors
             max_dist_,
             true, // forward_backward
             with_divisions_, // consider_divisions
@@ -554,6 +553,20 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::get_resolved_hypotheses_graph()
     }
     return resolved_graph_;
 }
+/*
+void ConsTracking::fixNodeToAppearanceLabel( HypothesesGraph& hypothesesGraph, int node, double label)
+{
+    //boost::static_pointer_cast<ConservationTracking>(
+    //tracker.pgm_->fixNodeToAppearanceLabel( tracker, node, label);
+    std::cout << "in ConsTracking::fixNodeToAppearanceLabel" << ConsTracking::getPGM() << std::endl;
+    ConsTracking::getPGM()->fixNodeToAppearanceLabel( hypothesesGraph, node, label);
+
+}
+*/
+boost::shared_ptr<ConservationTracking> ConsTracking::getPGM()
+{
+    return ConsTracking::pgm_;
+}
 
 EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         double ep_gap,
@@ -570,7 +583,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
-        boost::python::object transition_classifier)
+        boost::python::object transition_classifier,
+        bool trainingToHardConstraints)
 {
     ConservationTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
@@ -589,7 +603,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             uncertaintyParam,
             cplex_timeout,
             transition_classifier,
-            solver_);
+            solver_,
+            trainingToHardConstraints);
     uncertainty_param_ = uncertaintyParam;
 
     return ConsTracking::track_from_param(param);
@@ -597,7 +612,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 
 void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
 {
-  //std::cout << " ---------------------------------->I should NOT be here if I am doing SLT tracking" << std::endl;
+  std::cout << " ---------------------------------->I should NOT be here if I am doing SLT tracking" << std::endl;
 }
 
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
@@ -654,6 +669,128 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
     return all_ev;
 
 }
+void ConsTracking::addLabels()
+{
+    hypotheses_graph_->add(appearance_label());
+    hypotheses_graph_->add(disappearance_label());
+    hypotheses_graph_->add(division_label());
+    hypotheses_graph_->add(arc_label());
+}
+
+// In the following methods label values are shifted for +1 in order to distinguish between an initialized 0 and a set 0.
+// Labels are only used to export annotations to C++ side and are only used in setting node values in case trackingToHardConstraints is set to TRUE
+void ConsTracking::addAppearanceLabel(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_appearance_label(node, cellCount+1);
+        }
+}
+
+void ConsTracking::addDisappearanceLabel(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_disappearance_label(node, cellCount+1);
+        }
+}
+
+void ConsTracking::addDivisionLabel(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_division_label(node, cellCount+1);
+        }
+}
+
+void ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+    //typedef property_map<traxel_arc_id, HypothesesGraph::base_graph>::type traxel_arc_id_map;
+    //traxel_arc_id_map& arc_id_map = g.get(traxel_arc_id());
+
+    HypothesesGraph::Node to;
+    for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == startLabel){
+            for(HypothesesGraph::base_graph::OutArcIt arc(*hypotheses_graph_, node); arc != lemon::INVALID; ++arc){
+                to = hypotheses_graph_->target(arc);
+                if (traxel_map[to].Id == endLabel){
+                    std::cout << " ARC Label          : [" << startTime << "=?=" << timestep_map[node] << "," << startTime +1 << "=?=" << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
+                    hypotheses_graph_->add_arc_label(arc, cellCount+1);
+                }
+            }
+        }
+}
+
+void ConsTracking::addFirstLabels(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            //hypotheses_graph_->add_disappearance_label(node,0+1);// must be there for dense training in structured learning
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_appearance_label(node, cellCount+1);
+        }
+}
+
+void ConsTracking::addLastLabels(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_disappearance_label(node,cellCount+1);
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            //hypotheses_graph_->add_appearance_label(node,0+1); // must be there for dense training in structured learning
+        }
+}
+
+void ConsTracking::addIntermediateLabels(int time, int label, double cellCount)
+{
+    typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
+    node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
+    HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
+
+    for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
+        if (traxel_map[node].Id == label){
+            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_disappearance_label(node,cellCount+1);
+            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            hypotheses_graph_->add_appearance_label(node,cellCount+1);
+        }
+}
 
 ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(
         double forbidden_cost,
@@ -672,7 +809,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-        ConservationTracking::SolverType solver)
+        ConservationTracking::SolverType solver,
+        bool trainingToHardConstraints)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
@@ -729,7 +867,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         border_width,
         transition_classifier,
         with_optical_correction_,
-        solver
+        solver,
+        trainingToHardConstraints
     );
 
     std::vector<double> model_weights = {detection_weight, division_weight, transition_weight, disappearance_cost, appearance_cost};
