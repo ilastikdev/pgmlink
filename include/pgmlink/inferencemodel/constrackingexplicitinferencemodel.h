@@ -111,6 +111,7 @@ protected: // members
     cplex_optimizer::Parameter cplex_param_;
     boost::shared_ptr<cplex_optimizer> optimizer_;
     pgm::ConstraintPoolExplicit constraint_pool_;
+    pgm::ConstraintPoolExplicit linear_constraint_pool_;
 
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;
@@ -128,7 +129,9 @@ protected: // members
 template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
-    constraint_pool_.add_constraints_to_problem(model_, optimizer);
+    std::cout << "in explicit add_constraints" << std::endl;
+    //constraint_pool_.add_constraints_to_problem(model_, optimizer);
+    linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
 }
 
 } // namespace pgmlink

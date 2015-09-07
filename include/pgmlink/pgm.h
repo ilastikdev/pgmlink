@@ -26,6 +26,7 @@
 #include "pgmlink/graph.h"
 #include "pgmlink/util.h"
 #include "pgmlink/constraint_function.hxx"
+#include "opengm/functions/constraint_functions/linear_constraint_function.hxx"
 
 namespace pgmlink
 {
@@ -52,10 +53,20 @@ public:
     typedef OutgoingNoDivConstraintFunction<Energy, size_t, size_t> OutNoDivConsFunc;
     typedef DetectionConstraintFunction<Energy, size_t, size_t> DetConsFunc;
     typedef FixNodeValueConstraintFunction<Energy, size_t, size_t> FixNodeValConsFunc;
+
     typedef opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> LSumOfExpertsFunc;
 
+    typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
+    typedef IncomingLinearConstraintFunction<Energy, size_t, size_t> InLinearConsFunc;
+    typedef OutgoingLinearConstraintFunction<Energy, size_t, size_t> OutLinearConsFunc;
+    typedef OutgoingNoDivLinearConstraintFunction<Energy, size_t, size_t> OutNoDivLinearConsFunc;
+    typedef DetectionLinearConstraintFunction<Energy, size_t, size_t> DetLinearConsFunc;
+    typedef FixNodeValueLinearConstraintFunction<Energy, size_t, size_t> FixNodeValLinearConsFunc;
+
 //    typedef OPENGM_TYPELIST_8(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>, LSumOfExpertsFunc) ogmFunctionsTypelist;
-    typedef opengm::meta::TypeListGenerator<ExplicitFunction, LSumOfExpertsFunc, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
+
+    //typedef opengm::meta::TypeListGenerator<ExplicitFunction, LSumOfExpertsFunc, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
+    typedef opengm::meta::TypeListGenerator<LinearConstraintFunctionType, ExplicitFunction, LSumOfExpertsFunc, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
     typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
     typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
     typedef opengm::Minimizer ogmAccumulator;

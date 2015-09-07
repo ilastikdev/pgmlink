@@ -68,6 +68,8 @@ void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
             {
                 constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
                 constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
             }
         }
     }
@@ -85,6 +87,8 @@ void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
                 HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
                 constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
                 constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
             }
         }
     }
@@ -349,9 +353,8 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
             }
             size_t appearance_node = app_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingConstraint(appearance_node,
-                                            division_node,
-                                            transition_nodes));
+            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingConstraint(appearance_node,division_node,transition_nodes));
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
         }
 
         ////
@@ -365,8 +368,8 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
             }
             size_t disappearance_node = dis_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingConstraint(transition_nodes,
-                                            disappearance_node));
+            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingConstraint(transition_nodes,disappearance_node));
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingLinearConstraint(transition_nodes,disappearance_node));
         }
 
         ////
@@ -374,12 +377,13 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
         ////
         if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
         {
-            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionConstraint((size_t)dis_node_map_[n],
-                                            (size_t)app_node_map_[n]));
+            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
         }
     }
 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
+    linear_constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
 
 void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSolutions,
@@ -403,10 +407,14 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
+    std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)" << std::endl;
     if(param_.with_constraints)
     {
+        std::cout << "==== START =========if(param_.with_constraints) == TRUE" << std::endl;
         LOG(logINFO) << "add_constraints";
         add_constraints(*optimizer_);
+        std::cout << "==== END   =========if(param_.with_constraints) == TRUE" << std::endl;
+
     }
     else
     {
