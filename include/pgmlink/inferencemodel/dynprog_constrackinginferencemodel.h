@@ -112,6 +112,7 @@ double DynProgConsTrackInferenceModel::getTransitionArcScore(const HypothesesGra
         tr2 = traxel_map[g.target(a)];
     }
 
+    // transProb(state=1) - transProb(state=0) would be energy or cost. score is the negative of that
     double score = param_.transition(get_transition_probability(tr1, tr2, 0))
             - param_.transition(get_transition_probability(tr1, tr2, 1));
     return score - generateRandomOffset(Transition, -score, tr1, tr2);
