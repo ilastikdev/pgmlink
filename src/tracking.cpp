@@ -60,10 +60,10 @@ void transpose_matrix_in_file(std::string filename)
 {
     //from http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
     std::string awk_program = "gawk '{\n for (i=1; i<=NF; i++)  {\n a[NR,i] = $i \n} \n}\n NF>p { p = NF } \nEND {\n for(j=1; j<=p; j++) {\n str=a[1,j]\n for(i=2; i<=NR; i++){\n str=str\" \"a[i,j];\n }\n print str\n }\n }' ";
-    system( (awk_program + filename + "> tmp.txt").c_str() ) ;
-    system( (std::string("rm ") + filename).c_str() ) ;
-    system( (std::string("cp tmp.txt ") + filename).c_str() ) ;
-    system( "rm tmp.txt") ;
+    int r = system( (awk_program + filename + "> tmp.txt").c_str() ) ;
+    r = system( (std::string("rm ") + filename).c_str() ) ;
+    r = system( (std::string("cp tmp.txt ") + filename).c_str() ) ;
+    r = system( "rm tmp.txt") ;
 }
 
 //from  http://stackoverflow.com/questions/392981/how-can-i-convert-string-to-double-in-c

@@ -15,6 +15,7 @@
 #include <opengm/inference/lpgurobi.hxx>
 #else
 #include <opengm/inference/lpcplex.hxx>
+#include <opengm/inference/lpcplex2.hxx>
 #endif
 
 #include <opengm/learning/loss/hammingloss.hxx>
@@ -499,11 +500,25 @@ void StructuredLearningTracking::structuredLearning(
 
     opengm::learning::StructMaxMargin<DSS> learner(sltDataset,para);
 
-    typedef opengm::LPCplex<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::Minimizer> INFCPLEX;
+    typedef opengm::LPCplex2<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::Minimizer> INFCPLEX;
     INFCPLEX::Parameter infPara;
 
-    infPara.integerConstraint_ = true;
-    infPara.verbose_ = false;//true;
+    // lpcplex
+    //infPara.integerConstraint_ = true;
+
+    //lpcplex2
+    infPara.integerConstraintNodeVar_ = true;
+
+    infPara.relaxation_ = infPara.TightPolytope;
+    //infPara.relaxation_ = infPara.LocalPolytope;
+    //infPara.maxNumIterations_ = 0;
+    //infPara.maxNumConstraintsPerIter_ = 0;
+
+    //infPara.verbose_ = true;
+    infPara.verbose_ = false;
+    infPara.challengeHeuristic_ = infPara.Weighted;
+
+    infPara.useSoftConstraints_ = false;
 
     learner.learn<INFCPLEX>(infPara);
     const DSS::Weights& weights = learner.getWeights();

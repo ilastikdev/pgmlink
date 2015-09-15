@@ -94,7 +94,7 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = g.get(node_traxel());
 
-    std::cout << "appearance_labels" << std::endl;
+    std::cout << "------------------------------fixNodesToLabels-------------------appearance_labels" << std::endl;
     assert(g.has_property(appearance_label()));
     property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
     typedef property_map<appearance_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
@@ -109,7 +109,7 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
         }
     }
 
-    std::cout << "disappearance_labels" << std::endl;
+    std::cout << "------------------------------fixNodesToLabels-------------------disappearance_labels" << std::endl;
     assert(g.has_property(disappearance_label()));
     property_map<disappearance_label, HypothesesGraph::base_graph>::type &disappearance_labels = g.get(disappearance_label());
     typedef property_map<disappearance_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
@@ -124,7 +124,7 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
         }
     }
 
-    std::cout << "division_labels" << std::endl;
+    std::cout << "------------------------------fixNodesToLabels-------------------division_labels" << std::endl;
     assert(g.has_property(division_label()));
     property_map<division_label, HypothesesGraph::base_graph>::type &division_labels = g.get(division_label());
     typedef property_map<division_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
@@ -139,7 +139,7 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
         }
     }
 
-    std::cout << "arc_labels" << std::endl;
+    std::cout << "------------------------------fixNodesToLabels-------------------arc_labels" << std::endl;
     assert(g.has_property(arc_label()));
     property_map<arc_label, HypothesesGraph::base_graph>::type &arc_labels = g.get(arc_label());
     typedef property_map<arc_label, HypothesesGraph::base_graph>::type::ValueIt arc_value_it_type;

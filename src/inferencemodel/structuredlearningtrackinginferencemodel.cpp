@@ -1,4 +1,4 @@
-#include <opengm/functions/learnable/lsum_of_experts.hxx>
+#include <opengm/functions/learnable/lweightedsum_of_functions.hxx>
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include <boost/python.hpp>
 
@@ -208,7 +208,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         varShape.push_back((size_t)param_.max_number_objects+1);
         varShape.push_back((size_t)param_.max_number_objects+1);
 
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
 
@@ -273,7 +273,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         std::vector<size_t> varShape;
         varShape.push_back((size_t)1+param_.max_number_objects);
 
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
@@ -337,7 +337,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         std::vector<size_t> varShape;
         varShape.push_back((size_t)2);
 
-        opengm::functions::learnable::LSumOfExperts<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);

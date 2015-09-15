@@ -358,7 +358,7 @@ void ConstraintPoolExplicit::add_constraints_to_model(GM& model, INF& inf)
     add_constraint_type_to_model<GM, INF, OutgoingLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, outgoing_linear_constraints_);
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, outgoing_no_div_linear_constraints_);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, detection_linear_constraints_);
-    add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, fix_node_value_linear_constraints_);
+    //add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, fix_node_value_linear_constraints_);
     std::cout << "=========@@@==================================================>out explicit add_constraints_to_model" << std::endl;
 }
 
@@ -521,7 +521,7 @@ void ConstraintPoolExplicit::add_constraints_to_model(GM& model, INF& inf, std::
         size_t disappearance_node = index_mapping[constraint.disappearance_node];
         remapped_detection_linear_constraints.push_back(DetectionLinearConstraint(disappearance_node, appearance_node));
     }
-
+/*
     for(auto constraint : fix_node_value_linear_constraints_)
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
@@ -532,13 +532,14 @@ void ConstraintPoolExplicit::add_constraints_to_model(GM& model, INF& inf, std::
         size_t node = index_mapping[constraint.node];
         remapped_fix_node_value_linear_constraints.push_back(FixNodeValueLinearConstraint(node, constraint.value));
     }
+    */
     std::cout << "=====1======================================================>in explicit add_constraints_to_model" << std::endl;
 
     add_constraint_type_to_model<GM, INF, IncomingLinearConstraintFunction<ValueType, IndexType, LabelType>, IncomingLinearConstraint>(model, inf, remapped_incoming_linear_constraints);
     add_constraint_type_to_model<GM, INF, OutgoingLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, remapped_outgoing_linear_constraints);
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, remapped_outgoing_no_div_linear_constraints);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, remapped_detection_linear_constraints);
-    add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, remapped_fix_node_value_linear_constraints);
+    //add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, remapped_fix_node_value_linear_constraints);
     std::cout << "=====2======================================================>out explicit add_constraints_to_model" << std::endl;
 }
 
