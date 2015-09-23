@@ -326,9 +326,15 @@ void ConsTrackingExplicitInferenceModel::add_finite_factors(const HypothesesGrap
 //set up optimizer from constraints by reading from formulated gm
 void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
+    std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ConsTrackingExplicitInferenceModel::add_constraints: entered";
     LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
 
     constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
+                                           param_.with_divisions,
+                                           param_.with_appearance,
+                                           param_.with_disappearance,
+                                           param_.with_misdetections_allowed);
+    linear_constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
                                            param_.with_divisions,
                                            param_.with_appearance,
                                            param_.with_disappearance,
@@ -383,7 +389,7 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
     }
 
     constraint_pool_.force_softconstraint(!param_.with_constraints);
-    linear_constraint_pool_.force_softconstraint(!param_.with_constraints);
+    //linear_constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
 
 void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSolutions,
@@ -407,7 +413,7 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
-    std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)" << std::endl;
+    std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)==" << param_.with_constraints <<std::endl;
     if(param_.with_constraints)
     {
         std::cout << "==== START =========if(param_.with_constraints) == TRUE" << std::endl;

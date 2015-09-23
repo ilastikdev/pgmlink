@@ -300,7 +300,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 
     if(training_to_hard_constraints_)
     {
-        std::cout << "---------------------------------->ConsTracking::Adding Training to Node Variables" << std::endl;
+        std::cout << "------------XXX---------------------->ConsTracking::Adding Training to Node Variables" << std::endl;
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->fixNodesToLabels(hypotheses);
 
     }

@@ -147,11 +147,9 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::IncomingLinearConstraint>& constraints
      )
 {
-    std::cout << "in add_constraint_type_to_model IncomingLinearConstraint" << std::endl;
+    std::cout << "....................................> in add_constraint_type_to_model IncomingLinearConstraint" << std::endl;
     std::cout << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
-
-    const std::vector<LabelType> gmShape(model.numberOfVariables(), model.maxNumberOfLabels());
 
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -161,7 +159,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         // nothing to do if no incoming
         if(constraint.transition_nodes.size() == 0)
         {
-            std::cout << "nothing to do if no incoming" << std::endl;
+            //std::cout << "nothing to do if no incoming" << std::endl;
             continue;
         }
 
@@ -175,9 +173,10 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         {
             for (size_t state = 1; state < model.numberOfLabels(*incoming_it); ++state)
             {
-                cplex_idxs.push_back(optimizer.lpNodeVi(*incoming_it, state));
+                //cplex_idxs.push_back(optimizer.lpNodeVi(*incoming_it, state));
                 coeffs.push_back(state);
             }
+            cplex_idxs.push_back(*incoming_it);
             constraint_name << *incoming_it << " ";
         }
 
@@ -185,7 +184,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
         for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
         {
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
+            //cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
             coeffs.push_back(-state);
         }
 
@@ -193,6 +192,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         LOG(logDEBUG3) << constraint_name.str();
         //std::cout << constraint_name.str();
 
+        std::sort(cplex_idxs.begin(), cplex_idxs.end());
 
 
         // add linear constraint to model
@@ -200,24 +200,39 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
         // left hand side
         linearConstraint.reserve(cplex_idxs.size());
-        std::vector<LabelType> factorVariables(cplex_idxs.size());
-        for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-           factorVariables[i] = i;
-        }
+        std::vector<LabelType> factorVariables;
+        //for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+        //   factorVariables[i] = i;
+        //}
 
+        std::vector<LabelType> constraintFunctionShape;
+        size_t openGMConstraintFunctionVarIndex = 0;
         for (auto incoming_it = constraint.transition_nodes.begin(); incoming_it != constraint.transition_nodes.end(); ++incoming_it){
-            for (size_t state = 1; state < model.numberOfLabels(*incoming_it); ++state){
-                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(*incoming_it, LabelType(state));
+            for (size_t state = 1; state < model.numberOfLabels(cplex_idxs[openGMConstraintFunctionVarIndex]); ++state){//*incoming_it); ++state){
+            //for (size_t state = 1; state < model.numberOfLabels(*incoming_it); ++state){
+                //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(*incoming_it, LabelType(state));
+                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(state));
                 linearConstraint.add(indicatorVariable, (ValueType)state);
-                //std::cout << (ValueType)state << " X_" << optimizer.lpNodeVi(*incoming_it, state) << " +";
+                //std::cout << (ValueType)state << " X_" << optimizer.lpNodeVi(*incoming_it, state) << "(" << *incoming_it << ")  " << "+";
 
             }
+            constraintFunctionShape.push_back(model.numberOfLabels(cplex_idxs[openGMConstraintFunctionVarIndex]));//*incoming_it));
+            factorVariables.push_back(cplex_idxs[openGMConstraintFunctionVarIndex]);//*incoming_it);
+            //constraintFunctionShape.push_back(model.numberOfLabels(*incoming_it));
+            //factorVariables.push_back(*incoming_it);
+            //std::cout << " index -------------->" << *incoming_it << std::endl;
+            ++openGMConstraintFunctionVarIndex;
         }
         for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state){
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.disappearance_node, LabelType(state));
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.disappearance_node, LabelType(state));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(state));
             linearConstraint.add(indicatorVariable, -(ValueType)state);
-            //std::cout << -(ValueType)state << " X_" << optimizer.lpNodeVi(constraint.disappearance_node,state) << " ";
+            //std::cout << -(ValueType)state << " X_" << optimizer.lpNodeVi(constraint.disappearance_node,state) << "(" << constraint.disappearance_node << ")  ";
         }
+        constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
+        factorVariables.push_back(constraint.disappearance_node);
+        //std::cout << " index -------------->" << constraint.disappearance_node << std::endl;
+        ++openGMConstraintFunctionVarIndex;
 
         // right hand side
         linearConstraint.setBound( 0 );
@@ -226,8 +241,12 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         linearConstraint.setConstraintOperator(equalOperator);
         //std::cout << " == " << 0 << std::endl;
 
-        LinearConstraintFunctionType linearConstraintFunction(gmShape.begin(), gmShape.end(), &linearConstraint, &linearConstraint + 1);
+        LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
         FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
+
+
+        //for (size_t i=0; i<factorVariables.size();++i)
+        //    std::cout << ".....>" << factorVariables[i] << std::endl;
         model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
         //std::cout << " Factor" << model.numberOfFactors() -1 << std::endl;
     }
@@ -416,10 +435,10 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::OutgoingLinearConstraint>& constraints
      )
 {
-    std::cout << "in add_constraint_type_to_model OutgoingLinearConstraint" << std::endl;
+    std::cout << "....................................> in add_constraint_type_to_model OutgoingLinearConstraint" << std::endl;
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing";
 
-    const std::vector<LabelType> gmShape(model.numberOfVariables(), model.maxNumberOfLabels());
+    //const std::vector<LabelType> gmShape(model.numberOfVariables(), model.maxNumberOfLabels());
 
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -437,6 +456,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         std::stringstream constraint_name;
         constraint_name << "outgoing transitions: sum( transition-nodes ";
 
+        //std::cout << "0" << std::endl;
         // couple detection and transitions: Y_ij <= App_i
         for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
         {
@@ -465,24 +485,39 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     // left hand side
                     linearConstraintGe.reserve(cplex_idxs.size());
                     linearConstraintLe.reserve(cplex_idxs.size());
-                    std::vector<LabelType> factorVariablesGe(cplex_idxs.size());
-                    std::vector<LabelType> factorVariablesLe(cplex_idxs.size());
-                    for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-                       factorVariablesGe[i] = i;
-                       factorVariablesLe[i] = i;
-                    }
+                    std::vector<LabelType> factorVariablesGe;
+                    std::vector<LabelType> factorVariablesLe;
+                    //for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+                    //   factorVariablesGe[i] = i;
+                    //   factorVariablesLe[i] = i;
+                    //}
 
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a_ge(constraint.appearance_node, LabelType(a_state));
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a_le(constraint.appearance_node, LabelType(a_state));
-                    linearConstraintGe.add(indicatorVariable_a_ge, 1);
-                    linearConstraintLe.add(indicatorVariable_a_le, 1);
-                    //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node,a_state) << " +";
+                    std::vector<LabelType> constraintFunctionShape;
+                    size_t openGMConstraintFunctionVarIndex = 0;
 
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_t_ge(*outgoing_it, LabelType(t_state));
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_t_le(*outgoing_it, LabelType(t_state));
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_t_ge(*outgoing_it, LabelType(t_state));
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_t_le(*outgoing_it, LabelType(t_state));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_t_ge(openGMConstraintFunctionVarIndex, LabelType(t_state));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_t_le(openGMConstraintFunctionVarIndex, LabelType(t_state));
                     linearConstraintGe.add(indicatorVariable_t_ge, 1);
                     linearConstraintLe.add(indicatorVariable_t_le, 1);
+                    constraintFunctionShape.push_back(model.numberOfLabels(*outgoing_it));
+                    factorVariablesGe.push_back(*outgoing_it);
+                    factorVariablesLe.push_back(*outgoing_it);
+                    ++openGMConstraintFunctionVarIndex;
                     //std::cout << 1 << " X_" << optimizer.lpNodeVi(*outgoing_it, t_state) << " +";
+
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a_ge(constraint.appearance_node, LabelType(a_state));
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a_le(constraint.appearance_node, LabelType(a_state));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a_ge(openGMConstraintFunctionVarIndex, LabelType(a_state));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a_le(openGMConstraintFunctionVarIndex, LabelType(a_state));
+                    linearConstraintGe.add(indicatorVariable_a_ge, 1);
+                    linearConstraintLe.add(indicatorVariable_a_le, 1);
+                    constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+                    factorVariablesGe.push_back(constraint.appearance_node);
+                    factorVariablesLe.push_back(constraint.appearance_node);
+                    ++openGMConstraintFunctionVarIndex;
+                    //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node,a_state) << " +";
 
                     // right hand side
                     linearConstraintGe.setBound( 0 );
@@ -494,8 +529,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     //std::cout << " >= " << 0 << std::endl;
                     //std::cout << " <= " << 1 << std::endl;
 
-                    LinearConstraintFunctionType linearConstraintGeFunction(gmShape.begin(), gmShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
-                    LinearConstraintFunctionType linearConstraintLeFunction(gmShape.begin(), gmShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
+                    LinearConstraintFunctionType linearConstraintGeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
+                    LinearConstraintFunctionType linearConstraintLeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
                     FunctionIdentifierType linearConstraintGeFunctionID = model.addFunction(linearConstraintGeFunction);
                     FunctionIdentifierType linearConstraintLeFunctionID = model.addFunction(linearConstraintLeFunction);
                     model.addFactor(linearConstraintGeFunctionID, factorVariablesGe.begin(), factorVariablesGe.end());
@@ -507,6 +542,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         }
 
 
+        //std::cout << "1" << std::endl;
         int div_cplex_id = -1;
         if (with_divisions_ && constraint.division_node >= 0)
         {
@@ -516,6 +552,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             div_cplex_id = optimizer.lpNodeVi(constraint.division_node, 1);
         }
 
+        //std::cout << "2" << std::endl;
         if (constraint.transition_nodes.size() > 0)
         {
             // couple transitions: sum(Y_ij) = D_i + App_i
@@ -555,39 +592,46 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << constraint_name.str() << "..........................................................................>" << cplex_idxs.size() << std::endl;
 
 
+            //std::cout << "2.1" << std::endl;
             // add linear constraint to model
             LinearConstraintFunctionType::LinearConstraintType linearConstraint;
 
             // left hand side
             linearConstraint.reserve(cplex_idxs.size());
-            std::vector<IndexType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-               //std::cout << "===>" << factorVariables[i] << std::endl;
-            }
+            std::vector<IndexType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//               //std::cout << "===>" << factorVariables[i] << std::endl;
+//            }
 
+            std::vector<LabelType> constraintFunctionShape;
+            size_t openGMConstraintFunctionVarIndex = 0;
             for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
             {
                 constraint_name << *outgoing_it << " ";
                 for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
                 {
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(*outgoing_it, LabelType(state));
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(*outgoing_it, LabelType(state));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(state));
                     linearConstraint.add(indicatorVariable, state);
                     //std::cout << state << " X_" << optimizer.lpNodeVi(*outgoing_it,state) << " +";
                 }
+                constraintFunctionShape.push_back(model.numberOfLabels(*outgoing_it));
+                factorVariables.push_back(*outgoing_it);
+                ++openGMConstraintFunctionVarIndex;
             }
-            if (div_cplex_id != -1)
-            {
-                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.division_node, LabelType(1));
-                linearConstraint.add(indicatorVariable, -1);
-                //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " ";
-            }
+            //std::cout << "2.2" << std::endl;
             for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
             {
-                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.appearance_node, LabelType(state));
+                //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.appearance_node, LabelType(state));
+                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(state));
                 linearConstraint.add(indicatorVariable, -(ValueType)state);
                 //std::cout << -(ValueType)state << " X_" << optimizer.lpNodeVi(constraint.appearance_node, state) << " ";
             }
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+            factorVariables.push_back(constraint.appearance_node);
+            ++openGMConstraintFunctionVarIndex;
+
             // right hand side
             linearConstraint.setBound( 0 );
 
@@ -595,12 +639,27 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             linearConstraint.setConstraintOperator(equalOperator);
             //std::cout << " == " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintFunction(gmShape.begin(), gmShape.end(), &linearConstraint, &linearConstraint + 1);
-            FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
-            model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
             //std::cout << " xxx Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
+            //std::cout << "2.3" << std::endl;
+            if (div_cplex_id != -1)
+            {
+                //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.division_node, LabelType(1));
+                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(1));
+                linearConstraint.add(indicatorVariable, -1);
+                constraintFunctionShape.push_back(model.numberOfLabels(constraint.division_node));
+                factorVariables.push_back(constraint.division_node);
+                ++openGMConstraintFunctionVarIndex;
+                //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " ";
+            }
+            LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
+            FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
+
+            //for (size_t i=0; i<factorVariables.size();++i)
+                //std::cout << ".....>" << factorVariables[i] << std::endl;
+            model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
         }
 
+        //std::cout << "3" << std::endl;
         if (div_cplex_id != -1)
         {
             // couple detection and division: D_i = 1 => App_i = 1
@@ -631,20 +690,31 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             // left hand side
             linearConstraintGeCDD.reserve(cplex_idxs.size());
             linearConstraintLeCDD.reserve(cplex_idxs.size());
-            std::vector<LabelType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-            }
+            std::vector<LabelType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariableCDD(constraint.division_node, LabelType(1));
-            linearConstraintGeCDD.add(indicatorVariableCDD, 1);
-            linearConstraintLeCDD.add(indicatorVariableCDD, 1);
-            //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " ";
+            std::vector<LabelType> constraintFunctionShapeCDD;
+            size_t openGMConstraintFunctionVarIndex = 0;
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(1));
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(1));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(1));
             linearConstraintGeCDD.add(indicatorVariable_a, -1);
             linearConstraintLeCDD.add(indicatorVariable_a, -1);
+            constraintFunctionShapeCDD.push_back(model.numberOfLabels(constraint.appearance_node));
+            factorVariables.push_back(constraint.appearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node,1) << " +";
+
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariableCDD(constraint.division_node, LabelType(1));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariableCDD(openGMConstraintFunctionVarIndex, LabelType(1));
+            linearConstraintGeCDD.add(indicatorVariableCDD, 1);
+            linearConstraintLeCDD.add(indicatorVariableCDD, 1);
+            constraintFunctionShapeCDD.push_back(model.numberOfLabels(constraint.division_node));
+            factorVariables.push_back(constraint.division_node);
+            ++openGMConstraintFunctionVarIndex;
+            //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " ";
 
             // right hand side
             linearConstraintGeCDD.setBound( -1 );
@@ -656,12 +726,17 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << " >= " << -1 << std::endl;
             //std::cout << " <= " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintGeCDDFunction(gmShape.begin(), gmShape.end(), &linearConstraintGeCDD, &linearConstraintGeCDD + 1);
-            LinearConstraintFunctionType linearConstraintLeCDDFunction(gmShape.begin(), gmShape.end(), &linearConstraintLeCDD, &linearConstraintLeCDD + 1);
+            LinearConstraintFunctionType linearConstraintGeCDDFunction(constraintFunctionShapeCDD.begin(), constraintFunctionShapeCDD.end(), &linearConstraintGeCDD, &linearConstraintGeCDD + 1);
+            LinearConstraintFunctionType linearConstraintLeCDDFunction(constraintFunctionShapeCDD.begin(), constraintFunctionShapeCDD.end(), &linearConstraintLeCDD, &linearConstraintLeCDD + 1);
             FunctionIdentifierType linearConstraintGeCDDFunctionID = model.addFunction(linearConstraintGeCDDFunction);
             FunctionIdentifierType linearConstraintLeCDDFunctionID = model.addFunction(linearConstraintLeCDDFunction);
             model.addFactor(linearConstraintGeCDDFunctionID, factorVariables.begin(), factorVariables.end());
             model.addFactor(linearConstraintLeCDDFunctionID, factorVariables.begin(), factorVariables.end());
+
+
+
+
+
 
             // couple divsion and transition: D_1 = 1 => sum_k(Y_ik) = 2
             cplex_idxs2.clear();
@@ -669,6 +744,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs2.push_back(div_cplex_id);
             coeffs2.push_back(2);
 
+            //std::cout << "4" << std::endl;
             for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
             {
                 for (size_t state = 2; state < model.numberOfLabels(*outgoing_it); ++state)
@@ -700,20 +776,31 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     // left hand side
                     linearConstraintGe.reserve(cplex_idxs.size());
                     linearConstraintLe.reserve(cplex_idxs.size());
-                    std::vector<LabelType> factorVariables(cplex_idxs.size());
-                    for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-                       factorVariables[i] = i;
-                    }
+                    std::vector<LabelType> factorVariables;
+//                    for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//                       factorVariables[i] = i;
+//                    }
 
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.division_node, LabelType(1));
-                    linearConstraintGe.add(indicatorVariable, 1);
-                    linearConstraintLe.add(indicatorVariable, 1);
-                    //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " +";
+                    std::vector<LabelType> constraintFunctionShape;
+                    size_t openGMConstraintFunctionVarIndex = 0;
 
-                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(*outgoing_it, LabelType(state));
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(*outgoing_it, LabelType(state));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(state));
                     linearConstraintGe.add(indicatorVariable_a, 1);
                     linearConstraintLe.add(indicatorVariable_a, 1);
+                    constraintFunctionShape.push_back(model.numberOfLabels(*outgoing_it));
+                    factorVariables.push_back(*outgoing_it);
+                    ++openGMConstraintFunctionVarIndex;
                     //std::cout << 1 << " X_" << optimizer.lpNodeVi(*outgoing_it, state) << " ";
+
+                    //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.division_node, LabelType(1));
+                    const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(1));
+                    linearConstraintGe.add(indicatorVariable, 1);
+                    linearConstraintLe.add(indicatorVariable, 1);
+                    constraintFunctionShape.push_back(model.numberOfLabels(constraint.division_node));
+                    factorVariables.push_back(constraint.division_node);
+                    ++openGMConstraintFunctionVarIndex;
+                    //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " +";
 
                     // right hand side
                     linearConstraintGe.setBound( 0 );
@@ -725,8 +812,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     //std::cout << " >= " << 0 << std::endl;
                     //std::cout << " <= " << 1 << std::endl;
 
-                    LinearConstraintFunctionType linearConstraintGeFunction(gmShape.begin(), gmShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
-                    LinearConstraintFunctionType linearConstraintLeFunction(gmShape.begin(), gmShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
+                    LinearConstraintFunctionType linearConstraintGeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
+                    LinearConstraintFunctionType linearConstraintLeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
                     FunctionIdentifierType linearConstraintGeFunctionID = model.addFunction(linearConstraintGeFunction);
                     FunctionIdentifierType linearConstraintLeFunctionID = model.addFunction(linearConstraintLeFunction);
                     model.addFactor(linearConstraintGeFunctionID, factorVariables.begin(), factorVariables.end());
@@ -749,6 +836,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << constraint_name.str();
 
 
+            //std::cout << "5" << std::endl;
             // add linear constraint to model
             LinearConstraintFunctionType::LinearConstraintType linearConstraintGeCDT;
             LinearConstraintFunctionType::LinearConstraintType linearConstraintLeCDT;
@@ -756,22 +844,33 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             // left hand side
             linearConstraintGeCDT.reserve(cplex_idxs2.size());
             linearConstraintLeCDT.reserve(cplex_idxs2.size());
-            std::vector<LabelType> factorVariablesCDT(cplex_idxs2.size());
-            for(IndexType i = 0; i < cplex_idxs2.size(); ++i) {
-               factorVariablesCDT[i] = i;
-            }
+            std::vector<LabelType> factorVariablesCDT;
+//            for(IndexType i = 0; i < cplex_idxs2.size(); ++i) {
+//               factorVariablesCDT[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariableCDT(constraint.division_node, LabelType(1));
-            linearConstraintGeCDT.add(indicatorVariableCDT, 2);
-            linearConstraintLeCDT.add(indicatorVariableCDT, 2);
-            //std::cout << 2 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " +";
+            std::vector<LabelType> constraintFunctionShapeCDT;
+            size_t openGMConstraintFunctionVarIndexCDT = 0;
 
             for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it){
-                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(*outgoing_it, LabelType(1));
+                //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(*outgoing_it, LabelType(1));
+                const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndexCDT, LabelType(1));
                 linearConstraintGeCDT.add(indicatorVariable, -1);
                 linearConstraintLeCDT.add(indicatorVariable, -1);
                 //std::cout << -1 << " X_" << optimizer.lpNodeVi(*outgoing_it, 1) << " ";
+                constraintFunctionShapeCDT.push_back(model.numberOfLabels(*outgoing_it));
+                factorVariablesCDT.push_back(*outgoing_it);
+                ++openGMConstraintFunctionVarIndexCDT;
             }
+
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariableCDT(constraint.division_node, LabelType(1));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariableCDT(openGMConstraintFunctionVarIndexCDT, LabelType(1));
+            linearConstraintGeCDT.add(indicatorVariableCDT, 2);
+            linearConstraintLeCDT.add(indicatorVariableCDT, 2);
+            constraintFunctionShapeCDT.push_back(model.numberOfLabels(constraint.division_node));
+            factorVariablesCDT.push_back(constraint.division_node);
+            ++openGMConstraintFunctionVarIndexCDT;
+            //std::cout << 2 << " X_" << optimizer.lpNodeVi(constraint.division_node, 1) << " +";
 
             // right hand side
             linearConstraintGeCDT.setBound( -int(model.numberOfLabels(constraint.appearance_node) - 1) );
@@ -783,8 +882,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << " >= " << -int(model.numberOfLabels(constraint.appearance_node) - 1) << std::endl;
             //std::cout << " <= " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintGeCDTFunction(gmShape.begin(), gmShape.end(), &linearConstraintGeCDT, &linearConstraintGeCDT + 1);
-            LinearConstraintFunctionType linearConstraintLeCDTFunction(gmShape.begin(), gmShape.end(), &linearConstraintLeCDT, &linearConstraintLeCDT + 1);
+            LinearConstraintFunctionType linearConstraintGeCDTFunction(constraintFunctionShapeCDT.begin(), constraintFunctionShapeCDT.end(), &linearConstraintGeCDT, &linearConstraintGeCDT + 1);
+            LinearConstraintFunctionType linearConstraintLeCDTFunction(constraintFunctionShapeCDT.begin(), constraintFunctionShapeCDT.end(), &linearConstraintLeCDT, &linearConstraintLeCDT + 1);
             FunctionIdentifierType linearConstraintGeCDTFunctionID = model.addFunction(linearConstraintGeCDTFunction);
             FunctionIdentifierType linearConstraintLeCDTFunctionID = model.addFunction(linearConstraintLeCDTFunction);
             model.addFactor(linearConstraintGeCDTFunctionID, factorVariablesCDT.begin(), factorVariablesCDT.end());
@@ -982,10 +1081,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::DetectionLinearConstraint>& constraints
      )
 {
-    std::cout << "in add_constraint_type_to_model DetectionLinearConstraint" << std::endl;
+    std::cout << "....................................> in add_constraint_type_to_model DetectionLinearConstraint" << "<<<<<<<<<<<<<<<<<<<<<"<<std::endl;
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection";
-
-    const std::vector<LabelType> gmShape(model.numberOfVariables(), model.maxNumberOfLabels());
 
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -1030,25 +1127,41 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             // left hand side
             linearConstraintGe.reserve(cplex_idxs.size());
             linearConstraintLe.reserve(cplex_idxs.size());
-            std::vector<LabelType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-            }
+            std::vector<LabelType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(state));
+            std::vector<LabelType> constraintFunctionShape;
+            size_t openGMConstraintFunctionVarIndex = 0;
+
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(state));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(state));
             linearConstraintGe.add(indicatorVariable_a, 1);
             linearConstraintLe.add(indicatorVariable_a, 1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+            factorVariables.push_back(constraint.appearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node, state) << " ";
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(state));
-            linearConstraintGe.add(indicatorVariable_d, -1);
-            linearConstraintLe.add(indicatorVariable_d, -1);
-            //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, state) << " +";
-
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.disappearance_node, LabelType(0));
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.disappearance_node, LabelType(0));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(0));
             linearConstraintGe.add(indicatorVariable, -1);
             linearConstraintLe.add(indicatorVariable, -1);
+            //constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
+            //factorVariables.push_back(constraint.disappearance_node);
+            //++openGMConstraintFunctionVarIndex;
             //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, 0) << " +";
+
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(state));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(openGMConstraintFunctionVarIndex, LabelType(state));
+            linearConstraintGe.add(indicatorVariable_d, -1);
+            linearConstraintLe.add(indicatorVariable_d, -1);
+
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
+            factorVariables.push_back(constraint.disappearance_node);
+            ++openGMConstraintFunctionVarIndex;
+            std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, state) << " +";
 
             // right hand side
             linearConstraintGe.setBound( -1 );
@@ -1060,14 +1173,14 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << " >= " << -1 << std::endl;
             //std::cout << " <= " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintGeFunction(gmShape.begin(), gmShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
-            LinearConstraintFunctionType linearConstraintLeFunction(gmShape.begin(), gmShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
+            LinearConstraintFunctionType linearConstraintGeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
+            LinearConstraintFunctionType linearConstraintLeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
             FunctionIdentifierType linearConstraintGeFunctionID = model.addFunction(linearConstraintGeFunction);
             FunctionIdentifierType linearConstraintLeFunctionID = model.addFunction(linearConstraintLeFunction);
             model.addFactor(linearConstraintGeFunctionID, factorVariables.begin(), factorVariables.end());
             model.addFactor(linearConstraintLeFunctionID, factorVariables.begin(), factorVariables.end());
         }
-
+        //std::cout << "11.1" << std::endl;
         for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
         {
             cplex_idxs.clear();
@@ -1102,25 +1215,40 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             // left hand side
             linearConstraintGe.reserve(cplex_idxs.size());
             linearConstraintLe.reserve(cplex_idxs.size());
-            std::vector<LabelType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-            }
+            std::vector<LabelType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(state));
-            linearConstraintGe.add(indicatorVariable_d, 1);
-            linearConstraintLe.add(indicatorVariable_d, 1);
-            //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, state) << " ";
+            std::vector<LabelType> constraintFunctionShape;
+            size_t openGMConstraintFunctionVarIndex = 0;
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(state));
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(state));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(state));
             linearConstraintGe.add(indicatorVariable_a, -1);
             linearConstraintLe.add(indicatorVariable_a, -1);
+            //constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+            //factorVariables.push_back(constraint.appearance_node);
+            //++openGMConstraintFunctionVarIndex;
             //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node, state) << " +";
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.appearance_node, LabelType(0));
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(constraint.appearance_node, LabelType(0));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable(openGMConstraintFunctionVarIndex, LabelType(0));
             linearConstraintGe.add(indicatorVariable, -1);
             linearConstraintLe.add(indicatorVariable, -1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+            factorVariables.push_back(constraint.appearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node, 0) << " +";
+
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(state));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(openGMConstraintFunctionVarIndex, LabelType(state));
+            linearConstraintGe.add(indicatorVariable_d, 1);
+            linearConstraintLe.add(indicatorVariable_d, 1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
+            factorVariables.push_back(constraint.disappearance_node);
+            ++openGMConstraintFunctionVarIndex;
+            //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, state) << " ";
 
             // right hand side
             linearConstraintGe.setBound( -1 );
@@ -1132,8 +1260,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << " >= " << -1 << std::endl;
             //std::cout << " <= " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintGeFunction(gmShape.begin(), gmShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
-            LinearConstraintFunctionType linearConstraintLeFunction(gmShape.begin(), gmShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
+            LinearConstraintFunctionType linearConstraintGeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintGe, &linearConstraintGe + 1);
+            LinearConstraintFunctionType linearConstraintLeFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraintLe, &linearConstraintLe + 1);
             FunctionIdentifierType linearConstraintGeFunctionID = model.addFunction(linearConstraintGeFunction);
             FunctionIdentifierType linearConstraintLeFunctionID = model.addFunction(linearConstraintLeFunction);
             model.addFactor(linearConstraintGeFunctionID, factorVariables.begin(), factorVariables.end());
@@ -1141,6 +1269,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
         }
 
+        //std::cout << "11.2" << std::endl;
         if (!with_misdetections_)
         {
             cplex_idxs.clear();
@@ -1171,17 +1300,27 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
             // left hand side
             linearConstraint.reserve(cplex_idxs.size());
-            std::vector<IndexType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-            }
+            std::vector<IndexType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(0));
+            std::vector<LabelType> constraintFunctionShape;
+            size_t openGMConstraintFunctionVarIndex = 0;
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(0));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(openGMConstraintFunctionVarIndex, LabelType(0));
             linearConstraint.add(indicatorVariable_d, 1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
+            factorVariables.push_back(constraint.disappearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, 0) << " ";
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(0));
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(0));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(0));
             linearConstraint.add(indicatorVariable_a, 1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+            factorVariables.push_back(constraint.appearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node, 0) << " ";
 
             // right hand side
@@ -1191,12 +1330,13 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             linearConstraint.setConstraintOperator(equalOperator);
             //std::cout << " == " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintFunction(gmShape.begin(), gmShape.end(), &linearConstraint, &linearConstraint + 1);
+            LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
             FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
             model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
             //std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
         }
 
+        //std::cout << "11.3" << std::endl;
         if (!with_disappearance_)
         {
             cplex_idxs.clear();
@@ -1219,13 +1359,19 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
             // left hand side
             linearConstraint.reserve(cplex_idxs.size());
-            std::vector<IndexType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-            }
+            std::vector<IndexType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(0));
+            std::vector<LabelType> constraintFunctionShape;
+            size_t openGMConstraintFunctionVarIndex = 0;
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(constraint.disappearance_node, LabelType(0));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_d(openGMConstraintFunctionVarIndex, LabelType(0));
             linearConstraint.add(indicatorVariable_d, 1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
+            factorVariables.push_back(constraint.disappearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, 0) << " ";
 
             // right hand side
@@ -1235,12 +1381,13 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             linearConstraint.setConstraintOperator(equalOperator);
             //std::cout << " == " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintFunction(gmShape.begin(), gmShape.end(), &linearConstraint, &linearConstraint + 1);
+            LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
             FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
             model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
             //std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
         }
 
+        //std::cout << "11.4" << std::endl;
         if (!with_appearance_)
         {
             cplex_idxs.clear();
@@ -1263,13 +1410,19 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
             // left hand side
             linearConstraint.reserve(cplex_idxs.size());
-            std::vector<IndexType> factorVariables(cplex_idxs.size());
-            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
-               factorVariables[i] = i;
-            }
+            std::vector<IndexType> factorVariables;
+//            for(IndexType i = 0; i < cplex_idxs.size(); ++i) {
+//               factorVariables[i] = i;
+//            }
 
-            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(0));
+            std::vector<LabelType> constraintFunctionShape;
+            size_t openGMConstraintFunctionVarIndex = 0;
+            //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(0));
+            const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(0));
             linearConstraint.add(indicatorVariable_a, 1);
+            constraintFunctionShape.push_back(model.numberOfLabels(constraint.appearance_node));
+            factorVariables.push_back(constraint.appearance_node);
+            ++openGMConstraintFunctionVarIndex;
             //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.appearance_node, 0) << " ";
 
             // right hand side
@@ -1279,7 +1432,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             linearConstraint.setConstraintOperator(equalOperator);
             //std::cout << " == " << 0 << std::endl;
 
-            LinearConstraintFunctionType linearConstraintFunction(gmShape.begin(), gmShape.end(), &linearConstraint, &linearConstraint + 1);
+            LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
             FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
             model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
             //std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
@@ -1301,6 +1454,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplic
      )
 {
     std::cout << "in add_constraint_type_to_problem FixNodeValueConstraint" << std::endl;
+    std::cout << ",,,>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue" << std::endl;
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -1332,7 +1486,9 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::FixNodeValueLinearConstraint>& constraints
      )
 {
-    LOG(logINFO) << "________________________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
+    std::cout << "....................................> _______________WE NEED THIS CODE_________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
+    LOG(logINFO) << "____________WE NEED THIS CODE____________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
+    size_t myCounter = 0;
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
         const ConstraintPoolExplicit::FixNodeValueLinearConstraint& constraint = *it;
@@ -1347,7 +1503,42 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
         //optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());
         LOG(logDEBUG3) << constraint_name.str();
+
+
+        // add linear constraint to model
+        LinearConstraintFunctionType::LinearConstraintType linearConstraint;
+
+        // left hand side
+        linearConstraint.reserve(cplex_idxs.size());
+        std::vector<IndexType> factorVariables;
+
+        std::vector<LabelType> constraintFunctionShape;
+        size_t openGMConstraintFunctionVarIndex = 0;
+        //const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(constraint.appearance_node, LabelType(0));
+        const LinearConstraintFunctionType::LinearConstraintType::IndicatorVariableType indicatorVariable_a(openGMConstraintFunctionVarIndex, LabelType(constraint.value));
+        linearConstraint.add(indicatorVariable_a, 1);
+        constraintFunctionShape.push_back(model.numberOfLabels(constraint.node));
+        factorVariables.push_back(constraint.node);
+        ++openGMConstraintFunctionVarIndex;
+        std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.node, constraint.value) << " ";
+
+        // right hand side
+        linearConstraint.setBound( constraint.value );
+
+        // operator
+        linearConstraint.setConstraintOperator(equalOperator);
+        std::cout << " == " << constraint.value << std::endl;
+
+        LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
+        FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
+        model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
+        std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
+
+
+        ++myCounter;
+
     }
+    std::cout << "-------------------------------------->" << myCounter << std::endl;
 }
 
 //------------------------------------------------------------------------

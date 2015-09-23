@@ -672,7 +672,7 @@ void ConsTracking::addLabels()
     hypotheses_graph_->add(arc_label());
 }
 
-// In the following methods label values are shifted for +1 in order to distinguish between an initialized 0 and a set 0.
+// In the following methods label values are shifted for +1 in order to distinguish between an initialized 0 and a non-default value set to 0.
 // Labels are only used to export annotations to C++ side and are only used in setting node values in case trackingToHardConstraints is set to TRUE
 void ConsTracking::addAppearanceLabel(int time, int label, double cellCount)
 {
@@ -684,7 +684,7 @@ void ConsTracking::addAppearanceLabel(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_appearance_label(node, cellCount+1);
         }
 }
@@ -698,7 +698,7 @@ void ConsTracking::addDisappearanceLabel(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_disappearance_label(node, cellCount+1);
         }
 }
@@ -712,7 +712,7 @@ void ConsTracking::addDivisionLabel(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            std::cout << " ConsTracking::DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_division_label(node, cellCount+1);
         }
 }
@@ -732,7 +732,7 @@ void ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, doub
             for(HypothesesGraph::base_graph::OutArcIt arc(*hypotheses_graph_, node); arc != lemon::INVALID; ++arc){
                 to = hypotheses_graph_->target(arc);
                 if (traxel_map[to].Id == endLabel){
-                    std::cout << " ARC Label          : [" << startTime << "=?=" << timestep_map[node] << "," << startTime +1 << "=?=" << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
+                    std::cout << " ConsTracking::ARC Label                                 : [" << startTime << "=?=" << timestep_map[node] << "," << startTime +1 << "=?=" << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
                     hypotheses_graph_->add_arc_label(arc, cellCount+1);
                 }
             }
@@ -748,9 +748,11 @@ void ConsTracking::addFirstLabels(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+
+            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             //hypotheses_graph_->add_disappearance_label(node,0+1);// must be there for dense training in structured learning
-            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+
+            std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_appearance_label(node, cellCount+1);
         }
 }
@@ -764,9 +766,10 @@ void ConsTracking::addLastLabels(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_disappearance_label(node,cellCount+1);
-            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+
+            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             //hypotheses_graph_->add_appearance_label(node,0+1); // must be there for dense training in structured learning
         }
 }
@@ -780,9 +783,9 @@ void ConsTracking::addIntermediateLabels(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_disappearance_label(node,cellCount+1);
-            //std::cout << " APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
+            std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_appearance_label(node,cellCount+1);
         }
 }

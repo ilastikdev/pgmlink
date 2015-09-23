@@ -358,7 +358,7 @@ void ConstraintPoolExplicit::add_constraints_to_model(GM& model, INF& inf)
     add_constraint_type_to_model<GM, INF, OutgoingLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, outgoing_linear_constraints_);
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, outgoing_no_div_linear_constraints_);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, detection_linear_constraints_);
-    //add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, fix_node_value_linear_constraints_);
+    add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, fix_node_value_linear_constraints_);
     std::cout << "=========@@@==================================================>out explicit add_constraints_to_model" << std::endl;
 }
 

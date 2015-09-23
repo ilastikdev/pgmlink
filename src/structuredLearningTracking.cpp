@@ -183,6 +183,7 @@ void StructuredLearningTracking::hypothesesGraphTest(const HypothesesGraph& g)
 
 void StructuredLearningTracking::addLabels()
 {
+    std::cout << " iiiiiiiiiiiiiiiiiiiin   StructuredLearningTracking::addLabels" << std::endl;
     hypotheses_graph_->add(appearance_label());
     hypotheses_graph_->add(disappearance_label());
     hypotheses_graph_->add(division_label());
@@ -199,6 +200,7 @@ void StructuredLearningTracking::addAppearanceLabel(int time, int label, double 
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
+            //std::cout << " StructuredLearningTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_appearance_label(node, cellCount);
         }
 }
@@ -212,6 +214,7 @@ void StructuredLearningTracking::addDisappearanceLabel(int time, int label, doub
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
+            //std::cout << " StructuredLearningTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_disappearance_label(node, cellCount);
         }
 }
@@ -225,6 +228,7 @@ void StructuredLearningTracking::addDivisionLabel(int time, int label, double ce
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
+            //std::cout << " StructuredLearningTracking::DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_division_label(node, cellCount);
         }
 }
@@ -242,6 +246,7 @@ void StructuredLearningTracking::addArcLabel(int startTime, int startLabel, int 
             for(HypothesesGraph::base_graph::OutArcIt arc(*hypotheses_graph_, node); arc != lemon::INVALID; ++arc){
                 to = hypotheses_graph_->target(arc);
                 if (traxel_map[to].Id == endLabel){
+                    //std::cout << " StructuredLearningTracking::ARC Label          : [" << startTime << "=?=" << timestep_map[node] << "," << startTime +1 << "=?=" << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
                     hypotheses_graph_->add_arc_label(arc, cellCount);
                 }
             }
@@ -257,7 +262,9 @@ void StructuredLearningTracking::addFirstLabels(int time, int label, double cell
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            hypotheses_graph_->add_disappearance_label(node,0);
+            //std::cout << " StructuredLearningTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            //hypotheses_graph_->add_disappearance_label(node,0);
+            //std::cout << " StructuredLearningTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_appearance_label(node, cellCount);
         }
 }
@@ -271,8 +278,10 @@ void StructuredLearningTracking::addLastLabels(int time, int label, double cellC
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
+            //std::cout << " StructuredLearningTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_disappearance_label(node,cellCount);
-            hypotheses_graph_->add_appearance_label(node,0);
+            //std::cout << " StructuredLearningTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
+            //hypotheses_graph_->add_appearance_label(node,0);
         }
 }
 
@@ -285,7 +294,9 @@ void StructuredLearningTracking::addIntermediateLabels(int time, int label, doub
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
+            //std::cout << " StructuredLearningTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_disappearance_label(node,cellCount);
+            //std::cout << " StructuredLearningTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_appearance_label(node,cellCount);
         }
 }
@@ -416,6 +427,10 @@ void StructuredLearningTracking::structuredLearning(
 
         prepareTracking(pgm, param);
         inference_model.push_back(pgm.getInferenceModel());
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << std::endl;
+        std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ BUILD_FROM_GRAPH " << m << std::endl;
         inference_model[m]->build_from_graph(*(graph[m]));
 
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->set_inference_params(
@@ -426,6 +441,8 @@ void StructuredLearningTracking::structuredLearning(
 
         sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->model());
 
+        //size_t count = sltDataset.getModel(m).constraint_pool_.size();
+        //std::cout << "____ number of constraints in constraint_pool_ = " << count << std::endl;
         sltDataset.resizeGTS(m);
 
         node_traxel_map& traxel_map_sub_graph = hypothesesSubGraph[m]->get(node_traxel());
@@ -510,13 +527,14 @@ void StructuredLearningTracking::structuredLearning(
     infPara.integerConstraintNodeVar_ = true;
 
     infPara.relaxation_ = infPara.TightPolytope;
-    //infPara.relaxation_ = infPara.LocalPolytope;
-    //infPara.maxNumIterations_ = 0;
-    //infPara.maxNumConstraintsPerIter_ = 0;
+
+//    infPara.relaxation_ = infPara.LocalPolytope;
+//    infPara.maxNumIterations_ = 2;
+//    infPara.maxNumConstraintsPerIter_ = 1;
 
     //infPara.verbose_ = true;
     infPara.verbose_ = false;
-    infPara.challengeHeuristic_ = infPara.Weighted;
+    //infPara.challengeHeuristic_ = infPara.Weighted;
 
     infPara.useSoftConstraints_ = false;
 
