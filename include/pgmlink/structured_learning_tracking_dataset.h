@@ -37,7 +37,7 @@ public:
    )
    {
        if(numModels!=crops.size()){
-	 std::cout << "Number of crops and crops size do not match!!!" << std::endl; // xxx: use assert
+     std::cout << "Number of crops and crops size do not match!!!" << std::endl; // use assert
            return;
        }
 

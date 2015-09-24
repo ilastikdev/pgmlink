@@ -130,20 +130,8 @@ protected: // members
 template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
-    std::cout << "?????ConsTrackingExplicitInferenceModel::add_constraints in explicit add_constraints<<<<<<<<<" << &model_ << std::endl;
     //constraint_pool_.add_constraints_to_problem(model_, optimizer);
-
-
-
-
-
-
     linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
-
-
-
-
-    std::cout << "????ConsTrackingExplicitInferenceModel::add_constraints??????   end  ?????????????DO I GET HERE AT ALL ????????????? IN STRUCTURED LEARNING    ??????????????????in explicit add_constraints" << std::endl;
 }
 
 } // namespace pgmlink

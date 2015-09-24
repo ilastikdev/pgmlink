@@ -151,8 +151,6 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::IncomingLinearConstraint>& constraints
      )
 {
-    std::cout << "....................................> in add_constraint_type_to_model IncomingLinearConstraint" << std::endl;
-    std::cout << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
 
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
@@ -439,10 +437,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::OutgoingLinearConstraint>& constraints
      )
 {
-    std::cout << "....................................> in add_constraint_type_to_model OutgoingLinearConstraint" << std::endl;
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing";
-
-    //const std::vector<LabelType> gmShape(model.numberOfVariables(), model.maxNumberOfLabels());
 
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
@@ -643,7 +638,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             linearConstraint.setConstraintOperator(equalOperator);
             //std::cout << " == " << 0 << std::endl;
 
-            //std::cout << " xxx Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
+            //std::cout << " Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
             //std::cout << "2.3" << std::endl;
             if (div_cplex_id != -1)
             {
@@ -928,7 +923,6 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
      )
 {
     // for the CPLEX specialization we do the same for with and without divisions
-    std::cout << "in add_constraint_type_to_model OutgoingNoDivLinearConstraint" << std::endl;
     add_constraint_type_to_model<ConstraintPoolExplicitOpengmModel,
                                    ConstraintPoolExplicitCplexOptimizer,
                                    OutgoingLinearConstraintFunction<ValueType, IndexType, LabelType>,
@@ -1085,7 +1079,6 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::DetectionLinearConstraint>& constraints
      )
 {
-    std::cout << "....................................> in add_constraint_type_to_model DetectionLinearConstraint" << "<<<<<<<<<<<<<<<<<<<<<"<<std::endl;
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection";
 
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
@@ -1490,8 +1483,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
          const std::vector<ConstraintPoolExplicit::FixNodeValueLinearConstraint>& constraints
      )
 {
-    std::cout << "....................................> _______________WE NEED THIS CODE_________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
-    LOG(logINFO) << "____________WE NEED THIS CODE____________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
+    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
     //size_t myCounter = 0;
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {

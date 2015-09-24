@@ -187,7 +187,6 @@ void StructuredLearningTracking::hypothesesGraphTest(const HypothesesGraph& g)
 
 void StructuredLearningTracking::addLabels()
 {
-    std::cout << " iiiiiiiiiiiiiiiiiiiin   StructuredLearningTracking::addLabels" << std::endl;
     hypotheses_graph_->add(appearance_label());
     hypotheses_graph_->add(disappearance_label());
     hypotheses_graph_->add(division_label());
@@ -357,7 +356,7 @@ void StructuredLearningTracking::structuredLearning(
         
     // set up graphical models
     for(size_t m=0; m<numCrops_; ++m){
-        std::cout << std::endl << std::endl << " GRAPHICAL MODEL......................................................................................................" << m << std::endl<< std::endl<< std::endl;
+        std::cout << std::endl << " GRAPHICAL MODEL.............. " << m << std::endl << std::endl;
         HypothesesGraph::base_graph::NodeMap<bool> selected_nodes(*hypotheses_graph_);
         for (HypothesesGraph::NodeIt n(*hypotheses_graph_); n != lemon::INVALID; ++n)
             selected_nodes[n] = false;
@@ -432,10 +431,6 @@ void StructuredLearningTracking::structuredLearning(
 
         prepareTracking(pgm, param);
         inference_model.push_back(pgm.getInferenceModel());
-        std::cout << std::endl;
-        std::cout << std::endl;
-        std::cout << std::endl;
-        std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ BUILD_FROM_GRAPH " << m << "       " << graph[m] << std::endl;
         inference_model[m]->build_from_graph(*(graph[m]));
 
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->set_inference_params(
@@ -474,14 +469,14 @@ void StructuredLearningTracking::structuredLearning(
             sltDataset.setGTS(
                 m,
                 (size_t) numArcs + traxel_map[n].Id-1,
-                (size_t)appearance_labels[n]); // CHECK the order of appearance variables in model!!!
+                (size_t)appearance_labels[n]);
         }
 
         for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
 
             sltDataset.setGTS(
                 m,
-                (size_t) numArcs + numNodes + traxel_map[n].Id-1, // CHECK the order of disappearance variables in model!!!
+                (size_t) numArcs + numNodes + traxel_map[n].Id-1,
                 (size_t)disappearance_labels[n]);
         }
 
@@ -497,7 +492,7 @@ void StructuredLearningTracking::structuredLearning(
 
                 sltDataset.setGTS(
                     m,
-                    (size_t) numArcs + 2*numNodes + indexDivNodes, // CHECK the order of division variables in model!!!
+                    (size_t) numArcs + 2*numNodes + indexDivNodes,
                     (size_t)division_labels[n]);
                 ++indexDivNodes;
             }
@@ -520,7 +515,6 @@ void StructuredLearningTracking::structuredLearning(
 
     opengm::learning::StructMaxMargin<DSS> learner(sltDataset,para);
 
-    //typedef opengm::LPCplex2<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::Minimizer> INFCPLEX;
     typedef StructuredLearningTrackingInferenceModel::cplex2_optimizer INFCPLEX;
     INFCPLEX::Parameter infPara;
 
@@ -530,14 +524,14 @@ void StructuredLearningTracking::structuredLearning(
     //lpcplex2
     infPara.integerConstraintNodeVar_ = true;
 
-//    infPara.relaxation_ = infPara.TightPolytope;
+    infPara.relaxation_ = infPara.TightPolytope;
 
-    infPara.relaxation_ = infPara.LocalPolytope;
-    infPara.maxNumIterations_ = 20;
-    infPara.maxNumConstraintsPerIter_ = 10;
+//    infPara.relaxation_ = infPara.LocalPolytope;
+//    infPara.maxNumIterations_ = 5;
+//    infPara.maxNumConstraintsPerIter_ = 10;
 
-    //infPara.verbose_ = true;
-    infPara.verbose_ = false;
+    infPara.verbose_ = true;
+    //infPara.verbose_ = false;
     infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;

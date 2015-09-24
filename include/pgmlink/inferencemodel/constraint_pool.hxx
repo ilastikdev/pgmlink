@@ -343,8 +343,6 @@ void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueLinearCons
 template<class GM, class INF>
 void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 {
-    // TODO: handle force_softconstraint_
-
     add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType, IndexType, LabelType>, IncomingConstraint>(model, inf, incoming_constraints_);
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_constraints_);
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
@@ -355,20 +353,16 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
 template<class GM, class INF>
 void ConstraintPool::add_constraints_to_model(GM& model, INF& inf)
 {
-
-    std::cout << "=========@@@==================================================>in  add_constraints_to_model" << std::endl;
     add_constraint_type_to_model<GM, INF, IncomingLinearConstraintFunction<ValueType, IndexType, LabelType>, IncomingLinearConstraint>(model, inf, incoming_linear_constraints_);
     add_constraint_type_to_model<GM, INF, OutgoingLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, outgoing_linear_constraints_);
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, outgoing_no_div_linear_constraints_);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, detection_linear_constraints_);
     add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, fix_node_value_linear_constraints_);
-    std::cout << "=========@@@==================================================>out  add_constraints_to_model" << std::endl;
 }
 
 template<class GM, class INF>
 void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<size_t, size_t>& index_mapping)
 {
-    std::cout << "=========================XXX   XXX==================================>in add_constraints_to_problem" << std::endl;
     std::vector<IncomingConstraint> remapped_incoming_constraints;
     std::vector<OutgoingConstraint> remapped_outgoing_constraints;
     std::vector<OutgoingConstraint> remapped_outgoing_no_div_constraints;
@@ -457,7 +451,6 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
 template<class GM, class INF>
 void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size_t, size_t>& index_mapping)
 {
-    std::cout << "=====0======================================================>in  add_constraints_to_model" << std::endl;
     std::vector<IncomingLinearConstraint> remapped_incoming_linear_constraints;
     std::vector<OutgoingLinearConstraint> remapped_outgoing_linear_constraints;
     std::vector<OutgoingLinearConstraint> remapped_outgoing_no_div_linear_constraints;
@@ -468,7 +461,6 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
         {
-            std::cout << "################################################################ continue" << std::endl;
             continue;
         }
 
@@ -485,7 +477,6 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
         {
-            std::cout << "################################################################ continue" << std::endl;
             continue;
         }
 
@@ -503,7 +494,6 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
         {
-            std::cout << "################################################################ continue" << std::endl;
             continue;
         }
 
@@ -520,7 +510,6 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
         {
-            std::cout << "################################################################ continue" << std::endl;
             continue;
         }
 
@@ -533,7 +522,6 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     {
         if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
         {
-            std::cout << "################################################################ continue" << std::endl;
             continue;
         }
 
@@ -541,14 +529,11 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
         remapped_fix_node_value_linear_constraints.push_back(FixNodeValueLinearConstraint(node, constraint.value));
     }
 
-    std::cout << "=====1======================================================>in  add_constraints_to_model" << std::endl;
-
     add_constraint_type_to_model<GM, INF, IncomingLinearConstraintFunction<ValueType, IndexType, LabelType>, IncomingLinearConstraint>(model, inf, remapped_incoming_linear_constraints);
     add_constraint_type_to_model<GM, INF, OutgoingLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, remapped_outgoing_linear_constraints);
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, remapped_outgoing_no_div_linear_constraints);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, remapped_detection_linear_constraints);
     add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, remapped_fix_node_value_linear_constraints);
-    std::cout << "=====2======================================================>out  add_constraints_to_model" << std::endl;
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
@@ -589,7 +574,6 @@ void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint_type_to_model(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
-    std::cout << "===========================================================>in  add_constraint_type_to_model" << std::endl;
     LOG(logINFO) << "[ConstraintPool]: Using soft constraints";
     std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
     for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
@@ -619,7 +603,6 @@ void ConstraintPool::add_constraint_type_to_model(GM& model, INF&, const std::ve
         // create factor
         OpengmFactor< FUNCTION_TYPE > factor(*constraint_functions[shape], indices.begin(), indices.end());
 
-        std::cout << "=====-------======================================================>ADDING CONSTRAINT TO MODEL" << std::endl;
         factor.add_to(model);
     }
 }

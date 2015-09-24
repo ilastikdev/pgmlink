@@ -104,7 +104,7 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = g.get(node_traxel());
 
-    std::cout << "-----------TODAY-------------------ConsTrackingInferenceModel::fixNodesToLabels-------------------appearance_labels" << std::endl;
+    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------appearance_labels" << std::endl;
     assert(g.has_property(appearance_label()));
     property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
     typedef property_map<appearance_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
@@ -114,13 +114,13 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
         property_map<appearance_label, HypothesesGraph::base_graph>::type::ItemIt node_it(appearance_labels, *value_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            std::cout << "------>" << g.id(node_it) << "   " << appearance_labels[node_it]-1 << std::endl;
+            //std::cout << "------>" << g.id(node_it) << "   " << appearance_labels[node_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[node_it], appearance_labels[node_it]-1));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[node_it], appearance_labels[node_it]-1));
         }
     }
 
-    std::cout << "------------------------------ConsTrackingInferenceModel::fixNodesToLabels-------------------disappearance_labels" << std::endl;
+    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------disappearance_labels" << std::endl;
     assert(g.has_property(disappearance_label()));
     property_map<disappearance_label, HypothesesGraph::base_graph>::type &disappearance_labels = g.get(disappearance_label());
     typedef property_map<disappearance_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
@@ -130,13 +130,13 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
         property_map<disappearance_label, HypothesesGraph::base_graph>::type::ItemIt node_it(disappearance_labels, *value_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            std::cout << g.id(node_it) << "------>" << dis_node_map_[node_it] << "   " << disappearance_labels[node_it]-1 << std::endl;
+            //std::cout << g.id(node_it) << "------>" << dis_node_map_[node_it] << "   " << disappearance_labels[node_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[node_it], disappearance_labels[node_it]-1));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[node_it], disappearance_labels[node_it]-1));
         }
     }
 
-    std::cout << "------------------------------ConsTrackingInferenceModel::fixNodesToLabels-------------------division_labels" << std::endl;
+    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------division_labels" << std::endl;
     assert(g.has_property(division_label()));
     property_map<division_label, HypothesesGraph::base_graph>::type &division_labels = g.get(division_label());
     typedef property_map<division_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
@@ -146,26 +146,26 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
         property_map<division_label, HypothesesGraph::base_graph>::type::ItemIt node_it(division_labels, *value_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            std::cout << g.id(node_it) << "------>" << div_node_map_[node_it] << "   " << division_labels[node_it]-1 << std::endl;
+            //std::cout << g.id(node_it) << "------>" << div_node_map_[node_it] << "   " << division_labels[node_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(div_node_map_[node_it], division_labels[node_it]-1));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(div_node_map_[node_it], division_labels[node_it]-1));
         }
     }
 
-    std::cout << "------------------------------ConsTrackingInferenceModel::fixNodesToLabels-------------------arc_labels" << std::endl;
+    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------arc_labels" << std::endl;
     assert(g.has_property(arc_label()));
     property_map<arc_label, HypothesesGraph::base_graph>::type &arc_labels = g.get(arc_label());
     typedef property_map<arc_label, HypothesesGraph::base_graph>::type::ValueIt arc_value_it_type;
     for (arc_value_it_type value_it = ++arc_labels.beginValue(); value_it != arc_labels.endValue(); ++value_it)
     {
-        std::cout << "--->" << *value_it << std::endl;
+        //std::cout << "--->" << *value_it << std::endl;
         property_map<arc_label, HypothesesGraph::base_graph>::type::ItemIt arc_it(arc_labels, *value_it);
         for (; arc_it != lemon::INVALID; ++arc_it)
         {
 
 
 
-            std::cout << g.id(arc_it) << "------>" << arc_map_[arc_it] << "   " << traxel_map[g.source(arc_it)] << "   "  << traxel_map[g.target(arc_it)] << "   " << arc_labels[arc_it]-1 << std::endl;
+            //std::cout << g.id(arc_it) << "------>" << arc_map_[arc_it] << "   " << traxel_map[g.source(arc_it)] << "   "  << traxel_map[g.target(arc_it)] << "   " << arc_labels[arc_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
 
@@ -754,7 +754,7 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
-    std::cout << "=========================================== in set_inference_parameters if(param_.with_constraints)" << std::endl;
+    //std::cout << "=========================================== in set_inference_parameters if(param_.with_constraints)" << std::endl;
     if(param_.with_constraints)
     {
         LOG(logINFO) << "add_constraints";

@@ -18,7 +18,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors" << std::endl;
+    //std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors" << std::endl;
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -234,7 +234,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors" << std::endl;
+    //std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors" << std::endl;
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors";
 
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
@@ -301,7 +301,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add division factors" << std::endl;
+    //std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add division factors" << std::endl;
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add division factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {

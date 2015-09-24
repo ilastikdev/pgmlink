@@ -329,7 +329,7 @@ void ConsTrackingExplicitInferenceModel::add_finite_factors(const HypothesesGrap
 //set up optimizer from constraints by reading from formulated gm
 void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
-    std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ConsTrackingExplicitInferenceModel::add_constraints: entered";
+    //std::cout << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
     LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
 
 //    constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
@@ -416,13 +416,13 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     optimizer2_ = boost::shared_ptr<cplex2_optimizer>(new cplex2_optimizer(get_model(), cplex2_param_));
 #endif
 
-    std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)==" << param_.with_constraints <<std::endl;
+    //std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)==" << param_.with_constraints <<std::endl;
     if(param_.with_constraints)
     {
-        std::cout << "==== START =========if(param_.with_constraints) == TRUE" << std::endl;
+        //std::cout << "==== START =========if(param_.with_constraints) == TRUE" << std::endl;
         LOG(logINFO) << "add_constraints";
         add_constraints(*optimizer2_);
-        std::cout << "==== END   =========if(param_.with_constraints) == TRUE" << std::endl;
+        //std::cout << "==== END   =========if(param_.with_constraints) == TRUE" << std::endl;
 
     }
     else
