@@ -1,3 +1,7 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
+
 #include <opengm/functions/learnable/lweightedsum_of_functions.hxx>
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include <boost/python.hpp>

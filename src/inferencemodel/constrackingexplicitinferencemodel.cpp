@@ -1,3 +1,6 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
 #include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
 #include <boost/python.hpp>
 #include <opengm/functions/explicit_function.hxx>
@@ -16,10 +19,10 @@ ConsTrackingExplicitInferenceModel::ConsTrackingExplicitInferenceModel(const Par
     ground_truth_filename_(""),
     inferenceWeights_(5)
 {
-    cplex_param_.verbose_ = true;
-    cplex_param_.integerConstraint_ = true;
-    cplex_param_.epGap_ = ep_gap;
-    cplex_param_.timeLimit_ = cplex_timeout;
+    cplex2_param_.verbose_ = true;
+    cplex2_param_.integerConstraintNodeVar_ = true;
+    cplex2_param_.epGap_ = ep_gap;
+    cplex2_param_.timeLimit_ = cplex_timeout;
 }
 
 void ConsTrackingExplicitInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
@@ -66,8 +69,8 @@ void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
         {
             if(timestep_map[n] == earliest_timestep)
             {
-                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
-                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
                 linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
                 linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
             }
@@ -85,8 +88,8 @@ void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
             if(timestep_map[n] == earliest_timestep)
             {
                 HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
-                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
-                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
                 linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
                 linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
             }
@@ -329,11 +332,11 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
     std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ConsTrackingExplicitInferenceModel::add_constraints: entered";
     LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
 
-    constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
-                                           param_.with_divisions,
-                                           param_.with_appearance,
-                                           param_.with_disappearance,
-                                           param_.with_misdetections_allowed);
+//    constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
+//                                           param_.with_divisions,
+//                                           param_.with_appearance,
+//                                           param_.with_disappearance,
+//                                           param_.with_misdetections_allowed);
     linear_constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
                                            param_.with_divisions,
                                            param_.with_appearance,
@@ -359,7 +362,7 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
             }
             size_t appearance_node = app_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingConstraint(appearance_node,division_node,transition_nodes));
+//            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingConstraint(appearance_node,division_node,transition_nodes));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
         }
 
@@ -374,7 +377,7 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
             }
             size_t disappearance_node = dis_node_map_[n];
 
-            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingConstraint(transition_nodes,disappearance_node));
+//            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingConstraint(transition_nodes,disappearance_node));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingLinearConstraint(transition_nodes,disappearance_node));
         }
 
@@ -383,12 +386,12 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
         ////
         if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
         {
-            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
+//            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
         }
     }
 
-    constraint_pool_.force_softconstraint(!param_.with_constraints);
+//    constraint_pool_.force_softconstraint(!param_.with_constraints);
     //linear_constraint_pool_.force_softconstraint(!param_.with_constraints);
 }
 
@@ -400,8 +403,8 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     ground_truth_filename_ = ground_truth_filename;
 
 #ifdef WITH_MODIFIED_OPENGM
-    optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
-                 cplex_param_,
+    optimizer2_ = boost::shared_ptr<cplex2_optimizer>(new cplex2_optimizer(get_model(),
+                 cplex2_param_,
                  numberOfSolutions,
                  feature_filename,
                  constraints_filename,
@@ -410,7 +413,7 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
     cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
 #else
-    optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
+    optimizer2_ = boost::shared_ptr<cplex2_optimizer>(new cplex2_optimizer(get_model(), cplex2_param_));
 #endif
 
     std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)==" << param_.with_constraints <<std::endl;
@@ -418,7 +421,7 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     {
         std::cout << "==== START =========if(param_.with_constraints) == TRUE" << std::endl;
         LOG(logINFO) << "add_constraints";
-        add_constraints(*optimizer_);
+        add_constraints(*optimizer2_);
         std::cout << "==== END   =========if(param_.with_constraints) == TRUE" << std::endl;
 
     }
@@ -432,14 +435,14 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
 ConsTrackingExplicitInferenceModel::IlpSolution ConsTrackingExplicitInferenceModel::infer()
 {
 
-    opengm::InferenceTermination status = optimizer_->infer();
+    opengm::InferenceTermination status = optimizer2_->infer();
     if (status != opengm::NORMAL)
     {
         throw std::runtime_error("GraphicalModel::infer(): optimizer terminated abnormally");
     }
 
     IlpSolution solution;
-    opengm::InferenceTermination statusExtract = optimizer_->arg(solution);
+    opengm::InferenceTermination statusExtract = optimizer2_->arg(solution);
     if (statusExtract != opengm::NORMAL)
     {
         throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
@@ -455,7 +458,7 @@ ConsTrackingExplicitInferenceModel::IlpSolution ConsTrackingExplicitInferenceMod
 #ifdef WITH_MODIFIED_OPENGM
     optimizer_->set_export_file_names("", "", ground_truth_filename);
 #endif
-    opengm::InferenceTermination status = optimizer_->arg(solution, k);
+    opengm::InferenceTermination status = optimizer2_->arg(solution, k);
 
     if (status != opengm::NORMAL)
     {

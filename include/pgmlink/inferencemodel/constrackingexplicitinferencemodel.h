@@ -5,7 +5,7 @@
 
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/inference/inference.hxx>
-#include <opengm/inference/lpcplex.hxx>
+#include <opengm/inference/lpcplex2.hxx>
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
@@ -29,7 +29,8 @@ public: // typedefs
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
     typedef std::vector<LabelType> IlpSolution;
     typedef PertExplicitGmType GraphicalModelType;
-    typedef opengm::LPCplex<PertExplicitGmType, pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizer;
+    //typedef opengm::LPCplex2<PertExplicitGmType, pgm::OpengmModelDeprecated::ogmAccumulator> cplex2_optimizer;
+    typedef opengm::LPCplex2<PertExplicitGmType, opengm::Minimizer> cplex2_optimizer;
     typedef std::map<HypothesesGraph::Node, size_t> HypothesesGraphNodeMap;
     typedef std::map<HypothesesGraph::Arc, size_t> HypothesesGraphArcMap;
 
@@ -108,9 +109,9 @@ protected: // members
     std::map<HypothesesGraph::Node, size_t> detection_f_node_map_;
 
     // optimizer
-    cplex_optimizer::Parameter cplex_param_;
-    boost::shared_ptr<cplex_optimizer> optimizer_;
-    pgm::ConstraintPoolExplicit constraint_pool_;
+    cplex2_optimizer::Parameter cplex2_param_;
+    boost::shared_ptr<cplex2_optimizer> optimizer2_;
+//    pgm::ConstraintPoolExplicit constraint_pool_;
     pgm::ConstraintPoolExplicit linear_constraint_pool_;
 
     // remove?
@@ -129,7 +130,7 @@ protected: // members
 template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
-    std::cout << "?????ConsTrackingExplicitInferenceModel::add_constraints????? start ?????????????DO I GET HERE AT ALL ???? IN STRUCTURED LEARNING    ??????????????????in explicit add_constraints<<<<<<<<<" <<std::endl;
+    std::cout << "?????ConsTrackingExplicitInferenceModel::add_constraints in explicit add_constraints<<<<<<<<<" << &model_ << std::endl;
     //constraint_pool_.add_constraints_to_problem(model_, optimizer);
 
 

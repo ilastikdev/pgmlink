@@ -5,7 +5,7 @@
 
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
 #include <opengm/inference/inference.hxx>
-#include <opengm/inference/lpcplex.hxx>
+#include <opengm/inference/lpcplex2.hxx>
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"

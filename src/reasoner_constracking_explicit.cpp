@@ -1,3 +1,6 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
 #include <algorithm>
 #include <vector>
 #include <cassert>
@@ -5,7 +8,7 @@
 #include <string.h>
 #include <sstream>
 #include <memory.h>
-#include <opengm/inference/lpcplex.hxx>
+//#include <opengm/inference/lpcplex2.hxx>
 #include <opengm/datastructures/marray/marray.hxx>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -44,12 +47,11 @@ using namespace std;
 namespace pgmlink
 {
 
-typedef opengm::ModelViewFunction
-<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
-ViewFunctionType;
+//typedef opengm::ModelViewFunction
+//<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
+//ViewFunctionType;
 
-typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-        pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
+//typedef opengm::LPCplex2<pgm::OpengmModelDeprecated::ogmGraphicalModel,pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
 
 
 ConservationExplicitTracking::ConservationExplicitTracking(const Parameter &param)

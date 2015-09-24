@@ -1,3 +1,7 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
+
 #include "pgmlink/inferencemodel/constraint_pool_explicit.hxx"
 #include <typeinfo>
 
@@ -13,38 +17,38 @@ const LinearConstraintFunctionType::LinearConstraintType::LinearConstraintOperat
 const LinearConstraintFunctionType::LinearConstraintType::LinearConstraintOperatorValueType greaterEqualOperator = LinearConstraintFunctionType::LinearConstraintType::LinearConstraintOperatorType::GreaterEqual;
 const LinearConstraintFunctionType::LinearConstraintType::LinearConstraintOperatorValueType lessEqualOperator = LinearConstraintFunctionType::LinearConstraintType::LinearConstraintOperatorType::LessEqual;
 
-template<>
-void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::IncomingConstraint& constraint)
-{
-    incoming_constraints_.push_back(constraint);
-}
+//template<>
+//void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::IncomingConstraint& constraint)
+//{
+//    incoming_constraints_.push_back(constraint);
+//}
 
-template<>
-void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::OutgoingConstraint& constraint)
-{
-    // here we separate the outgoing constraints with division node from those without,
-    // such that the template specializations work
-    if(constraint.division_node >= 0)
-    {
-        outgoing_constraints_.push_back(constraint);
-    }
-    else
-    {
-        outgoing_no_div_constraints_.push_back(constraint);
-    }
-}
+//template<>
+//void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::OutgoingConstraint& constraint)
+//{
+//    // here we separate the outgoing constraints with division node from those without,
+//    // such that the template specializations work
+//    if(constraint.division_node >= 0)
+//    {
+//        outgoing_constraints_.push_back(constraint);
+//    }
+//    else
+//    {
+//        outgoing_no_div_constraints_.push_back(constraint);
+//    }
+//}
 
-template<>
-void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::DetectionConstraint& constraint)
-{
-    detection_constraints_.push_back(constraint);
-}
+//template<>
+//void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::DetectionConstraint& constraint)
+//{
+//    detection_constraints_.push_back(constraint);
+//}
 
-template<>
-void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::FixNodeValueConstraint& constraint)
-{
-    fix_node_value_constraints_.push_back(constraint);
-}
+//template<>
+//void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::FixNodeValueConstraint& constraint)
+//{
+//    fix_node_value_constraints_.push_back(constraint);
+//}
 
 // LINEAR
 template<>
@@ -80,59 +84,59 @@ void ConstraintPoolExplicit::add_constraint(const ConstraintPoolExplicit::FixNod
     fix_node_value_linear_constraints_.push_back(constraint);
 }
 
-//------------------------------------------------------------------------
-// specialization for IncomingConstraintFunction
-template<>
-void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolExplicitCplexOptimizer,
-     IncomingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
-     ConstraintPoolExplicit::IncomingConstraint>
-     (
-         ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolExplicitCplexOptimizer& optimizer,
-         const std::vector<ConstraintPoolExplicit::IncomingConstraint>& constraints
-     )
-{
-    std::cout << "in add_constraint_type_to_problem IncomingConstraint" << std::endl;
-    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
-    for(auto it = constraints.begin(); it != constraints.end(); ++it)
-    {
-        const ConstraintPoolExplicit::IncomingConstraint& constraint = *it;
+////------------------------------------------------------------------------
+//// specialization for IncomingConstraintFunction
+//template<>
+//void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+//     ConstraintPoolExplicitCplexOptimizer,
+//     IncomingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+//     ConstraintPoolExplicit::IncomingConstraint>
+//     (
+//         ConstraintPoolExplicitOpengmModel& model,
+//         ConstraintPoolExplicitCplexOptimizer& optimizer,
+//         const std::vector<ConstraintPoolExplicit::IncomingConstraint>& constraints
+//     )
+//{
+//    std::cout << "in add_constraint_type_to_problem IncomingConstraint" << std::endl;
+//    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
+//    for(auto it = constraints.begin(); it != constraints.end(); ++it)
+//    {
+//        const ConstraintPoolExplicit::IncomingConstraint& constraint = *it;
 
-        // nothing to do if no incoming
-        if(constraint.transition_nodes.size() == 0)
-        {
-            continue;
-        }
+//        // nothing to do if no incoming
+//        if(constraint.transition_nodes.size() == 0)
+//        {
+//            continue;
+//        }
 
-        // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
-        std::vector<size_t> cplex_idxs;
-        std::vector<int> coeffs;
-        std::stringstream constraint_name;
-        constraint_name << "incoming transitions: sum( transition-nodes ";
+//        // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
+//        std::vector<size_t> cplex_idxs;
+//        std::vector<int> coeffs;
+//        std::stringstream constraint_name;
+//        constraint_name << "incoming transitions: sum( transition-nodes ";
 
-        for (auto incoming_it = constraint.transition_nodes.begin(); incoming_it != constraint.transition_nodes.end(); ++incoming_it)
-        {
-            for (size_t state = 1; state < model.numberOfLabels(*incoming_it); ++state)
-            {
-                cplex_idxs.push_back(optimizer.lpNodeVi(*incoming_it, state));
-                coeffs.push_back(state);
-            }
-            constraint_name << *incoming_it << " ";
-        }
+//        for (auto incoming_it = constraint.transition_nodes.begin(); incoming_it != constraint.transition_nodes.end(); ++incoming_it)
+//        {
+//            for (size_t state = 1; state < model.numberOfLabels(*incoming_it); ++state)
+//            {
+//                cplex_idxs.push_back(optimizer.lpNodeVi(*incoming_it, state));
+//                coeffs.push_back(state);
+//            }
+//            constraint_name << *incoming_it << " ";
+//        }
 
-        constraint_name << ") = disappearance-node " << constraint.disappearance_node;
+//        constraint_name << ") = disappearance-node " << constraint.disappearance_node;
 
-        for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
-        {
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
-            coeffs.push_back(-state);
-        }
+//        for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
+//        {
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
+//            coeffs.push_back(-state);
+//        }
 
-        optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0, constraint_name.str().c_str());
-        LOG(logDEBUG3) << constraint_name.str();
-    }
-}
+//        optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0, constraint_name.str().c_str());
+//        LOG(logDEBUG3) << constraint_name.str();
+//    }
+//}
 
 //------------------------------------------------------------------------
 // specialization for IncomingLinearConstraintFunction
@@ -252,175 +256,175 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
     }
 }
 
-//------------------------------------------------------------------------
-// specialization for OutgoingConstraintFunction
-template<>
-void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolExplicitCplexOptimizer,
-     OutgoingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
-     ConstraintPoolExplicit::OutgoingConstraint>
-     (
-         ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolExplicitCplexOptimizer& optimizer,
-         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
-     )
-{
-    std::cout << "in add_constraint_type_to_problem OutgoingConstraint" << std::endl;
-    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing";
-    for(auto it = constraints.begin(); it != constraints.end(); ++it)
-    {
-        const ConstraintPoolExplicit::OutgoingConstraint& constraint = *it;
+////------------------------------------------------------------------------
+//// specialization for OutgoingConstraintFunction
+//template<>
+//void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+//     ConstraintPoolExplicitCplexOptimizer,
+//     OutgoingConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+//     ConstraintPoolExplicit::OutgoingConstraint>
+//     (
+//         ConstraintPoolExplicitOpengmModel& model,
+//         ConstraintPoolExplicitCplexOptimizer& optimizer,
+//         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
+//     )
+//{
+//    std::cout << "in add_constraint_type_to_problem OutgoingConstraint" << std::endl;
+//    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing";
+//    for(auto it = constraints.begin(); it != constraints.end(); ++it)
+//    {
+//        const ConstraintPoolExplicit::OutgoingConstraint& constraint = *it;
 
-        // nothing to do if no outgoing
-        if(constraint.transition_nodes.size() == 0)
-        {
-            continue;
-        }
+//        // nothing to do if no outgoing
+//        if(constraint.transition_nodes.size() == 0)
+//        {
+//            continue;
+//        }
 
-        std::vector<size_t> cplex_idxs, cplex_idxs2;
-        std::vector<int> coeffs, coeffs2;
+//        std::vector<size_t> cplex_idxs, cplex_idxs2;
+//        std::vector<int> coeffs, coeffs2;
 
-        std::stringstream constraint_name;
-        constraint_name << "outgoing transitions: sum( transition-nodes ";
+//        std::stringstream constraint_name;
+//        constraint_name << "outgoing transitions: sum( transition-nodes ";
 
-        // couple detection and transitions: Y_ij <= App_i
-        for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
-        {
-            for(size_t a_state = 0; a_state < model.numberOfLabels(constraint.appearance_node); a_state++)
-            {
-                for(size_t t_state = a_state + 1; t_state < model.numberOfLabels(*outgoing_it) - 1; t_state++)
-                {
-                    cplex_idxs.clear();
-                    coeffs.clear();
-                    coeffs.push_back(1);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, a_state));
-                    coeffs.push_back(1);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, t_state));
-                    constraint_name.str(std::string()); // clear the name
-                    constraint_name << "outgoing: 0 <= App_i[" << a_state << "] + Y_ij[" << t_state << "] <= 1; ";
-                    constraint_name << "g.id(n) = " << *outgoing_it << ", g.id(a) = " << constraint.appearance_node;
-                    optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
-                                            0, 1, constraint_name.str().c_str());
-                    LOG(logDEBUG3) << constraint_name.str();
-                }
-            }
-        }
+//        // couple detection and transitions: Y_ij <= App_i
+//        for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
+//        {
+//            for(size_t a_state = 0; a_state < model.numberOfLabels(constraint.appearance_node); a_state++)
+//            {
+//                for(size_t t_state = a_state + 1; t_state < model.numberOfLabels(*outgoing_it) - 1; t_state++)
+//                {
+//                    cplex_idxs.clear();
+//                    coeffs.clear();
+//                    coeffs.push_back(1);
+//                    cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, a_state));
+//                    coeffs.push_back(1);
+//                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, t_state));
+//                    constraint_name.str(std::string()); // clear the name
+//                    constraint_name << "outgoing: 0 <= App_i[" << a_state << "] + Y_ij[" << t_state << "] <= 1; ";
+//                    constraint_name << "g.id(n) = " << *outgoing_it << ", g.id(a) = " << constraint.appearance_node;
+//                    optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
+//                                            0, 1, constraint_name.str().c_str());
+//                    LOG(logDEBUG3) << constraint_name.str();
+//                }
+//            }
+//        }
 
 
-        int div_cplex_id = -1;
-        if (with_divisions_ && constraint.division_node >= 0)
-        {
-            LOG(logDEBUG3) << "div_node_map_[n] = " << constraint.division_node;
-            LOG(logDEBUG3) << "number_of_transition_nodes_ = " << constraint.transition_nodes.size();
-            // LOG(logDEBUG3) << "number_of_division_nodes_ = " << number_of_division_nodes_; ???
-            div_cplex_id = optimizer.lpNodeVi(constraint.division_node, 1);
-        }
+//        int div_cplex_id = -1;
+//        if (with_divisions_ && constraint.division_node >= 0)
+//        {
+//            LOG(logDEBUG3) << "div_node_map_[n] = " << constraint.division_node;
+//            LOG(logDEBUG3) << "number_of_transition_nodes_ = " << constraint.transition_nodes.size();
+//            // LOG(logDEBUG3) << "number_of_division_nodes_ = " << number_of_division_nodes_; ???
+//            div_cplex_id = optimizer.lpNodeVi(constraint.division_node, 1);
+//        }
 
-        if (constraint.transition_nodes.size() > 0)
-        {
-            // couple transitions: sum(Y_ij) = D_i + App_i
-            cplex_idxs.clear();
-            coeffs.clear();
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple transitions: sum( transition-nodes ";
+//        if (constraint.transition_nodes.size() > 0)
+//        {
+//            // couple transitions: sum(Y_ij) = D_i + App_i
+//            cplex_idxs.clear();
+//            coeffs.clear();
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "couple transitions: sum( transition-nodes ";
 
-            for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
-            {
-                constraint_name << *outgoing_it << " ";
-                for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
-                {
-                    coeffs.push_back(state);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
-                }
-            }
+//            for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
+//            {
+//                constraint_name << *outgoing_it << " ";
+//                for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
+//                {
+//                    coeffs.push_back(state);
+//                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
+//                }
+//            }
 
-            if (div_cplex_id != -1)
-            {
-                cplex_idxs.push_back(div_cplex_id);
-                coeffs.push_back(-1);
-            }
+//            if (div_cplex_id != -1)
+//            {
+//                cplex_idxs.push_back(div_cplex_id);
+//                coeffs.push_back(-1);
+//            }
 
-            for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
-            {
-                coeffs.push_back(-state);
-                cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
-            }
+//            for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
+//            {
+//                coeffs.push_back(-state);
+//                cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
+//            }
 
-            // 0 <= sum_nu [ sum_j( nu * Y_ij[nu] ) ] - [ sum_nu nu * X_i[nu] + D_i[1] + sum_nu nu * App_i[nu] ]<= 0
-            constraint_name << ") = D_i + App_i added for nodes: App_i=" << constraint.appearance_node
-                            << ", D_i = " << constraint.division_node;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
+//            // 0 <= sum_nu [ sum_j( nu * Y_ij[nu] ) ] - [ sum_nu nu * X_i[nu] + D_i[1] + sum_nu nu * App_i[nu] ]<= 0
+//            constraint_name << ") = D_i + App_i added for nodes: App_i=" << constraint.appearance_node
+//                            << ", D_i = " << constraint.division_node;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
+//                                    constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
 
-        if (div_cplex_id != -1)
-        {
-            // couple detection and division: D_i = 1 => App_i = 1
-            cplex_idxs.clear();
-            coeffs.clear();
+//        if (div_cplex_id != -1)
+//        {
+//            // couple detection and division: D_i = 1 => App_i = 1
+//            cplex_idxs.clear();
+//            coeffs.clear();
 
-            cplex_idxs.push_back(div_cplex_id);
-            coeffs.push_back(1);
+//            cplex_idxs.push_back(div_cplex_id);
+//            coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 1));
-            coeffs.push_back(-1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 1));
+//            coeffs.push_back(-1);
 
-            // -1 <= D_i[1] - App_i[1] <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple division and detection: ";
-            constraint_name << " D_i=1 => App_i =1 added for n = "
-                            << constraint.appearance_node << ", d = " << constraint.division_node;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1, 0,
-                                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
+//            // -1 <= D_i[1] - App_i[1] <= 0
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "couple division and detection: ";
+//            constraint_name << " D_i=1 => App_i =1 added for n = "
+//                            << constraint.appearance_node << ", d = " << constraint.division_node;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1, 0,
+//                                    constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
 
-            // couple divsion and transition: D_1 = 1 => sum_k(Y_ik) = 2
-            cplex_idxs2.clear();
-            coeffs2.clear(); // -m <= 2 * D_i[1] - sum_j ( Y_ij[1] ) <= 0
-            cplex_idxs2.push_back(div_cplex_id);
-            coeffs2.push_back(2);
+//            // couple divsion and transition: D_1 = 1 => sum_k(Y_ik) = 2
+//            cplex_idxs2.clear();
+//            coeffs2.clear(); // -m <= 2 * D_i[1] - sum_j ( Y_ij[1] ) <= 0
+//            cplex_idxs2.push_back(div_cplex_id);
+//            coeffs2.push_back(2);
 
-            for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
-            {
-                for (size_t state = 2; state < model.numberOfLabels(*outgoing_it); ++state)
-                {
-                    // D_i[1] = 1 => Y_ij[nu] = 0 forall nu > 1
-                    cplex_idxs.clear();
-                    coeffs.clear();
-                    cplex_idxs.push_back(div_cplex_id);
-                    coeffs.push_back(1);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
-                    coeffs.push_back(1);
+//            for (auto outgoing_it = constraint.transition_nodes.begin(); outgoing_it != constraint.transition_nodes.end(); ++outgoing_it)
+//            {
+//                for (size_t state = 2; state < model.numberOfLabels(*outgoing_it); ++state)
+//                {
+//                    // D_i[1] = 1 => Y_ij[nu] = 0 forall nu > 1
+//                    cplex_idxs.clear();
+//                    coeffs.clear();
+//                    cplex_idxs.push_back(div_cplex_id);
+//                    coeffs.push_back(1);
+//                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
+//                    coeffs.push_back(1);
 
-                    // 0 <= D_i[1] + Y_ij[nu] <= 1 forall nu>1
-                    constraint_name.str(std::string()); // clear the name
-                    constraint_name << "couple division and transition: ";
-                    constraint_name << " D_i=1 => Y_i[nu]=0 added for "
-                                    << "d = " << constraint.division_node << ", y = " << *outgoing_it << ", nu = "
-                                    << state;
+//                    // 0 <= D_i[1] + Y_ij[nu] <= 1 forall nu>1
+//                    constraint_name.str(std::string()); // clear the name
+//                    constraint_name << "couple division and transition: ";
+//                    constraint_name << " D_i=1 => Y_i[nu]=0 added for "
+//                                    << "d = " << constraint.division_node << ", y = " << *outgoing_it << ", nu = "
+//                                    << state;
 
-                    optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
-                                            0, 1, constraint_name.str().c_str());
-                    LOG(logDEBUG3) << constraint_name.str();
+//                    optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(),
+//                                            0, 1, constraint_name.str().c_str());
+//                    LOG(logDEBUG3) << constraint_name.str();
 
-                }
+//                }
 
-                cplex_idxs2.push_back(optimizer.lpNodeVi(*outgoing_it, 1));
-                coeffs2.push_back(-1);
-            }
+//                cplex_idxs2.push_back(optimizer.lpNodeVi(*outgoing_it, 1));
+//                coeffs2.push_back(-1);
+//            }
 
-            // -m <= 2 * D_i[1] - sum_j (Y_ij[1]) <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "couple division and transitions: ";
-            constraint_name  << " D_i = 1 => sum_k(Y_ik) = 2 added for "
-                             << "d = " << constraint.division_node;
-            optimizer.addConstraint(cplex_idxs2.begin(), cplex_idxs2.end(), coeffs2.begin(),
-                                    -int(model.numberOfLabels(constraint.appearance_node) - 1), 0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
-    }
-}
+//            // -m <= 2 * D_i[1] - sum_j (Y_ij[1]) <= 0
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "couple division and transitions: ";
+//            constraint_name  << " D_i = 1 => sum_k(Y_ik) = 2 added for "
+//                             << "d = " << constraint.division_node;
+//            optimizer.addConstraint(cplex_idxs2.begin(), cplex_idxs2.end(), coeffs2.begin(),
+//                                    -int(model.numberOfLabels(constraint.appearance_node) - 1), 0, constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
+//    }
+//}
 
 //------------------------------------------------------------------------
 // specialization for OutgoingLinearConstraintFunction
@@ -467,9 +471,9 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     cplex_idxs.clear();
                     coeffs.clear();
                     coeffs.push_back(1);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, a_state));
+                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, a_state));
                     coeffs.push_back(1);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, t_state));
+                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(*outgoing_it, t_state));
                     constraint_name.str(std::string()); // clear the name
                     constraint_name << "outgoing: 0 <= App_i[" << a_state << "] + Y_ij[" << t_state << "] <= 1; ";
                     constraint_name << "g.id(n) = " << *outgoing_it << ", g.id(a) = " << constraint.appearance_node;
@@ -549,7 +553,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             LOG(logDEBUG3) << "div_node_map_[n] = " << constraint.division_node;
             LOG(logDEBUG3) << "number_of_transition_nodes_ = " << constraint.transition_nodes.size();
             // LOG(logDEBUG3) << "number_of_division_nodes_ = " << number_of_division_nodes_; ???
-            div_cplex_id = optimizer.lpNodeVi(constraint.division_node, 1);
+            div_cplex_id = 99;//optimizer.lpNodeVi(constraint.division_node, 1);
         }
 
         //std::cout << "2" << std::endl;
@@ -567,7 +571,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                 for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
                 {
                     coeffs.push_back(state);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
+                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(*outgoing_it, state));
                 }
             }
 
@@ -580,7 +584,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
             {
                 coeffs.push_back(-state);
-                cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
+                cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, state));
             }
 
             // 0 <= sum_nu [ sum_j( nu * Y_ij[nu] ) ] - [ sum_nu nu * X_i[nu] + D_i[1] + sum_nu nu * App_i[nu] ]<= 0
@@ -669,7 +673,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs.push_back(div_cplex_id);
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 1));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 1));
             coeffs.push_back(-1);
 
             // -1 <= D_i[1] - App_i[1] <= 0
@@ -754,7 +758,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     coeffs.clear();
                     cplex_idxs.push_back(div_cplex_id);
                     coeffs.push_back(1);
-                    cplex_idxs.push_back(optimizer.lpNodeVi(*outgoing_it, state));
+                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(*outgoing_it, state));
                     coeffs.push_back(1);
 
                     // 0 <= D_i[1] + Y_ij[nu] <= 1 forall nu>1
@@ -821,7 +825,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
                 }
 
-                cplex_idxs2.push_back(optimizer.lpNodeVi(*outgoing_it, 1));
+                cplex_idxs2.push_back(99);//optimizer.lpNodeVi(*outgoing_it, 1));
                 coeffs2.push_back(-1);
             }
 
@@ -892,25 +896,25 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
     }
 }
 
-template<>
-void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolExplicitCplexOptimizer,
-     OutgoingNoDivConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
-     ConstraintPoolExplicit::OutgoingConstraint>
-     (
-         ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolExplicitCplexOptimizer& optimizer,
-         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
-     )
-{
-    // for the CPLEX specialization we do the same for with and without divisions
-    std::cout << "in add_constraint_type_to_problem OutgoingNoDivConstraint" << std::endl;
-    add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-                                   ConstraintPoolExplicitCplexOptimizer,
-                                   OutgoingConstraintFunction<ValueType, IndexType, LabelType>,
-                                   OutgoingConstraint>
-                                   (model, optimizer, constraints);
-}
+//template<>
+//void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+//     ConstraintPoolExplicitCplexOptimizer,
+//     OutgoingNoDivConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+//     ConstraintPoolExplicit::OutgoingConstraint>
+//     (
+//         ConstraintPoolExplicitOpengmModel& model,
+//         ConstraintPoolExplicitCplexOptimizer& optimizer,
+//         const std::vector<ConstraintPoolExplicit::OutgoingConstraint>& constraints
+//     )
+//{
+//    // for the CPLEX specialization we do the same for with and without divisions
+//    std::cout << "in add_constraint_type_to_problem OutgoingNoDivConstraint" << std::endl;
+//    add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+//                                   ConstraintPoolExplicitCplexOptimizer,
+//                                   OutgoingConstraintFunction<ValueType, IndexType, LabelType>,
+//                                   OutgoingConstraint>
+//                                   (model, optimizer, constraints);
+//}
 
 template<>
 void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicitOpengmModel,
@@ -932,141 +936,141 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                                    (model, optimizer, constraints);
 }
 
-//------------------------------------------------------------------------
-// specialization for DetectionConstraintFunction
-template<>
-void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolExplicitCplexOptimizer,
-     DetectionConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
-     ConstraintPoolExplicit::DetectionConstraint>
-     (
-         ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolExplicitCplexOptimizer& optimizer,
-         const std::vector<ConstraintPoolExplicit::DetectionConstraint>& constraints
-     )
-{
-    std::cout << "in add_constraint_type_to_problem DetectionConstraintFunction" << std::endl;
-    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection";
-    for(auto it = constraints.begin(); it != constraints.end(); ++it)
-    {
-        const ConstraintPoolExplicit::DetectionConstraint& constraint = *it;
+////------------------------------------------------------------------------
+//// specialization for DetectionConstraintFunction
+//template<>
+//void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+//     ConstraintPoolExplicitCplexOptimizer,
+//     DetectionConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+//     ConstraintPoolExplicit::DetectionConstraint>
+//     (
+//         ConstraintPoolExplicitOpengmModel& model,
+//         ConstraintPoolExplicitCplexOptimizer& optimizer,
+//         const std::vector<ConstraintPoolExplicit::DetectionConstraint>& constraints
+//     )
+//{
+//    std::cout << "in add_constraint_type_to_problem DetectionConstraintFunction" << std::endl;
+//    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection";
+//    for(auto it = constraints.begin(); it != constraints.end(); ++it)
+//    {
+//        const ConstraintPoolExplicit::DetectionConstraint& constraint = *it;
 
-        // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
-        std::vector<size_t> cplex_idxs;
-        std::vector<int> coeffs;
-        std::stringstream constraint_name;
+//        // 0 <= sum_nu [ nu * sum_i (Y_ij[nu] ) ] - sum_nu ( nu * X_j[nu] ) - sum_nu ( nu * Dis_j[nu] ) <= 0
+//        std::vector<size_t> cplex_idxs;
+//        std::vector<int> coeffs;
+//        std::stringstream constraint_name;
 
-        for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
-        {
-            cplex_idxs.clear();
-            coeffs.clear();
+//        for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
+//        {
+//            cplex_idxs.clear();
+//            coeffs.clear();
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
-            coeffs.push_back(1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
+//            coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
-            coeffs.push_back(-1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
+//            coeffs.push_back(-1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
-            coeffs.push_back(-1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
+//            coeffs.push_back(-1);
 
-            // A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1
-            // -1 <= App_i[nu] - ( Dis_i[nu] + Dis_i[0] ) <= 0 forall nu > 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1 added for nodes "
-                            << constraint.appearance_node << ", " << constraint.disappearance_node;
-            constraint_name << " for state: " << state;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
-                                    0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
+//            // A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1
+//            // -1 <= App_i[nu] - ( Dis_i[nu] + Dis_i[0] ) <= 0 forall nu > 0
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "disappearance/appearance coupling: ";
+//            constraint_name << " A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1 added for nodes "
+//                            << constraint.appearance_node << ", " << constraint.disappearance_node;
+//            constraint_name << " for state: " << state;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
+//                                    0, constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
 
-        for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
-        {
-            cplex_idxs.clear();
-            coeffs.clear();
+//        for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
+//        {
+//            cplex_idxs.clear();
+//            coeffs.clear();
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
-            coeffs.push_back(1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
+//            coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
-            coeffs.push_back(-1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
+//            coeffs.push_back(-1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
-            coeffs.push_back(-1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
+//            coeffs.push_back(-1);
 
-            // V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1
-            // -1 <= Dis_i[nu] - ( App_i[nu] + App_i[0] ) <= 0 forall nu > 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1 added for nodes "
-                            << constraint.appearance_node << ", " << constraint.disappearance_node;
-            constraint_name << " for state: " << state;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
-                                    0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
+//            // V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1
+//            // -1 <= Dis_i[nu] - ( App_i[nu] + App_i[0] ) <= 0 forall nu > 0
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "disappearance/appearance coupling: ";
+//            constraint_name << " V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1 added for nodes "
+//                            << constraint.appearance_node << ", " << constraint.disappearance_node;
+//            constraint_name << " for state: " << state;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), -1,
+//                                    0, constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
 
-        if (!with_misdetections_)
-        {
-            cplex_idxs.clear();
-            coeffs.clear();
+//        if (!with_misdetections_)
+//        {
+//            cplex_idxs.clear();
+//            coeffs.clear();
 
-            // assume both nodes are given
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
-            coeffs.push_back(1);
+//            // assume both nodes are given
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
+//            coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
-            coeffs.push_back(1);
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
+//            coeffs.push_back(1);
 
-            // V_i[0] = 0 => 1 <= A_i[0]
-            // A_i[0] = 0 => 1 <= V_i[0]
-            // V_i <= m, A_i <= m
-            // 0 <= Dis_i[0] + App_i[0] <= 0
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " A_i[0] + V_i[0] = 0 added for nodes " << constraint.appearance_node << ", " << constraint.disappearance_node;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
-                                    constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
+//            // V_i[0] = 0 => 1 <= A_i[0]
+//            // A_i[0] = 0 => 1 <= V_i[0]
+//            // V_i <= m, A_i <= m
+//            // 0 <= Dis_i[0] + App_i[0] <= 0
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "disappearance/appearance coupling: ";
+//            constraint_name << " A_i[0] + V_i[0] = 0 added for nodes " << constraint.appearance_node << ", " << constraint.disappearance_node;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0,
+//                                    constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
 
-        if (!with_disappearance_)
-        {
-            cplex_idxs.clear();
-            coeffs.clear();
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
-            coeffs.push_back(1);
-            // V_i[0] = 0
-            // 1 <= V_i <= m
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " V_i[0] = 0 added for n = "
-                            << constraint.disappearance_node;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
-                                    0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
+//        if (!with_disappearance_)
+//        {
+//            cplex_idxs.clear();
+//            coeffs.clear();
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
+//            coeffs.push_back(1);
+//            // V_i[0] = 0
+//            // 1 <= V_i <= m
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "disappearance/appearance coupling: ";
+//            constraint_name << " V_i[0] = 0 added for n = "
+//                            << constraint.disappearance_node;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
+//                                    0, constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
 
-        if (!with_appearance_)
-        {
-            cplex_idxs.clear();
-            coeffs.clear();
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
-            coeffs.push_back(1);
-            // A_i[0] = 0
-            // 1 <= A_i <= m
-            constraint_name.str(std::string()); // clear the name
-            constraint_name << "disappearance/appearance coupling: ";
-            constraint_name << " A_i[0] = 0 added for n = "
-                            << constraint.appearance_node;
-            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
-                                    0, constraint_name.str().c_str());
-            LOG(logDEBUG3) << constraint_name.str();
-        }
-    }
-}
+//        if (!with_appearance_)
+//        {
+//            cplex_idxs.clear();
+//            coeffs.clear();
+//            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
+//            coeffs.push_back(1);
+//            // A_i[0] = 0
+//            // 1 <= A_i <= m
+//            constraint_name.str(std::string()); // clear the name
+//            constraint_name << "disappearance/appearance coupling: ";
+//            constraint_name << " A_i[0] = 0 added for n = "
+//                            << constraint.appearance_node;
+//            optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0,
+//                                    0, constraint_name.str().c_str());
+//            LOG(logDEBUG3) << constraint_name.str();
+//        }
+//    }
+//}
 
 //------------------------------------------------------------------------
 // specialization for DetectionLinearConstraintFunction
@@ -1097,13 +1101,13 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs.clear();
             coeffs.clear();
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, state));
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, state));
             coeffs.push_back(-1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
             coeffs.push_back(-1);
 
             // A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1
@@ -1161,7 +1165,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             constraintFunctionShape.push_back(model.numberOfLabels(constraint.disappearance_node));
             factorVariables.push_back(constraint.disappearance_node);
             ++openGMConstraintFunctionVarIndex;
-            std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, state) << " +";
+            //std::cout << -1 << " X_" << optimizer.lpNodeVi(constraint.disappearance_node, state) << " +";
 
             // right hand side
             linearConstraintGe.setBound( -1 );
@@ -1186,13 +1190,13 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs.clear();
             coeffs.clear();
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, state));
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, state));
             coeffs.push_back(-1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 0));
             coeffs.push_back(-1);
 
             // V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1
@@ -1276,10 +1280,10 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             coeffs.clear();
 
             // assume both nodes are given
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 0));
             coeffs.push_back(1);
 
             // V_i[0] = 0 => 1 <= A_i[0]
@@ -1341,7 +1345,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         {
             cplex_idxs.clear();
             coeffs.clear();
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, 0));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
             coeffs.push_back(1);
             // V_i[0] = 0
             // 1 <= V_i <= m
@@ -1392,7 +1396,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         {
             cplex_idxs.clear();
             coeffs.clear();
-            cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, 0));
+            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 0));
             coeffs.push_back(1);
             // A_i[0] = 0
             // 1 <= A_i <= m
@@ -1440,38 +1444,38 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
     }
 }
 
-//------------------------------------------------------------------------
-// specialization for FixNodeValueConstraintFunction
-template<>
-void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
-     ConstraintPoolExplicitCplexOptimizer,
-     FixNodeValueConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
-     ConstraintPoolExplicit::FixNodeValueConstraint>
-     (
-         ConstraintPoolExplicitOpengmModel& model,
-         ConstraintPoolExplicitCplexOptimizer& optimizer,
-         const std::vector<ConstraintPoolExplicit::FixNodeValueConstraint>& constraints
-     )
-{
-    std::cout << "in add_constraint_type_to_problem FixNodeValueConstraint" << std::endl;
-    std::cout << ",,,>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue" << std::endl;
-    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue";
-    for(auto it = constraints.begin(); it != constraints.end(); ++it)
-    {
-        const ConstraintPoolExplicit::FixNodeValueConstraint& constraint = *it;
+////------------------------------------------------------------------------
+//// specialization for FixNodeValueConstraintFunction
+//template<>
+//void ConstraintPoolExplicit::add_constraint_type_to_problem<ConstraintPoolExplicitOpengmModel,
+//     ConstraintPoolExplicitCplexOptimizer,
+//     FixNodeValueConstraintFunction<ConstraintPoolExplicit::ValueType, ConstraintPoolExplicit::IndexType, ConstraintPoolExplicit::LabelType>,
+//     ConstraintPoolExplicit::FixNodeValueConstraint>
+//     (
+//         ConstraintPoolExplicitOpengmModel& model,
+//         ConstraintPoolExplicitCplexOptimizer& optimizer,
+//         const std::vector<ConstraintPoolExplicit::FixNodeValueConstraint>& constraints
+//     )
+//{
+//    std::cout << "in add_constraint_type_to_problem FixNodeValueConstraint" << std::endl;
+//    std::cout << ",,,>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue" << std::endl;
+//    LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNodeValue";
+//    for(auto it = constraints.begin(); it != constraints.end(); ++it)
+//    {
+//        const ConstraintPoolExplicit::FixNodeValueConstraint& constraint = *it;
 
-        std::vector<size_t> cplex_idxs;
-        std::vector<int> coeffs;
-        std::stringstream constraint_name;
-        constraint_name << "fix node value of " << constraint.node << " to " << constraint.value;
+//        std::vector<size_t> cplex_idxs;
+//        std::vector<int> coeffs;
+//        std::stringstream constraint_name;
+//        constraint_name << "fix node value of " << constraint.node << " to " << constraint.value;
 
-        cplex_idxs.push_back(optimizer.lpNodeVi(constraint.node, constraint.value));
-        coeffs.push_back(1);
+//        cplex_idxs.push_back(optimizer.lpNodeVi(constraint.node, constraint.value));
+//        coeffs.push_back(1);
 
-        optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());
-        LOG(logDEBUG3) << constraint_name.str();
-    }
-}
+//        optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());
+//        LOG(logDEBUG3) << constraint_name.str();
+//    }
+//}
 
 //------------------------------------------------------------------------
 // specialization for FixNodeValueLinearConstraintFunction
@@ -1488,7 +1492,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 {
     std::cout << "....................................> _______________WE NEED THIS CODE_________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
     LOG(logINFO) << "____________WE NEED THIS CODE____________________________>[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
-    size_t myCounter = 0;
+    //size_t myCounter = 0;
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
         const ConstraintPoolExplicit::FixNodeValueLinearConstraint& constraint = *it;
@@ -1498,7 +1502,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         std::stringstream constraint_name;
         constraint_name << "fix node value of " << constraint.node << " to " << constraint.value;
 
-        cplex_idxs.push_back(optimizer.lpNodeVi(constraint.node, constraint.value));
+        cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.node, constraint.value));
         coeffs.push_back(1);
 
         //optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());
@@ -1520,61 +1524,61 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         constraintFunctionShape.push_back(model.numberOfLabels(constraint.node));
         factorVariables.push_back(constraint.node);
         ++openGMConstraintFunctionVarIndex;
-        std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.node, constraint.value) << " ";
+        //std::cout << 1 << " X_" << optimizer.lpNodeVi(constraint.node, constraint.value) << " ";
 
         // right hand side
         linearConstraint.setBound( constraint.value );
 
         // operator
         linearConstraint.setConstraintOperator(equalOperator);
-        std::cout << " == " << constraint.value << std::endl;
+        //std::cout << " == " << constraint.value << std::endl;
 
         LinearConstraintFunctionType linearConstraintFunction(constraintFunctionShape.begin(), constraintFunctionShape.end(), &linearConstraint, &linearConstraint + 1);
         FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
         model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
-        std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
+        //std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
 
 
-        ++myCounter;
+        //++myCounter;
 
     }
-    std::cout << "-------------------------------------->" << myCounter << std::endl;
+    //std::cout << "-------------------------------------->" << myCounter << std::endl;
 }
 
 //------------------------------------------------------------------------
-template<>
-void ConstraintPoolExplicit::constraint_indices<ConstraintPoolExplicit::IncomingConstraint>(std::vector<ConstraintPoolExplicit::IndexType>& indices, const IncomingConstraint& constraint)
-{
-    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
-    indices.push_back(constraint.disappearance_node);
-}
+//template<>
+//void ConstraintPoolExplicit::constraint_indices<ConstraintPoolExplicit::IncomingConstraint>(std::vector<ConstraintPoolExplicit::IndexType>& indices, const IncomingConstraint& constraint)
+//{
+//    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
+//    indices.push_back(constraint.disappearance_node);
+//}
 
-template<>
-void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const OutgoingConstraint& constraint)
-{
-    indices.push_back(constraint.appearance_node);
+//template<>
+//void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const OutgoingConstraint& constraint)
+//{
+//    indices.push_back(constraint.appearance_node);
 
-    // if division node id < 0, don't add it and use OutgoingNoDivConstraintFunction
-    if(constraint.division_node >= 0)
-    {
-        indices.push_back(constraint.division_node);
-    }
+//    // if division node id < 0, don't add it and use OutgoingNoDivConstraintFunction
+//    if(constraint.division_node >= 0)
+//    {
+//        indices.push_back(constraint.division_node);
+//    }
 
-    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
-}
+//    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
+//}
 
-template<>
-void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const DetectionConstraint& constraint)
-{
-    indices.push_back(constraint.disappearance_node);
-    indices.push_back(constraint.appearance_node);
-}
+//template<>
+//void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const DetectionConstraint& constraint)
+//{
+//    indices.push_back(constraint.disappearance_node);
+//    indices.push_back(constraint.appearance_node);
+//}
 
-template<>
-void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const FixNodeValueConstraint& constraint)
-{
-    indices.push_back(constraint.node);
-}
+//template<>
+//void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplicit::IndexType>& indices, const FixNodeValueConstraint& constraint)
+//{
+//    indices.push_back(constraint.node);
+//}
 
 //------------------------------------------------------------------------
 template<>
@@ -1611,38 +1615,38 @@ void ConstraintPoolExplicit::constraint_indices(std::vector<ConstraintPoolExplic
     indices.push_back(constraint.node);
 }
 
-//------------------------------------------------------------------------
-template<>
-void ConstraintPoolExplicit::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, IncomingConstraint)
-{
-    // no flags needed
-}
+////------------------------------------------------------------------------
+//template<>
+//void ConstraintPoolExplicit::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, IncomingConstraint)
+//{
+//    // no flags needed
+//}
 
-template<>
-void ConstraintPoolExplicit::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, OutgoingConstraint)
-{
-    // no flags needed
-}
+//template<>
+//void ConstraintPoolExplicit::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, OutgoingConstraint)
+//{
+//    // no flags needed
+//}
 
-template<>
-void ConstraintPoolExplicit::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
-{
-    func->set_with_divisions(with_divisions_);
-}
+//template<>
+//void ConstraintPoolExplicit::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
+//{
+//    func->set_with_divisions(with_divisions_);
+//}
 
-template<>
-void ConstraintPoolExplicit::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, DetectionConstraint)
-{
-    func->set_with_appearance(with_appearance_);
-    func->set_with_disappearance(with_disappearance_);
-    func->set_with_misdetections(with_misdetections_);
-}
+//template<>
+//void ConstraintPoolExplicit::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, DetectionConstraint)
+//{
+//    func->set_with_appearance(with_appearance_);
+//    func->set_with_disappearance(with_disappearance_);
+//    func->set_with_misdetections(with_misdetections_);
+//}
 
-template<>
-void ConstraintPoolExplicit::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPoolExplicit::FixNodeValueConstraint constraint)
-{
-    func->set_desired_value(constraint.value);
-}
+//template<>
+//void ConstraintPoolExplicit::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPoolExplicit::FixNodeValueConstraint constraint)
+//{
+//    func->set_desired_value(constraint.value);
+//}
 
 //------------------------------------------------------------------------
 template<>

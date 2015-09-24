@@ -29,7 +29,6 @@
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/structured_learning_tracking_dataset.h"
 
-
 namespace pgmlink
 {
 

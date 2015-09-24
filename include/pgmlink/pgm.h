@@ -21,6 +21,7 @@
 #include <opengm/utilities/metaprogramming.hxx>
 #include "opengm/functions/modelviewfunction.hxx"
 #include "opengm/functions/view.hxx"
+#include "opengm/functions/unary_loss_function.hxx"
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/graph.h"
@@ -440,13 +441,16 @@ PertGmType;
 
 typedef opengm::GraphicalModel
 <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-<   LinearConstraintFunctionType,
-    InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
+  < LinearConstraintFunctionType,
     opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
-    opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType>
-> , pgm::OpengmModelDeprecated::LWeightedSumOfFunctionsType>::type,
-opengm::DiscreteSpace<IndexType, LabelType> >
+    opengm::UnaryLossFunction<ValueType, IndexType, LabelType>,
+    opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType>>,
+    opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
+  >::type,
+  opengm::DiscreteSpace<IndexType, LabelType>
+>
 PertExplicitGmType;
+//InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
 
 } /* namespace pgmlink */
 

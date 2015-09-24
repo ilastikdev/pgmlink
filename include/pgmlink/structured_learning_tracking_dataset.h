@@ -1,7 +1,7 @@
 #ifndef OPENGM_DATASET_H
 #define OPENGM_DATASET_H
 
-#include <opengm/learning/dataset/dataset.hxx>
+#include <opengm/learning/dataset/editabledataset.hxx>
 
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/tracking.h"
@@ -13,7 +13,7 @@ namespace opengm {
 namespace datasets{
 
 template<class GM, class LOSS>
-class StructuredLearningTrackingDataset : public Dataset<GM,LOSS,GM>{
+class StructuredLearningTrackingDataset : public EditableDataset<GM,LOSS,GM>{
 public:
    typedef GM                     GMType;
    typedef GM                     GMWITHLOSS;

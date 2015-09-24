@@ -2,6 +2,10 @@
 #define NO_IMPORT_ARRAY
 #define BOOST_PYTHON_MAX_ARITY 30
 
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
+
 #include <vector>
 
 #include "../include/pgmlink/field_of_view.h"

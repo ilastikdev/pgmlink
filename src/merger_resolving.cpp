@@ -1,3 +1,7 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
+
 // stl headers
 #include <vector>
 #include <stdexcept>

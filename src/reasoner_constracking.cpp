@@ -1,3 +1,7 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
+
 #include <algorithm>
 #include <vector>
 #include <cassert>
@@ -44,12 +48,11 @@ using namespace std;
 namespace pgmlink
 {
 
-typedef opengm::ModelViewFunction
-<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
-ViewFunctionType;
+//typedef opengm::ModelViewFunction
+//<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
+//ViewFunctionType;
 
-typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-        pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
+//typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
 
 
 ConservationTracking::ConservationTracking(const Parameter &param)

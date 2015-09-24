@@ -1,3 +1,7 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
+
 #include <cassert>
 #include <memory>
 #include <set>
@@ -14,7 +18,6 @@
 #ifdef WITH_GUROBI
 #include <opengm/inference/lpgurobi.hxx>
 #else
-#include <opengm/inference/lpcplex.hxx>
 #include <opengm/inference/lpcplex2.hxx>
 #endif
 
@@ -38,6 +41,7 @@
 #include "pgmlink/field_of_view.h"
 
 #include <stdio.h>
+
 
 using boost::shared_ptr;
 using boost::shared_array;
@@ -353,6 +357,7 @@ void StructuredLearningTracking::structuredLearning(
         
     // set up graphical models
     for(size_t m=0; m<numCrops_; ++m){
+        std::cout << std::endl << std::endl << " GRAPHICAL MODEL......................................................................................................" << m << std::endl<< std::endl<< std::endl;
         HypothesesGraph::base_graph::NodeMap<bool> selected_nodes(*hypotheses_graph_);
         for (HypothesesGraph::NodeIt n(*hypotheses_graph_); n != lemon::INVALID; ++n)
             selected_nodes[n] = false;
@@ -430,7 +435,7 @@ void StructuredLearningTracking::structuredLearning(
         std::cout << std::endl;
         std::cout << std::endl;
         std::cout << std::endl;
-        std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ BUILD_FROM_GRAPH " << m << std::endl;
+        std::cout << "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{ BUILD_FROM_GRAPH " << m << "       " << graph[m] << std::endl;
         inference_model[m]->build_from_graph(*(graph[m]));
 
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->set_inference_params(
@@ -441,8 +446,6 @@ void StructuredLearningTracking::structuredLearning(
 
         sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->model());
 
-        //size_t count = sltDataset.getModel(m).constraint_pool_.size();
-        //std::cout << "____ number of constraints in constraint_pool_ = " << count << std::endl;
         sltDataset.resizeGTS(m);
 
         node_traxel_map& traxel_map_sub_graph = hypothesesSubGraph[m]->get(node_traxel());
@@ -517,7 +520,8 @@ void StructuredLearningTracking::structuredLearning(
 
     opengm::learning::StructMaxMargin<DSS> learner(sltDataset,para);
 
-    typedef opengm::LPCplex2<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::Minimizer> INFCPLEX;
+    //typedef opengm::LPCplex2<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::Minimizer> INFCPLEX;
+    typedef StructuredLearningTrackingInferenceModel::cplex2_optimizer INFCPLEX;
     INFCPLEX::Parameter infPara;
 
     // lpcplex
@@ -526,15 +530,15 @@ void StructuredLearningTracking::structuredLearning(
     //lpcplex2
     infPara.integerConstraintNodeVar_ = true;
 
-    infPara.relaxation_ = infPara.TightPolytope;
+//    infPara.relaxation_ = infPara.TightPolytope;
 
-//    infPara.relaxation_ = infPara.LocalPolytope;
-//    infPara.maxNumIterations_ = 2;
-//    infPara.maxNumConstraintsPerIter_ = 1;
+    infPara.relaxation_ = infPara.LocalPolytope;
+    infPara.maxNumIterations_ = 20;
+    infPara.maxNumConstraintsPerIter_ = 10;
 
     //infPara.verbose_ = true;
     infPara.verbose_ = false;
-    //infPara.challengeHeuristic_ = infPara.Weighted;
+    infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;
 
