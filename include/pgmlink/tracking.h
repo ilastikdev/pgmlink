@@ -253,8 +253,7 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object(),
-            unsigned int num_threads = 0,
-            bool with_cross_timestep_constraint = false);
+            unsigned int num_threads = 0);
 
     PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
                                                             bool fixLabeledNodes = false);
@@ -276,8 +275,7 @@ public:
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
             ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
-            unsigned int num_threads = 0,
-            bool with_cross_timestep_constraint = false);
+            unsigned int num_threads = 0);
 
     PGMLINK_EXPORT void setTrackLabelingExportFile(std::string file_name);
 

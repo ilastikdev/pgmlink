@@ -38,12 +38,6 @@ void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint
     fix_node_value_constraints_.push_back(constraint);
 }
 
-template<>
-void ConstraintPool::add_constraint(const ConstraintPool::SumEqualityConstraint& constraint)
-{
-    sum_equality_constraints_.push_back(constraint);
-}
-
 //------------------------------------------------------------------------
 // specialization for IncomingConstraintFunction
 template<>
@@ -451,58 +445,6 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
     }
 }
 
-
-//------------------------------------------------------------------------
-// specialization for SumEqualityConstraintFunction
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     SumEqualityConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::SumEqualityConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::SumEqualityConstraint>& constraints
-     )
-{
-    LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for SumEquality";
-    for(auto it = constraints.begin(); it != constraints.end(); ++it)
-    {
-        const ConstraintPool::SumEqualityConstraint& constraint = *it;
-
-        std::vector<size_t> cplex_idxs;
-        std::vector<int> coeffs;
-        std::stringstream constraint_name;
-        constraint_name << "sum equality: ";
-
-        for(IndexType i : constraint.lhs_nodes)
-        {
-            constraint_name << "+ " << i;
-            for (size_t state = 1; state < model.numberOfLabels(i); ++state)
-            {
-                cplex_idxs.push_back(optimizer.lpNodeVi(i, state));
-                coeffs.push_back(state);
-            }
-        }
-
-        constraint_name << " = ";
-
-        for(IndexType i : constraint.rhs_nodes)
-        {
-            constraint_name << "+ " << i;
-            for (size_t state = 1; state < model.numberOfLabels(i); ++state)
-            {
-                cplex_idxs.push_back(optimizer.lpNodeVi(i, state));
-                coeffs.push_back(-(int)state);
-            }
-        }
-
-        optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0, constraint_name.str().c_str());
-        LOG(logDEBUG3) << constraint_name.str();
-    }
-}
-
-
 //------------------------------------------------------------------------
 template<>
 void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint)
@@ -538,13 +480,6 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
     indices.push_back(constraint.node);
 }
 
-template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const SumEqualityConstraint& constraint)
-{
-    indices.insert(indices.begin(), constraint.lhs_nodes.begin(), constraint.lhs_nodes.end());
-    indices.insert(indices.begin(), constraint.rhs_nodes.begin(), constraint.rhs_nodes.end());
-}
-
 //------------------------------------------------------------------------
 template<>
 void ConstraintPool::configure_function(IncomingConstraintFunction<ValueType, IndexType, LabelType>*, IncomingConstraint)
@@ -577,10 +512,6 @@ void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType
 {
     func->set_desired_value(constraint.value);
 }
-
-template<>
-void ConstraintPool::configure_function(SumEqualityConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPool::SumEqualityConstraint)
-{}
 
 } // namespace pgm
 } // namespace pgmlink

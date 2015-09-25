@@ -146,26 +146,6 @@ public:
         DetectionConstraint() {}
     };
 
-    class SumEqualityConstraint
-    {
-    public:
-        SumEqualityConstraint(const std::vector<IndexType>& lhs_nodes,
-                            const std::vector<IndexType>& rhs_nodes):
-            lhs_nodes(lhs_nodes),
-            rhs_nodes(rhs_nodes)
-        {}
-
-        std::vector<IndexType> lhs_nodes;
-        std::vector<IndexType> rhs_nodes;
-
-    private:
-        // boost serialization interface
-        friend class boost::serialization::access;
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int);
-        SumEqualityConstraint() {}
-    };
-
     class FixNodeValueConstraint
     {
     public:
@@ -204,7 +184,6 @@ protected:
     std::vector<OutgoingConstraint> outgoing_no_div_constraints_;
     std::vector<DetectionConstraint> detection_constraints_;
     std::vector<FixNodeValueConstraint> fix_node_value_constraints_;
-    std::vector<SumEqualityConstraint> sum_equality_constraints_;
 
     ValueType big_m_;
     bool with_divisions_;
@@ -244,10 +223,6 @@ void ConstraintPool::add_constraint(const ConstraintPool::DetectionConstraint& c
 template<>
 void ConstraintPool::add_constraint(const ConstraintPool::FixNodeValueConstraint& constraint);
 
-template<>
-void ConstraintPool::add_constraint(const ConstraintPool::SumEqualityConstraint& constraint);
-
-
 //------------------------------------------------------------------------
 template<class GM, class INF>
 void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
@@ -259,7 +234,6 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf)
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, outgoing_no_div_constraints_);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, detection_constraints_);
     add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, fix_node_value_constraints_);
-    add_constraint_type_to_problem<GM, INF, SumEqualityConstraintFunction<ValueType, IndexType, LabelType>, SumEqualityConstraint>(model, inf, sum_equality_constraints_);
 }
 
 template<class GM, class INF>
@@ -270,7 +244,6 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     std::vector<OutgoingConstraint> remapped_outgoing_no_div_constraints;
     std::vector<DetectionConstraint> remapped_detection_constraints;
     std::vector<FixNodeValueConstraint> remapped_fix_node_value_constraints;
-    std::vector<SumEqualityConstraint> remapped_sum_equality_constraints;
 
     for(auto constraint : incoming_constraints_)
     {
@@ -344,33 +317,11 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
         remapped_fix_node_value_constraints.push_back(FixNodeValueConstraint(node, constraint.value));
     }
 
-    for(auto constraint : sum_equality_constraints_)
-    {
-        if(!check_all_constraint_vars_in_mapping(index_mapping, constraint))
-        {
-            continue;
-        }
-
-        std::vector<size_t> lhs_nodes;
-        for(auto n : constraint.lhs_nodes)
-        {
-            lhs_nodes.push_back(index_mapping[n]);
-        }
-
-        std::vector<size_t> rhs_nodes;
-        for(auto n : constraint.rhs_nodes)
-        {
-            rhs_nodes.push_back(index_mapping[n]);
-        }
-        remapped_sum_equality_constraints.push_back(SumEqualityConstraint(lhs_nodes, rhs_nodes));
-    }
-
     add_constraint_type_to_problem<GM, INF, IncomingConstraintFunction<ValueType, IndexType, LabelType>, IncomingConstraint>(model, inf, remapped_incoming_constraints);
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_constraints);
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
-    add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_fix_node_value_constraints);
-    add_constraint_type_to_problem<GM, INF, SumEqualityConstraintFunction<ValueType, IndexType, LabelType>, SumEqualityConstraint>(model, inf, remapped_sum_equality_constraints);
+    add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_detection_constraints);
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
@@ -471,19 +422,6 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
          const std::vector<ConstraintPool::FixNodeValueConstraint>& constraints
      );
 
-//------------------------------------------------------------------------
-// specialization for SumEqualityConstraintFunction
-template<>
-void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
-     SumEqualityConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
-     ConstraintPool::SumEqualityConstraint>
-     (
-         ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
-         const std::vector<ConstraintPool::SumEqualityConstraint>& constraints
-     );
-
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
@@ -503,9 +441,6 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
 
 template<>
 void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const FixNodeValueConstraint& constraint);
-
-template<>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const SumEqualityConstraint& constraint);
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
@@ -546,9 +481,6 @@ void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, I
 
 template<>
 void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint constraint);
-
-template<>
-void ConstraintPool::configure_function(SumEqualityConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::SumEqualityConstraint constraint);
 
 //------------------------------------------------------------------------
 // Serialization
@@ -599,13 +531,6 @@ void ConstraintPool::FixNodeValueConstraint::serialize(Archive & ar, const unsig
 {
     ar & value;
     ar & node;
-}
-
-template<class Archive>
-void ConstraintPool::SumEqualityConstraint::serialize(Archive & ar, const unsigned int)
-{
-    ar & rhs_nodes;
-    ar & lhs_nodes;
 }
 
 } // namespace pgm

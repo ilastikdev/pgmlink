@@ -86,7 +86,6 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     inference_model_param_.with_disappearance = with_disappearance_;
     inference_model_param_.with_misdetections_allowed = with_misdetections_allowed_;
     inference_model_param_.with_optical_correction = with_optical_correction_;
-    inference_model_param_.with_cross_timestep_constraint = param.with_cross_timestep_constraint;
 
     inference_model_param_.detection = detection_;
     inference_model_param_.division = division_;
