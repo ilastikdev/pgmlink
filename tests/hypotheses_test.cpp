@@ -15,6 +15,7 @@
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/traxels.h"
+#include <pgmlink/features/feature.h>
 
 using namespace pgmlink;
 using namespace std;
@@ -1132,4 +1133,114 @@ BOOST_AUTO_TEST_CASE( HypothesesGraph_SubGraph_Copy )
             BOOST_CHECK(traxel_map[n].Timestep < 3);
         }
     }
+}
+
+BOOST_AUTO_TEST_CASE( HypothesesGraph_SaveToDot )
+{
+    // build the following simple graph and save it to a dot file
+    //  t=1      2      3       4
+    //  o                       o
+    //    |                    |
+    //      ---- o ---- o ----
+    //    |                    |
+    //  o                       o
+    TraxelStore ts;
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    Traxel n11, n12, n21, n31, n41, n42;
+    feature_array com(feature_array::difference_type(3));
+    feature_array divProb(feature_array::difference_type(1));
+    feature_array detProb(feature_array::difference_type(2));
+    n11.Id = 1;
+    n11.Timestep = 1;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    detProb[0] = 0.7;
+    detProb[1] = 0.3;
+    n11.features["com"] = com;
+    n11.features["divProb"] = divProb;
+    n11.features["detProb"] = detProb;
+    add(ts, fs, n11);
+    n12.Id = 3;
+    n12.Timestep = 1;
+    com[0] = 2;
+    com[1] = 2;
+    com[2] = 2;
+    divProb[0] = 0.1;
+    detProb[0] = 0.3;
+    detProb[1] = 0.7;
+    n12.features["com"] = com;
+    n12.features["divProb"] = divProb;
+    n12.features["detProb"] = detProb;
+    add(ts, fs, n12);
+    n21.Id = 10;
+    n21.Timestep = 2;
+    com[0] = 1;
+    com[1] = 1;
+    com[2] = 1;
+    divProb[0] = 0.1;
+    detProb[0] = 0.1;
+    detProb[1] = 0.9;
+    n21.features["com"] = com;
+    n21.features["divProb"] = divProb;
+    n21.features["detProb"] = detProb;
+    add(ts, fs, n21);
+    n31.Id = 11;
+    n31.Timestep = 3;
+    com[0] = 1;
+    com[1] = 1;
+    com[2] = 1;
+    divProb[0] = 0.1;
+    detProb[0] = 0.1;
+    detProb[1] = 0.9;
+    n31.features["com"] = com;
+    n31.features["divProb"] = divProb;
+    n31.features["detProb"] = detProb;
+    add(ts, fs, n31);
+    n41.Id = 12;
+    n41.Timestep = 4;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    detProb[0] = 0.5;
+    detProb[1] = 0.5;
+    n41.features["com"] = com;
+    n41.features["divProb"] = divProb;
+    n41.features["detProb"] = detProb;
+    add(ts, fs, n41);
+    n42.Id = 13;
+    n42.Timestep = 4;
+    com[0] = 0;
+    com[1] = 0;
+    com[2] = 0;
+    divProb[0] = 0.1;
+    detProb[0] = 0.5;
+    detProb[1] = 0.5;
+    n42.features["com"] = com;
+    n42.features["divProb"] = divProb;
+    n42.features["detProb"] = detProb;
+    add(ts, fs, n42);
+
+    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
+            20,
+            true, // forward_backward
+            true, // consider_divisions
+            0.3);
+    SingleTimestepTraxel_HypothesesBuilder hyp_builder(&ts, builder_opts);
+    HypothesesGraph* graph = hyp_builder.build();
+    std::cout << "Beginning saving to dot..." << std::endl;
+    std::string filename(tmpnam(NULL));
+    graph->save_to_graphviz_dot_file(filename,
+                                     false, // with tracklets
+                                     true, // with_divisions
+                                     NegLnDetection(10.0),      // detection
+                                     NegLnDivision(10.0),      // division
+                                     NegLnTransition(10.0),      // transition
+                                     ConstantFeature(500.0),      // disappearance
+                                     ConstantFeature(500.0),      // appearance
+                                     1, // max nr objects
+                                     5); // trans param
+    BOOST_CHECK(true);
 }

@@ -6,7 +6,8 @@ namespace pgmlink
 
 ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
         double ep_gap,
-        double cplex_timeout):
+        double cplex_timeout,
+        double num_threads):
     InferenceModel(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
@@ -22,6 +23,7 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     //cplex_param_.integerConstraintNodeVar_ = true;
     //cplex_param_.relaxation_ = cplex_param_.TightPolytope;
     //cplex_param_.useSoftConstraints_ = false;
+    cplex_param_.numberOfThreads_ = num_threads;
 }
 
 void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)

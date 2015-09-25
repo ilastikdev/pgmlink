@@ -74,6 +74,7 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       with_constraints_(param.with_constraints),
       uncertainty_param_(param.uncertainty_param),
       cplex_timeout_(param.cplex_timeout),
+      num_threads_(param.num_threads),
       isMAP_(true),
       division_weight_(param.division_weight),
       detection_weight_(param.detection_weight),
@@ -105,6 +106,11 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     inference_model_param_.forbidden_cost = forbidden_cost_;
     inference_model_param_.appearance_cost = appearance_cost_;
     inference_model_param_.disappearance_cost = disappearance_cost_;
+
+    inference_model_param_.motion_model3 = param.motion_model3;
+    inference_model_param_.motion_model4 = param.motion_model4;
+    inference_model_param_.motion_model3_default = param.motion_model3_default;
+    inference_model_param_.motion_model4_default = param.motion_model4_default;
 
     perturbed_inference_model_param_.distributionId = uncertainty_param_.distributionId;
     perturbed_inference_model_param_.distributionParam = uncertainty_param_.distributionParam;
@@ -204,7 +210,8 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
     {
             return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
                                                               ep_gap_,
-                                                              cplex_timeout_);
+                                                              cplex_timeout_,
+                                                              num_threads_);
     }
 #ifdef WITH_DPCT
     else if(solver_ == DynProgSolver)
@@ -227,7 +234,8 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inferen
                     inference_model_param_,
                     perturb,
                     ep_gap_,
-                    cplex_timeout_);
+                    cplex_timeout_,
+                    num_threads_);
     }
 #ifdef WITH_DPCT
     else if (solver_ == DynProgSolver)
@@ -264,6 +272,17 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
 void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 {
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
+
+//    graph->save_to_graphviz_dot_file("/Users/chaubold/Desktop/sabrina_mnd200_trackletgraph.dot",
+//                                     inference_model_param_.with_tracklets,
+//                                     inference_model_param_.with_divisions,
+//                                     inference_model_param_.detection,
+//                                     inference_model_param_.division,
+//                                     inference_model_param_.transition,
+//                                     inference_model_param_.disappearance_cost,
+//                                     inference_model_param_.appearance_cost,
+//                                     inference_model_param_.max_number_objects,
+//                                     inference_model_param_.transition_parameter);
 
     LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
     LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;

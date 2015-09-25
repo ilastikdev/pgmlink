@@ -234,7 +234,7 @@ public:
      * refactoring of operator().
      */
 
-    PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts);
+    PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts, int max_nearest_neighbors=1);
 
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_resolved_hypotheses_graph();
@@ -255,7 +255,8 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object(),
-            bool trainingToHardConstraints = false);
+            bool trainingToHardConstraints = false,
+            unsigned int num_threads = 0);
 
     PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
                                                             bool fixLabeledNodes = false);
@@ -278,7 +279,8 @@ public:
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
             ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
-            bool trainingToHardConstraints = false);
+            bool trainingToHardConstraints = false,
+            unsigned int num_threads = 0);
 
     PGMLINK_EXPORT void setTrackLabelingExportFile(std::string file_name);
 
@@ -327,6 +329,18 @@ public:
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
 
+    /// for debugging purposes a labeled graph with energies etc can be exported
+    PGMLINK_EXPORT void plot_hypotheses_graph(boost::shared_ptr<HypothesesGraph> g,
+                               const std::string &filename,
+                               bool with_tracklets,
+                               bool with_divisions,
+                               double detection_weight,
+                               double division_weight,
+                               double transition_weight,
+                               double disappearance_cost,
+                               double appearance_cost,
+                               double transition_parameter,
+                               double border_width);
 protected:
     int max_number_objects_;
     double max_dist_;

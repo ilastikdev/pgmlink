@@ -49,6 +49,10 @@ public: // Parameter object
         double disappearance_weight;
         double division_weight;
         double transition_weight;
+        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
+        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
+        double motion_model3_default;
+        double motion_model4_default;
     };
 
     typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;

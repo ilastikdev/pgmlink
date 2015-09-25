@@ -5,6 +5,7 @@
 #include <boost/utility.hpp>
 
 #include "../include/pgmlink/field_of_view.h"
+#include "pytemplated_pickle_suite.h"
 
 using namespace pgmlink;
 using namespace boost::python;
@@ -24,6 +25,8 @@ void export_field_of_view()
              args("lt", "lx", "ly", "lz", "ut", "ux", "uy", "uz")))
     .def("set_boundingbox", &FieldOfView::set_boundingbox, return_self<>())
     .def("set_time_bounds", &set_time_bounds)
+    .def_pickle(TemplatedPickleSuite<FieldOfView>() )
+    .def("spatial_distance_to_border", &FieldOfView::spatial_distance_to_border)
     //.def("contains", &FieldOfView::contains)
     //.def("lower_bound", &FieldOfView::lower_bound, return_value_policy<copy_const_reference>())
     //.def("upper_bound", &FieldOfView::upper_bound, return_value_policy<copy_const_reference>())

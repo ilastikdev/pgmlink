@@ -30,7 +30,23 @@ private:
     T ref_;
 };
 
-typedef ConservationTrackingUserData<HypothesesGraph::Node> ConservationTrackingNodeData;
+class ConservationTrackingNodeData : public ConservationTrackingUserData<HypothesesGraph::Node>
+{
+public:
+    ConservationTrackingNodeData(HypothesesGraph::Node& n, Traxel& t):
+        ConservationTrackingUserData<HypothesesGraph::Node>(n),
+        traxel_(t)
+    {}
+
+    const Traxel& getTraxel() const
+    {
+        return traxel_;
+    }
+
+private:
+    Traxel traxel_;
+};
+
 typedef ConservationTrackingUserData<HypothesesGraph::Arc> ConservationTrackingArcData;
 
 class DynProgConsTrackInferenceModel : public InferenceModel
@@ -65,6 +81,12 @@ public:
                                      HypothesesGraph::Node n,
                                      HypothesesGraph::Arc a,
                                      size_t state);
+
+private:
+    double evaluate_motion_model(dpct::Node* a,
+                                dpct::Node* b, 
+                                dpct::Node* c) const;
+
 protected:
     // dpct inference members
     dpct::Graph inference_graph_;
@@ -90,6 +112,7 @@ double DynProgConsTrackInferenceModel::getTransitionArcScore(const HypothesesGra
         tr2 = traxel_map[g.target(a)];
     }
 
+    // transProb(state=1) - transProb(state=0) would be energy or cost. score is the negative of that
     double score = param_.transition(get_transition_probability(tr1, tr2, 0))
             - param_.transition(get_transition_probability(tr1, tr2, 1));
     return score - generateRandomOffset(Transition, -score, tr1, tr2);

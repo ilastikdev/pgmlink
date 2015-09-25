@@ -21,7 +21,8 @@ public: // API
     PerturbedInferenceModel(const ConsTrackingInferenceModel::Parameter& param,
         boost::shared_ptr<Perturbation> perturbation,
         double ep_gap,
-        double cplex_timeout);
+        double cplex_timeout,
+        unsigned int num_threads = 0);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,

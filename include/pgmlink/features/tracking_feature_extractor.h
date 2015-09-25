@@ -137,7 +137,6 @@ public:
     /// Comments are ignored, and will not be copied to the edited file
     void append_feature_vector_to_file(const std::string &filename);
 
-
 private:
     void push_back_feature(std::string feature_name, double feature_value);
     void push_back_feature(
@@ -155,6 +154,7 @@ private:
     void compute_sq_accel_features(ConstTraxelRefVectors&, std::string);
     void compute_angle_features(ConstTraxelRefVectors&, std::string);
     void compute_track_length_features(ConstTraxelRefVectors&);
+    void compute_id_features(ConstTraxelRefVectors&, const std::string&, bool is_track = true);
     void compute_track_id_outlier(ConstTraxelRefVectors&, std::string);
     void compute_track_diff_outlier(ConstTraxelRefVectors&, std::string);
     void compute_svm_track_feature_outlier(ConstTraxelRefVectors&tracks);

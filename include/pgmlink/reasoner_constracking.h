@@ -62,7 +62,8 @@ public:
             boost::python::object transition_classifier = boost::python::object(),
             bool with_optical_correction = false,
             SolverType solver = CplexSolver,
-            bool trainingToHardConstraints = false):
+            bool trainingToHardConstraints = false,
+            unsigned int num_threads = 0):
             max_number_objects(max_number_objects),
             detection(detection),
             detectionNoWeight(0),
@@ -88,7 +89,8 @@ public:
             transition_classifier(transition_classifier),
             with_optical_correction(with_optical_correction),
             solver_(solver),
-            training_to_hard_constraints(trainingToHardConstraints)
+            training_to_hard_constraints(trainingToHardConstraints),
+            num_threads(num_threads)
         {}
 
         // empty parameter needed for python
@@ -100,6 +102,10 @@ public:
         boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
         boost::function<double (const double)> transition;
+        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
+        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
+        double motion_model3_default;
+        double motion_model4_default;
         double forbidden_cost;
         double ep_gap;
         bool with_tracklets;
@@ -123,6 +129,99 @@ public:
         bool with_optical_correction;
         SolverType solver_;
         bool training_to_hard_constraints;
+        unsigned int num_threads;
+
+    private:
+        // python extensions:
+        double python_caller_det_div(boost::python::object func, const Traxel& t, const size_t state)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object py_result = func(t, state);
+            double result = boost::python::extract<double>(py_result);
+            // PyGILState_Release(pygilstate);
+            return result;
+        }
+
+        double python_caller_dis_appear(boost::python::object func, const Traxel& t)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object py_result = func(t);
+            double result = boost::python::extract<double>(py_result);
+            // PyGILState_Release(pygilstate);
+            return result;
+        }
+
+        double python_caller_trans(boost::python::object func, double distance)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+            boost::python::object py_result = func(distance);
+            double result = boost::python::extract<double>(py_result);
+            // PyGILState_Release(pygilstate);
+            return result;
+        }
+
+        double python_caller_motion_model3(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            boost::python::object py_result = func(a, b, c);
+            double result = boost::python::extract<double>(py_result);
+            return result;
+        }
+
+        double python_caller_motion_model4(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c, const Traxel& d)
+        {
+            assert(1 == PyCallable_Check(func.ptr()));
+            boost::python::object py_result = func(a, b, c, d);
+            double result = boost::python::extract<double>(py_result);
+            return result;
+        }
+    public:
+        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
+        void register_detection_func(boost::python::object func)
+        {
+            detection = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
+        }
+
+        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
+        void register_division_func(boost::python::object func)
+        {
+            division = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
+        }
+
+        /// Expects a function with signature (double distance) -> double energy
+        void register_transition_func(boost::python::object func)
+        {
+            transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1);
+        }
+
+        /// Expects a function with signature (Traxel traxel) -> double energy
+        void register_appearance_func(boost::python::object func)
+        {
+            appearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+        }
+
+        /// Expects a function with signature (Traxel traxel) -> double energy
+        void register_disappearance_func(boost::python::object func)
+        {
+            disappearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+        }
+
+        /// Expects a function with signature (Traxel, Traxel, Traxel) -> double energy
+        void register_motion_model3_func(boost::python::object func, double default_value)
+        {
+            motion_model3 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model3, this, func, _1, _2, _3);
+            motion_model3_default = default_value;
+        }
+
+        /// Expects a function with signature (Traxel, Traxel, Traxel, Traxel) -> double energy
+        void register_motion_model4_func(boost::python::object func, double default_value)
+        {
+            motion_model4 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model4, this, func, _1, _2, _3, _4);
+            motion_model4_default = default_value;
+        }
     };
 
 public:
@@ -196,6 +295,7 @@ protected: // members
     Perturbation::Parameter perturbed_inference_model_param_;
 
     double cplex_timeout_;
+    unsigned int num_threads_;
     bool isMAP_;
     SolverType solver_;
 

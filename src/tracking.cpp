@@ -18,6 +18,11 @@
 
 #include "pgmlink/randomforest.h"
 #include "pgmlink/features/feature.h"
+
+// include the LPDef symbols only once!
+#undef OPENGM_LPDEF_NO_SYMBOLS
+#include <opengm/inference/auxiliary/lpdef.hxx>
+
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/log.h"
@@ -29,7 +34,10 @@
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
 
-using namespace std;
+//<<<<<<< HEAD
+//using namespace std;
+//=======
+//>>>>>>> bitbucketchaubold/development
 using boost::shared_ptr;
 using boost::shared_array;
 
@@ -117,7 +125,7 @@ std::vector<std::vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
 
 
 
-    cout << "-> building feature functions " << endl;
+    std::cout << "-> building feature functions " << std::endl;
     SquaredDistance move;
     BorderAwareConstant appearance(app_, earliest_timestep(ts), true, 0);
     BorderAwareConstant disappearance(dis_, latest_timestep(ts), false, 0);
@@ -171,12 +179,12 @@ std::vector<std::vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
         misdetection = ConstantFeature(mis_);
     }
 
-    cout << "-> building hypotheses" << endl;
+    std::cout << "-> building hypotheses" << std::endl;
     SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(n_neighbors_, 50);
     SingleTimestepTraxel_HypothesesBuilder hyp_builder(&ts, builder_opts);
     boost::shared_ptr<HypothesesGraph> graph = boost::shared_ptr<HypothesesGraph>(hyp_builder.build());
 
-    cout << "-> init MRF reasoner" << endl;
+    std::cout << "-> init MRF reasoner" << std::endl;
     std::auto_ptr<Chaingraph> mrf;
 
     if(alternative_builder_)
@@ -220,22 +228,22 @@ std::vector<std::vector<Event> > ChaingraphTracking::operator()(TraxelStore& ts)
                                                        cplex_timeout_));
     }
 
-    cout << "-> formulate MRF model" << endl;
+    std::cout << "-> formulate MRF model" << std::endl;
     mrf->formulate(*graph);
 
-    cout << "-> infer" << endl;
+    std::cout << "-> infer" << std::endl;
     mrf->infer();
 
-    cout << "-> conclude" << endl;
+    std::cout << "-> conclude" << std::endl;
     mrf->conclude(*graph);
 
-    cout << "-> storing state of detection vars" << endl;
+    std::cout << "-> storing state of detection vars" << std::endl;
     last_detections_ = state_of_nodes(*graph);
 
-    cout << "-> pruning inactive hypotheses" << endl;
+    std::cout << "-> pruning inactive hypotheses" << std::endl;
     prune_inactive(*graph);
 
-    cout << "-> constructing events" << endl;
+    std::cout << "-> constructing events" << std::endl;
 
     return *events(*graph);
 }
@@ -379,10 +387,10 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
     }
 }
 
-boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts)
+boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& ts, int max_nearest_neighbors)
 {
 
-    LOG(logDEBUG3) << "entering build_hypo_graph" << endl;;
+    LOG(logDEBUG3) << "entering build_hypo_graph" << std::endl;;
 
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
@@ -459,7 +467,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
             FeatureMap::const_iterator it = trax.features.find("count");
             if(it == trax.features.end())
             {
-                throw runtime_error("get_detection_prob(): cellness feature not in traxel");
+                throw std::runtime_error("get_detection_prob(): cellness feature not in traxel");
             }
             double vol = it->second[0];
             std::vector<double> detProb;
@@ -484,8 +492,8 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::build_hypo_graph(TraxelStore& t
         }
     }
 
-    LOG(logDEBUG1) << "-> building hypotheses" << endl;
-    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(2, // max_nearest_neighbors
+    LOG(logDEBUG1) << "-> building hypotheses" << std::endl;
+    SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(max_nearest_neighbors, // max_nearest_neighbors
             max_dist_,
             true, // forward_backward
             with_divisions_, // consider_divisions
@@ -581,7 +589,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::object transition_classifier,
-        bool trainingToHardConstraints)
+        bool trainingToHardConstraints,
+        unsigned int num_threads)
 {
     ConservationTracking::Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
@@ -601,7 +610,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             cplex_timeout,
             transition_classifier,
             solver_,
-            trainingToHardConstraints);
+            trainingToHardConstraints,
+            num_threads);
     uncertainty_param_ = uncertaintyParam;
 
     return ConsTracking::track_from_param(param);
@@ -609,6 +619,52 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
 
 void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
 {}
+
+void ConsTracking::plot_hypotheses_graph(
+        boost::shared_ptr<HypothesesGraph> g,
+        const std::string& filename,
+        bool with_tracklets,
+        bool with_divisions,
+        double detection_weight,
+        double division_weight,
+        double transition_weight,
+        double disappearance_cost,
+        double appearance_cost,
+        double transition_parameter,
+        double border_width)
+{
+    // reuse the parameter construction method to get configured functions
+    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+            0,
+            0,
+            with_tracklets,
+            detection_weight,
+            division_weight,
+            transition_weight,
+            disappearance_cost,
+            appearance_cost,
+            false,
+            3,
+            transition_parameter,
+            border_width,
+            true,
+            UncertaintyParameter(),
+            0.0,
+            boost::python::object(),
+            solver_,
+            0);
+
+    g->save_to_graphviz_dot_file(filename,
+                                with_tracklets,
+                                with_divisions,
+                                param.detection,
+                                param.division,
+                                param.transition,
+                                param.disappearance_cost_fn,
+                                param.appearance_cost_fn,
+                                max_number_objects_,
+                                transition_parameter);
+}
 
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
                                                        bool fixLabeledNodes)
@@ -635,7 +691,7 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
     size_t num_solutions = uncertainty_param_.numberOfIterations;
     if (num_solutions == 1)
     {
-        cout << "-> storing state of detection vars" << endl;
+        std::cout << "-> storing state of detection vars" << std::endl;
         last_detections_ = state_of_nodes(*hypotheses_graph_);
     }
 
@@ -645,7 +701,7 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
     //TODO: conceptual problem here:
     //revise prune_inactive//events
 
-    cout << "-> constructing unresolved events" << endl;
+    std::cout << "-> constructing unresolved events" << std::endl;
 
     EventVectorVectorVector all_ev(num_solutions);
     for (size_t i = 0; i < num_solutions; ++i)
@@ -808,7 +864,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         double cplex_timeout,
         boost::python::api::object transition_classifier,
         ConservationTracking::SolverType solver,
-        bool trainingToHardConstraints)
+        bool trainingToHardConstraints,
+        unsigned int num_threads)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
@@ -866,7 +923,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         transition_classifier,
         with_optical_correction_,
         solver,
-        trainingToHardConstraints
+        trainingToHardConstraints,
+        num_threads
     );
 
     std::vector<double> model_weights = {detection_weight, division_weight, transition_weight, disappearance_cost, appearance_cost};
@@ -950,7 +1008,7 @@ EventVectorVector ConsTracking::resolve_mergers(
     boost::function<double(const double)> transition;
     transition = NegLnTransition(transition_weight);
 
-    cout << "-> resolving mergers" << endl;
+    std::cout << "-> resolving mergers" << std::endl;
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
     if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
@@ -997,11 +1055,11 @@ EventVectorVector ConsTracking::resolve_mergers(
                       solver_);
 //            prune_inactive(resolved_graph);
 
-        cout << "-> constructing resolved events" << endl;
+        std::cout << "-> constructing resolved events" << std::endl;
         boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
         boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
 
-        cout << "-> merging unresolved and resolved events" << endl;
+        std::cout << "-> merging unresolved and resolved events" << std::endl;
         // delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
         boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
         boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
@@ -1022,7 +1080,7 @@ EventVectorVector ConsTracking::resolve_mergers(
 
         return *events_ptr;
     }
-    cout << "-> done resolving mergers" << endl;
+    std::cout << "-> done resolving mergers" << std::endl;
     return events;
 }
 
@@ -1168,7 +1226,7 @@ std::vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_
 
     LOG(logINFO) << "calling funkey with " << command;
     std::string shell_output =  exec(command.c_str());
-    LOG(logINFO) << shell_output << endl;
+    LOG(logINFO) << shell_output << std::endl;
     int start = shell_output.find("optimial w is [") + 15;
     int end = shell_output.find("]", start);
     std::string numlist = shell_output.substr(start, end - start);
@@ -1185,13 +1243,13 @@ std::vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_
 
 double ConsTracking::hammingloss_of_files(std::string f1, std::string f2)
 {
-    ifstream in(f1);
-    ifstream in2(f2);
+    std::ifstream in(f1);
+    std::ifstream in2(f2);
     double loss = 0.;
 
     while ((!in.eof()) && (!in2.eof()))
     {
-        string line, line2;
+        std::string line, line2;
         getline(in, line);
         getline(in2, line2);
         LOG(logDEBUG4) << "ConsTracking::hammingloss_of_files: comparing  " << line[0] << " and " << line2[0] ;
@@ -1278,7 +1336,7 @@ EventVectorVectorVector ConsExplicitTracking::operator()(TraxelStore& ts,
 
 boost::shared_ptr<HypothesesGraph> ConsExplicitTracking::build_hypo_graph(TraxelStore& ts)
 {
-    LOG(logDEBUG3) << "entering build_hypo_graph" << endl;;
+    LOG(logDEBUG3) << "entering build_hypo_graph" << std::endl;;
 
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
@@ -1355,7 +1413,7 @@ boost::shared_ptr<HypothesesGraph> ConsExplicitTracking::build_hypo_graph(Traxel
             FeatureMap::const_iterator it = trax.features.find("count");
             if(it == trax.features.end())
             {
-                throw runtime_error("get_detection_prob(): cellness feature not in traxel");
+                throw std::runtime_error("get_detection_prob(): cellness feature not in traxel");
             }
             double vol = it->second[0];
             std::vector<double> detProb;
@@ -1380,7 +1438,7 @@ boost::shared_ptr<HypothesesGraph> ConsExplicitTracking::build_hypo_graph(Traxel
         }
     }
 
-    LOG(logDEBUG1) << "-> building hypotheses" << endl;
+    LOG(logDEBUG1) << "-> building hypotheses" << std::endl;
     SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max_nearest_neighbors
             max_dist_,
             true, // forward_backward
@@ -1516,7 +1574,7 @@ EventVectorVectorVector ConsExplicitTracking::track_from_param(ConservationExpli
     size_t num_solutions = uncertainty_param_.numberOfIterations;
     if (num_solutions == 1)
     {
-        cout << "-> storing state of detection vars" << endl;
+        std::cout << "-> storing state of detection vars" << std::endl;
         last_detections_ = state_of_nodes(*hypotheses_graph_);
     }
 
@@ -1526,7 +1584,7 @@ EventVectorVectorVector ConsExplicitTracking::track_from_param(ConservationExpli
     //TODO: conceptual problem here:
     //revise prune_inactive//events
 
-    cout << "-> constructing unresolved events" << endl;
+    std::cout << "-> constructing unresolved events" << std::endl;
 
     EventVectorVectorVector all_ev(num_solutions);
     for (size_t i = 0; i < num_solutions; ++i)
@@ -1703,7 +1761,7 @@ EventVectorVector ConsExplicitTracking::resolve_mergers(
     boost::function<double(const double)> transition;
     transition = NegLnTransition(transition_weight);
 
-    cout << "-> resolving mergers" << endl;
+    std::cout << "-> resolving mergers" << std::endl;
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
     if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
@@ -1750,11 +1808,11 @@ EventVectorVector ConsExplicitTracking::resolve_mergers(
                       solver_);
 //            prune_inactive(resolved_graph);
 
-        cout << "-> constructing resolved events" << endl;
+        std::cout << "-> constructing resolved events" << std::endl;
         boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
         boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
 
-        cout << "-> merging unresolved and resolved events" << endl;
+        std::cout << "-> merging unresolved and resolved events" << std::endl;
         // delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
         boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
         boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
@@ -1775,7 +1833,7 @@ EventVectorVector ConsExplicitTracking::resolve_mergers(
 
         return *events_ptr;
     }
-    cout << "-> done resolving mergers" << endl;
+    std::cout << "-> done resolving mergers" << std::endl;
     return events;
 }
 
@@ -1921,7 +1979,7 @@ std::vector<double> ConsExplicitTracking::learnTrackingWeights(std::string featu
 
     LOG(logINFO) << "calling funkey with " << command;
     std::string shell_output =  exec(command.c_str());
-    LOG(logINFO) << shell_output << endl;
+    LOG(logINFO) << shell_output << std::endl;
     int start = shell_output.find("optimial w is [") + 15;
     int end = shell_output.find("]", start);
     std::string numlist = shell_output.substr(start, end - start);
@@ -1938,13 +1996,13 @@ std::vector<double> ConsExplicitTracking::learnTrackingWeights(std::string featu
 
 double ConsExplicitTracking::hammingloss_of_files(std::string f1, std::string f2)
 {
-    ifstream in(f1);
-    ifstream in2(f2);
+    std::ifstream in(f1);
+    std::ifstream in2(f2);
     double loss = 0.;
 
     while ((!in.eof()) && (!in2.eof()))
     {
-        string line, line2;
+        std::string line, line2;
         getline(in, line);
         getline(in2, line2);
         LOG(logDEBUG4) << "ConsExplicitTracking::hammingloss_of_files: comparing  " << line[0] << " and " << line2[0] ;

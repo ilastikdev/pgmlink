@@ -125,7 +125,7 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
         for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
         {
             cplex_idxs.push_back(optimizer.lpNodeVi(constraint.disappearance_node, state));
-            coeffs.push_back(-state);
+            coeffs.push_back(-(int)state);
         }
 
         optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 0, 0, constraint_name.str().c_str());
@@ -344,7 +344,7 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 
             for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
             {
-                coeffs.push_back(-state);
+                coeffs.push_back(-(int)state);
                 cplex_idxs.push_back(optimizer.lpNodeVi(constraint.appearance_node, state));
             }
 
@@ -1631,7 +1631,7 @@ void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueTyp
 }
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
+void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, OutgoingConstraint)
 {
     func->set_with_divisions(with_divisions_);
 }
