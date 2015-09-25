@@ -208,7 +208,7 @@ private:
 template<class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint(const CONSTRAINT_TYPE&)
 {
-    throw std::logic_error("only template specializations of this method should be called");
+    throw std::logic_error("only template specializations of this method (add_constraints) should be called");
 }
 
 template<>
@@ -427,7 +427,7 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 template<class CONSTRAINT_TYPE>
 void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
 {
-    throw std::logic_error("only template specializations of this method should be called");
+    throw std::logic_error("only template specializations of this method (constraint_indices) should be called");
 }
 
 template<>
@@ -464,7 +464,7 @@ bool ConstraintPool::check_all_constraint_vars_in_mapping(std::map<size_t, size_
 template<class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::configure_function(FUNCTION_TYPE* func, CONSTRAINT_TYPE constraint)
 {
-    throw std::logic_error("only template specializations of this method should be called");
+    throw std::logic_error("only template specializations of this method (configure_function) should be called ");
 }
 
 template<>
@@ -474,13 +474,13 @@ template<>
 void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>*, ConstraintPool::OutgoingConstraint);
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::IncomingConstraint);
+void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::OutgoingConstraint);
 
 template<>
 void ConstraintPool::configure_function(DetectionConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::DetectionConstraint);
 
 template<>
-void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint constraint);
+void ConstraintPool::configure_function(FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>* func, ConstraintPool::FixNodeValueConstraint);
 
 //------------------------------------------------------------------------
 // Serialization

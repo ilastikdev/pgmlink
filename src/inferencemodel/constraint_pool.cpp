@@ -494,7 +494,7 @@ void ConstraintPool::configure_function(OutgoingNoDivConstraintFunction<ValueTyp
 }
 
 template<>
-void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, IncomingConstraint)
+void ConstraintPool::configure_function(OutgoingConstraintFunction<ValueType, IndexType, LabelType>* func, OutgoingConstraint)
 {
     func->set_with_divisions(with_divisions_);
 }
