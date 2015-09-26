@@ -139,23 +139,8 @@ protected: // members
 template<class INF>
 void ConsTrackingInferenceModel::add_constraints(INF &optimizer)
 {
-//    std::cout << " ConsTrackingInferenceModel::add_constraints   ================I NEED THIS CODE====================>" << constraint_pool_.get_num_constraints() << std::endl;
-//    std::cout << " ConsTrackingInferenceModel::add_constraints   ==================I NEED THIS CODE==================>" << linear_constraint_pool_.get_num_linear_constraints() << std::endl;
-
-//    std::cout << "=======================before======================== num Factors   = " << model_.numberOfFactors() << std::endl;
-//    std::cout << "=======================before======================== num Functions = " << model_.numberOfVariables() << std::endl;
-
-
-
     constraint_pool_.add_constraints_to_problem(model_, optimizer);
     //linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
-
-
-
-    //    std::cout << "=======================after======================== num Factors   = " << model_.numberOfFactors() << std::endl;
-//    std::cout << "=======================after======================== num Functions = " << model_.numberOfVariables() << std::endl;
-//    std::cout << " ConsTrackingInferenceModel::add_constraints   ================I NEED THIS CODE====================>" << constraint_pool_.get_num_constraints() << std::endl;
-//    std::cout << " ConsTrackingInferenceModel::add_constraints   ================I NEED THIS CODE====================>" << linear_constraint_pool_.get_num_linear_constraints() << std::endl;
 }
 
 } // namespace pgmlink

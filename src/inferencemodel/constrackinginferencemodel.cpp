@@ -59,7 +59,7 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
         )
 {
 
-    std::cout << " ===============>I am GETTING CALLED !?!?!?!?!?!?!?!?!?!?    <======================" << std::endl;
+    //std::cout << " ===============>I am GETTING CALLED !?!?!?!?!?!?!?!?!?!?    <======================" << std::endl;
 
     assert(g.has_property(appearance_label()));
     property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
@@ -167,12 +167,25 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
 
 
 
-            //std::cout << g.id(arc_it) << "------>" << arc_map_[arc_it] << "   " << traxel_map[g.source(arc_it)] << "   "  << traxel_map[g.target(arc_it)] << "   " << arc_labels[arc_it]-1 << std::endl;
+            //std::cout << "hypoGraph--->" << g.id(arc_it) << "---openGM--->" << arc_map_[arc_it] << "   " << traxel_map[g.source(arc_it)] << "   "  << traxel_map[g.target(arc_it)] << "   " << arc_labels[arc_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
             linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
 
         }
     }
+
+//    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------list of hypoGraph and openGM and cplex variable ids" << std::endl;
+//    std::cout << "NODES:" << std::endl;
+//    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+//    {
+//        std::cout << "hypoGraph " << g.id(n) << "     openGM: " << app_node_map_[n] << " " << dis_node_map_[n] << " " << div_node_map_[n] << " " << std::endl;
+//        for (size_t state = 1; state < model_.numberOfLabels(app_node_map_[n]); ++state)
+//        {
+//            std::cout << "hypoGraph " << std::endl;
+//            std::cout << "               " << optimizer_->lpNodeVi(app_node_map_[n], state)<< std::cout;
+//        }
+//    }
+
 }
 
 
@@ -665,7 +678,7 @@ void ConsTrackingInferenceModel::add_finite_factors(const HypothesesGraph& g)
 
 void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
-    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_constraints: entered<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<";
+    LOG(logDEBUG) << "ConsTrackingInferenceModel::add_constraints_to_pool";
 
     constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
                                            param_.with_divisions,

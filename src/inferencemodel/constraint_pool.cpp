@@ -117,10 +117,10 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
                 cplex_idxs.push_back(optimizer.lpNodeVi(*incoming_it, state));
                 coeffs.push_back(state);
             }
-            constraint_name << *incoming_it << " ";
+            constraint_name << *incoming_it << "("<<optimizer.lpNodeVi(*incoming_it, 1)<<"..."<<optimizer.lpNodeVi(*incoming_it, model.numberOfLabels(*incoming_it)-1)<<") ";
         }
 
-        constraint_name << ") = disappearance-node " << constraint.disappearance_node;
+        constraint_name << ") = disappearance-node " << constraint.disappearance_node <<"("<<optimizer.lpNodeVi(constraint.disappearance_node, 1)<<"..."<<optimizer.lpNodeVi(constraint.disappearance_node, model.numberOfLabels(constraint.disappearance_node)-1)<<") ";
 
         for (size_t state = 1; state < model.numberOfLabels(constraint.disappearance_node); ++state)
         {
@@ -1468,8 +1468,6 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 
         cplex_idxs.push_back(optimizer.lpNodeVi(constraint.node, constraint.value));
         coeffs.push_back(1);
-
-        //std::cout << constraint_name .str()<< std::endl;
 
         optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());
         LOG(logDEBUG3) << constraint_name.str();
