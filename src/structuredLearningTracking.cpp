@@ -236,13 +236,14 @@ void StructuredLearningTracking::addDivisionLabel(int time, int label, double ce
         }
 }
 
-void StructuredLearningTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
+bool StructuredLearningTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
     HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
 
+    bool found = false;
     HypothesesGraph::Node to;
     for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == startLabel){
@@ -251,9 +252,14 @@ void StructuredLearningTracking::addArcLabel(int startTime, int startLabel, int 
                 if (traxel_map[to].Id == endLabel){
                     //std::cout << " StructuredLearningTracking::ARC Label          : [" << startTime << "=?=" << timestep_map[node] << "," << startTime +1 << "=?=" << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << "): "  << cellCount << std::endl;
                     hypotheses_graph_->add_arc_label(arc, cellCount);
+                    found = true;
                 }
             }
         }
+    if(not found){
+        std::cout << "[StructuredLearningTracking::addArcLabel] You have tried to set a label of an arc that does not exist!" << std::endl;
+    }
+    return found;
 }
 
 void StructuredLearningTracking::addFirstLabels(int time, int label, double cellCount)

@@ -788,7 +788,7 @@ void ConsTracking::addDivisionLabel(int time, int label, double cellCount)
         }
 }
 
-void ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
+bool ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
 {
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -798,6 +798,7 @@ void ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, doub
     //traxel_arc_id_map& arc_id_map = g.get(traxel_arc_id());
     property_map< arc_label, HypothesesGraph::base_graph>::type& gt_arc_label = hypotheses_graph_->get(arc_label());
 
+    bool found = false;
     HypothesesGraph::Node to;
     for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == startLabel){
@@ -806,10 +807,15 @@ void ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, doub
                 if (traxel_map[to].Id == endLabel){
                     //std::cout << " ConsTracking::ARC Label                                 : [" << timestep_map[node] << "," << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << ")=("<< hypotheses_graph_->id(node) << "," << hypotheses_graph_->id(to)<<"): "  << cellCount << std::endl;
                     hypotheses_graph_->add_arc_label(arc, cellCount+1); // shifted for +1
+                    found = true;
                     //std::cout << " ConsTracking::ARC Label                                 : [" << timestep_map[node] << "," << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << ")=("<< hypotheses_graph_->id(node) << "," << hypotheses_graph_->id(to)<<"): "  << cellCount << " new value=" << gt_arc_label[arc]<< std::endl;
                 }
             }
         }
+    if(not found){
+        std::cout << "[ConsTracking::addArcLabel] You have tried to set a label of an arc that does not exist!" << std::endl;
+    }
+    return found;
 }
 
 void ConsTracking::addFirstLabels(int time, int label, double cellCount)

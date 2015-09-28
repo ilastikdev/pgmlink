@@ -324,7 +324,7 @@ public:
     PGMLINK_EXPORT void addAppearanceLabel(int, int, double );
     PGMLINK_EXPORT void addDisappearanceLabel(int, int, double );
     PGMLINK_EXPORT void addDivisionLabel(int, int, double );
-    PGMLINK_EXPORT void addArcLabel(int, int, int, double );
+    PGMLINK_EXPORT bool addArcLabel(int, int, int, double );
     PGMLINK_EXPORT void addFirstLabels(int, int, double );
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
