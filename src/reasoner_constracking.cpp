@@ -17,7 +17,7 @@
 #include "pgmlink/traxels.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
-#include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_constrackinferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_perturbedinferencemodel.h"
 
 // perturbations

@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <opengm/datastructures/marray/marray.hxx>
-#include "dynprog_constrackinginferencemodel.h"
+#include "dynprog_constrackinferencemodel.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/perturbation/perturbation.h"
 

@@ -60,7 +60,7 @@ public: // API
                               const std::string& constraints_filename,
                               const std::string& ground_truth_filename);
 
-    IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
+    IlpSolution extractSolution(size_t k, const std::string& ground_truth_filename);
 
     // write results to hypotheses graph
     virtual void conclude(HypothesesGraph &g,

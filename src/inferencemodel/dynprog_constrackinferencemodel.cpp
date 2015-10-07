@@ -1,6 +1,6 @@
 #ifdef WITH_DPCT
 
-#include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_constrackinferencemodel.h"
 #include <stdexcept>
 #include <memory>
 #include <dpct/magnusson.h>
