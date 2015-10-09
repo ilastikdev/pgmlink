@@ -63,11 +63,13 @@ public: // API
     IlpSolution extractSolution(size_t k, const std::string& ground_truth_filename);
     void set_starting_point(const IlpSolution& solution);
 
-    // write results to hypotheses graph
+    // write or extract results to hypotheses graph
     virtual void conclude(HypothesesGraph &g,
                           HypothesesGraph &tracklet_graph,
                           std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
                           IlpSolution &solution);
+
+    IlpSolution extract_solution_from_graph(const HypothesesGraph&, size_t solutionIndex=0);
 
     // output
     void printResults(const HypothesesGraph &g);

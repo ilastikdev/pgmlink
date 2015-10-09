@@ -1066,6 +1066,87 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     }
 }
 
+ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solution_from_graph(const HypothesesGraph& g, size_t solutionIndex)
+{
+    // allocate enough space
+    IlpSolution sol(number_of_division_nodes_ + number_of_appearance_nodes_ + number_of_disappearance_nodes_ + number_of_transition_nodes_);
+
+    // WARNING: this only works with the _count maps, and not the single ones!
+    if(!g.has_property(arc_value_count()) ||
+        !g.has_property(node_active_count()) ||
+        !g.has_property(division_active_count()))
+    {
+        throw new std::runtime_error("Can only extract solution from graph if active_count and arc_value_count maps are present!");
+    }
+
+    property_map<arc_value_count, HypothesesGraph::base_graph>::type& arc_values =
+        g.get(arc_value_count());
+    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
+        g.get(node_active_count());
+    property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
+        g.get(division_active_count());    
+
+    // extract divisions
+    for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
+         it != div_node_map_.end(); 
+         ++it)
+    {
+        assert(it->second < sol.size());
+        // assert(active_divisions_count.find(it->first) != active_divisions_count.end());
+        assert(active_divisions_count[it->first].size() > solutionIndex);
+
+        sol[it->second] = active_divisions_count[it->first][solutionIndex] ? 1 : 0;;
+    }
+
+    std::function<size_t(HypothesesGraph::Node&)> findFlowAlongOutArcs([&](HypothesesGraph::Node& n){
+        size_t num_arcs = 0;
+        for (HypothesesGraph::OutArcIt oa(g, n); oa != lemon::INVALID; ++oa)
+            num_arcs += arc_values[oa][solutionIndex];
+        return num_arcs;
+    });
+
+    std::function<size_t(HypothesesGraph::Node&)> findFlowAlongInArcs([&](HypothesesGraph::Node& n){
+        size_t num_arcs = 0;
+        for (HypothesesGraph::InArcIt ia(g, n); ia != lemon::INVALID; ++ia)
+            num_arcs += arc_values[ia][solutionIndex];
+        return num_arcs;
+    });
+
+    // extract appearances/disappearances
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        assert(app_node_map_.find(n) != app_node_map_.end());
+        assert(dis_node_map_.find(n) != dis_node_map_.end());
+
+        size_t node_state = active_nodes_count[n][solutionIndex];
+        size_t incoming = findFlowAlongInArcs(n);
+        size_t outgoing = findFlowAlongOutArcs(n);
+        size_t division = sol[div_node_map_[n]];
+
+        if(incoming != node_state && incoming != 0)
+            throw new std::runtime_error("Invalid configuration, incoming transitions don't sum up to node label");
+        if(outgoing != node_state + division && outgoing != 0)
+            throw new std::runtime_error("Invalid configuration, outgoing transitions don't sum to node state + divisions");
+
+        sol[dis_node_map_[n]] = incoming;
+        sol[app_node_map_[n]] = outgoing - division;
+    }
+
+    // extract transitions
+    for (std::map<HypothesesGraph::Arc, size_t>::const_iterator it = arc_map_.begin();
+         it != arc_map_.end(); 
+         ++it)
+    {
+        assert(it->second < sol.size());
+        // assert(arc_values.find(it->first) != arc_values.end());
+        assert(arc_values[it->first].size() > solutionIndex);
+        
+        sol[it->second] = arc_values[it->first][solutionIndex];
+    }
+
+    return sol;
+}
+
 void ConsTrackingInferenceModel::set_starting_point(const IlpSolution& solution)
 {
     optimizer_->setStartingPoint(solution.begin());
