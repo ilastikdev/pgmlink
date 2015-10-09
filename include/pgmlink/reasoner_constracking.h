@@ -29,7 +29,8 @@ public:
     enum SolverType
     {
         CplexSolver,
-        DynProgSolver
+        DynProgSolver,
+        DPInitCplexSolver
     };
 
     class Parameter
@@ -226,6 +227,13 @@ public:
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
     virtual void perturbedInference(HypothesesGraph&);
+
+    /**
+    Run the dynamic programming solver first and then use it as initialization
+    for the globally optimal solver.
+    */
+    void twoStageInference(HypothesesGraph & hypotheses);
+
     void enableFixingLabeledAppearanceNodes();
 
     double forbidden_cost() const;

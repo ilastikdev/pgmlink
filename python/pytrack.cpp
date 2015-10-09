@@ -263,6 +263,7 @@ void export_track()
     enum_<ConservationTracking::SolverType>("ConsTrackingSolverType")
     .value("CplexSolver", ConservationTracking::CplexSolver)
     .value("DynProgSolver", ConservationTracking::DynProgSolver)
+    .value("DPInitCplexSolver", ConservationTracking::DPInitCplexSolver)
     ;
 
     enum_<Event::EventType>("EventType")

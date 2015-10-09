@@ -184,6 +184,8 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
         throw std::runtime_error("Support for dynamic programming solver not built!");
     }
 #endif // WITH_DPCT
+    else
+        throw new std::runtime_error("No solver type available to set up inference model");
 }
 
 boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
@@ -204,7 +206,13 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inferen
                     inference_model_param_,
                     perturb);
     }
+    else if (solver_ == DPInitCplexSolver)
+    {
+        throw new std::runtime_error("DynProg-initialized CPLEX cannot handle perturbations (yet)");
+    }
 #endif
+    else
+        throw new std::runtime_error("No solver type available to set up perturbed inference model");
 }
 
 HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypotheses)
@@ -227,6 +235,43 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
     graph->add(relative_uncertainty()).add(node_active_count());
 
     return graph;
+}
+
+void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
+{
+#ifndef WITH_DPCT
+    throw new std::runtime_error("Dynamic Programming Solver has not been built!");
+#endif
+
+    if(solver_ != DPInitCplexSolver)
+        throw new std::logic_error("TwoStageInference should only be called with DPInitCplexSolver");
+    HypothesesGraph *graph = get_prepared_graph(hypotheses);
+
+    // 1st stage: dyn prog
+    boost::shared_ptr<DynProgConsTrackInferenceModel> dyn_prog_inf_model = 
+        boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+    dyn_prog_inf_model->build_from_graph(*graph);
+    IlpSolution temp = dyn_prog_inf_model->infer();
+    dyn_prog_inf_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, temp);
+
+    // set up 2nd stage: CPLEX
+    boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = 
+        boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_, ep_gap_, cplex_timeout_, num_threads_);
+    constrack_inf_model->build_from_graph(*graph);
+
+    // extract solution from 1st stage and use as initialization
+    IlpSolution initialization = constrack_inf_model->extract_solution_from_graph(*graph);
+
+    std::cout << "Extracted solution: ";
+    for(size_t i : initialization)
+        std::cout << i << " ";
+    std::cout << std::endl;
+
+    // run final inference
+    constrack_inf_model->set_inference_params(1,"","","");
+    constrack_inf_model->set_starting_point(initialization);
+    IlpSolution sol = constrack_inf_model->infer();
+    constrack_inf_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, sol);
 }
 
 void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)

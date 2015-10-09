@@ -640,8 +640,8 @@ void ConsTracking::plot_hypotheses_graph(
 EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
                                                        bool fixLabeledNodes)
 {
-    original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
-    HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+    // original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
+    // HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
 
 //	PyEval_InitThreads();
 //	PyGILState_STATE gilstate = PyGILState_Ensure();
@@ -649,44 +649,56 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
 
     ConservationTracking pgm(param);
 
-    pgm.labels_export_file_name_ = tracking_labels_export_file_name_;
-    if(fixLabeledNodes)
+    if(param.solver_ == ConservationTracking::DPInitCplexSolver)
     {
-        pgm.enableFixingLabeledAppearanceNodes();
-    }
-    pgm.perturbedInference(*hypotheses_graph_);
+        pgm.twoStageInference(*hypotheses_graph_);
 
-    size_t num_solutions = uncertainty_param_.numberOfIterations;
-    if (num_solutions == 1)
+        // the hypotheses graph now contains the results of first and 
+        // second stage. Here we only take the 2nd stage and return that.
+        EventVectorVectorVector eventVec(1);
+        eventVec[0] = *events(*hypotheses_graph_, 1);
+        return eventVec;
+    }
+    else
     {
-        cout << "-> storing state of detection vars" << endl;
-        last_detections_ = state_of_nodes(*hypotheses_graph_);
+        pgm.labels_export_file_name_ = tracking_labels_export_file_name_;
+        if(fixLabeledNodes)
+        {
+            pgm.enableFixingLabeledAppearanceNodes();
+        }
+        pgm.perturbedInference(*hypotheses_graph_);
+
+        size_t num_solutions = uncertainty_param_.numberOfIterations;
+        if (num_solutions == 1)
+        {
+            cout << "-> storing state of detection vars" << endl;
+            last_detections_ = state_of_nodes(*hypotheses_graph_);
+        }
+
+        //  PyGILState_Release(gilstate);
+
+
+        //TODO: conceptual problem here:
+        //revise prune_inactive//events
+
+        cout << "-> constructing unresolved events" << endl;
+
+        EventVectorVectorVector all_ev(num_solutions);
+        for (size_t i = 0; i < num_solutions; ++i)
+        {
+            all_ev[i] = *events(*hypotheses_graph_, i);
+        }
+
+        if(event_vector_dump_filename_ != "none")
+        {
+            // store the traxel store and the resulting event vector
+            std::ofstream ofs(event_vector_dump_filename_.c_str());
+            boost::archive::text_oarchive out_archive(ofs);
+            out_archive << all_ev[0];
+        }
+
+        return all_ev;
     }
-
-    //	PyGILState_Release(gilstate);
-
-
-    //TODO: conceptual problem here:
-    //revise prune_inactive//events
-
-    cout << "-> constructing unresolved events" << endl;
-
-    EventVectorVectorVector all_ev(num_solutions);
-    for (size_t i = 0; i < num_solutions; ++i)
-    {
-        all_ev[i] = *events(*hypotheses_graph_, i);
-    }
-
-    if(event_vector_dump_filename_ != "none")
-    {
-        // store the traxel store and the resulting event vector
-        std::ofstream ofs(event_vector_dump_filename_.c_str());
-        boost::archive::text_oarchive out_archive(ofs);
-        out_archive << all_ev[0];
-    }
-
-    return all_ev;
-
 }
 
 ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(double forbidden_cost,
