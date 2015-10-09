@@ -61,6 +61,7 @@ public: // API
                               const std::string& ground_truth_filename);
 
     IlpSolution extractSolution(size_t k, const std::string& ground_truth_filename);
+    void set_starting_point(const IlpSolution& solution);
 
     // write results to hypotheses graph
     virtual void conclude(HypothesesGraph &g,

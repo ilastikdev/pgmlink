@@ -1066,5 +1066,10 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     }
 }
 
+void ConsTrackingInferenceModel::set_starting_point(const IlpSolution& solution)
+{
+    optimizer_->setStartingPoint(solution.begin());
+}
+
 
 } // namespace pgmlink
