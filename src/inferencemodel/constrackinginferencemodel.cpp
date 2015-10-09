@@ -854,7 +854,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
         g.get(division_active());
 
     // add counting properties for analysis of perturbed models
-    g.add(arc_active_count()).add(node_active_count()).add(division_active_count());
+    g.add(arc_active_count()).add(node_active_count()).add(division_active_count()).add(arc_value_count());
 
     property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
         g.get(arc_active_count());
@@ -862,6 +862,8 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
         g.get(node_active_count());
     property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
         g.get(division_active_count());
+    property_map<arc_value_count, HypothesesGraph::base_graph>::type& arc_values =
+        g.get(arc_value_count());
 
     if (!param_.with_tracklets)
     {
@@ -936,6 +938,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
 
                     active_arcs.set(a, true);
                     active_arcs_count.get_value(a)[iterStep] = true;
+                    arc_values.get_value(a)[iterStep] = solution[it->second];
 
                     assert(active_nodes[g.source(a)] == solution[it->second]
                            && "tracklet internal arcs must have the same flow as their connected nodes");
@@ -987,6 +990,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
 
                         active_arcs.set(a, true);
                         active_arcs_count.get_value(a)[iterStep] = true;
+                        arc_values.get_value(a)[iterStep] = solution[it->second];
 
                         assert(active_nodes[g.source(a)] == solution[it->second]
                                && "tracklet internal arcs must have the same flow as their connected nodes");
@@ -1021,11 +1025,13 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
             {
                 active_arcs.set(g.arcFromId((traxel_arc_id_map[it->first])), true);
                 active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[it->first])))[iterStep] = true;
+                arc_values.get_value(g.arcFromId((traxel_arc_id_map[it->first])))[iterStep] = solution[it->second];
             }
             else
             {
                 active_arcs.set(it->first, true);
                 active_arcs_count.get_value(it->first)[iterStep] = true;
+                arc_values.get_value(it->first)[iterStep] = solution[it->second];
             }
         }
     }

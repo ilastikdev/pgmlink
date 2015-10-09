@@ -142,6 +142,18 @@ struct property_map<arc_active_count, Graph>
 template <typename Graph>
 const std::string property_map<arc_active_count, Graph>::name = "arc_active_count";
 
+// arc_value_count
+struct arc_value_count {};
+template <typename Graph>
+struct property_map<arc_value_count, Graph>
+{
+    typedef IterableEditableValueMap< Graph, typename Graph::Arc, std::vector<size_t> > type;
+    //typedef lemon::IterableIntMap< Graph, typename Graph::Arc> type;
+    static const std::string name;
+};
+template <typename Graph>
+const std::string property_map<arc_value_count, Graph>::name = "arc_value_count";
+
 // division_active_count
 struct division_active_count {};
 template <typename Graph>

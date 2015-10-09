@@ -437,9 +437,11 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
     // add counting properties for analysis of perturbed models
-    g.add(arc_active_count()).add(node_active_count()).add(division_active_count());
+    g.add(arc_active_count()).add(node_active_count()).add(division_active_count()).add(arc_value_count());
     property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
         g.get(arc_active_count());
+    property_map<arc_value_count, HypothesesGraph::base_graph>::type& arc_values =
+        g.get(arc_value_count());
     property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
         g.get(node_active_count());
     property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
@@ -484,6 +486,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     {
         active_arcs.set(a, false);
         active_arcs_count.get_value(a).push_back(0);
+        arc_values.get_value(a).push_back(0);
     }
 
     // function used to increase number of objects per node
@@ -518,6 +521,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
 //                assert(active_arcs[a] == false);
                 active_arcs.set(a, true);
                 active_arcs_count.get_value(a)[iterStep] = true;
+                arc_values.get_value(a)[iterStep]++;
             }
         }
         else
@@ -538,11 +542,13 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         {
             active_arcs.set(g.arcFromId((traxel_arc_id_map[a])), true);
             active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[a])))[iterStep] = true;
+            arc_values.get_value(g.arcFromId((traxel_arc_id_map[a])))[iterStep]++;
         }
         else
         {
             active_arcs.set(a, true);
             active_arcs_count.get_value(a)[iterStep] = true;
+            arc_values.get_value(a)[iterStep]++;
         }
     };
 
@@ -622,6 +628,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                             LOG(logDEBUG3) << "Found arc to activate for division!" << std::endl;
                             active_arcs.set(oa, true);
                             active_arcs_count.get_value(oa)[iterStep] = true;
+                            arc_values.get_value(oa)[iterStep]++;
                             break;
                         }
                     }

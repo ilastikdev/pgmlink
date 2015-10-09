@@ -1379,6 +1379,11 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
         writer.arcMap("arc_active_count", g.get(arc_active_count()), TypeToStrConverter<vector<bool> >());
     }
 
+    if(config["arc_value_count"])
+    {
+        writer.arcMap("arc_value_count", g.get(arc_value_count()), TypeToStrConverter<vector<size_t> >());
+    }
+
     if(config["node_traxel"])
     {
         writer.nodeMap("node_traxel", g.get(node_traxel()), TypeToStrConverter<Traxel>());
@@ -1532,6 +1537,12 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     {
         g.add(arc_active_count());
         reader.arcMap("arc_active_count", g.get(arc_active_count()), StrToTypeConverter<vector<bool> >());
+    }
+
+    if(config["arc_value_count"])
+    {
+        g.add(arc_value_count());
+        reader.arcMap("arc_value_count", g.get(arc_value_count()), StrToTypeConverter<vector<size_t> >());
     }
 
     if(config["node_traxel"])
@@ -1867,6 +1878,12 @@ void PropertyGraph<lemon::ListDigraph>::copy(PropertyGraph<lemon::ListDigraph>& 
         graph_copy.arcMap(src.get(arc_active_count()), dest.get(arc_active_count()));
     }
 
+    if(src.has_property(arc_value_count()))
+    {
+        dest.add(arc_value_count());
+        graph_copy.arcMap(src.get(arc_value_count()), dest.get(arc_value_count()));
+    }
+
     if(src.has_property(node_traxel()))
     {
         dest.add(node_traxel());
@@ -2049,6 +2066,12 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
     {
         dest.add(arc_active_count());
         graph_copy.arcMap(src.get(arc_active_count()), dest.get(arc_active_count()));
+    }
+
+    if(src.has_property(arc_value_count()))
+    {
+        dest.add(arc_value_count());
+        graph_copy.arcMap(src.get(arc_value_count()), dest.get(arc_value_count()));
     }
 
     if(src.has_property(node_traxel()))
