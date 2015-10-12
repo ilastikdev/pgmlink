@@ -335,7 +335,8 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         TimestepIdCoordinateMapPtr coordinates,
-        boost::python::object transition_classifier)
+        boost::python::object transition_classifier,
+        ConservationTracking::Parameter param)
 {
 
     build_hypo_graph(ts);
@@ -375,7 +376,8 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                                                  n_dim,
                                                  transition_parameter,
                                                  with_constraints,
-                                                 transition_classifier
+                                                 transition_classifier,
+                                                 param
                                              ));
         }
 
@@ -936,7 +938,8 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
 
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
-    boost::function<double(const double)> transition;
+    //boost::function<double(const double)> transition;
+    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
     
     LOG(logDEBUG1) << "division_weight = " << division_weight;
@@ -1024,7 +1027,7 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     }
 
     param.division = NegLnDivision(weights[1]);
-    param.transition = NegLnTransition(weights[2]);
+    //param.transition = NegLnTransition(weights[2]); // TODO: define the default
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
                              param.border_width,
@@ -1048,12 +1051,15 @@ EventVectorVector ConsTracking::resolve_mergers(
     int n_dim,
     double transition_parameter,
     bool with_constraints,
-    boost::python::object transitionClassifier
+    boost::python::object transitionClassifier,
+    ConservationTracking::Parameter param
 )
 {
     // TODO Redundancy to track(). -> Problem?
-    boost::function<double(const double)> transition;
-    transition = NegLnTransition(transition_weight);
+    //boost::function<double(const double)> transition;
+    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    //transition = NegLnTransition(transition_weight);
+    transition = param.transition;
 
     std::cout << "-> resolving mergers" << std::endl;
     // TODO why doesn't it check for empty vectors in the event vector from the
@@ -1330,7 +1336,8 @@ EventVectorVectorVector ConsExplicitTracking::operator()(TraxelStore& ts,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         TimestepIdCoordinateMapPtr coordinates,
-        boost::python::object transition_classifier)
+        boost::python::object transition_classifier,
+        ConservationExplicitTracking::Parameter param)
 {
     build_hypo_graph(ts);
 
@@ -1692,7 +1699,8 @@ ConservationExplicitTracking::Parameter ConsExplicitTracking::get_conservation_t
 
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
-    boost::function<double(const double)> transition;
+    //boost::function<double(const double)> transition;
+    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
 
     LOG(logDEBUG1) << "division_weight = " << division_weight;
@@ -1777,7 +1785,7 @@ void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Par
     }
 
     param.division = NegLnDivision(weights[1]);
-    param.transition = NegLnTransition(weights[2]);
+    //param.transition = NegLnTransition(weights[2]); // TODO: default parameter
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
                              param.border_width,
@@ -1801,12 +1809,15 @@ EventVectorVector ConsExplicitTracking::resolve_mergers(
     int n_dim,
     double transition_parameter,
     bool with_constraints,
-    boost::python::object transitionClassifier
+    boost::python::object transitionClassifier,
+    ConservationExplicitTracking::Parameter param
 )
 {
     // TODO Redundancy to track(). -> Problem?
-    boost::function<double(const double)> transition;
-    transition = NegLnTransition(transition_weight);
+    //boost::function<double(const double)> transition;
+    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    //transition = NegLnTransition(transition_weight);
+    transition = param.transition;
 
     std::cout << "-> resolving mergers" << std::endl;
     // TODO why doesn't it check for empty vectors in the event vector from the

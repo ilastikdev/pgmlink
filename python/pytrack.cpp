@@ -153,8 +153,8 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
         int n_dim,
         double transition_parameter,
         bool with_constraints,
-        object transitionClassifier
-                                        )
+        object transitionClassifier,
+        ConservationTracking::Parameter& param)
 {
     EventVectorVector result;
     // release the GIL
@@ -162,7 +162,7 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
     try
     {
         result = tracker.resolve_mergers(events, coordinates, ep_gap, transition_weight,
-                                         with_tracklets, n_dim, transition_parameter, with_constraints, transitionClassifier);
+                                         with_tracklets, n_dim, transition_parameter, with_constraints, transitionClassifier, param);
     }
     catch (std::exception& e)
     {

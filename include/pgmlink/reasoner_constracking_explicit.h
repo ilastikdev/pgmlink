@@ -41,7 +41,8 @@ public:
             boost::function<double (const Traxel&, const size_t)> detection,
             //boost::function<double (const Traxel&, const size_t)> detectionNoWeight,
             boost::function<double (const Traxel&, const size_t)> division,
-            boost::function<double (const double)> transition,
+            //boost::function<double (const double)> transition,
+            boost::function<double (const Traxel&, const Traxel&, const size_t)> transition,
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = false,
@@ -97,7 +98,8 @@ public:
         boost::function<double (const Traxel&, const size_t)> detection;
         boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
-        boost::function<double (const double)> transition;
+        //boost::function<double (const double)> transition;
+        boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
         double forbidden_cost;
         double ep_gap;
         bool with_tracklets;
@@ -168,7 +170,8 @@ protected: // members
     boost::function<double (const Traxel&, const size_t)> detection_;
     boost::function<double (const Traxel&, const size_t)> detectionNoWeight_;
     boost::function<double (const Traxel&, const size_t)> division_;
-    boost::function<double (const double)> transition_;
+    //boost::function<double (const double)> transition_;
+    boost::function<double (const Traxel&, const Traxel&, const size_t)> transition_;
 
     double forbidden_cost_;
     std::vector<IlpSolution> solutions_;

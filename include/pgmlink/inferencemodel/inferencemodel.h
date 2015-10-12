@@ -36,7 +36,8 @@ public: // Parameter object
         boost::function<double (const Traxel&, const size_t)> detection;
         boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
-        boost::function<double (const double)> transition;
+        //boost::function<double (const double)> transition;
+        boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
         double transition_parameter;
         boost::python::object transition_classifier;
 

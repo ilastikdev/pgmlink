@@ -41,7 +41,8 @@ public:
             boost::function<double (const Traxel&, const size_t)> detection,
             //boost::function<double (const Traxel&, const size_t)> detectionNoWeight,
             boost::function<double (const Traxel&, const size_t)> division,
-            boost::function<double (const double)> transition,
+            //boost::function<double (const double)> transition,
+            boost::function<double (const Traxel&, const Traxel&, const size_t)> transition,
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = false,
@@ -101,7 +102,8 @@ public:
         boost::function<double (const Traxel&, const size_t)> detection;
         boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
-        boost::function<double (const double)> transition;
+        boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
+        //boost::function<double (const double)> transition;
         boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
         boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
         double motion_model3_default;
@@ -153,11 +155,13 @@ public:
             return result;
         }
 
-        double python_caller_trans(boost::python::object func, double distance)
+        //double python_caller_trans(boost::python::object func, double distance)
+        double python_caller_trans(boost::python::object func, const Traxel& a, const Traxel& b, const size_t state)
         {
             assert(1 == PyCallable_Check(func.ptr()));
             // PyGILState_STATE pygilstate = PyGILState_Ensure();
-            boost::python::object py_result = func(distance);
+            //boost::python::object py_result = func(distance);
+            boost::python::object py_result = func(a, b, state);
             double result = boost::python::extract<double>(py_result);
             // PyGILState_Release(pygilstate);
             return result;
@@ -194,7 +198,8 @@ public:
         /// Expects a function with signature (double distance) -> double energy
         void register_transition_func(boost::python::object func)
         {
-            transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1);
+            //transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1);
+            transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1, _2, _3);
         }
 
         /// Expects a function with signature (Traxel traxel) -> double energy
@@ -272,7 +277,8 @@ protected: // members
     boost::function<double (const Traxel&, const size_t)> detection_;
     boost::function<double (const Traxel&, const size_t)> detectionNoWeight_;
     boost::function<double (const Traxel&, const size_t)> division_;
-    boost::function<double (const double)> transition_;
+    //boost::function<double (const double)> transition_;
+    boost::function<double (const Traxel&, const Traxel&, const size_t)> transition_;
 
     double forbidden_cost_;
     std::vector<IlpSolution> solutions_;

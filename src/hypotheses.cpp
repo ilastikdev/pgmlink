@@ -2123,7 +2123,8 @@ void HypothesesGraph::save_to_graphviz_dot_file(const std::string &filename,
                                                 bool with_divisions,
                                                 boost::function<double (const Traxel&, const size_t)> detection,
                                                 boost::function<double (const Traxel&, const size_t)> division,
-                                                boost::function<double (const double)> transition,
+                                                //boost::function<double (const double)> transition,
+                                                boost::function<double (const Traxel&, const Traxel&, const size_t)> transition,
                                                 boost::function<double (const Traxel&)> disappearance_cost,
                                                 boost::function<double (const Traxel&)> appearance_cost,
                                                 size_t max_number_objects,
@@ -2195,7 +2196,8 @@ void HypothesesGraph::save_to_graphviz_dot_file(const std::string &filename,
                         {
                             prob = 1 - prob;
                         }
-                        energy += transition(prob);
+                        //energy += transition(prob);
+                        energy += transition(tr_prev,tr,state);
                     }
                     else
                     {
@@ -2300,7 +2302,8 @@ void HypothesesGraph::save_to_graphviz_dot_file(const std::string &filename,
         // FIXME: hard coded choice here
         double distance = tr1.distance_to(tr2);
         double prob = exp(-distance / transition_parameter);
-        double energy = transition(prob);
+        //double energy = transition(prob);
+        double energy = transition(tr1, tr2, 1);
 
         out_file << "\t" << id(source(a)) << " -> " << id(target(a)) << " [ label=\" " << energy << " \" ];\n" << std::flush;
     }

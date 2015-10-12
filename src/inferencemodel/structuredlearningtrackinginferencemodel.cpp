@@ -125,7 +125,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     Traxel tr = *trax_it;
                     if (!first)
                     {
-                        e = param_.transition( get_transition_probability(tr_prev, tr, state) );
+                        //e = param_.transition( get_transition_probability(tr_prev, tr, state) );
+                        e = param_.transition( tr_prev, tr, state);
                         energy += e;
                         energy += generateRandomOffset(Transition, e, tr_prev, tr);
                     }
@@ -259,7 +260,8 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
                 tr2 = traxel_map_[g.target(a)];
             }
 
-            double energy = param_.transition(get_transition_probability(tr1, tr2, state));
+            //double energy = param_.transition(get_transition_probability(tr1, tr2, state));
+            double energy = param_.transition(tr1, tr2, state);
             energy += generateRandomOffset(Transition, energy, tr1, tr2);
 
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state

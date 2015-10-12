@@ -226,7 +226,8 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
-            boost::python::object transition_classifier = boost::python::object());
+            boost::python::object transition_classifier = boost::python::object(),
+            ConservationTracking::Parameter param = ConservationTracking::Parameter());
 
 
 
@@ -294,7 +295,8 @@ public:
             int n_dim = 3,
             double transition_parameter = 5.,
             bool with_constraints = true,
-            boost::python::object transitionClassifier = boost::python::object());
+            boost::python::object transitionClassifier = boost::python::object(),
+            ConservationTracking::Parameter param = ConservationTracking::Parameter());
 
 
     /**
@@ -449,7 +451,8 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
-            boost::python::object transition_classifier = boost::python::object());
+            boost::python::object transition_classifier = boost::python::object(),
+            ConservationExplicitTracking::Parameter param = ConservationExplicitTracking::Parameter());
 
 
 
@@ -513,7 +516,8 @@ public:
             int n_dim = 3,
             double transition_parameter = 5.,
             bool with_constraints = true,
-            boost::python::object transitionClassifier = boost::python::object());
+            boost::python::object transitionClassifier = boost::python::object(),
+            ConservationExplicitTracking::Parameter param = ConservationExplicitTracking::Parameter());
 
 
     /**
