@@ -273,6 +273,16 @@ void export_track()
     .def("register_motion_model4_func", &ConservationTracking::Parameter::register_motion_model4_func)
     ;
 
+    class_<ConservationExplicitTracking::Parameter>("ConservationExplicitTrackingParameter")
+    .def("register_explicit_detection_func", &ConservationExplicitTracking::Parameter::register_explicit_detection_func)
+    .def("register_explicit_division_func", &ConservationExplicitTracking::Parameter::register_explicit_division_func)
+    .def("register_explicit_transition_func", &ConservationExplicitTracking::Parameter::register_explicit_transition_func)
+    .def("register_explicit_appearance_func", &ConservationExplicitTracking::Parameter::register_explicit_appearance_func)
+    .def("register_explicit_disappearance_func", &ConservationExplicitTracking::Parameter::register_explicit_disappearance_func)
+    .def("register_explicit_motion_model3_func", &ConservationExplicitTracking::Parameter::register_explicit_motion_model3_func)
+    .def("register_explicit_motion_model4_func", &ConservationExplicitTracking::Parameter::register_explicit_motion_model4_func)
+    ;
+
     class_<ConsTracking>("ConsTracking",
                          init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType,int>(
                              args("max_number_objects",
@@ -337,7 +347,7 @@ void export_track()
     .value("CplexSolver", ConservationTracking::CplexSolver)
     .value("DynProgSolver", ConservationTracking::DynProgSolver)
     ;
-    enum_<ConservationExplicitTracking::SolverType>("ConsExplicitTrackingSolverType")
+    enum_<ConservationExplicitTracking::SolverType>("StructuredLearningTrackingSolverType")
     .value("CplexSolver", ConservationExplicitTracking::CplexSolver)
     .value("DynProgSolver", ConservationExplicitTracking::DynProgSolver)
     ;
@@ -416,8 +426,10 @@ void export_track()
     .def("addLastLabels", &StructuredLearningTracking::addLastLabels)
     .def("addIntermediateLabels", &StructuredLearningTracking::addIntermediateLabels)
     .def("structuredLearning", &StructuredLearningTracking::structuredLearning)
+    .def("structuredLearning", &StructuredLearningTracking::structuredLearningFromParam)
     .def("weight", &StructuredLearningTracking::weight)
     .def("setWeight", &StructuredLearningTracking::setWeight)
+    .def("getStructuredLearningTrackingParameters", &StructuredLearningTracking::get_structured_learning_tracking_parameters)
     ;
 
 }

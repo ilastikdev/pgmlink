@@ -548,7 +548,9 @@ PGMLINK_EXPORT void resolve_graph_explicit(const HypothesesGraph &src,
                                   const double transition_parameter = 5,
                                   const bool with_constraints = true,
                                   boost::python::object transitionClassifier = boost::python::object(),
-                                  ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver);
+                                  ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver,
+                                  bool with_merger_resolution = true,
+                                  int n_dim = 3);
 
 
 ////

@@ -977,9 +977,17 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         num_threads
     );
 
-    std::vector<double> model_weights = {detection_weight, division_weight, transition_weight, disappearance_cost, appearance_cost};
+    std::vector<double> model_weights = {
+        detection_weight,
+        division_weight,
+        transition_weight,
+        disappearance_cost,
+        appearance_cost};
 
-    setParameterWeights(param,model_weights); 
+    setParameterWeights(
+        param,
+        model_weights);
+
     return param;
 }
 
@@ -1720,6 +1728,8 @@ ConservationExplicitTracking::Parameter ConsExplicitTracking::get_conservation_t
         with_divisions_,
         disappearance_cost_fn,
         appearance_cost_fn,
+        with_merger_resolution,
+        n_dim,
         true, // with_misdetections_allowed
         true, // with_appearance
         true, // with_disappearance

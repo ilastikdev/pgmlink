@@ -319,6 +319,186 @@ bool StructuredLearningTracking::exportCrop(FieldOfView crop)//, const std::stri
     return true;
 }
 
+ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structured_learning_tracking_parameters(
+        double forbidden_cost,
+        double ep_gap,
+        bool with_tracklets,
+        double detection_weight,
+        double division_weight,
+        double transition_weight,
+        double disappearance_cost,
+        double appearance_cost,
+        bool with_merger_resolution,
+        int n_dim,
+        double transition_parameter,
+        double border_width,
+        bool with_constraints,
+        UncertaintyParameter uncertaintyParam,
+        double cplex_timeout,
+        boost::python::api::object transition_classifier,
+        ConservationExplicitTracking::SolverType solver)//,
+//        bool trainingToHardConstraints,
+//        unsigned int num_threads)
+{
+    LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
+    LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
+    LOG(logDEBUG1) << "forbidden_cost\t" <<      forbidden_cost;
+    LOG(logDEBUG1) << "ep_gap\t" <<      ep_gap;
+    LOG(logDEBUG1) << "avg_obj_size\t" <<      avg_obj_size_;
+    LOG(logDEBUG1) << "with_tracklets\t" <<      with_tracklets;
+    LOG(logDEBUG1) << "detection_weight\t" <<      detection_weight;
+    LOG(logDEBUG1) << "division_weight\t" <<      division_weight;
+    LOG(logDEBUG1) << "transition_weight\t" <<      transition_weight;
+    LOG(logDEBUG1) << "with_divisions\t" <<      with_divisions_;
+    LOG(logDEBUG1) << "disappearance_cost\t" <<      disappearance_cost;
+    LOG(logDEBUG1) << "appearance_cost\t" <<      appearance_cost;
+    LOG(logDEBUG1) << "with_merger_resolution\t" <<      with_merger_resolution;
+    LOG(logDEBUG1) << "n_dim\t" <<      n_dim;
+    LOG(logDEBUG1) << "transition_parameter\t" <<      transition_parameter;
+    LOG(logDEBUG1) << "border_width\t" <<      border_width;
+    LOG(logDEBUG1) << "with_constraints\t" <<      with_constraints;
+    LOG(logDEBUG1) << "cplex_timeout\t" <<      cplex_timeout;
+    uncertaintyParam.print();
+
+    Traxels empty;
+    boost::function<double(const Traxel&, const size_t)> detection, division;
+    //boost::function<double(const double)> transition;
+    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
+
+    LOG(logDEBUG1) << "division_weight = " << division_weight;
+    LOG(logDEBUG1) << "transition_weight = " << transition_weight;
+    //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+    LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+
+    std::cout << "BEFORE CONSTRUCTING ConservationExplicitTracking::Parameter param" << std::endl;
+    ConservationExplicitTracking::Parameter param(
+        max_number_objects_,
+        detection,
+        division,
+        transition,
+        forbidden_cost,
+        ep_gap,
+        with_tracklets,
+        with_divisions_,
+        disappearance_cost_fn,
+        appearance_cost_fn,
+        with_merger_resolution,
+        n_dim,
+        true, // with_misdetections_allowed
+        true, // with_appearance
+        true, // with_disappearance
+        transition_parameter,
+        with_constraints,
+        uncertaintyParam,
+        cplex_timeout,
+        division_weight,
+        detection_weight,
+        transition_weight,
+        border_width,
+        transition_classifier,
+        with_optical_correction_,
+        solver//,
+//        trainingToHardConstraints,
+//        num_threads
+    );
+    std::cout << "AFTER CONSTRUCTING ConservationExplicitTracking::Parameter param" << std::endl;
+
+    std::vector<double> model_weights = {
+        detection_weight,
+        division_weight,
+        transition_weight,
+        disappearance_cost,
+        appearance_cost};
+
+    StructuredLearningTracking::setParameterWeights(
+        param,
+        model_weights);
+
+    return param;
+}
+
+void StructuredLearningTracking::structuredLearningFromParam(ConservationExplicitTracking::Parameter& param)
+{
+    StructuredLearningTracking::structuredLearning(
+        param.forbidden_cost,
+        param.ep_gap,
+        param.with_tracklets,
+        param.detection_weight,
+        param.division_weight,
+        param.transition_weight,
+        param.disappearance_weight,//disappearance_cost_fn,
+        param.appearance_weight,//appearance_cost_fn,
+        param.with_merger_resolution,
+        param.n_dim,
+        param.transition_parameter,
+        param.border_width,
+        param.with_constraints,
+        param.uncertainty_param,
+        param.cplex_timeout,
+        param.transition_classifier);
+
+}
+
+void StructuredLearningTracking::setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights)
+{
+
+    param.detection_weight  =weights[0];
+    param.division_weight   =weights[1];
+    param.transition_weight =weights[2];
+    param.appearance_weight = weights[3];
+    param.disappearance_weight = weights[4];
+
+    size_t tmin = hypotheses_graph_->earliest_timestep();
+    size_t tmax = hypotheses_graph_->latest_timestep();
+
+    if (use_classifier_prior_)
+    {
+        LOG(logINFO) << "Using classifier prior";
+        param.detection = NegLnDetection(weights[0]);
+        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+    }
+    else if (use_size_dependent_detection_)
+    {
+        LOG(logINFO) << "Using size dependent prior";
+        param.detection = NegLnDetection(weights[0]); // weight
+        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+    }
+    else
+    {
+        LOG(logINFO) << "Using hard prior";
+        // assume a quasi geometric distribution
+        std::vector<double> prob_vector;
+        double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
+        double sum = 0;
+        for(double state = 0; state < max_number_objects_; ++state)
+        {
+            double prob = p * pow(1 - p, state);
+            prob_vector.push_back(prob);
+            sum += prob;
+        }
+        prob_vector.insert(prob_vector.begin(), 1 - sum);
+
+        param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
+        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
+    }
+
+    param.division = NegLnDivision(weights[1]);
+    //param.transition = NegLnTransition(weights[2]); // TODO: define the default
+
+    param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
+                             param.border_width,
+                             false, // true if relative margin to border
+                             fov_,
+                             tmin);// set appearance cost to zero at t = tmin
+
+    param.disappearance_cost_fn = SpatialBorderAwareWeight(weights[3],
+                            param.border_width,
+                            false, // true if relative margin to border
+                            fov_,
+                            tmax);// set disappearance cost to zero at t = tmax
+}
+
 void StructuredLearningTracking::structuredLearning(
         double forbidden_cost,
         double ep_gap,

@@ -66,6 +66,8 @@ ConservationExplicitTracking::ConservationExplicitTracking(const Parameter &para
       with_divisions_(param.with_divisions),
       disappearance_cost_(param.disappearance_cost_fn),
       appearance_cost_(param.appearance_cost_fn),
+      with_merger_resolution_(param.with_merger_resolution),
+      n_dim_(param.n_dim),
       with_misdetections_allowed_(param.with_misdetections_allowed),
       with_appearance_(param.with_appearance),
       with_disappearance_(param.with_disappearance),

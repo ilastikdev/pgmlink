@@ -908,7 +908,9 @@ void resolve_graph_explicit(const HypothesesGraph& src,
                    const double transition_parameter,
                    const bool with_constraints,
                    boost::python::object transitionClassifier,
-                   ConservationExplicitTracking::SolverType solver)
+                   ConservationExplicitTracking::SolverType solver,
+                   bool with_merger_resolution,
+                   int n_dim)
 {
 
     // Optimize the graph built by the class MergerResolver.
@@ -1006,6 +1008,8 @@ void resolve_graph_explicit(const HypothesesGraph& src,
         false, // with_divisions_
         disappearance_cost, // disappearance_cost_
         appearance_cost, // appearance_cost
+        with_merger_resolution,
+        n_dim,
         false, // with_misdetections_allowed
         false, // with appearance
         false, // with disappearance

@@ -122,6 +122,29 @@ public:
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object());
 
+    PGMLINK_EXPORT void structuredLearningFromParam(ConservationExplicitTracking::Parameter& param);
+
+    PGMLINK_EXPORT ConservationExplicitTracking::Parameter get_structured_learning_tracking_parameters(
+            double forbidden_cost = 0,
+            double ep_gap = 0.01,
+            bool with_tracklets = true,
+            double detection_weight = 10.,
+            double division_weight = 10.0,
+            double transition_weight = 10.0,
+            double disappearance_cost = 0,
+            double appearance_cost = 0,
+            bool with_merger_resolution = true,
+            int n_dim = 3,
+            double transition_parameter = 5.,
+            double border_width = 0,
+            bool with_constraints = true,
+            UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
+            double cplex_timeout = 1e+75,
+            boost::python::object transition_classifier = boost::python::object(),
+            ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver);
+
+    PGMLINK_EXPORT void setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights);
+
 public:
     int numCrops_;
     std::vector<FieldOfView> crops_;
