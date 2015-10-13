@@ -27,18 +27,17 @@ ConsTrackingExplicitInferenceModel::ConsTrackingExplicitInferenceModel(const Par
 
 void ConsTrackingExplicitInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
 {
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: entered";
 
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_transition_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::build_from_graph: add_transition_nodes";
     add_transition_nodes(hypotheses);
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_appearance_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::build_from_graph: add_appearance_nodes";
     add_appearance_nodes(hypotheses);
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_disappearance_nodes";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::build_from_graph: add_disappearance_nodes";
     add_disappearance_nodes(hypotheses);
 
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::formulate: add_division_nodes";
     if (param_.with_divisions)
     {
+        LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::build_from_graph: add_division_nodes";
         add_division_nodes(hypotheses);
     }
 
@@ -290,7 +289,6 @@ size_t ConsTrackingExplicitInferenceModel::add_detection_factors(const Hypothese
 
 size_t ConsTrackingExplicitInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-
     return 0;
 }
 
@@ -318,19 +316,17 @@ void ConsTrackingExplicitInferenceModel::add_finite_factors(const HypothesesGrap
     //
     // Also, this implies that there is some functor choosing either energy or offset
 
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: entered";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors";
     size_t factorIndex = 0;
     factorIndex = add_detection_factors(g, factorIndex);
     factorIndex = add_transition_factors(g, factorIndex);
     factorIndex = add_division_factors(g, factorIndex);
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_finite_factors: finished";
 }
 
 //set up optimizer from constraints by reading from formulated gm
 void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
 {
-    //std::cout << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
-    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints: entered";
+    LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints";
 
 //    constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
 //                                           param_.with_divisions,
@@ -416,14 +412,10 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     optimizer2_ = boost::shared_ptr<cplex2_optimizer>(new cplex2_optimizer(get_model(), cplex2_param_));
 #endif
 
-    //std::cout << "===========================================in explicit set_inference_parameters if(param_.with_constraints)==" << param_.with_constraints <<std::endl;
     if(param_.with_constraints)
     {
-        //std::cout << "==== START =========if(param_.with_constraints) == TRUE" << std::endl;
         LOG(logINFO) << "add_constraints";
         add_constraints(*optimizer2_);
-        //std::cout << "==== END   =========if(param_.with_constraints) == TRUE" << std::endl;
-
     }
     else
     {

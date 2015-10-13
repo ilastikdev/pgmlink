@@ -18,7 +18,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    //std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors" << std::endl;
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -61,7 +60,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     energy = param_.appearance_cost(traxel_map_[n]);
                 }
 
-                energy += generateRandomOffset(Appearance);
+                //energy += generateRandomOffset(Appearance);
                 cost.push_back(energy);
             }
             ++num_vars;
@@ -82,7 +81,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     energy = param_.disappearance_cost(traxel_map_[n]);
                 }
 
-                energy += generateRandomOffset(Disappearance);
+                //energy += generateRandomOffset(Disappearance);
                 cost.push_back(energy);
             }
             else
@@ -113,7 +112,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     e = param_.detection(*trax_it, state);
                     energy += e;
 
-                    energy += generateRandomOffset(Detection, e, *trax_it, 0, state);
+                    //energy += generateRandomOffset(Detection, e, *trax_it, 0, state);
                 }
                 // add all transition factors of the internal arcs
                 Traxel tr_prev;
@@ -128,7 +127,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                         //e = param_.transition( get_transition_probability(tr_prev, tr, state) );
                         e = param_.transition( tr_prev, tr, state);
                         energy += e;
-                        energy += generateRandomOffset(Transition, e, tr_prev, tr);
+                        //energy += generateRandomOffset(Transition, e, tr_prev, tr);
                     }
                     else
                     {
@@ -144,7 +143,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 f = param_.detectionNoWeight(traxel_map_[n], state);
                 energy = f;
 
-                energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
+                //energy += generateRandomOffset(Detection, e, traxel_map_[n], 0, state);
             }
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: detection[" << state
                            << "] = " << energy;
@@ -235,7 +234,6 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    //std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors" << std::endl;
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors";
 
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
@@ -262,7 +260,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 
             //double energy = param_.transition(get_transition_probability(tr1, tr2, state));
             double energy = param_.transition(tr1, tr2, state);
-            energy += generateRandomOffset(Transition, energy, tr1, tr2);
+            //energy += generateRandomOffset(Transition, energy, tr1, tr2);
 
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state
                            << "] = " << energy;
@@ -303,7 +301,6 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
 
-    //std::cout << ":::::::::::::::::::::::::::::>   StructuredLearningTrackingInferenceModel::add_finite_factors: add division factors" << std::endl;
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add division factors";
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -329,7 +326,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
                 tr = traxel_map_[n];
             }
             energy = param_.division(tr, state);
-            energy += generateRandomOffset(Division, energy,  tr);
+            //energy += generateRandomOffset(Division, energy,  tr);
 
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: division[" << state
                            << "] = " << energy;

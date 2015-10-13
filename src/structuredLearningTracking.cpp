@@ -336,10 +336,9 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-        ConservationExplicitTracking::SolverType solver)//,
-//        bool trainingToHardConstraints,
-//        unsigned int num_threads)
+        ConservationExplicitTracking::SolverType solver)
 {
+    std::cout << "in StructuredLearningTracking::get_structured_learning_tracking_parameters" << std::endl;
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
     LOG(logDEBUG1) << "size_dependent_detection_prob\t" <<  use_size_dependent_detection_ ;
     LOG(logDEBUG1) << "forbidden_cost\t" <<      forbidden_cost;
@@ -371,7 +370,6 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
-    std::cout << "BEFORE CONSTRUCTING ConservationExplicitTracking::Parameter param" << std::endl;
     ConservationExplicitTracking::Parameter param(
         max_number_objects_,
         detection,
@@ -420,6 +418,7 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
 
 void StructuredLearningTracking::structuredLearningFromParam(ConservationExplicitTracking::Parameter& param)
 {
+    transition_= param.transition;
     StructuredLearningTracking::structuredLearning(
         param.forbidden_cost,
         param.ep_gap,
@@ -437,7 +436,6 @@ void StructuredLearningTracking::structuredLearningFromParam(ConservationExplici
         param.uncertainty_param,
         param.cplex_timeout,
         param.transition_classifier);
-
 }
 
 void StructuredLearningTracking::setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights)
@@ -599,7 +597,9 @@ void StructuredLearningTracking::structuredLearning(
                 solver_);
         uncertainty_param_ = uncertaintyParam;
 
+        param.transition = transition_;
         ConservationExplicitTracking pgm(param);
+
 
         graph.push_back( pgm.get_prepared_graph(*(hypothesesSubGraph[m])) );
 
@@ -688,6 +688,7 @@ void StructuredLearningTracking::structuredLearning(
         for(size_t i=0; i<sltDataset.getModel(m).numberOfVariables();++i)
 
         sltDataset.build_model_with_loss(m);
+
     } // for model m
 
     sltDataset.getWeights().setWeight(0,trackingWeights_.getWeight(0));

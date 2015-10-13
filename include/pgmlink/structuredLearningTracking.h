@@ -160,6 +160,7 @@ protected:
     double detection_weight_;
     double transition_weight_;
 
+    boost::function<double (const Traxel&, const Traxel&, const size_t)> transition_;
 };
 
 } // end namespace pgmlink
