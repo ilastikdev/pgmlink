@@ -185,7 +185,7 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
     }
 #endif // WITH_DPCT
     else
-        throw new std::runtime_error("No solver type available to set up inference model");
+        throw std::runtime_error("No solver type available to set up inference model");
 }
 
 boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
@@ -208,11 +208,11 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inferen
     }
     else if (solver_ == DPInitCplexSolver)
     {
-        throw new std::runtime_error("DynProg-initialized CPLEX cannot handle perturbations (yet)");
+        throw std::runtime_error("DynProg-initialized CPLEX cannot handle perturbations (yet)");
     }
 #endif
     else
-        throw new std::runtime_error("No solver type available to set up perturbed inference model");
+        throw std::runtime_error("No solver type available to set up perturbed inference model");
 }
 
 HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypotheses)
@@ -240,11 +240,11 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
 void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 {
 #ifndef WITH_DPCT
-    throw new std::runtime_error("Dynamic Programming Solver has not been built!");
+    throw std::runtime_error("Dynamic Programming Solver has not been built!");
 #endif
 
     if(solver_ != DPInitCplexSolver)
-        throw new std::logic_error("TwoStageInference should only be called with DPInitCplexSolver");
+        throw std::logic_error("TwoStageInference should only be called with DPInitCplexSolver");
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
     // 1st stage: dyn prog
@@ -253,6 +253,8 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
     dyn_prog_inf_model->build_from_graph(*graph);
     IlpSolution temp = dyn_prog_inf_model->infer();
     dyn_prog_inf_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, temp);
+    if(!hypotheses.has_property(arc_value_count()))
+        throw std::logic_error("Something went wrong with concluding, arc_value_count() property is missing!");
 
     // set up 2nd stage: CPLEX
     boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = 

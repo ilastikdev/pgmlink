@@ -1072,11 +1072,17 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
     IlpSolution sol(number_of_division_nodes_ + number_of_appearance_nodes_ + number_of_disappearance_nodes_ + number_of_transition_nodes_);
 
     // WARNING: this only works with the _count maps, and not the single ones!
-    if(!g.has_property(arc_value_count()) ||
-        !g.has_property(node_active_count()) ||
-        !g.has_property(division_active_count()))
+    if(!g.has_property(arc_value_count()))
     {
-        throw new std::runtime_error("Can only extract solution from graph if active_count and arc_value_count maps are present!");
+        throw std::runtime_error("Can only extract solution from graph if arc_value_count map is present!");
+    }
+    if(!g.has_property(node_active_count()))
+    {
+        throw std::runtime_error("Can only extract solution from graph if node_active_count map is present!");
+    }
+    if(!g.has_property(division_active_count()))
+    {
+        throw std::runtime_error("Can only extract solution from graph if division_active_count map is present!");
     }
 
     property_map<arc_value_count, HypothesesGraph::base_graph>::type& arc_values =
@@ -1124,9 +1130,9 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
         size_t division = sol[div_node_map_[n]];
 
         if(incoming != node_state && incoming != 0)
-            throw new std::runtime_error("Invalid configuration, incoming transitions don't sum up to node label");
+            throw std::runtime_error("Invalid configuration, incoming transitions don't sum up to node label");
         if(outgoing != node_state + division && outgoing != 0)
-            throw new std::runtime_error("Invalid configuration, outgoing transitions don't sum to node state + divisions");
+            throw std::runtime_error("Invalid configuration, outgoing transitions don't sum to node state + divisions");
 
         sol[dis_node_map_[n]] = incoming;
         sol[app_node_map_[n]] = outgoing - division;
