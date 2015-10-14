@@ -241,8 +241,7 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 {
 #ifndef WITH_DPCT
     throw std::runtime_error("Dynamic Programming Solver has not been built!");
-#endif
-
+#else
     if(solver_ != DPInitCplexSolver)
         throw std::logic_error("TwoStageInference should only be called with DPInitCplexSolver");
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
@@ -274,6 +273,7 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
     constrack_inf_model->set_starting_point(initialization);
     IlpSolution sol = constrack_inf_model->infer();
     constrack_inf_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, sol);
+#endif
 }
 
 void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)

@@ -145,101 +145,103 @@ BOOST_AUTO_TEST_CASE( dummy )
 //}
 
 
-//BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Division ) {
+BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_Division ) {
 
-//    std::cout << "Constructing HypothesesGraph" << std::endl;
-//    std::cout << std::endl;
+   std::cout << "Constructing HypothesesGraph" << std::endl;
+   std::cout << std::endl;
 
-//    using lemon::INVALID;
+   using lemon::INVALID;
 
-//    std::cout << "Adding Traxels to TraxelStore" << std::endl;
-//    std::cout << std::endl;
+   std::cout << "Adding Traxels to TraxelStore" << std::endl;
+   std::cout << std::endl;
 
-//    //  t=1      2      3
-//    //                  o
-//    //                |
-//    //  D ---- D ----
-//    //                |
-//    //                  o
-//    TraxelStore ts;
-//    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-//    Traxel n11, n21, n31, n32;
-//    feature_array com(feature_array::difference_type(3));
-//    feature_array divProb(feature_array::difference_type(1));
-//    feature_array detProb(feature_array::difference_type(3));
-//    detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
-//    n11.Id = 1; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.8;
-//    n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-//    add(ts, fs, n11);
-//    n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.7;
-//    n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-//    add(ts, fs, n21);
-//    n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
-//    n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
-//    add(ts, fs, n31);
-//    n32.Id = 13; n32.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
-//    n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
-//    add(ts, fs, n32);
+   //  t=1      2      3
+   //                  o
+   //                |
+   //  D ---- D ----
+   //                |
+   //                  o
+   TraxelStore ts;
+   boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+   Traxel n11, n21, n31, n32;
+   feature_array com(feature_array::difference_type(3));
+   feature_array divProb(feature_array::difference_type(1));
+   feature_array detProb(feature_array::difference_type(3));
+   detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
+   n11.Id = 1; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.8;
+   n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+   add(ts, fs, n11);
+   n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.7;
+   n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+   add(ts, fs, n21);
+   n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+   n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
+   add(ts, fs, n31);
+   n32.Id = 13; n32.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
+   n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
+   add(ts, fs, n32);
 
 
-//    std::cout << "Initialize Conservation tracking" << std::endl;
-//    std::cout << std::endl;
+   std::cout << "Initialize Conservation tracking" << std::endl;
+   std::cout << std::endl;
 
-//    FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
-//    ConsTrackingDynProg tracking = ConsTrackingDynProg(
-//                         2, // max_number_objects
-//                         false, // detection_by_volume
-//                         double(1.1), // avg_obj_size
-//                         20, // max_neighbor_distance
-//                         true, //with_divisions
-//                         0.3, // division_threshold
-//                         "none", // random_forest_filename
-//                         fov
-//                         );
+   FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+   ConsTracking tracking = ConsTracking(
+                        2, // max_number_objects
+                        false, // detection_by_volume
+                        double(1.1), // avg_obj_size
+                        20, // max_neighbor_distance
+                        true, //with_divisions
+                        0.3, // division_threshold
+                        "none", // random_forest_filename
+                        fov,
+                        "none",
+                        ConservationTracking::DPInitCplexSolver
+                        );
 
-//    std::cout << "Run Conservation tracking" << std::endl;
-//    std::cout << std::endl;
+   std::cout << "Run Conservation tracking" << std::endl;
+   std::cout << std::endl;
 
-//    std::vector< std::vector<Event> > events = tracking(ts,
+   std::vector< std::vector<Event> > events = tracking(ts,
 
-//                                0, // forbidden_cost
-//                                0.0, // ep_gap
-//                                false, // with_tracklets
-//                                10.0, //division_weight
-//                                10.0, //transition_weight
-//                                1500., // disappearance_cost,
-//                                1500., // appearance_cost
-//                                false, //with_merger_resolution
-//                                3, //n_dim
-//                                5, //transition_parameter
-//                                0 //border_width for app/disapp costs
-//                                )[0];
+                               0, // forbidden_cost
+                               0.0, // ep_gap
+                               false, // with_tracklets
+                               10.0, //division_weight
+                               10.0, //transition_weight
+                               1500., // disappearance_cost,
+                               1500., // appearance_cost
+                               false, //with_merger_resolution
+                               3, //n_dim
+                               5, //transition_parameter
+                               0 //border_width for app/disapp costs
+                               )[0];
 
-//    size_t count_moves = 0;
-//    size_t count_divisions = 0;
-//    size_t t = 1;
-//    for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
-//        // events:
-//        // t = 1: 1x move
-//        // t = 2: 1x division
-//        BOOST_CHECK_EQUAL(it_t->size(),1);
+   size_t count_moves = 0;
+   size_t count_divisions = 0;
+   size_t t = 1;
+   for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
+       // events:
+       // t = 1: 1x move
+       // t = 2: 1x division
+       BOOST_CHECK_EQUAL(it_t->size(),1);
 
-//        for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
-//            Event e = *it;
-//            BOOST_CHECK_NE(e.type, Event::Disappearance);
-//            BOOST_CHECK_NE(e.type, Event::Appearance);
+       for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
+           Event e = *it;
+           BOOST_CHECK_NE(e.type, Event::Disappearance);
+           BOOST_CHECK_NE(e.type, Event::Appearance);
 
-//            if (e.type == Event::Move) {
-//                ++count_moves;
-//            } else if (e.type == Event::Division) {
-//                ++count_divisions;
-//            }
-//        }
-//        ++t;
-//    }
-//    BOOST_CHECK_EQUAL(count_moves, 1);
-//    BOOST_CHECK_EQUAL(count_divisions, 1);
-//}
+           if (e.type == Event::Move) {
+               ++count_moves;
+           } else if (e.type == Event::Division) {
+               ++count_divisions;
+           }
+       }
+       ++t;
+   }
+   BOOST_CHECK_EQUAL(count_moves, 1);
+   BOOST_CHECK_EQUAL(count_divisions, 1);
+}
 
 
 //BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove ) {
@@ -1684,136 +1686,135 @@ BOOST_AUTO_TEST_CASE( Tracking_DynProg_ConservationTracking_AppearanceSimple ) {
 //    BOOST_CHECK_EQUAL(multis, 0);
 //}
 
-//BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
+BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
+   std::cout << "Constructing HypothesesGraph" << std::endl;
+   std::cout << std::endl;
 
-//    std::cout << "Constructing HypothesesGraph" << std::endl;
-//    std::cout << std::endl;
+   using lemon::INVALID;
 
-//    using lemon::INVALID;
+   std::cout << "Adding Traxels to TraxelStore" << std::endl;
+   std::cout << std::endl;
 
-//    std::cout << "Adding Traxels to TraxelStore" << std::endl;
-//    std::cout << std::endl;
+   //  t=1      2
+   //  1 ------ 3
+   //      |
+   //  1D<
+   //      |
+   //  1 ------ 2
+   TraxelStore ts;
+   boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+   Traxel n11, n12, n13, n21, n22;
+   feature_array com(feature_array::difference_type(3));
+   feature_array divProb(feature_array::difference_type(1));
+   feature_array detProb(feature_array::difference_type(4));
+   feature_array count(feature_array::difference_type(1));
+   feature_array coordinates(feature_array::difference_type(2*3));
 
-//    //  t=1      2
-//    //  1 ------ 2
-//    //      |
-//    //  1D<
-//    //      |
-//    //  1 ------ 2
-//    TraxelStore ts;
-//    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
-//    Traxel n11, n12, n13, n21, n22;
-//    feature_array com(feature_array::difference_type(3));
-//    feature_array divProb(feature_array::difference_type(1));
-//    feature_array detProb(feature_array::difference_type(3));
-//    feature_array count(feature_array::difference_type(1));
-//    feature_array coordinates(feature_array::difference_type(2*3));
+   n11.Id = 11; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.01;
+   detProb[0] = 0.0; detProb[1] = 1.; detProb[2] = 0.0; detProb[3]= 0.0;
+   n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+   coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
+   coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
+   n11.features["coordinates"] = coordinates;
+   add(ts, fs, n11);
 
-//    n11.Id = 11; n11.Timestep = 1; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.01;
-//    detProb[0] = 0.0; detProb[1] = 1.; detProb[2] = 0.0;
-//    n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
-//    coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
-//    coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
-//    n11.features["coordinates"] = coordinates;
-//    add(ts, fs, n11);
+   n12.Id = 12; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 0; divProb[0] = 1.;
+   detProb[0] = 0.0; detProb[1] = 1.; detProb[2] = 0.0; detProb[3]= 0.0;
+   n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
+   coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
+   coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
+   n12.features["coordinates"] = coordinates;
+   add(ts, fs, n12);
 
-//    n12.Id = 12; n12.Timestep = 1; com[0] = 2; com[1] = 2; com[2] = 0; divProb[0] = 1.;
-//    detProb[0] = 0.0; detProb[1] = 1.; detProb[2] = 0.0;
-//    n12.features["com"] = com; n12.features["divProb"] = divProb; n12.features["detProb"] = detProb;
-//    coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
-//    coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
-//    n12.features["coordinates"] = coordinates;
-//    add(ts, fs, n12);
+   n13.Id = 13; n13.Timestep = 1; com[0] = 4; com[1] = 4; com[2] = 0; divProb[0] = 0.01;
+   detProb[0] = 0.00; detProb[1] = 1.; detProb[2] = 0.0; detProb[3]= 0.0;
+   n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["detProb"] = detProb;
+   coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
+   coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
+   n13.features["coordinates"] = coordinates;
+   add(ts, fs, n13);
 
-//    n13.Id = 13; n13.Timestep = 1; com[0] = 4; com[1] = 4; com[2] = 0; divProb[0] = 0.01;
-//    detProb[0] = 0.00; detProb[1] = 1.; detProb[2] = 0.0;
-//    n13.features["com"] = com; n13.features["divProb"] = divProb; n13.features["detProb"] = detProb;
-//    coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
-//    coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 1;
-//    n13.features["coordinates"] = coordinates;
-//    add(ts, fs, n13);
+   n21.Id = 21; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.01;
+   detProb[0] = 0.0; detProb[1] = 0.0; detProb[2] = 0.2; detProb[3] = 0.8;
+   n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+   coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
+   coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 0;
+   n21.features["coordinates"] = coordinates;
+   add(ts, fs, n21);
 
-//    n21.Id = 21; n21.Timestep = 2; com[0] = 0; com[1] = 0; com[2] = 0; divProb[0] = 0.01;
-//    detProb[0] = 0.0; detProb[1] = 0.0; detProb[2] = 1.;
-//    n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
-//    coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
-//    coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 0;
-//    n21.features["coordinates"] = coordinates;
-//    add(ts, fs, n21);
+   n22.Id = 22; n22.Timestep = 2; com[0] = 4; com[1] = 4; com[2] = 0; divProb[0] = 0.01;
+   detProb[0] = 0.0; detProb[1] = 0.0; detProb[2] = 1.; detProb[3] = 0.;
+   n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["detProb"] = detProb;
+   coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
+   coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 0;
+   n22.features["coordinates"] = coordinates;
+   add(ts, fs, n22);
 
-//    n22.Id = 22; n22.Timestep = 2; com[0] = 4; com[1] = 4; com[2] = 0; divProb[0] = 0.01;
-//    detProb[0] = 0.0; detProb[1] = 0.0; detProb[2] = 1.;
-//    n22.features["com"] = com; n22.features["divProb"] = divProb; n22.features["detProb"] = detProb;
-//    coordinates[0] = com[0]; coordinates[1] = com[1]; coordinates[2] = com[2];
-//    coordinates[3] = com[0] + 1; coordinates[4] = com[1] + 1; coordinates[5] = com[2] + 0;
-//    n22.features["coordinates"] = coordinates;
-//    add(ts, fs, n22);
+   std::cout << "Initialize Conservation tracking" << std::endl;
+   std::cout << std::endl;
 
-//    std::cout << "Initialize Conservation tracking" << std::endl;
-//    std::cout << std::endl;
+   FieldOfView fov(0, 0, 0, 0, 4, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
 
-//    FieldOfView fov(0, 0, 0, 0, 4, 1000, 1000, 1); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+   ConsTracking tracking = ConsTracking(
+                    3, // max_number_objects
+                    false, // detection_by_volume
+                    double(1.1), // avg_obj_size
+                    99999, // max_neighbor_distance
+                    true, //with_divisions
+                    0.1, // division_threshold
+                    "none", // random_forest_filename
+                    fov,
+                    "none",
+                    ConservationTracking::DPInitCplexSolver
+                    );
 
-//    ConsTrackingDynProg tracking = ConsTrackingDynProg(
-//                     2, // max_number_objects
-//                     false, // detection_by_volume
-//                     double(1.1), // avg_obj_size
-//                     99999, // max_neighbor_distance
-//                     true, //with_divisions
-//                     0.1, // division_threshold
-//                     "none", // random_forest_filename
-//                     fov,
-//                     "none"
-//                     );
+   std::cout << "Run Conservation tracking" << std::endl;
+   std::cout << std::endl;
 
-//    std::cout << "Run Conservation tracking" << std::endl;
-//    std::cout << std::endl;
+   std::vector< std::vector<Event> > events = tracking(ts,
+                               0, // forbidden_cost
+                               0.0, // ep_gap
+                               false, // with_tracklets
+                               10.0, //division_weight
+                               10.0, //transition_weight
+                               1500., // disappearance_cost,
+                               1500., // appearance_cost
+                               false, //with_merger_resolution
+                               2, //n_dim
+                               5, //transition_parameter
+                               0 //border_width for app/disapp costs
+                               )[0];
 
-//    std::vector< std::vector<Event> > events = tracking(ts,
-//                                0, // forbidden_cost
-//                                0.0, // ep_gap
-//                                true, // with_tracklets
-//                                10.0, //division_weight
-//                                10.0, //transition_weight
-//                                1500., // disappearance_cost,
-//                                1500., // appearance_cost
-//                                true, //with_merger_resolution
-//                                2, //n_dim
-//                                5, //transition_parameter
-//                                0 //border_width for app/disapp costs
-//                                )[0];
-
-//    size_t t = 1;
-//    BOOST_CHECK_EQUAL(events[t].size(), 7);
-//    size_t num_mergers = 0;
-//    for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
-//        Event e = *it;
-//        if (e.type == Event::Move && e.traxel_ids[0] == 11) {
-//            BOOST_CHECK_EQUAL(e.traxel_ids[1], 21);
-//        } else if (e.type == Event::Move && e.traxel_ids[0] == 13) {
-//            BOOST_CHECK_EQUAL(e.traxel_ids[1], 22);
-//        } else if (e.type == Event::Division && e.traxel_ids[0] == 12) {
-//            set<unsigned> division_set(e.traxel_ids.begin()+1, e.traxel_ids.end());
-//            set<unsigned> comparison_set;
-//            comparison_set.insert(21);
-//            comparison_set.insert(22);
-//            BOOST_CHECK_EQUAL_COLLECTIONS(division_set.begin(),
-//                                         division_set.end(),
-//                                         comparison_set.begin(),
-//                                         comparison_set.end());
-//        } else if (e.type == Event::Merger) {
-//            ++num_mergers;
-//            BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
-//        } else if (e.type == Event::ResolvedTo) {
-//            BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
-//        } else  {
-//            cout << "unexpected event: " << e;
-//            BOOST_CHECK(false);
-//        }
-//    }
-//    BOOST_CHECK_EQUAL(num_mergers, 2);
-
-//}
+   size_t t = 1;
+   BOOST_CHECK_EQUAL(events[t].size(), 5);
+   size_t num_mergers = 0;
+   for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
+       Event e = *it;
+       if (e.type == Event::Move && e.traxel_ids[0] == 11) {
+           BOOST_CHECK_EQUAL(e.traxel_ids[1], 21);
+       } else if (e.type == Event::Move && e.traxel_ids[0] == 13) {
+           BOOST_CHECK_EQUAL(e.traxel_ids[1], 22);
+       } else if (e.type == Event::Division && e.traxel_ids[0] == 12) {
+           set<unsigned> division_set(e.traxel_ids.begin()+1, e.traxel_ids.end());
+           set<unsigned> comparison_set;
+           comparison_set.insert(21);
+           comparison_set.insert(22);
+           BOOST_CHECK_EQUAL_COLLECTIONS(division_set.begin(),
+                                        division_set.end(),
+                                        comparison_set.begin(),
+                                        comparison_set.end());
+       } else if (e.type == Event::Merger) {
+           ++num_mergers;
+           BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
+       } else if (e.type == Event::ResolvedTo) {
+           BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
+       } else  {
+           cout << "unexpected event: " << e;
+           BOOST_CHECK(false);
+       }
+   }
+   BOOST_CHECK_EQUAL(num_mergers, 2);
+}
 
 //BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 ) {
 
