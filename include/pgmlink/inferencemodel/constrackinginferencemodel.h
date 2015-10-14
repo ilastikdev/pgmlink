@@ -69,7 +69,10 @@ public: // API
                           std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
                           IlpSolution &solution);
 
-    IlpSolution extract_solution_from_graph(const HypothesesGraph&, size_t solutionIndex=0);
+    IlpSolution extract_solution_from_graph(const HypothesesGraph &g,
+                          const HypothesesGraph &tracklet_graph,
+                          const std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                          size_t solutionIndex=0) const;
 
     // output
     void printResults(const HypothesesGraph &g);

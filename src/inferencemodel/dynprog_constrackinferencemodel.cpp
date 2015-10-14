@@ -454,6 +454,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
         {
             active_arcs_count.set(a, std::vector<bool>());
+            arc_values.set(a, std::vector<size_t>());
         }
         for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
         {

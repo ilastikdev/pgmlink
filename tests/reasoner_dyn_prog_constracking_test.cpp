@@ -806,12 +806,12 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_AppearanceSimple ) 
    std::vector< std::vector<Event> > events = tracking(ts,
                                0, // forbidden_cost
                                0.0, // ep_gap
-                               false, // with_tracklets
+                               true, // with_tracklets
                                10.0, //division_weight
                                10.0, //transition_weight
                                1500., // disappearance_cost,
                                1500., // appearance_cost
-                               false, //with_merger_resolution
+                               true, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
                                0 //border_width for app/disapp costs
@@ -1779,14 +1779,14 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
                                10.0, //transition_weight
                                1500., // disappearance_cost,
                                1500., // appearance_cost
-                               false, //with_merger_resolution
+                               true, //with_merger_resolution
                                2, //n_dim
                                5, //transition_parameter
                                0 //border_width for app/disapp costs
                                )[0];
 
    size_t t = 1;
-   BOOST_CHECK_EQUAL(events[t].size(), 5);
+   BOOST_CHECK_EQUAL(events[t].size(), 7);
    size_t num_mergers = 0;
    for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
        Event e = *it;

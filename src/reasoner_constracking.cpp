@@ -261,8 +261,9 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
     constrack_inf_model->build_from_graph(*graph);
 
     // extract solution from 1st stage and use as initialization
-    IlpSolution initialization = constrack_inf_model->extract_solution_from_graph(*graph);
 
+    IlpSolution initialization = constrack_inf_model->extract_solution_from_graph(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
+    
     std::cout << "Extracted solution: ";
     for(size_t i : initialization)
         std::cout << i << " ";

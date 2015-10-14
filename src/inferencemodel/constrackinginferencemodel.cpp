@@ -883,6 +883,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
         for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
         {
             active_arcs_count.set(a, std::vector<bool>());
+            arc_values.set(a, std::vector<size_t>());
         }
         for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
         {
@@ -903,6 +904,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     {
         active_arcs.set(a, false);
         active_arcs_count.get_value(a).push_back(0);
+        arc_values.get_value(a).push_back(0);
     }
 
     // write state after inference into 'active'-property maps
@@ -1066,7 +1068,11 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     }
 }
 
-ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solution_from_graph(const HypothesesGraph& g, size_t solutionIndex)
+ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solution_from_graph(
+  const HypothesesGraph &g,
+  const HypothesesGraph &tracklet_graph,
+  const std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+  size_t solutionIndex) const
 {
     // allocate enough space
     IlpSolution sol(number_of_division_nodes_ + number_of_appearance_nodes_ + number_of_disappearance_nodes_ + number_of_transition_nodes_);
@@ -1093,15 +1099,19 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
         g.get(division_active_count());    
 
     // extract divisions
-    for (std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
+    for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
          it != div_node_map_.end(); 
          ++it)
     {
         assert(it->second < sol.size());
         // assert(active_divisions_count.find(it->first) != active_divisions_count.end());
-        assert(active_divisions_count[it->first].size() > solutionIndex);
+        HypothesesGraph::Node node = it->first;
+        if(param_.with_tracklets)
+            node = tracklet2traxel_node_map.at(node).back();
 
-        sol[it->second] = active_divisions_count[it->first][solutionIndex] ? 1 : 0;;
+        assert(active_divisions_count[node].size() > solutionIndex);
+
+        sol[it->second] = active_divisions_count[node][solutionIndex] ? 1 : 0;;
     }
 
     std::function<size_t(HypothesesGraph::Node&)> findFlowAlongOutArcs([&](HypothesesGraph::Node& n){
@@ -1119,35 +1129,69 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
     });
 
     // extract appearances/disappearances
-    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    HypothesesGraph::NodeIt n = HypothesesGraph::NodeIt(g);
+    if(param_.with_tracklets)
+        n = HypothesesGraph::NodeIt(tracklet_graph);
+
+    for(; n != lemon::INVALID; ++n)
     {
         assert(app_node_map_.find(n) != app_node_map_.end());
         assert(dis_node_map_.find(n) != dis_node_map_.end());
 
-        size_t node_state = active_nodes_count[n][solutionIndex];
-        size_t incoming = findFlowAlongInArcs(n);
-        size_t outgoing = findFlowAlongOutArcs(n);
-        size_t division = sol[div_node_map_[n]];
+        HypothesesGraph::Node node_begin = n;
+        HypothesesGraph::Node node_end = n;
+
+        if(param_.with_tracklets)
+        {
+            node_begin = tracklet2traxel_node_map.at(n).front();
+            node_end = tracklet2traxel_node_map.at(n).back();
+        }
+
+        size_t node_state = active_nodes_count[node_end][solutionIndex];
+        size_t incoming = findFlowAlongInArcs(node_begin);
+        size_t outgoing = findFlowAlongOutArcs(node_end);
+        size_t division = 0;
+        if(div_node_map_.find(n) != div_node_map_.end())
+            division = sol[div_node_map_.at(n)];
 
         if(incoming != node_state && incoming != 0)
             throw std::runtime_error("Invalid configuration, incoming transitions don't sum up to node label");
         if(outgoing != node_state + division && outgoing != 0)
             throw std::runtime_error("Invalid configuration, outgoing transitions don't sum to node state + divisions");
 
-        sol[dis_node_map_[n]] = incoming;
-        sol[app_node_map_[n]] = outgoing - division;
+        sol[dis_node_map_.at(n)] = incoming;
+        sol[app_node_map_.at(n)] = outgoing - division;
     }
 
     // extract transitions
-    for (std::map<HypothesesGraph::Arc, size_t>::const_iterator it = arc_map_.begin();
+    for(std::map<HypothesesGraph::Arc, size_t>::const_iterator it = arc_map_.begin();
          it != arc_map_.end(); 
          ++it)
     {
+        HypothesesGraph::Arc arc = it->first;
+        if(param_.with_tracklets)
+        {
+            HypothesesGraph::Node s = tracklet2traxel_node_map.at(tracklet_graph.source(arc)).back();
+            HypothesesGraph::Node t = tracklet2traxel_node_map.at(tracklet_graph.target(arc)).front();
+
+            // find proper arc in original hypothesesgraph
+            for (HypothesesGraph::OutArcIt oa(g, s); oa != lemon::INVALID; ++oa)
+            {
+                if(g.target(oa) == t)
+                {
+                    arc = oa;
+                    break;
+                }
+            }
+
+            if(arc == it->first)
+                throw std::runtime_error("Did not find corresponding arc in non-tracklet hypothesesgraph!");
+        }
+
         assert(it->second < sol.size());
-        // assert(arc_values.find(it->first) != arc_values.end());
-        assert(arc_values[it->first].size() > solutionIndex);
+        assert(arc_values[arc].size() > solutionIndex);
         
-        sol[it->second] = arc_values[it->first][solutionIndex];
+        sol[it->second] = arc_values[arc][solutionIndex];
     }
 
     return sol;
