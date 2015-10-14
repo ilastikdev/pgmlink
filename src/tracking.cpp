@@ -352,6 +352,10 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 
     if (with_merger_resolution)
     {
+        // always run merger resolving with CPLEX
+        ConservationTracking::SolverType chosen_solver = solver_;
+        solver_ = ConservationTracking::CplexSolver;
+
         EventVectorVectorVector merger_resolved_events;
 
         for(auto& event : events)
@@ -368,6 +372,9 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                                                  transition_classifier
                                              ));
         }
+
+        // reset solver
+        solver_ = chosen_solver;
 
         return merger_resolved_events;
     }
