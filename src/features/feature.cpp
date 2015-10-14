@@ -102,7 +102,11 @@ double NegLnCellness::operator()(const Traxel& tr) const
     {
         cellness = 0.00001;
     }
-    return w_ * -1 * log(cellness);
+    double result = w_ * -1 * log(cellness);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 
 
@@ -116,7 +120,11 @@ double NegLnOneMinusCellness::operator()(const Traxel& tr) const
     {
         arg = 0.00001;
     }
-    return w_ * -1 * log(arg);
+    double result = w_ * -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 
 
@@ -130,7 +138,11 @@ double NegLnDetection::operator ()(const Traxel& tr, size_t state) const
     {
         arg = 0.0000000001;
     }
-    return w_ * -1 * log(arg);
+    double result = w_ * -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 
 ////
@@ -143,7 +155,11 @@ double NegLnDetectionNoWeight::operator ()(const Traxel& tr, size_t state) const
     {
         arg = 0.0000000001;
     }
-    return -1 * log(arg);
+    double result = -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 double NegLnDetection::getw()
 {
@@ -164,7 +180,11 @@ double NegLnDivision::operator ()(const Traxel& tr, size_t state) const
     {
         arg = 0.0000000001;
     }
-    return w_ * -1 * log(arg);
+    double result = w_ * -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 double NegLnDivision::getw()
 {
@@ -181,7 +201,11 @@ double NegLnTransition::operator ()(const double dist_prob) const
     {
         arg = 0.0000000001;
     }
-    return w_ * -1 * log(arg);
+    double result = w_ * -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 
 
@@ -212,7 +236,11 @@ double NegLnConstant::operator ()(size_t state) const
     {
         arg = 0.0000000001;
     }
-    return w_ * -1 * log(arg);
+    double result = w_ * -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 
 ////
@@ -230,7 +258,11 @@ double NegLnConstantNoWeight::operator ()(size_t state) const
     {
         arg = 0.0000000001;
     }
-    return -1 * log(arg);
+    double result = -1 * log(arg);
+    if (result == -0)
+        return 0;
+    else
+        return result;
 }
 
 ////
