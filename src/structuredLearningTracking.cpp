@@ -722,8 +722,8 @@ void StructuredLearningTracking::structuredLearning(
 //    infPara.maxNumIterations_ = 5;
 //    infPara.maxNumConstraintsPerIter_ = 10;
 
-    //infPara.verbose_ = true;
-    infPara.verbose_ = false;
+    infPara.verbose_ = true;
+    //infPara.verbose_ = false;
     infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;

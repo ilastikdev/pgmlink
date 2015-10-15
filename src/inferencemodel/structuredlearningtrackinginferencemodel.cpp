@@ -31,6 +31,130 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
         size_t num_vars = 0;
+//        std::vector<size_t> vi;
+//        std::vector<double> cost;
+
+//        int node_begin_time = -1;
+//        int node_end_time = -1;
+//            node_begin_time = traxel_map_[n].Timestep;
+//            node_end_time = traxel_map_[n].Timestep;
+
+        double energy;//, e, f;//, w;
+        if (app_node_map_.count(n) > 0)
+        {
+//            vi.push_back(app_node_map_[n]);
+//            // "<" holds if there are only tracklets in the first frame
+//            if (node_begin_time <= g.earliest_timestep())
+//            {
+//                // pay no appearance costs in the first timestep
+//                cost.push_back(0.);
+//            }
+//            else
+//            {
+//                energy = param_.appearance_cost(traxel_map_[n]);
+//                cost.push_back(energy);
+//            }
+            ++num_vars;
+        }
+
+        if (dis_node_map_.count(n) > 0)
+        {
+//            vi.push_back(dis_node_map_[n]);
+//            // "<" holds if there are only tracklets in the last frame
+//            if (node_end_time < g.latest_timestep())
+//            {
+//                energy = param_.disappearance_cost(traxel_map_[n]);
+
+//                cost.push_back(energy);
+//            }
+//            else
+//            {
+//                cost.push_back(0);
+//            }
+            ++num_vars;
+        }
+        // convert vector to array
+//        std::vector<size_t> coords(num_vars, 0);
+
+//        std::vector<size_t> shape(num_vars, (param_.max_number_objects + 1));
+//        marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
+
+        for (size_t state = 0; state <= param_.max_number_objects; ++state)
+        {
+                //e = param_.detection(traxel_map_[n], state);
+                //f = param_.detectionNoWeight(traxel_map_[n], state);
+                energy = param_.detectionNoWeight(traxel_map_[n], state);
+
+            for (size_t var_idx = 0; var_idx < num_vars; ++var_idx)
+            {
+//                coords[var_idx] = state;
+
+//                energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
+//                energiesP(coords.begin()) = energy;
+
+                if (energy < minEnergyP)
+                    minEnergyP = energy;
+                if (energy > maxEnergyP)
+                    maxEnergyP = energy;
+
+                if (var_idx == 0){ // A
+//                    energiesA(coords.begin()) = state;// * cost[var_idx];
+//                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
+                    if (state < minEnergyA)
+                        minEnergyA = state;
+                    if (state > maxEnergyA)
+                        maxEnergyA = state;
+                }
+                else{ // D
+//                    energiesD(coords.begin()) = state;// * cost[var_idx];
+//                    energiesDVec(coordsVec.begin()) = state;// * cost[var_idx];
+                    if (state < minEnergyD)
+                        minEnergyD = state;
+                    if (state > maxEnergyD)
+                        maxEnergyD = state;
+                }
+
+//                coords[var_idx] = 0;
+            }
+            // also this energy if both variables have the same state
+            if (num_vars == 2)
+            {
+//                coords[0] = state;
+//                coords[1] = state;
+
+//                energiesP(coords.begin()) = energy;
+
+                if (energy < minEnergyP)
+                    minEnergyP = energy;
+                if (energy > maxEnergyP)
+                    maxEnergyP = energy;
+
+//                coords[0] = 0;
+//                coords[1] = 0;
+
+            }
+        } // end for state
+    } // end for node n
+
+    std::cout << "minEnergyDet " << minEnergyP << std::endl;
+    std::cout << "maxEnergyDet " << maxEnergyP << std::endl;
+    std::cout << "minEnergyApp " << minEnergyA << std::endl;
+    std::cout << "maxEnergyApp " << maxEnergyA << std::endl;
+    std::cout << "minEnergyDis " << minEnergyD << std::endl;
+    std::cout << "maxEnergyDis " << maxEnergyD << std::endl;
+
+    double minEnergyPnew = (double)std::numeric_limits<double>::infinity();
+    double maxEnergyPnew = 0.0;
+    double minEnergyAnew = (double)std::numeric_limits<double>::infinity();
+    double maxEnergyAnew = 0.0;
+    double minEnergyDnew = (double)std::numeric_limits<double>::infinity();
+    double maxEnergyDnew = 0.0;
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        size_t num_vars = 0;
         std::vector<size_t> vi;
         std::vector<double> cost;
 
@@ -83,12 +207,12 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         marray::Marray<double> energiesA(shape.begin(), shape.end(), param_.forbidden_cost);
         marray::Marray<double> energiesD(shape.begin(), shape.end(), param_.forbidden_cost);
 
-        std::vector<size_t> coordsVec(1, 0);
-        std::vector<size_t> shapeVec(1,(param_.max_number_objects + 1)*(param_.max_number_objects + 1));
-        marray::Marray<double> energiesVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
-        marray::Marray<double> energiesPVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
-        marray::Marray<double> energiesAVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
-        marray::Marray<double> energiesDVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
+//        std::vector<size_t> coordsVec(1, 0);
+//        std::vector<size_t> shapeVec(1,(param_.max_number_objects + 1)*(param_.max_number_objects + 1));
+//        marray::Marray<double> energiesVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesPVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesAVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
+//        marray::Marray<double> energiesDVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
 
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
@@ -101,9 +225,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             for (size_t var_idx = 0; var_idx < num_vars; ++var_idx)
             {
                 coords[var_idx] = state;
-                coordsVec[0] = coords[0]*(param_.max_number_objects + 1)+coords[1];
-//                coordsSym[0] = coords[1];
-//                coordsSym[1] = coords[0];
+//                coordsVec[0] = coords[0]*(param_.max_number_objects + 1)+coords[1];
 
 
                 // if only one of the variables is > 0, then it is an appearance in this time frame
@@ -112,31 +234,33 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
 
                 energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
-                energiesP(coords.begin()) = energy;
+                energiesP(coords.begin()) = (energy-minEnergyP)/(maxEnergyP-minEnergyP);
 
-                energiesVec(coordsVec.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
-                energiesPVec(coordsVec.begin()) = energy;
+//                energiesVec(coordsVec.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
+//                energiesPVec(coordsVec.begin()) = energy;
 
-                if (energy < minEnergyP)
-                    minEnergyP = energy;
-                if (energy > maxEnergyP)
-                    maxEnergyP = energy;
+                if (energiesP(coords.begin()) < minEnergyPnew)
+                    minEnergyPnew = energiesP(coords.begin());
+                if (energiesP(coords.begin()) > maxEnergyPnew)
+                    maxEnergyPnew = energiesP(coords.begin());
 
                 if (var_idx == 0){ // A
-                    energiesA(coords.begin()) = state;// * cost[var_idx];
-                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
-                    if (state < minEnergyA)
-                        minEnergyA = state;
-                    if (state > maxEnergyA)
-                        maxEnergyA = state;
+                    energiesA(coords.begin()) = (state-minEnergyA)/(maxEnergyA-minEnergyA);// * cost[var_idx];
+//                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
+
+                    if (energiesA(coords.begin()) < minEnergyAnew)
+                        minEnergyAnew = energiesA(coords.begin());
+                    if (energiesA(coords.begin()) > maxEnergyAnew)
+                        maxEnergyAnew = energiesA(coords.begin());
                 }
                 else{ // D
-                    energiesD(coords.begin()) = state;// * cost[var_idx];
-                    energiesDVec(coordsVec.begin()) = state;// * cost[var_idx];
-                    if (state < minEnergyD)
-                        minEnergyD = state;
-                    if (state > maxEnergyD)
-                        maxEnergyD = state;
+                    energiesD(coords.begin()) = (state-minEnergyD)/(maxEnergyD-minEnergyD);// * cost[var_idx];
+//                    energiesDVec(coordsVec.begin()) = state;// * cost[var_idx];
+
+                    if (energiesD(coords.begin()) < minEnergyDnew)
+                        minEnergyDnew = energiesD(coords.begin());
+                    if (energiesD(coords.begin()) > maxEnergyDnew)
+                        maxEnergyDnew = energiesD(coords.begin());
                 }
 
                 coords[var_idx] = 0;
@@ -148,18 +272,19 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             {
                 coords[0] = state;
                 coords[1] = state;
-                coordsVec[0] = coords[0]*(param_.max_number_objects + 1)+coords[1];
+//                coordsVec[0] = coords[0]*(param_.max_number_objects + 1)+coords[1];
                 // only pay detection energy if both variables are on
 
                 energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy;
-                energiesP(coords.begin()) = energy;
+                energiesP(coords.begin()) = (energy-minEnergyP)/(maxEnergyP-minEnergyP);
 
-                energiesVec(coordsVec.begin()) = inferenceWeights_.getWeight((size_t)0) * energy;
-                energiesPVec(coordsVec.begin()) = energy;
-                if (energy < minEnergyP)
-                    minEnergyP = energy;
-                if (energy > maxEnergyP)
-                    maxEnergyP = energy;
+//                energiesVec(coordsVec.begin()) = inferenceWeights_.getWeight((size_t)0) * energy;
+//                energiesPVec(coordsVec.begin()) = energy;
+
+                if (energiesP(coords.begin()) < minEnergyPnew)
+                    minEnergyPnew = energiesP(coords.begin());
+                if (energiesP(coords.begin()) > maxEnergyPnew)
+                    maxEnergyPnew = energiesP(coords.begin());
 
                 coords[0] = 0;
                 coords[1] = 0;
@@ -169,11 +294,11 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             }
         } // end for state
 
-        marray::Marray<double> errorMA(shape.begin(), shape.end(), param_.forbidden_cost);
-        errorMA = energies - inferenceWeights_.getWeight((size_t)0) * energiesP - cost[0]*energiesA - cost[1]*energiesD;
+//        marray::Marray<double> errorMA(shape.begin(), shape.end(), param_.forbidden_cost);
+//        errorMA = energies - inferenceWeights_.getWeight((size_t)0) * energiesP - cost[0]*energiesA - cost[1]*energiesD;
 
-        marray::Marray<double> errorMAVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
-        errorMAVec = energiesVec - inferenceWeights_.getWeight((size_t)0) * energiesPVec - cost[0]*energiesAVec - cost[1]*energiesDVec;
+//        marray::Marray<double> errorMAVec(shapeVec.begin(), shapeVec.end(), param_.forbidden_cost);
+//        errorMAVec = energiesVec - inferenceWeights_.getWeight((size_t)0) * energiesPVec - cost[0]*energiesAVec - cost[1]*energiesDVec;
 
 //        std::cout << "energies ==========================================================" << std::endl;
 //        for (size_t state = 0; state <= param_.max_number_objects; ++state){
@@ -304,13 +429,12 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
     } // end for node n
 
-    std::cout << "minEnergyDet " << minEnergyP << std::endl;
-    std::cout << "...............................................maxEnergyDet " << maxEnergyP << std::endl;
-    std::cout << "minEnergyApp " << minEnergyA << std::endl;
-    std::cout << "...............................................maxEnergyApp " << maxEnergyA << std::endl;
-    std::cout << "minEnergyDis " << minEnergyD << std::endl;
-    std::cout << "...............................................maxEnergyDis " << maxEnergyD << std::endl;
-
+    std::cout << "minEnergyDet new " << minEnergyPnew << std::endl;
+    std::cout << "maxEnergyDet new " << maxEnergyPnew << std::endl;
+    std::cout << "minEnergyApp new " << minEnergyAnew << std::endl;
+    std::cout << "maxEnergyApp new " << maxEnergyAnew << std::endl;
+    std::cout << "minEnergyDis new " << minEnergyDnew << std::endl;
+    std::cout << "maxEnergyDis new " << maxEnergyDnew << std::endl;
     return factorIndex;
 }
 
@@ -327,6 +451,64 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 
     double minEnergy = (double)std::numeric_limits<double>::infinity();
     double maxEnergy = 0.0;
+
+    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+    {
+//        size_t vi[] = { arc_map_[a] };
+//        std::vector<size_t> coords(1, 0);
+
+//        std::vector<size_t> shape(1, (param_.max_number_objects + 1));
+//        marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
+
+        for (size_t state = 0; state <= param_.max_number_objects; ++state)
+        {
+            Traxel tr1, tr2;
+            tr1 = traxel_map_[g.source(a)];
+            tr2 = traxel_map_[g.target(a)];
+
+            //double energy = param_.transition(get_transition_probability(tr1, tr2, state));
+            double energy = param_.transition(tr1, tr2, state);
+            //energy += generateRandomOffset(Transition, energy, tr1, tr2);
+
+            LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state
+                           << "] = " << energy;
+//            coords[0] = state;
+//            energies(coords.begin()) = energy;
+            if (energy < minEnergy)
+                minEnergy = energy;
+            if (energy > maxEnergy)
+                maxEnergy = energy;
+//            coords[0] = 0;
+        }
+        //factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
+
+
+//        std::vector<size_t> weightIDs;
+//        weightIDs.push_back((size_t)2);
+//        std::vector<marray::Marray<double>> features;
+//        features.push_back(energies);
+
+//        std::vector<size_t> varShape;
+//        varShape.push_back((size_t)1+param_.max_number_objects);
+
+//        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+
+//        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
+//        model_.addFactor(funcId, vi, vi + 1);
+
+//        std::cout << "energies ==========================TRANSITION================================" << std::endl;
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            coords[0] = state;
+//            std::cout << energies(coords.begin()) << " ";
+//        }
+//        std::cout << std::endl;
+    }
+
+    std::cout << "minEnergyTran  " << minEnergy << std::endl;
+    std::cout << "maxEnergyTran " << maxEnergy << std::endl;
+
+    double minEnergyNew = (double)std::numeric_limits<double>::infinity();
+    double maxEnergyNew = 0.0;
 
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
@@ -349,14 +531,15 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state
                            << "] = " << energy;
             coords[0] = state;
-            energies(coords.begin()) = energy;
-            if (energy < minEnergy)
-                minEnergy = energy;
-            if (energy > maxEnergy)
-                maxEnergy = energy;
+            energies(coords.begin()) = (energy-minEnergy)/(maxEnergy-minEnergy);
+
+            if (energies(coords.begin()) < minEnergyNew)
+                minEnergyNew = energies(coords.begin());
+            if (energies(coords.begin()) > maxEnergyNew)
+                maxEnergyNew = energies(coords.begin());
             coords[0] = 0;
         }
-        factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
+        //factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
 
 
         std::vector<size_t> weightIDs;
@@ -380,9 +563,8 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 //        std::cout << std::endl;
     }
 
-    std::cout << "minEnergyTran  " << minEnergy << std::endl;
-    std::cout << "...............................................maxEnergyTran " << maxEnergy << std::endl;
-
+    std::cout << "minEnergyTran new " << minEnergyNew << std::endl;
+    std::cout << "maxEnergyTran new " << maxEnergyNew << std::endl;
     return factorIndex;
 }
 
@@ -410,6 +592,69 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         {
             continue;
         }
+//        size_t vi[] = { div_node_map_[n] };
+//        std::vector<size_t> coords(1, 0);
+//        std::vector<size_t> shape(1, 2);
+//        marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
+
+        for (size_t state = 0; state <= 1; ++state)
+        {
+            double energy;
+            Traxel tr;
+            tr = traxel_map_[n];
+            //energy = param_.division(tr, state);
+            energy = param_.divisionNoWeight(tr, state);
+
+
+            //energy += generateRandomOffset(Division, energy,  tr);
+
+//            LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: division[" << state
+//                           << "] = " << energy;
+//            std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: tr=" << tr << " state=" << state << " division[" << state
+//                           << "] = " << energy << std::endl;
+//            coords[0] = state;
+//            energies(coords.begin()) = energy;
+
+            if (energy < minEnergy)
+                minEnergy = energy;
+            if (energy > maxEnergy)
+                maxEnergy = energy;
+//            coords[0] = 0;
+        }
+        //factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
+
+//        std::vector<size_t> weightIDs;
+//        weightIDs.push_back((size_t)1);
+//        std::vector<marray::Marray<double>> features;
+//        features.push_back(energies);
+//        std::vector<size_t> varShape;
+//        varShape.push_back((size_t)2);
+
+//        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
+
+//        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
+//        model_.addFactor(funcId, vi, vi + 1);
+
+//        std::cout << "=========================DIVISION=================================" << std::endl;
+//        for (size_t state = 0; state < 2; ++state){
+//            coords[0] = state;
+//            std::cout << energies(coords.begin()) << " ";
+//        }
+//        std::cout << std::endl;
+    }
+
+    std::cout << "minEnergyDiv  " << minEnergy << std::endl;
+    std::cout << "maxEnergyDiv " << maxEnergy << std::endl;
+
+    double minEnergyNew = (double)std::numeric_limits<double>::infinity();
+    double maxEnergyNew = 0.0;
+
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        if (div_node_map_.count(n) == 0)
+        {
+            continue;
+        }
         size_t vi[] = { div_node_map_[n] };
         std::vector<size_t> coords(1, 0);
         std::vector<size_t> shape(1, 2);
@@ -419,14 +664,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         {
             double energy;
             Traxel tr;
-//            if (param_.with_tracklets)
-//            {
-//                tr = tracklet_map_[n].back();
-//            }
-//            else
-//            {
-                tr = traxel_map_[n];
-//            }
+            tr = traxel_map_[n];
             //energy = param_.division(tr, state);
             energy = param_.divisionNoWeight(tr, state);
 
@@ -438,14 +676,15 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 //            std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: tr=" << tr << " state=" << state << " division[" << state
 //                           << "] = " << energy << std::endl;
             coords[0] = state;
-            energies(coords.begin()) = energy;
-            if (energy < minEnergy)
-                minEnergy = energy;
-            if (energy > maxEnergy)
-                maxEnergy = energy;
+            energies(coords.begin()) = (energy-minEnergy)/(maxEnergy-minEnergy);
+
+            if (energies(coords.begin()) < minEnergyNew)
+                minEnergyNew = energies(coords.begin());
+            if (energies(coords.begin()) > maxEnergyNew)
+                maxEnergyNew = energies(coords.begin());
             coords[0] = 0;
         }
-        factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
+        //factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
 
         std::vector<size_t> weightIDs;
         weightIDs.push_back((size_t)1);
@@ -467,8 +706,8 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 //        std::cout << std::endl;
     }
 
-    std::cout << "minEnergyDiv  " << minEnergy << std::endl;
-    std::cout << "...............................................maxEnergyDiv " << maxEnergy << std::endl;
+    std::cout << "minEnergyDiv New " << minEnergyNew << std::endl;
+    std::cout << "maxEnergyDiv New " << maxEnergyNew << std::endl;
 
     return factorIndex;
 }
