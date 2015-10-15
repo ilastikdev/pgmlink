@@ -59,8 +59,6 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
         )
 {
 
-    //std::cout << " ===============>I am GETTING CALLED !?!?!?!?!?!?!?!?!?!?    <======================" << std::endl;
-
     assert(g.has_property(appearance_label()));
     property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
 

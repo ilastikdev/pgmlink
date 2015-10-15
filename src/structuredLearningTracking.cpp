@@ -109,6 +109,7 @@ void StructuredLearningTracking::prepareTracking(ConservationExplicitTracking& p
     inference_model_param_.detection = param.detection;
     inference_model_param_.detectionNoWeight = param.detectionNoWeight;
     inference_model_param_.division = param.division;
+    inference_model_param_.divisionNoWeight = param.divisionNoWeight;
     inference_model_param_.transition = param.transition;
     inference_model_param_.transition_parameter = param.transition_parameter;
     inference_model_param_.transition_classifier = param.transition_classifier;
@@ -233,6 +234,7 @@ void StructuredLearningTracking::addDivisionLabel(int time, int label, double ce
         if (traxel_map[node].Id == label){
             //std::cout << " StructuredLearningTracking::DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
             hypotheses_graph_->add_division_label(node, cellCount);
+            //std::cout << " StructuredLearningTracking::DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << hypotheses_graph_->get_division_label(node) << std::endl;
         }
 }
 
@@ -368,6 +370,7 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
     LOG(logDEBUG1) << "division_weight = " << division_weight;
     LOG(logDEBUG1) << "transition_weight = " << transition_weight;
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
     ConservationExplicitTracking::Parameter param(
@@ -459,7 +462,7 @@ void StructuredLearningTracking::setParameterWeights(ConservationExplicitTrackin
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
-        param.detection = NegLnDetection(weights[0]); // weight
+        param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
@@ -482,6 +485,8 @@ void StructuredLearningTracking::setParameterWeights(ConservationExplicitTrackin
     }
 
     param.division = NegLnDivision(weights[1]);
+    param.divisionNoWeight = NegLnDivisionNoWeight(weights[1]);
+
     //param.transition = NegLnTransition(weights[2]); // TODO: define the default
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
@@ -717,8 +722,8 @@ void StructuredLearningTracking::structuredLearning(
 //    infPara.maxNumIterations_ = 5;
 //    infPara.maxNumConstraintsPerIter_ = 10;
 
-    infPara.verbose_ = true;
-    //infPara.verbose_ = false;
+    //infPara.verbose_ = true;
+    infPara.verbose_ = false;
     infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;

@@ -945,7 +945,9 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
     LOG(logDEBUG1) << "division_weight = " << division_weight;
     LOG(logDEBUG1) << "transition_weight = " << transition_weight;
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+    LOG(logDEBUG1) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
 
     ConservationTracking::Parameter param(
@@ -1035,6 +1037,7 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     }
 
     param.division = NegLnDivision(weights[1]);
+    param.divisionNoWeight = NegLnDivisionNoWeight(weights[1]);
     //param.transition = NegLnTransition(weights[2]); // TODO: define the default
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
@@ -1714,7 +1717,9 @@ ConservationExplicitTracking::Parameter ConsExplicitTracking::get_conservation_t
     LOG(logDEBUG1) << "division_weight = " << division_weight;
     LOG(logDEBUG1) << "transition_weight = " << transition_weight;
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+    LOG(logDEBUG1) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
 
     ConservationExplicitTracking::Parameter param(
@@ -1795,6 +1800,7 @@ void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Par
     }
 
     param.division = NegLnDivision(weights[1]);
+    param.divisionNoWeight = NegLnDivisionNoWeight(weights[1]);
     //param.transition = NegLnTransition(weights[2]); // TODO: default parameter
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],

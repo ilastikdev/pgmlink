@@ -39,7 +39,6 @@ public:
         Parameter(
             unsigned int max_number_objects,
             boost::function<double (const Traxel&, const size_t)> detection,
-            //boost::function<double (const Traxel&, const size_t)> detectionNoWeight,
             boost::function<double (const Traxel&, const size_t)> division,
             //boost::function<double (const double)> transition,
             boost::function<double (const Traxel&, const Traxel&, const size_t)> transition,
@@ -69,6 +68,7 @@ public:
             detection(detection),
             detectionNoWeight(0),
             division(division),
+            divisionNoWeight(0),
             transition(transition),
             border_width(border_width),
             forbidden_cost(forbidden_cost),
@@ -102,6 +102,7 @@ public:
         boost::function<double (const Traxel&, const size_t)> detection;
         boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
         boost::function<double (const Traxel&, const size_t)> division;
+        boost::function<double (const Traxel&, const size_t)> divisionNoWeight;
         boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
         //boost::function<double (const double)> transition;
         boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
@@ -277,6 +278,7 @@ protected: // members
     boost::function<double (const Traxel&, const size_t)> detection_;
     boost::function<double (const Traxel&, const size_t)> detectionNoWeight_;
     boost::function<double (const Traxel&, const size_t)> division_;
+    boost::function<double (const Traxel&, const size_t)> divisionNoWeight_;
     //boost::function<double (const double)> transition_;
     boost::function<double (const Traxel&, const Traxel&, const size_t)> transition_;
 

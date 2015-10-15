@@ -427,6 +427,7 @@ public:
 
     // assign division ground truth to a node
     PGMLINK_EXPORT void add_division_label(HypothesesGraph::Node, label_type label);
+    PGMLINK_EXPORT label_type get_division_label(HypothesesGraph::Node);
 
     // assign ground truth to a node
     PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  , label_type label);

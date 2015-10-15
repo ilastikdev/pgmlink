@@ -153,6 +153,12 @@ void HypothesesGraph::add_division_label(HypothesesGraph::Node node, label_type 
     gt_label.set(node, label);
 }
 
+label_type HypothesesGraph::get_division_label(HypothesesGraph::Node node)
+{
+    property_map< division_label, HypothesesGraph::base_graph>::type& gt_label = get(division_label());
+    return gt_label[node];
+}
+
 void HypothesesGraph::add_arc_label(HypothesesGraph::Arc arc, label_type label)
 {
     property_map<  arc_label, HypothesesGraph::base_graph>::type& gt_label = get(arc_label());

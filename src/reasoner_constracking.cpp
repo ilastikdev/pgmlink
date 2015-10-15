@@ -60,6 +60,7 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       detection_(param.detection),
       detectionNoWeight_(param.detectionNoWeight),
       division_(param.division),
+      divisionNoWeight_(param.divisionNoWeight),
       transition_(param.transition),
       forbidden_cost_(param.forbidden_cost),
       ep_gap_(param.ep_gap),
@@ -99,6 +100,7 @@ ConservationTracking::ConservationTracking(const Parameter &param)
     inference_model_param_.detection = detection_;
     inference_model_param_.detectionNoWeight = detectionNoWeight_;
     inference_model_param_.division = division_;
+    inference_model_param_.divisionNoWeight = divisionNoWeight_;
     inference_model_param_.transition = transition_;
     inference_model_param_.transition_parameter = transition_parameter_;
     inference_model_param_.transition_classifier = transition_classifier_;
