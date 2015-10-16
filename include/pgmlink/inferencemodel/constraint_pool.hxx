@@ -321,7 +321,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     add_constraint_type_to_problem<GM, INF, OutgoingConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_constraints);
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
-    add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_detection_constraints);
+    add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_fix_node_value_constraints);
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
