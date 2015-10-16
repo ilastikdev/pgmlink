@@ -1140,7 +1140,7 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
         size_t num_arcs = 0;
         for (HypothesesGraph::OutArcIt oa(g, n); oa != lemon::INVALID; ++oa)
         {
-            assert(active_nodes_count[n][solutionIndex] <= arc_values[oa][solutionIndex]);
+            assert(active_nodes_count[n][solutionIndex] >= arc_values[oa][solutionIndex]);
             num_arcs += arc_values[oa][solutionIndex];
         }
         return num_arcs;
@@ -1150,7 +1150,7 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
         size_t num_arcs = 0;
         for (HypothesesGraph::InArcIt ia(g, n); ia != lemon::INVALID; ++ia)
         {
-            assert(active_nodes_count[n][solutionIndex] <= arc_values[oa][solutionIndex]);
+            assert(active_nodes_count[n][solutionIndex] >= arc_values[ia][solutionIndex]);
             num_arcs += arc_values[ia][solutionIndex];
         }
         return num_arcs;
@@ -1217,8 +1217,8 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
             if(!found)
                 throw std::runtime_error("Did not find corresponding arc in non-tracklet hypothesesgraph!");
 
-            assert(active_nodes_count[s][solutionIndex] <= arc_values[arc][solutionIndex]);
-            assert(active_nodes_count[t][solutionIndex] <= arc_values[arc][solutionIndex]);
+            assert(active_nodes_count[s][solutionIndex] >= arc_values[arc][solutionIndex]);
+            assert(active_nodes_count[t][solutionIndex] >= arc_values[arc][solutionIndex]);
             assert(active_nodes_count[s][solutionIndex] > 0);
             assert(active_nodes_count[t][solutionIndex] > 0);
         }
