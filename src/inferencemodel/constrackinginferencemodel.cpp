@@ -263,6 +263,22 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
     }
 }
 
+ConsTrackingInferenceModel::GraphicalModelType::FunctionIdentifier ConsTrackingInferenceModel::add_marray_as_explicit_function(
+    const std::vector<size_t>& shape,
+    const marray::Marray<double>& energies)
+{
+    pgm::OpengmModelDeprecated::ExplicitFunctionType func(shape.begin(), shape.end());
+        
+    auto func_it = func.begin();
+    for(auto energies_it = energies.begin(); energies_it != energies.end(); ++energies_it)
+    {
+        *func_it = *energies_it;
+         ++func_it;
+    }
+    
+    return model_.addFunction(func);
+}
+
 size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
     ////
@@ -425,8 +441,11 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         LOG(logDEBUG3) << "ConsTrackingInferenceModel::add_finite_factors: adding table to pgm";
         //functor add detection table
         factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+        
+        typename GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
 
+        // sorting only works because appearance nodes have lower variable indices than disappearances
+        // and the matrix is constructed such that appearances are along coords[0], ...
         sort(vi.begin(), vi.end());
         model_.addFactor(funcId, vi.begin(), vi.end());
 //        if (not perturb)
@@ -479,7 +498,8 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
             coords[0] = 0;
         }
         factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+
+        typename GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 
@@ -537,7 +557,7 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
         //table.add_to(model);
         factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
 
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(energies);
+        typename GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 

@@ -18,8 +18,8 @@
 #include <pgmlink/ext_opengm/indicator_function.hxx>
 #include <opengm/operations/adder.hxx>
 #include <opengm/utilities/metaprogramming.hxx>
-#include "opengm/functions/modelviewfunction.hxx"
-#include "opengm/functions/view.hxx"
+#include <opengm/functions/modelviewfunction.hxx>
+#include <opengm/functions/view.hxx>
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/graph.h"
@@ -402,11 +402,12 @@ typedef double ValueType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
-typedef opengm::GraphicalModel
-<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-<opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType> >::type,
-opengm::DiscreteSpace<IndexType, LabelType> >
-PertGmType;
+// typedef opengm::GraphicalModel
+// <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
+// <opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType>, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc >::type,
+// opengm::DiscreteSpace<IndexType, LabelType> >
+// PertGmType;
+typedef pgm::OpengmModelDeprecated::ogmGraphicalModel PertGmType;
 
 } /* namespace pgmlink */
 

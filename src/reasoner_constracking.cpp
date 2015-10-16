@@ -41,14 +41,6 @@ using namespace std;
 namespace pgmlink
 {
 
-typedef opengm::ModelViewFunction
-<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >
-ViewFunctionType;
-
-typedef opengm::LPCplex<pgm::OpengmModelDeprecated::ogmGraphicalModel,
-        pgm::OpengmModelDeprecated::ogmAccumulator> cplex_optimizerHG;
-
-
 ConservationTracking::ConservationTracking(const Parameter &param)
     : max_number_objects_(param.max_number_objects),
       detection_(param.detection),
