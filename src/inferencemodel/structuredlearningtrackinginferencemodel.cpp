@@ -266,6 +266,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
 
+        // sorting only works because appearance nodes have lower variable indices than disappearances
+        // and the matrix is constructed such that appearances are along coords[0], ...
         sort(vi.begin(), vi.end());
         model_.addFactor(funcId, vi.begin(), vi.end());
         detection_f_node_map_[n] = model_.numberOfFactors() - 1;

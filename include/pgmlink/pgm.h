@@ -419,6 +419,7 @@ typedef double ValueType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
+//<<<<<<< HEAD
 typedef double Energy;
 typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
 typedef pgm::IncomingLinearConstraintFunction<Energy, size_t, size_t> InLinearConsFunc;
@@ -430,12 +431,11 @@ typedef pgm::FixNodeValueLinearConstraintFunction<Energy, size_t, size_t> FixNod
 
 typedef opengm::GraphicalModel
 <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-<   LinearConstraintFunctionType,
-    InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
-    opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> >,
-    marray::Marray<ValueType>,
-    pgm::OpengmModelDeprecated::LWeightedSumOfFunctionsType>::type,
-opengm::DiscreteSpace<IndexType, LabelType> >
+  < LinearConstraintFunctionType,
+    opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
+    opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
+  >::type,
+  opengm::DiscreteSpace<IndexType, LabelType> >
 PertGmType;
 
 
@@ -443,14 +443,11 @@ typedef opengm::GraphicalModel
 <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
   < LinearConstraintFunctionType,
     opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
-    opengm::UnaryLossFunction<ValueType, IndexType, LabelType>,
-    opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType>>,
     opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
   >::type,
   opengm::DiscreteSpace<IndexType, LabelType>
 >
 PertExplicitGmType;
-//InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
 
 } /* namespace pgmlink */
 

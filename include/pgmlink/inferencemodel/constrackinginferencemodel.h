@@ -96,6 +96,10 @@ protected: // methods
 
     void add_constraints_to_pool(const HypothesesGraph& );
 
+    GraphicalModelType::FunctionIdentifier add_marray_as_explicit_function(
+        const std::vector<size_t>& shape,
+        const marray::Marray<double>& energies);
+
     // retrieve node and arc maps
     HypothesesGraphNodeMap& get_division_node_map();
     HypothesesGraphNodeMap& get_appearance_node_map();
