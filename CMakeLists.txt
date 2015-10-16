@@ -217,7 +217,7 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 # tools
-#add_subdirectory(tools/)
+add_subdirectory(tools/)
 
 # Tests
 if(WITH_TESTS)

@@ -4,10 +4,10 @@
 #include <stack>
 
 #include "pgmlink/pgm.h"
-#include "pgmlink/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool.hxx"
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include <opengm/inference/icm.hxx>
-#include <vigra/timing.hxx>
+// #include <vigra/timing.hxx>
 
 typedef pgmlink::pgm::OpengmModelDeprecated::ogmGraphicalModel GraphicalModel;
 typedef opengm::LPCplex<GraphicalModel, pgmlink::pgm::OpengmModelDeprecated::ogmAccumulator> CPLEX;
@@ -148,7 +148,7 @@ std::pair<Solution, IndexMapping> inference_on_submodel(const CONTAINER& nodes, 
 
 int main(int argc, char** argv)
 {
-    USETICTOC
+    // USETICTOC
     if(argc != 6 && argc != 5)
     {
         std::cout << "Perform something similar to block-ICM on stored conservation tracking models with constraints. 2014 (c) Carsten Haubold" << std::endl;
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
     std::set< std::set<size_t> > blocks_to_compute;
     std::vector< std::set<size_t> > blocks_done;
 
-    TIC
+    // TIC
     // iterate over time steps, create submodel (view?) just for pairwise time frames, CPLEX inference on submodels only
     for(auto timestep_it = nodes_per_timestep.begin(); timestep_it != nodes_per_timestep.end(); ++timestep_it)
     {
@@ -275,5 +275,5 @@ int main(int argc, char** argv)
     opengm::ICM<GraphicalModel, pgmlink::pgm::OpengmModelDeprecated::ogmAccumulator> inf(model);
     cp.add_constraints_to_problem(model, inf);
     std::cout << "Solution after optimizing " << nodes_per_timestep.size() << " timesteps has energy: " << model.evaluate(solution) << std::endl;
-    std::cout << "Done after " << TOCS << std::endl;
+    // std::cout << "Done after " << TOCS << std::endl;
 }

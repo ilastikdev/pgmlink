@@ -15,6 +15,6 @@ foreach(tool_src ${TOOL_SRCS})
   
     get_filename_component(tool_name ${tool_src} NAME_WE)
     add_executable( ${tool_name} ${tool_src} )
-    target_link_libraries( ${tool_name} pgmlink ${Boost_LIBRARIES} ${CPLEX_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES})
+    target_link_libraries( ${tool_name} pgmlink ${Boost_LIBRARIES} ${CPLEX_LIBRARIES} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES})
   
 endforeach(tool_src)
