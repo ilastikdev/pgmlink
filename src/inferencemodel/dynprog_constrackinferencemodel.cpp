@@ -213,7 +213,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 
         if(in_first_frame && in_last_frame && param_.with_tracklets)
         {
-            LOG(logINFO) << "Node " << graph->id(n) << " is full timespan tracklet with state 0 score: " << scoreDeltas[0];
+            LOG(logDEBUG3) << "Node " << graph->id(n) << " is full timespan tracklet with state 0 score: " << scoreDeltas[0];
         }
 
         // for merger resolving: paths can start and end at other timeframes!
@@ -616,6 +616,8 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                     }
 
                     LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;
+                    assert(active_divisions_count.get_value(parent)[iterStep] == false);
+                    assert(active_nodes_count.get_value(parent)[iterStep] == 1);
                     active_divisions.set(parent, true);
                     active_divisions_count.get_value(parent)[iterStep] = true;
                     increase_object_count(a->getTargetNode());

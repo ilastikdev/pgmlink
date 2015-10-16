@@ -264,10 +264,10 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 
     IlpSolution initialization = constrack_inf_model->extract_solution_from_graph(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     
-    std::cout << "Extracted solution: ";
+    /*std::cout << "Extracted solution: ";
     for(size_t i : initialization)
         std::cout << i << " ";
-    std::cout << std::endl;
+    std::cout << std::endl;*/
 
     // run final inference
     constrack_inf_model->set_inference_params(1,"","","");

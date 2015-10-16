@@ -1104,27 +1104,35 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
          ++it)
     {
         assert(it->second < sol.size());
-        // assert(active_divisions_count.find(it->first) != active_divisions_count.end());
+        
         HypothesesGraph::Node node = it->first;
         if(param_.with_tracklets)
             node = tracklet2traxel_node_map.at(node).back();
 
         assert(active_divisions_count[node].size() > solutionIndex);
+        if(active_divisions_count[node][solutionIndex])
+            assert(active_nodes_count[node][solutionIndex]);
 
-        sol[it->second] = active_divisions_count[node][solutionIndex] ? 1 : 0;;
+        sol[it->second] = active_divisions_count[node][solutionIndex] ? 1 : 0;
     }
 
     std::function<size_t(HypothesesGraph::Node&)> findFlowAlongOutArcs([&](HypothesesGraph::Node& n){
         size_t num_arcs = 0;
         for (HypothesesGraph::OutArcIt oa(g, n); oa != lemon::INVALID; ++oa)
+        {
+            assert(active_nodes_count[n][solutionIndex] <= arc_values[oa][solutionIndex]);
             num_arcs += arc_values[oa][solutionIndex];
+        }
         return num_arcs;
     });
 
     std::function<size_t(HypothesesGraph::Node&)> findFlowAlongInArcs([&](HypothesesGraph::Node& n){
         size_t num_arcs = 0;
         for (HypothesesGraph::InArcIt ia(g, n); ia != lemon::INVALID; ++ia)
+        {
+            assert(active_nodes_count[n][solutionIndex] <= arc_values[oa][solutionIndex]);
             num_arcs += arc_values[ia][solutionIndex];
+        }
         return num_arcs;
     });
 
@@ -1174,18 +1182,25 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
             HypothesesGraph::Node s = tracklet2traxel_node_map.at(tracklet_graph.source(arc)).back();
             HypothesesGraph::Node t = tracklet2traxel_node_map.at(tracklet_graph.target(arc)).front();
 
+            bool found = false;
             // find proper arc in original hypothesesgraph
             for (HypothesesGraph::OutArcIt oa(g, s); oa != lemon::INVALID; ++oa)
             {
                 if(g.target(oa) == t)
                 {
+                    found = true;
                     arc = oa;
                     break;
                 }
             }
 
-            if(arc == it->first)
+            if(!found)
                 throw std::runtime_error("Did not find corresponding arc in non-tracklet hypothesesgraph!");
+
+            assert(active_nodes_count[s][solutionIndex] <= arc_values[arc][solutionIndex]);
+            assert(active_nodes_count[t][solutionIndex] <= arc_values[arc][solutionIndex]);
+            assert(active_nodes_count[s][solutionIndex] > 0);
+            assert(active_nodes_count[t][solutionIndex] > 0);
         }
 
         assert(it->second < sol.size());
