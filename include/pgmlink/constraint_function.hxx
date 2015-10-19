@@ -57,7 +57,7 @@ public:
             configuration.push_back(labels[i]);
         }
         assert(configuration.size() == this->ordering_.size());
-        indexsorter::reorder(configuration, ordering_);
+        indexsorter::reorder_inverse(configuration, ordering_);
 
         return get_energy_of_configuration(configuration);
     }
