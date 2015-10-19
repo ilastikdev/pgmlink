@@ -35,9 +35,13 @@ public:
 
     template<class SHAPE_ITERATOR>
     ConstraintFunction(SHAPE_ITERATOR shape_begin,
-                       SHAPE_ITERATOR shape_end):
+                       SHAPE_ITERATOR shape_end,
+                       const std::vector<I>& variable_indices,
+                       const std::vector<I>& index_reordering):
         FunctionBaseType(),
-        shape_(shape_begin, shape_end)
+        shape_(shape_begin, shape_end),
+        ordering_(index_reordering),
+        variable_indices_(variable_indices)
     {}
 
     ConstraintFunction() {}
@@ -52,6 +56,8 @@ public:
         {
             configuration.push_back(labels[i]);
         }
+        assert(configuration.size() == this->ordering_.size());
+        indexsorter::reorder(configuration, ordering_);
 
         return get_energy_of_configuration(configuration);
     }
@@ -90,6 +96,8 @@ protected:
 
     std::vector<I> shape_;
     T forbidden_energy_;
+    std::vector<I> ordering_;
+    std::vector<I> variable_indices_;
 };
 
 //------------------------------------------------------------------------
@@ -105,8 +113,10 @@ class IncomingConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
-                               SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end)
+                               SHAPE_ITERATOR shape_end,
+                               const std::vector<I>& variable_indices,
+                               const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering)
     {}
 
     IncomingConstraintFunction() {}
@@ -131,6 +141,11 @@ protected:
             return 0.0;
         }
         else
+            std::cout << "Found invalid config Incoming" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
         {
             return this->forbidden_energy_;
         }
@@ -150,8 +165,10 @@ class OutgoingConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
-                               SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+                               SHAPE_ITERATOR shape_end,
+                               const std::vector<I>& variable_indices,
+                               const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering),
         with_divisions_(true)
     {}
 
@@ -186,6 +203,12 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid configuration for Outgoing" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
+            std::cout << "\tAppearances: " << num_appearing_objects << " \n\tDivision: " << division << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -207,8 +230,10 @@ class OutgoingNoDivConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     OutgoingNoDivConstraintFunction(SHAPE_ITERATOR shape_begin,
-                                    SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end)
+                                    SHAPE_ITERATOR shape_end,
+                                    const std::vector<I>& variable_indices,
+                                    const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering)
     {}
 
     OutgoingNoDivConstraintFunction() {}
@@ -234,6 +259,11 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid config for OutgoingNoDiv" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -249,8 +279,10 @@ class DetectionConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
-                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+                                SHAPE_ITERATOR shape_end,
+                                const std::vector<I>& variable_indices,
+                                const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering),
         with_appearance_(true),
         with_disappearance_(true),
         with_misdetections_(true)
@@ -291,6 +323,11 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid config for Detection" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -311,8 +348,10 @@ class FixNodeValueConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     FixNodeValueConstraintFunction(SHAPE_ITERATOR shape_begin,
-                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+                                SHAPE_ITERATOR shape_end,
+                                const std::vector<I>& variable_indices,
+                                const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering),
         value(0)
     {}
 
@@ -334,6 +373,11 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid config for FixNodeValue" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
             return this->forbidden_energy_;
         }
     }

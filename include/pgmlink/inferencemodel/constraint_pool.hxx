@@ -328,34 +328,33 @@ template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
     LOG(logINFO) << "[ConstraintPool]: Using soft constraints";
-    std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
     for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
     {
         const CONSTRAINT_TYPE& constraint = *it;
+
+        // set up indices and shape
         std::vector<IndexType> indices;
         constraint_indices(indices, constraint);
         if(indices.size() < 2)
-        {
             continue;
-        }
 
         std::vector<IndexType> shape;
         for(std::vector<IndexType>::iterator idx = indices.begin(); idx != indices.end(); ++idx)
-        {
             shape.push_back(model.numberOfLabels(*idx));
-        }
 
-        // see if the function is already present in our map and model
-        if(constraint_functions.find(shape) == constraint_functions.end())
-        {
-            constraint_functions[shape] = new FUNCTION_TYPE(shape.begin(), shape.end());
-            constraint_functions[shape]->set_forbidden_energy(big_m_);
-            configure_function(constraint_functions[shape], *it);
-        }
+        // reorder variable indices ascending
+        std::vector<IndexType> reordering;
+        indexsorter::sort_indices(indices.begin(), indices.end(), reordering);
 
-        // create factor
-        OpengmFactor< FUNCTION_TYPE > factor(*constraint_functions[shape], indices.begin(), indices.end());
-        factor.add_to(model);
+        // create function
+        FUNCTION_TYPE f(shape.begin(), shape.end(), indices, reordering);
+        f.set_forbidden_energy(big_m_);
+        configure_function(&f, *it);
+
+        // create function and factor
+        indexsorter::reorder(indices, reordering);
+        typename GM::FunctionIdentifier fid = model.addFunction( f );
+        model.addFactor(fid, indices.begin(), indices.end());
     }
 }
 

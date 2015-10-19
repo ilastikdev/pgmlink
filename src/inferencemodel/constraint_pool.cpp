@@ -464,7 +464,7 @@ void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& 
         indices.push_back(constraint.division_node);
     }
 
-    indices.insert(indices.begin(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
+    indices.insert(indices.end(), constraint.transition_nodes.begin(), constraint.transition_nodes.end());
 }
 
 template<>
