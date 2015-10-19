@@ -1116,7 +1116,10 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
     property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
         g.get(node_active_count());
     property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
-        g.get(division_active_count());    
+        g.get(division_active_count());  
+    property_map<node_timestep, HypothesesGraph::base_graph>::type& timestep_map = g.get(node_timestep());  
+    int earliest_timestep = *(timestep_map.beginValue());
+    int latest_timestep = *(timestep_map.endValue());
 
     // extract divisions
     for(std::map<HypothesesGraph::Node, size_t>::const_iterator it = div_node_map_.begin();
@@ -1186,6 +1189,14 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
             throw std::runtime_error("Invalid configuration, incoming transitions don't sum up to node label");
         if(outgoing != node_state + division && outgoing != 0)
             throw std::runtime_error("Invalid configuration, outgoing transitions don't sum to node state + divisions");
+
+        if(timestep_map[n] == earliest_timestep)
+            incoming = outgoing - division;
+        if(timestep_map[n] == latest_timestep)
+        {
+            assert(division == 0);
+            outgoing = incoming;
+        }
 
         sol[dis_node_map_.at(n)] = incoming;
         sol[app_node_map_.at(n)] = outgoing - division;
