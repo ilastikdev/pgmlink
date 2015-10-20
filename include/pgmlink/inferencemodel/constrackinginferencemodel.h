@@ -37,10 +37,7 @@ public: // typedefs
 
 public: // API
     // constructor
-    ConsTrackingInferenceModel(const Parameter& param,
-                               double ep_gap,
-                               double cplex_timeout,
-                               double num_threads=0);
+    ConsTrackingInferenceModel(const Parameter& param);
 
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&);

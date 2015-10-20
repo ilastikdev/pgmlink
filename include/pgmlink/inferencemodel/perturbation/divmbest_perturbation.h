@@ -27,7 +27,7 @@ namespace pgmlink
 class DivMBestPerturbation : public Perturbation
 {
 public: // API
-    DivMBestPerturbation(const Parameter& perturbation_param, const InferenceModel::Parameter& inf_param);
+    DivMBestPerturbation(const Perturbation::Parameter& perturbation_param, const pgmlink::Parameter& inf_param);
 
 
     virtual void push_away_from_solution(const PertGmType& model, std::vector<size_t> solution);

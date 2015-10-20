@@ -28,6 +28,7 @@
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/features/feature.h"
 #include "pgmlink/pgmlink_export.h"
+#include "pgmlink/conservationtracking_parameter.h"
 
 /**
  * @brief Implementation of ideas for merger resolution in the HypothesesGraph environment.
@@ -535,7 +536,7 @@ PGMLINK_EXPORT void resolve_graph(const HypothesesGraph &src,
                                   const double transition_parameter = 5,
                                   const bool with_constraints = true,
                                   boost::python::object transitionClassifier = boost::python::object(),
-                                  ConservationTracking::SolverType solver = ConservationTracking::CplexSolver);
+                                  SolverType solver = SolverType::CplexSolver);
 
 
 ////

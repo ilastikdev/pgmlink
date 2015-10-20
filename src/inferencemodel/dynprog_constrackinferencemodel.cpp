@@ -9,7 +9,7 @@
 namespace pgmlink
 {
 
-DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(const InferenceModel::Parameter &param):
+DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(const Parameter &param):
     InferenceModel(param),
     inference_graph_(dpct::Graph::Configuration(param.with_appearance, param.with_disappearance, param.with_divisions))
 {
@@ -71,6 +71,7 @@ double DynProgConsTrackInferenceModel::evaluate_motion_model(dpct::Node* a,
 std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
+    // Magnusson(Graph* graph, bool withSwap, bool usedArcsScoreZero = true, bool useFastFirstIter = false);
     dpct::Magnusson tracker(&inference_graph_, false, true, false);
 
     // set up motion model function if one was specified
@@ -244,13 +245,13 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
             tr = traxel_map[n];
         }
 
-        double app_score = -1.0 * param_.appearance_cost(tr) - generateRandomOffset(Appearance);
+        double app_score = -1.0 * param_.appearance_cost_fn(tr) - generateRandomOffset(Appearance);
 
         if(param_.with_tracklets)
         {
             tr = tracklet_map[n].back();
         }
-        double dis_score = -1.0 * param_.disappearance_cost(tr) - generateRandomOffset(Disappearance);
+        double dis_score = -1.0 * param_.disappearance_cost_fn(tr) - generateRandomOffset(Disappearance);
         LOG(logDEBUG3) << "\tapp-score " << app_score << std::endl;
         LOG(logDEBUG3) << "\tdis-score " << dis_score << std::endl;
 

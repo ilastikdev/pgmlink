@@ -770,7 +770,7 @@ void resolve_graph(const HypothesesGraph& src,
                    const double transition_parameter,
                    const bool with_constraints,
                    boost::python::object transitionClassifier,
-                   ConservationTracking::SolverType solver)
+                   SolverType solver)
 {
 
     // Optimize the graph built by the class MergerResolver.
@@ -857,7 +857,7 @@ void resolve_graph(const HypothesesGraph& src,
 
     // Construct conservation tracking and
     // do inference.
-    ConservationTracking::Parameter param(
+    Parameter param(
         1, //max_number_objects_,
         detection, //detection,
         division, // division

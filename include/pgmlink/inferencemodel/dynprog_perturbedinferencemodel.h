@@ -20,7 +20,7 @@ namespace pgmlink
 class DynProgPerturbedInferenceModel : public DynProgConsTrackInferenceModel
 {
 public: // API
-    DynProgPerturbedInferenceModel(const InferenceModel::Parameter& param,
+    DynProgPerturbedInferenceModel(const Parameter& param,
                                    boost::shared_ptr<Perturbation> perturbation);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,

@@ -353,8 +353,8 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
     if (with_merger_resolution)
     {
         // always run merger resolving with CPLEX
-        ConservationTracking::SolverType chosen_solver = solver_;
-        solver_ = ConservationTracking::CplexSolver;
+        SolverType chosen_solver = solver_;
+        solver_ = SolverType::CplexSolver;
 
         EventVectorVectorVector merger_resolved_events;
 
@@ -574,7 +574,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         boost::python::object transition_classifier,
         unsigned int num_threads)
 {
-    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+    Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
             ep_gap,
             with_tracklets,
@@ -612,7 +612,7 @@ void ConsTracking::plot_hypotheses_graph(
         double border_width)
 {
     // reuse the parameter construction method to get configured functions
-    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+    Parameter param = get_conservation_tracking_parameters(
             0,
             0,
             with_tracklets,
@@ -644,7 +644,7 @@ void ConsTracking::plot_hypotheses_graph(
                                 transition_parameter);
 }
 
-EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
+EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
                                                        bool fixLabeledNodes)
 {
     // original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
@@ -656,7 +656,7 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
 
     ConservationTracking pgm(param);
 
-    if(param.solver_ == ConservationTracking::DPInitCplexSolver)
+    if(param.solver == SolverType::DPInitCplexSolver)
     {
         pgm.twoStageInference(*hypotheses_graph_);
 
@@ -708,7 +708,7 @@ EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Par
     }
 }
 
-ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(double forbidden_cost,
+Parameter ConsTracking::get_conservation_tracking_parameters(double forbidden_cost,
         double ep_gap,
         bool with_tracklets,
         double detection_weight,
@@ -724,7 +724,7 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-        ConservationTracking::SolverType solver,
+        SolverType solver,
         unsigned int num_threads)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
@@ -758,7 +758,7 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
 
-    ConservationTracking::Parameter param(
+    Parameter param(
         max_number_objects_,
         detection,
         division,
@@ -792,7 +792,7 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
     return param;
 }
 
-void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
+void ConsTracking::setParameterWeights(Parameter& param,std::vector<double> weights)
 {
 
     param.detection_weight  =weights[0];
@@ -1007,7 +1007,7 @@ void ConsTracking::createStructuredLearningFiles(std::string feature_file_name,
 void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
-                                      ConservationTracking::Parameter param)
+                                      Parameter param)
 {
 
     //create empty files that opengm can append to

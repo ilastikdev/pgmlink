@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_Division ) {
                         "none", // random_forest_filename
                         fov,
                         "none",
-                        ConservationTracking::DPInitCplexSolver
+                        SolverType::DPInitCplexSolver
                         );
 
    std::cout << "Run Conservation tracking" << std::endl;
@@ -797,7 +797,7 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_AppearanceSimple ) 
                         "none", // random_forest_filename
                         fov,
                         "none",
-                        ConservationTracking::DPInitCplexSolver
+                        SolverType::DPInitCplexSolver
                         );
 
    std::cout << "Run Conservation tracking" << std::endl;
@@ -897,7 +897,7 @@ BOOST_AUTO_TEST_CASE( Tracking_DynProg_ConservationTracking_AppearanceSimple ) {
                         "none", // random_forest_filename
                         fov,
                         "none",
-                        ConservationTracking::DynProgSolver
+                        SolverType::DynProgSolver
                         );
 
    std::cout << "Run Conservation tracking" << std::endl;
@@ -1765,7 +1765,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
                     "none", // random_forest_filename
                     fov,
                     "none",
-                    ConservationTracking::DPInitCplexSolver
+                    SolverType::DPInitCplexSolver
                     );
 
    std::cout << "Run Conservation tracking" << std::endl;

@@ -27,7 +27,7 @@ namespace pgmlink
 class ClassifierUncertaintyPerturbation : public Perturbation
 {
 public: // API
-    ClassifierUncertaintyPerturbation(const Parameter& perturbation_param, const InferenceModel::Parameter& inf_param);
+    ClassifierUncertaintyPerturbation(const Perturbation::Parameter& perturbation_param, const pgmlink::Parameter& inf_param);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,

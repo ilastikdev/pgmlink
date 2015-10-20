@@ -20,6 +20,7 @@
 #include "pgmlink/traxels.h"
 #include "pgmlink/field_of_view.h"
 #include "pgmlink/merger_resolving.h"
+#include "pgmlink/conservationtracking_parameter.h"
 #include <boost/python.hpp>
 
 namespace pgmlink
@@ -161,7 +162,7 @@ public:
                  const std::string& random_forest_filename = "none",
                  FieldOfView fov = FieldOfView(),
                  const std::string& event_vector_dump_filename = "none",
-                 ConservationTracking::SolverType solver = ConservationTracking::CplexSolver
+                 SolverType solver = SolverType::CplexSolver
                 )
         : max_number_objects_(max_number_objects),
           max_dist_(max_neighbor_distance),
@@ -182,7 +183,7 @@ public:
     PGMLINK_EXPORT
     ConsTracking(boost::shared_ptr<HypothesesGraph> g,
                  TraxelStore& ts,
-                 ConservationTracking::Parameter param,
+                 Parameter param,
                  UncertaintyParameter uncertainty_param,
                  FieldOfView fov = FieldOfView(),
                  bool size_dependent_detection_prob = false,
@@ -201,7 +202,7 @@ public:
         fov_(fov),
         event_vector_dump_filename_("none"),
         with_optical_correction_(false),
-        solver_(param.solver_),
+        solver_(param.solver),
         traxel_store_(&ts),
         hypotheses_graph_(g),
         uncertainty_param_(uncertainty_param)
@@ -255,10 +256,10 @@ public:
             boost::python::object TransitionClassifier = boost::python::object(),
             unsigned int num_threads = 0);
 
-    PGMLINK_EXPORT EventVectorVectorVector track_from_param(ConservationTracking::Parameter& param,
+    PGMLINK_EXPORT EventVectorVectorVector track_from_param(Parameter& param,
                                                             bool fixLabeledNodes = false);
 
-    PGMLINK_EXPORT ConservationTracking::Parameter get_conservation_tracking_parameters(double forbidden_cost = 0,
+    PGMLINK_EXPORT Parameter get_conservation_tracking_parameters(double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
             double detection_weight = 10.,
@@ -274,12 +275,12 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
-            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+            SolverType solver = SolverType::CplexSolver,
             unsigned int num_threads = 0);
 
     PGMLINK_EXPORT void setTrackLabelingExportFile(std::string file_name);
 
-    PGMLINK_EXPORT void setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights);
+    PGMLINK_EXPORT void setParameterWeights(Parameter& param,std::vector<double> weights);
 
     PGMLINK_EXPORT EventVectorVector resolve_mergers(EventVectorVector &events,
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
@@ -302,7 +303,7 @@ public:
     PGMLINK_EXPORT void writeStructuredLearningFiles(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
-                                      ConservationTracking::Parameter param);
+                                      Parameter param);
     PGMLINK_EXPORT vector<double> learnTrackingWeights(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
@@ -351,7 +352,7 @@ protected:
 
     bool with_optical_correction_;
     UncertaintyParameter uncertainty_param_;
-    ConservationTracking::SolverType solver_;
+    SolverType solver_;
 };
 
 } // end namespace pgmlink

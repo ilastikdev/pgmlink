@@ -3,8 +3,8 @@
 namespace pgmlink
 {
 
-GaussianPerturbation::GaussianPerturbation(const Parameter &perturbation_param,
-                           const InferenceModel::Parameter &inf_param):
+GaussianPerturbation::GaussianPerturbation(const Perturbation::Parameter &perturbation_param,
+                           const pgmlink::Parameter &inf_param):
     Perturbation(perturbation_param, inf_param)
 {
     if(perturbation_param_.distributionId != Gaussian)

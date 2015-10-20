@@ -6,6 +6,8 @@
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
+#include "pgmlink/conservationtracking_parameter.h"
+
 #include <boost/python.hpp>
 
 namespace pgmlink
@@ -19,36 +21,7 @@ enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 
  */
 class InferenceModel
 {
-public: // Parameter object
-    class Parameter
-    {
-    public:
-        size_t max_number_objects;
-
-        bool with_constraints;
-        bool with_tracklets;
-        bool with_divisions;
-        bool with_optical_correction;
-        bool with_misdetections_allowed;
-        bool with_appearance;
-        bool with_disappearance;
-
-        boost::function<double (const Traxel&, const size_t)> detection;
-        boost::function<double (const Traxel&, const size_t)> division;
-        boost::function<double (const double)> transition;
-        double transition_parameter;
-        boost::python::object transition_classifier;
-
-        boost::function<double (const Traxel&)> disappearance_cost;
-        boost::function<double (const Traxel&)> appearance_cost;
-        double forbidden_cost;
-
-        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
-        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
-        double motion_model3_default;
-        double motion_model4_default;
-    };
-
+public: // typedefs
     typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
 
 public: // API

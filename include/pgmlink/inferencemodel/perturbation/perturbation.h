@@ -43,7 +43,7 @@ public: // Parameter object
     };
 
 public: // API
-    Perturbation(const Parameter& perturbation_param, const InferenceModel::Parameter& inf_param);
+    Perturbation(const Parameter& perturbation_param, const pgmlink::Parameter& inf_param);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,
@@ -66,7 +66,7 @@ public: // API
 protected: // Members
     boost::math::normal standard_gaussian_distribution;
     Parameter perturbation_param_;
-    InferenceModel::Parameter param_;
+    pgmlink::Parameter param_;
 
     boost::mt19937 rng_;
     normalRNGType random_normal_;

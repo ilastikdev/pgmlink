@@ -66,34 +66,10 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       transition_weight_(param.transition_weight),
       transition_classifier_(param.transition_classifier),
       with_optical_correction_(param.with_optical_correction),
-      solver_(param.solver_),
-      use_app_node_labels_to_fix_values_(false)
+      solver_(param.solver),
+      use_app_node_labels_to_fix_values_(false),
+      param_(param)
 {
-    inference_model_param_.max_number_objects = max_number_objects_;
-
-    inference_model_param_.with_constraints = with_constraints_;
-    inference_model_param_.with_tracklets = with_tracklets_;
-    inference_model_param_.with_divisions = with_divisions_;
-    inference_model_param_.with_appearance = with_appearance_;
-    inference_model_param_.with_disappearance = with_disappearance_;
-    inference_model_param_.with_misdetections_allowed = with_misdetections_allowed_;
-    inference_model_param_.with_optical_correction = with_optical_correction_;
-
-    inference_model_param_.detection = detection_;
-    inference_model_param_.division = division_;
-    inference_model_param_.transition = transition_;
-    inference_model_param_.transition_parameter = transition_parameter_;
-    inference_model_param_.transition_classifier = transition_classifier_;
-
-    inference_model_param_.forbidden_cost = forbidden_cost_;
-    inference_model_param_.appearance_cost = appearance_cost_;
-    inference_model_param_.disappearance_cost = disappearance_cost_;
-
-    inference_model_param_.motion_model3 = param.motion_model3;
-    inference_model_param_.motion_model4 = param.motion_model4;
-    inference_model_param_.motion_model3_default = param.motion_model3_default;
-    inference_model_param_.motion_model4_default = param.motion_model4_default;
-
     perturbed_inference_model_param_.distributionId = uncertainty_param_.distributionId;
     perturbed_inference_model_param_.distributionParam = uncertainty_param_.distributionParam;
     perturbed_inference_model_param_.detection_weight = detection_weight_;
@@ -139,16 +115,16 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
     switch(perturbed_inference_model_param_.distributionId)
     {
         case Gaussian:
-            return boost::make_shared<GaussianPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            return boost::make_shared<GaussianPerturbation>(perturbed_inference_model_param_, param_);
             break;
         case PerturbAndMAP:
-            return boost::make_shared<PerturbAndMapPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            return boost::make_shared<PerturbAndMapPerturbation>(perturbed_inference_model_param_, param_);
             break;
         case DiverseMbest:
-            return boost::make_shared<DivMBestPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            return boost::make_shared<DivMBestPerturbation>(perturbed_inference_model_param_, param_);
             break;
         case ClassifierUncertainty:
-            return boost::make_shared<ClassifierUncertaintyPerturbation>(perturbed_inference_model_param_, inference_model_param_);
+            return boost::make_shared<ClassifierUncertaintyPerturbation>(perturbed_inference_model_param_, param_);
             break;
         default:
             throw std::runtime_error("The chosen perturbation distribution is not available "
@@ -158,20 +134,17 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
 
 boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
 {
-    if(solver_ == CplexSolver)
+    if(solver_ == SolverType::CplexSolver)
     {
-        return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
-                                                              ep_gap_,
-                                                              cplex_timeout_,
-                                                              num_threads_);
+        return boost::make_shared<ConsTrackingInferenceModel>(param_);
     }
 #ifdef WITH_DPCT
-    else if(solver_ == DynProgSolver)
+    else if(solver_ == SolverType::DynProgSolver)
     {
-        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+        return boost::make_shared<DynProgConsTrackInferenceModel>(param_);
     }
 #else
-    else if(solver_ == DynProgSolver)
+    else if(solver_ == SolverType::DynProgSolver)
     {
         throw std::runtime_error("Support for dynamic programming solver not built!");
     }
@@ -182,23 +155,20 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
 
 boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inference_model(boost::shared_ptr<Perturbation> perturb)
 {
-    if(solver_ == CplexSolver)
+    if(solver_ == SolverType::CplexSolver)
     {
         return boost::make_shared<PerturbedInferenceModel>(
-                    inference_model_param_,
-                    perturb,
-                    ep_gap_,
-                    cplex_timeout_,
-                    num_threads_);
-    }
-#ifdef WITH_DPCT
-    else if (solver_ == DynProgSolver)
-    {
-        return boost::make_shared<DynProgPerturbedInferenceModel>(
-                    inference_model_param_,
+                    param_,
                     perturb);
     }
-    else if (solver_ == DPInitCplexSolver)
+#ifdef WITH_DPCT
+    else if (solver_ == SolverType::DynProgSolver)
+    {
+        return boost::make_shared<DynProgPerturbedInferenceModel>(
+                    param_,
+                    perturb);
+    }
+    else if (solver_ == SolverType::DPInitCplexSolver)
     {
         throw std::runtime_error("DynProg-initialized CPLEX cannot handle perturbations (yet)");
     }
@@ -234,13 +204,13 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 #ifndef WITH_DPCT
     throw std::runtime_error("Dynamic Programming Solver has not been built!");
 #else
-    if(solver_ != DPInitCplexSolver)
+    if(solver_ != SolverType::DPInitCplexSolver)
         throw std::logic_error("TwoStageInference should only be called with DPInitCplexSolver");
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
     // 1st stage: dyn prog
     boost::shared_ptr<DynProgConsTrackInferenceModel> dyn_prog_inf_model = 
-        boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
+        boost::make_shared<DynProgConsTrackInferenceModel>(param_);
     dyn_prog_inf_model->build_from_graph(*graph);
     IlpSolution temp = dyn_prog_inf_model->infer();
     dyn_prog_inf_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, temp);
@@ -249,7 +219,7 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 
     // set up 2nd stage: CPLEX
     boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = 
-        boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_, ep_gap_, cplex_timeout_, num_threads_);
+        boost::make_shared<ConsTrackingInferenceModel>(param_);
     constrack_inf_model->build_from_graph(*graph);
 
     // extract solution from 1st stage and use as initialization
@@ -315,7 +285,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 
-    if(solver_ == CplexSolver)
+    if(solver_ == SolverType::CplexSolver)
     {
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(
             numberOfSolutions,
@@ -332,7 +302,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 
     for (size_t k = 1; k < numberOfSolutions; ++k)
     {
-        if(solver_ != CplexSolver)
+        if(solver_ != SolverType::CplexSolver)
             throw std::runtime_error("When using CPlex MBest perturbations you need to use the Cplex solver!");
         LOG(logINFO) << "conclude " << k + 1 << "-best solution";
         solutions_.push_back(boost::static_pointer_cast<ConsTrackingInferenceModel>(
@@ -357,7 +327,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
             LOG(logINFO) << "------------> Beginning Iteration " << iterStep << " <-----------\n";
             if (uncertainty_param_.distributionId == DiverseMbest)
             {
-                if(solver_ == CplexSolver)
+                if(solver_ == SolverType::CplexSolver)
                 {
                     boost::static_pointer_cast<DivMBestPerturbation>(perturbation)->push_away_from_solution(
                                 boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->get_model(),
@@ -379,7 +349,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
                 perturbed_inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
             }
 
-            if(solver_ == CplexSolver)
+            if(solver_ == SolverType::CplexSolver)
             {
                 boost::static_pointer_cast<ConsTrackingInferenceModel>(perturbed_inference_model)->set_inference_params(1,
                                                                 get_export_filename(iterStep, features_file_),

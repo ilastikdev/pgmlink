@@ -3,8 +3,8 @@
 namespace pgmlink
 {
 
-PerturbAndMapPerturbation::PerturbAndMapPerturbation(const Parameter &perturbation_param,
-                           const InferenceModel::Parameter &inf_param):
+PerturbAndMapPerturbation::PerturbAndMapPerturbation(const Perturbation::Parameter &perturbation_param,
+                           const pgmlink::Parameter &inf_param):
     Perturbation(perturbation_param, inf_param)
 {
     if(perturbation_param_.distributionId != PerturbAndMAP)

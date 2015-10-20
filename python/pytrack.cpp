@@ -204,18 +204,18 @@ void export_track()
     .def("set_cplex_timeout", &ChaingraphTracking::set_cplex_timeout)
     ;
 
-    class_<ConservationTracking::Parameter>("ConservationTrackingParameter")
-    .def("register_detection_func", &ConservationTracking::Parameter::register_detection_func)
-    .def("register_division_func", &ConservationTracking::Parameter::register_division_func)
-    .def("register_transition_func", &ConservationTracking::Parameter::register_transition_func)
-    .def("register_appearance_func", &ConservationTracking::Parameter::register_appearance_func)
-    .def("register_disappearance_func", &ConservationTracking::Parameter::register_disappearance_func)
-    .def("register_motion_model3_func", &ConservationTracking::Parameter::register_motion_model3_func)
-    .def("register_motion_model4_func", &ConservationTracking::Parameter::register_motion_model4_func)
+    class_<Parameter>("ConservationTrackingParameter")
+    .def("register_detection_func", &Parameter::register_detection_func)
+    .def("register_division_func", &Parameter::register_division_func)
+    .def("register_transition_func", &Parameter::register_transition_func)
+    .def("register_appearance_func", &Parameter::register_appearance_func)
+    .def("register_disappearance_func", &Parameter::register_disappearance_func)
+    .def("register_motion_model3_func", &Parameter::register_motion_model3_func)
+    .def("register_motion_model4_func", &Parameter::register_motion_model4_func)
     ;
 
     class_<ConsTracking>("ConsTracking",
-                         init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType>(
+                         init<int, bool, double, double, bool, double, string, FieldOfView, string, SolverType>(
                              args("max_number_objects",
                                   "size_dependent_detection_prob",
                                   "avg_obj_size",
@@ -228,7 +228,7 @@ void export_track()
                                   "solver_type")))
     .def(init<boost::shared_ptr<HypothesesGraph>,
          TraxelStore&,
-         ConservationTracking::Parameter,
+         Parameter,
          UncertaintyParameter,
          FieldOfView,
          bool,
@@ -255,15 +255,15 @@ void export_track()
     ;
 
     class_<ConservationTracking, boost::noncopyable>("ConservationTracking",
-            init<ConservationTracking::Parameter>(args("parameters")))
+            init<Parameter>(args("parameters")))
     .def("perturbedInference", &ConservationTracking::perturbedInference)
     .def("fixLabeledAppearanceNodes", &ConservationTracking::enableFixingLabeledAppearanceNodes)
     ;
 
-    enum_<ConservationTracking::SolverType>("ConsTrackingSolverType")
-    .value("CplexSolver", ConservationTracking::CplexSolver)
-    .value("DynProgSolver", ConservationTracking::DynProgSolver)
-    .value("DPInitCplexSolver", ConservationTracking::DPInitCplexSolver)
+    enum_<SolverType>("ConsTrackingSolverType")
+    .value("CplexSolver", SolverType::CplexSolver)
+    .value("DynProgSolver", SolverType::DynProgSolver)
+    .value("DPInitCplexSolver", SolverType::DPInitCplexSolver)
     ;
 
     enum_<Event::EventType>("EventType")

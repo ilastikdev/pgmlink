@@ -4,10 +4,7 @@
 namespace pgmlink
 {
 
-ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
-        double ep_gap,
-        double cplex_timeout,
-        double num_threads):
+ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param):
     InferenceModel(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
@@ -17,9 +14,9 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
 {
     cplex_param_.verbose_ = true;
     cplex_param_.integerConstraint_ = true;
-    cplex_param_.epGap_ = ep_gap;
-    cplex_param_.timeLimit_ = cplex_timeout;
-    cplex_param_.numberOfThreads_ = num_threads;
+    cplex_param_.epGap_ = param_.ep_gap;
+    cplex_param_.timeLimit_ = param_.cplex_timeout;
+    cplex_param_.numberOfThreads_ = param_.num_threads;
 }
 
 void ConsTrackingInferenceModel::build_from_graph(const HypothesesGraph& hypotheses)
@@ -323,11 +320,11 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
             {
                 if (param_.with_tracklets)
                 {
-                    energy = param_.appearance_cost(tracklet_map_[n].front());
+                    energy = param_.appearance_cost_fn(tracklet_map_[n].front());
                 }
                 else
                 {
-                    energy = param_.appearance_cost(traxel_map_[n]);
+                    energy = param_.appearance_cost_fn(traxel_map_[n]);
                 }
 
                 energy += generateRandomOffset(Appearance);
@@ -344,11 +341,11 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
             {
                 if (param_.with_tracklets)
                 {
-                    energy = param_.disappearance_cost(tracklet_map_[n].back());
+                    energy = param_.disappearance_cost_fn(tracklet_map_[n].back());
                 }
                 else
                 {
-                    energy = param_.disappearance_cost(traxel_map_[n]);
+                    energy = param_.disappearance_cost_fn(traxel_map_[n]);
                 }
 
                 energy += generateRandomOffset(Disappearance);

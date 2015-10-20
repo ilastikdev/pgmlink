@@ -3042,36 +3042,10 @@ BOOST_AUTO_TEST_CASE(Tracking_ConservationTracking_extractSolution)
 
     boost::shared_ptr<HypothesesGraph> hg = tracking.build_hypo_graph(ts);
 
-    ConservationTracking::Parameter param = tracking.get_conservation_tracking_parameters();
+    Parameter param = tracking.get_conservation_tracking_parameters();
+    param.with_tracklets = false;
 
-    InferenceModel::Parameter inf_param;
-    inf_param.max_number_objects = 2;
-    inf_param.with_constraints = true;
-    inf_param.with_divisions = true;
-    inf_param.with_tracklets = false;
-    inf_param.with_optical_correction = false;
-    inf_param.with_misdetections_allowed = false;
-    inf_param.with_appearance = true;
-    inf_param.with_disappearance = true;
-
-    inf_param.detection = param.detection;
-    inf_param.division = param.division;
-    inf_param.transition = param.transition;
-    inf_param.disappearance_cost = param.disappearance_cost_fn;
-    inf_param.appearance_cost = param.appearance_cost_fn;
-    inf_param.transition_parameter = param.transition_parameter;
-    inf_param.transition_classifier = param.transition_classifier;
-    inf_param.forbidden_cost = param.forbidden_cost;
-    inf_param.motion_model3 = param.motion_model3;
-    inf_param.motion_model4 = param.motion_model4;
-    inf_param.motion_model3_default = param.motion_model3_default;
-    inf_param.motion_model4_default = param.motion_model4_default;
-
-    boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = boost::make_shared<ConsTrackingInferenceModel>(
-                                inf_param,
-                                0.01,  // ep gap
-                                10000000, // cplex timeout
-                                1); // num threads
+    boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = boost::make_shared<ConsTrackingInferenceModel>(param);
 
     constrack_inf_model->build_from_graph(*hg);
     constrack_inf_model->set_inference_params(1,"","","");
