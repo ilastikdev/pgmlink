@@ -1208,6 +1208,10 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
          ++it)
     {
         HypothesesGraph::Arc arc = it->first;
+        
+        assert(it->second < sol.size());
+        assert(arc_values[arc].size() > solutionIndex);
+        
         if(param_.with_tracklets)
         {
             HypothesesGraph::Node s = tracklet2traxel_node_map.at(tracklet_graph.source(arc)).back();
@@ -1230,12 +1234,27 @@ ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solu
 
             assert(active_nodes_count[s][solutionIndex] >= arc_values[arc][solutionIndex]);
             assert(active_nodes_count[t][solutionIndex] >= arc_values[arc][solutionIndex]);
-            assert(active_nodes_count[s][solutionIndex] > 0);
-            assert(active_nodes_count[t][solutionIndex] > 0);
         }
+        else
+        {
+            HypothesesGraph::Node s = g.source(arc);
+            HypothesesGraph::Node t = g.target(arc);
 
-        assert(it->second < sol.size());
-        assert(arc_values[arc].size() > solutionIndex);
+            if(active_nodes_count[t][solutionIndex] >= arc_values[arc][solutionIndex] && 
+                active_nodes_count[s][solutionIndex] >= arc_values[arc][solutionIndex])
+            {
+                LOG(logDEBUG4) << "all good";
+            }
+            else
+            {
+                std::cout << "Problem with arc " << g.id(arc) << " between nodes " << g.id(s) << " and " << g.id(t) << std::endl;
+                std::cout << "\tTimesteps " << timestep_map[s] << " and " << timestep_map[t] << std::endl;
+                std::cout << "\tActive States " << active_nodes_count[s][solutionIndex] << " and " << active_nodes_count[s][solutionIndex] << std::endl;
+                std::cout << "\tArc State " << arc_values[arc][solutionIndex] << std::endl;
+            }
+            assert(active_nodes_count[t][solutionIndex] >= arc_values[arc][solutionIndex]);
+            assert(active_nodes_count[s][solutionIndex] >= arc_values[arc][solutionIndex]);
+        }
         
         sol[it->second] = arc_values[arc][solutionIndex];
     }
