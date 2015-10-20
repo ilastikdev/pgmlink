@@ -72,8 +72,9 @@ std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
     // Magnusson(Graph* graph, bool withSwap, bool usedArcsScoreZero = true, bool useFastFirstIter = false);
-    dpct::Magnusson tracker(&inference_graph_, false, true, false);
-
+    dpct::Magnusson tracker(&inference_graph_, param_.with_swap, true, false);
+    tracker.setMaxNumberOfPaths(param_.max_number_paths);
+    
     // set up motion model function if one was specified
     if(param_.motion_model3 || param_.motion_model4)
     {

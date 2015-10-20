@@ -71,7 +71,9 @@ public:
     transition_classifier(transition_classifier),
     with_optical_correction(with_optical_correction),
     solver(solver),
-    num_threads(num_threads)
+    num_threads(num_threads),
+    with_swap(true),
+    max_number_paths(std::numeric_limits<size_t>::max())
     {}
 
     // empty parameter needed for python
@@ -87,7 +89,6 @@ public:
     double motion_model3_default;
     double motion_model4_default;
     double forbidden_cost;
-    double ep_gap;
     bool with_tracklets;
     bool with_divisions;
     boost::function<double (const Traxel&)> disappearance_cost_fn;
@@ -97,16 +98,25 @@ public:
     bool with_disappearance;
     double transition_parameter;
     bool with_constraints;
-    UncertaintyParameter uncertainty_param;
-    double cplex_timeout;
     double division_weight;
     double detection_weight;
     double transition_weight;
     double border_width;
-    boost::python::object transition_classifier;
     bool with_optical_correction;
     SolverType solver;
+
+    // cplex settings
     unsigned int num_threads;
+    double ep_gap;
+    double cplex_timeout;
+
+    // dynprog settings
+    size_t max_number_paths;
+    bool with_swap;
+
+    // perturbation settings
+    UncertaintyParameter uncertainty_param;
+    boost::python::object transition_classifier;
 
 private:
     // python extensions:

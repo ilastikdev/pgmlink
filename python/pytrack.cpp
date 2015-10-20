@@ -234,6 +234,8 @@ void export_track()
     .def_readwrite("with_optical_correction", &Parameter::with_optical_correction)
     .def_readwrite("solver", &Parameter::solver)
     .def_readwrite("num_threads", &Parameter::num_threads)
+    .def_readwrite("max_number_paths", &Parameter::max_number_paths)
+    .def_readwrite("with_swap", &Parameter::with_swap)
     ;
 
     class_<ConsTracking>("ConsTracking",
