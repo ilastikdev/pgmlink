@@ -233,9 +233,13 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 
     // run final inference
     constrack_inf_model->set_inference_params(1,"","","");
+
+    std::cout << "DP model eval: " << constrack_inf_model->get_model().evaluate(initialization) << std::endl;
+
     constrack_inf_model->set_starting_point(initialization);
     IlpSolution sol = constrack_inf_model->infer();
     constrack_inf_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, sol);
+    std::cout << "ILP model eval: " << constrack_inf_model->get_model().evaluate(sol) << std::endl;
 #endif
 }
 
@@ -300,6 +304,20 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     LOG(logINFO) << "conclude MAP";
     inference_model->conclude(hypotheses, tracklet_graph_, tracklet2traxel_node_map_, solutions_.back());
 
+    // print solution energies
+    if(solver_ == SolverType::CplexSolver)
+        std::cout << "ILP model eval: " << boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->get_model().evaluate(solutions_.back()) << std::endl;
+    else if(solver_ == SolverType::DynProgSolver)
+    {
+        boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = 
+        boost::make_shared<ConsTrackingInferenceModel>(param_);
+        constrack_inf_model->build_from_graph(*graph);
+        IlpSolution initialization = constrack_inf_model->extract_solution_from_graph(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
+        constrack_inf_model->set_inference_params(1,"","","");
+        std::cout << "DP model eval: " << constrack_inf_model->get_model().evaluate(initialization) << std::endl;
+    }
+
+    // run perturbations etc.
     for (size_t k = 1; k < numberOfSolutions; ++k)
     {
         if(solver_ != SolverType::CplexSolver)
