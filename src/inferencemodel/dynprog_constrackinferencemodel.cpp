@@ -510,7 +510,6 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                  ++tr_n_it)
             {
                 HypothesesGraph::Node no = *tr_n_it;
-                assert(active_divisions_count.get_value(no)[iterStep] == false);
                 active_nodes.set(no, active_nodes[no] + 1);
                 active_nodes_count.get_value(no)[iterStep] = active_nodes[no];
             }
@@ -522,7 +521,6 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                  ++arc_id_it)
             {
                 HypothesesGraph::Arc a = g.arcFromId(*arc_id_it);
-//                assert(active_arcs[a] == false);
                 active_arcs.set(a, true);
                 active_arcs_count.get_value(a)[iterStep] = true;
                 arc_values.get_value(a)[iterStep]++;
@@ -530,7 +528,6 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         }
         else
         {
-            assert(active_divisions_count.get_value(n)[iterStep] == false);
             active_nodes.set(n, active_nodes[n] + 1);
             active_nodes_count.get_value(n)[iterStep] = active_nodes[n];
         }
@@ -561,7 +558,6 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     // for each path, increment the number of cells the nodes and arcs along the path
     for(dpct::TrackingAlgorithm::Path& p : solution_paths_)
     {
-//        std::cout << "\rLooking at path " << num_paths++  << " of length " << p.size() << std::flush;
         // a path starts at the dummy-source and goes to the dummy-sink. these arcs are of type dummy, and thus skipped
         bool first_arc_on_path = true;
         for(dpct::Arc* a : p)
@@ -620,8 +616,6 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                     }
 
                     LOG(logDEBUG3) << "activating division for " << traxel_map[parent] << std::endl;
-                    assert(active_divisions_count.get_value(parent)[iterStep] == false);
-                    assert(active_nodes_count.get_value(parent)[iterStep] == 1);
                     active_divisions.set(parent, true);
                     active_divisions_count.get_value(parent)[iterStep] = true;
                     increase_object_count(a->getTargetNode());
