@@ -64,8 +64,8 @@ public:
             solver,
             ndim),
         numLabels_(max_number_objects),
-	numWeights_(5),
-	  trackingWeights_((size_t)5)
+        numWeights_(5),
+        trackingWeights_((size_t)5)
     {
         hypotheses_graph_ = hypotheses_graph;
     }
@@ -100,8 +100,13 @@ public:
     PGMLINK_EXPORT void addFirstLabels(int, int, double );
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
-    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationExplicitTracking::Parameter& param);
-    PGMLINK_EXPORT virtual void prepareTracking(ConservationExplicitTracking& pgm, ConservationExplicitTracking::Parameter& param);
+    PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(
+            ConservationExplicitTracking::Parameter& param,
+            opengm::learning::Weights<double>& trackingWeights);
+    PGMLINK_EXPORT virtual void prepareTracking(
+            ConservationExplicitTracking& pgm,
+            ConservationExplicitTracking::Parameter& param,
+            opengm::learning::Weights<double>& trackingWeights);
     PGMLINK_EXPORT double weight(int);
     PGMLINK_EXPORT void setWeight(int,double);
     PGMLINK_EXPORT void structuredLearning(

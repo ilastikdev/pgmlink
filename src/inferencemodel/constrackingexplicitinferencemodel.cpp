@@ -10,15 +10,17 @@ namespace pgmlink
 
 ConsTrackingExplicitInferenceModel::ConsTrackingExplicitInferenceModel(const Parameter& param,
         double ep_gap,
-        double cplex_timeout):
+        double cplex_timeout,
+        opengm::learning::Weights<double>& inferenceWeights):
     InferenceModel(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
     number_of_appearance_nodes_(0),
     number_of_disappearance_nodes_(0),
     ground_truth_filename_(""),
-    inferenceWeights_(5)
+    inferenceWeights_ (inferenceWeights)
 {
+
     cplex2_param_.verbose_ = true;
     cplex2_param_.integerConstraintNodeVar_ = true;
     cplex2_param_.epGap_ = ep_gap;
@@ -219,6 +221,18 @@ unsigned int ConsTrackingExplicitInferenceModel::get_number_of_division_nodes(){
     return number_of_division_nodes_;
 }
 
+unsigned int ConsTrackingExplicitInferenceModel::get_number_of_transition_nodes(){
+    return number_of_transition_nodes_;
+}
+
+unsigned int ConsTrackingExplicitInferenceModel::get_number_of_appearance_nodes(){
+    return number_of_appearance_nodes_;
+}
+
+unsigned int ConsTrackingExplicitInferenceModel::get_number_of_disappearance_nodes(){
+    return number_of_disappearance_nodes_;
+}
+
 void ConsTrackingExplicitInferenceModel::printResults(const HypothesesGraph& g)
 {
     //very verbose print of solution
@@ -415,7 +429,9 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     if(param_.with_constraints)
     {
         LOG(logINFO) << "add_constraints";
+        std::cout << "add_constraints" << std::endl;
         add_constraints(*optimizer2_);
+        std::cout << "END add_constraints" << std::endl;
     }
     else
     {

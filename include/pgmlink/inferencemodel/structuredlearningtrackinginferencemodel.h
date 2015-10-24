@@ -28,8 +28,13 @@ public:
     StructuredLearningTrackingInferenceModel(
         const Parameter& inferenceParam,
         double ep_gap,
-        double cplex_timeout):
-        ConsTrackingExplicitInferenceModel(inferenceParam, ep_gap, cplex_timeout)
+        double cplex_timeout,
+        opengm::learning::Weights<double>& inferenceWeights):
+        ConsTrackingExplicitInferenceModel(
+            inferenceParam,
+            ep_gap,
+            cplex_timeout,
+            inferenceWeights)
     {}
 
     virtual size_t add_division_factors(const HypothesesGraph&, size_t);

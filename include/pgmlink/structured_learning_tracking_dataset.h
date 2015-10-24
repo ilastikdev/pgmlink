@@ -44,9 +44,7 @@ public:
        this->lossParams_.resize(numModels);
        this->isCached_.resize(numModels);
        this->count_.resize(numModels,0);
-       this->weights_ = Weights(numWeights);
-       for(size_t i=0; i<numWeights; ++i)
-	   this->weights_.setWeight(i, trackingWeights.getWeight(i));
+       this->getWeights() = trackingWeights;
 
        this->gms_.resize(numModels);
        this->gts_.resize(numModels);

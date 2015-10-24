@@ -96,7 +96,10 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
     return result;
 }
 }
-void StructuredLearningTracking::prepareTracking(ConservationExplicitTracking& pgm, ConservationExplicitTracking::Parameter& param)
+void StructuredLearningTracking::prepareTracking(
+        ConservationExplicitTracking& pgm,
+        ConservationExplicitTracking::Parameter& param,
+        opengm::learning::Weights<double>& trackingWeights)
 {
     inference_model_param_.max_number_objects = param.max_number_objects;
     inference_model_param_.with_constraints = param.with_constraints;
@@ -118,24 +121,15 @@ void StructuredLearningTracking::prepareTracking(ConservationExplicitTracking& p
     inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
 
     boost::shared_ptr<InferenceModel> inference_model =
-        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param));
+        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param,trackingWeights));
 
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->inferenceWeights_.setWeight((size_t)0,param.detection_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->inferenceWeights_.setWeight((size_t)1,param.division_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->inferenceWeights_.setWeight((size_t)2,param.transition_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->inferenceWeights_.setWeight((size_t)3,param.appearance_weight);
-    boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->inferenceWeights_.setWeight((size_t)4,param.disappearance_weight);
-    numWeights_ = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->inferenceWeights_.size();
-    
-    trackingWeights_.setWeight((size_t)0,param.detection_weight);
-    trackingWeights_.setWeight((size_t)1,param.division_weight);
-    trackingWeights_.setWeight((size_t)2,param.transition_weight);
-    trackingWeights_.setWeight((size_t)3,param.appearance_weight);
-    trackingWeights_.setWeight((size_t)4,param.disappearance_weight);
+    numWeights_ = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->getWeights().size();
     pgm.setInferenceModel(inference_model);
 }
 
-boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(ConservationExplicitTracking::Parameter& param)
+boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(
+        ConservationExplicitTracking::Parameter& param,
+        opengm::learning::Weights<double>& trackingWeights)
 {
 
     ep_gap_ = param.ep_gap;
@@ -144,7 +138,8 @@ boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_m
         return boost::make_shared<StructuredLearningTrackingInferenceModel>(
             inference_model_param_,
             ep_gap_,
-            cplex_timeout_);
+            cplex_timeout_,
+            trackingWeights);
 }
 
 
@@ -522,7 +517,8 @@ void StructuredLearningTracking::structuredLearning(
         )
 {
 
-    typedef opengm::datasets::StructuredLearningTrackingDataset<StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::learning::HammingLoss> DSS;
+    typedef opengm::datasets::StructuredLearningTrackingDataset<
+            StructuredLearningTrackingInferenceModel::GraphicalModelType,opengm::learning::HammingLoss> DSS;
 
     trackingWeights_.setWeight(0,detection_weight);
     trackingWeights_.setWeight(1,division_weight);
@@ -539,13 +535,14 @@ void StructuredLearningTracking::structuredLearning(
 
     property_map<traxel_arc_id, HypothesesGraph::base_graph>::type& arc_id_map = hypotheses_graph_->get(traxel_arc_id());
 
-    std::vector<boost::shared_ptr<HypothesesGraph>> hypothesesSubGraph;//boost::make_shared<HypothesesGraph>();
-    std::vector<HypothesesGraph*> graph;// = pgm.get_prepared_graph(*(hypothesesSubGraph[m]));
-    std::vector<boost::shared_ptr<InferenceModel>> inference_model;// = pgm.getInferenceModel();
+    std::vector<boost::shared_ptr<HypothesesGraph>> hypothesesSubGraph;
+    std::vector<HypothesesGraph*> graph;
+    std::vector<boost::shared_ptr<InferenceModel>> inference_model;
         
     // set up graphical models
     for(size_t m=0; m<numCrops_; ++m){
         std::cout << std::endl << " GRAPHICAL MODEL.............. " << m << std::endl << std::endl;
+
         HypothesesGraph::base_graph::NodeMap<bool> selected_nodes(*hypotheses_graph_);
         for (HypothesesGraph::NodeIt n(*hypotheses_graph_); n != lemon::INVALID; ++n)
             selected_nodes[n] = false;
@@ -620,16 +617,19 @@ void StructuredLearningTracking::structuredLearning(
             ++numArcs;
         }
 
-        prepareTracking(pgm, param);
+        prepareTracking(pgm, param, sltDataset.getWeights());
         inference_model.push_back(pgm.getInferenceModel());
+        std::cout << "build from graph " << std::endl;
         inference_model[m]->build_from_graph(*(graph[m]));
 
+        std::cout << "set_inference_params" << std::endl;
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->set_inference_params(
             1,//numberOfSolutions,
             "",//get_export_filename(0, features_file_),
             "",//constraints_file_,
             "");//get_export_filename(0, labels_export_file_name_));
 
+        std::cout << "setGraphicalModel" << std::endl;
         sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->model());
 
         sltDataset.resizeGTS(m);
@@ -643,6 +643,8 @@ void StructuredLearningTracking::structuredLearning(
         property_map< arc_label, HypothesesGraph::base_graph>::type& arc_labels = graph[m]->get(arc_label());
         property_map< traxel_arc_id, HypothesesGraph::base_graph>::type& arc_id_map_sub = graph[m]->get(traxel_arc_id());
 
+        size_t number_of_transition_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_transition_nodes();
+        std::cout << "setGraphicalModel:arc_labels " << number_of_transition_nodes << std::endl;
         size_t indexArcs=0;
         for(HypothesesGraph::ArcIt a(*(graph[m])); a != lemon::INVALID; ++a)
         {
@@ -654,24 +656,36 @@ void StructuredLearningTracking::structuredLearning(
                 (size_t) arc_label);
             ++indexArcs;
         }
+        assert ( indexArcs == number_of_transition_nodes);
 
+        size_t number_of_appearance_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_appearance_nodes();
+        std::cout << "setGraphicalModel GT: appearance labels " << number_of_appearance_nodes << std::endl;
+        size_t indexAppNodes=0;
         for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
 
             sltDataset.setGTS(
                 m,
                 (size_t) numArcs + traxel_map[n].Id-1,
                 (size_t)appearance_labels[n]);
+            ++indexAppNodes;
         }
+        assert ( indexAppNodes == number_of_appearance_nodes );
 
+        size_t number_of_disappearance_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_disappearance_nodes();
+        std::cout << "setGraphicalModel GT: dissappearance labels " << number_of_disappearance_nodes << std::endl;
+        size_t indexDisAppNodes=0;
         for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
 
             sltDataset.setGTS(
                 m,
                 (size_t) numArcs + numNodes + traxel_map[n].Id-1,
                 (size_t)disappearance_labels[n]);
+            ++indexDisAppNodes;
         }
+        assert ( indexDisAppNodes == number_of_disappearance_nodes);
 
         size_t number_of_division_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_division_nodes();
+        std::cout << "setGraphicalModel GT: division nodes " << number_of_division_nodes << std::endl;
         std::vector<size_t> division_var_to_node_fun (number_of_division_nodes);
         size_t indexDivNodes=0;
         for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
@@ -690,20 +704,19 @@ void StructuredLearningTracking::structuredLearning(
         }
         assert ( indexDivNodes == number_of_division_nodes);
 
+        std::cout << "BUILD MODEL WITH LOSS" << std::endl;
+
         for(size_t i=0; i<sltDataset.getModel(m).numberOfVariables();++i)
 
         sltDataset.build_model_with_loss(m);
-
     } // for model m
 
-    sltDataset.getWeights().setWeight(0,trackingWeights_.getWeight(0));
-    sltDataset.getWeights().setWeight(1,trackingWeights_.getWeight(1));
-    sltDataset.getWeights().setWeight(2,trackingWeights_.getWeight(2));
-    sltDataset.getWeights().setWeight(3,trackingWeights_.getWeight(3));
-    sltDataset.getWeights().setWeight(4,trackingWeights_.getWeight(4));
+    for(size_t i=0; i<5; ++i)
+        std::cout << sltDataset.getWeights()[i] << " ";
+    std::cout << std::endl;
 
     opengm::learning::StructMaxMargin<DSS>::Parameter para;
-    para.optimizerParameter_.lambda = 100;
+    para.optimizerParameter_.lambda = 1.00;
 
     opengm::learning::StructMaxMargin<DSS> learner(sltDataset,para);
 
@@ -719,11 +732,13 @@ void StructuredLearningTracking::structuredLearning(
     infPara.relaxation_ = infPara.TightPolytope;
 
 //    infPara.relaxation_ = infPara.LocalPolytope;
-//    infPara.maxNumIterations_ = 5;
+//    infPara.maxNumIterations_ = 100;
 //    infPara.maxNumConstraintsPerIter_ = 10;
 
-    infPara.verbose_ = true;
-    //infPara.verbose_ = false;
+    //infPara.tolerance_ = 0.0001;
+    infPara.epGap_ = ep_gap;
+    //infPara.verbose_ = true;
+    infPara.verbose_ = false;
     infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;

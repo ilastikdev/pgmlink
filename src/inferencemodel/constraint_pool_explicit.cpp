@@ -153,6 +153,9 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 {
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming";
 
+    std::cout << "[ConstraintPoolExplicit]: Number of Factors" << model.numberOfFactors() << std::endl;
+    std::cout << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Incoming" << std::endl;
+
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
         //std::cout << " CONSTRAINT: " << typeid(it).name() << std::endl;
@@ -252,6 +255,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
         //std::cout << " Factor" << model.numberOfFactors() -1 << std::endl;
     }
+    //std::cout << "[ConstraintPoolExplicit]: Number of Factors" << model.numberOfFactors() << std::endl;
 }
 
 ////------------------------------------------------------------------------
@@ -439,6 +443,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 {
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing";
 
+    std::cout << "[ConstraintPoolExplicit]: Number of Factors" << model.numberOfFactors() << std::endl;
+    std::cout << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Outgoing" << std::endl;
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
         const ConstraintPoolExplicit::OutgoingLinearConstraint& constraint = *it;
@@ -466,9 +472,9 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     cplex_idxs.clear();
                     coeffs.clear();
                     coeffs.push_back(1);
-                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, a_state));
+                    cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, a_state));
                     coeffs.push_back(1);
-                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(*outgoing_it, t_state));
+                    cplex_idxs.push_back(1);//optimizer.lpNodeVi(*outgoing_it, t_state));
                     constraint_name.str(std::string()); // clear the name
                     constraint_name << "outgoing: 0 <= App_i[" << a_state << "] + Y_ij[" << t_state << "] <= 1; ";
                     constraint_name << "g.id(n) = " << *outgoing_it << ", g.id(a) = " << constraint.appearance_node;
@@ -548,7 +554,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             LOG(logDEBUG3) << "div_node_map_[n] = " << constraint.division_node;
             LOG(logDEBUG3) << "number_of_transition_nodes_ = " << constraint.transition_nodes.size();
             // LOG(logDEBUG3) << "number_of_division_nodes_ = " << number_of_division_nodes_; ???
-            div_cplex_id = 99;//optimizer.lpNodeVi(constraint.division_node, 1);
+            div_cplex_id = 1;//optimizer.lpNodeVi(constraint.division_node, 1);
         }
 
         //std::cout << "2" << std::endl;
@@ -566,7 +572,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                 for (size_t state = 1; state < model.numberOfLabels(*outgoing_it); ++state)
                 {
                     coeffs.push_back(state);
-                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(*outgoing_it, state));
+                    cplex_idxs.push_back(1);//optimizer.lpNodeVi(*outgoing_it, state));
                 }
             }
 
@@ -579,7 +585,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             for (size_t state = 1; state < model.numberOfLabels(constraint.appearance_node); ++state)
             {
                 coeffs.push_back(-state);
-                cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, state));
+                cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, state));
             }
 
             // 0 <= sum_nu [ sum_j( nu * Y_ij[nu] ) ] - [ sum_nu nu * X_i[nu] + D_i[1] + sum_nu nu * App_i[nu] ]<= 0
@@ -668,7 +674,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs.push_back(div_cplex_id);
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 1));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, 1));
             coeffs.push_back(-1);
 
             // -1 <= D_i[1] - App_i[1] <= 0
@@ -753,7 +759,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
                     coeffs.clear();
                     cplex_idxs.push_back(div_cplex_id);
                     coeffs.push_back(1);
-                    cplex_idxs.push_back(99);//optimizer.lpNodeVi(*outgoing_it, state));
+                    cplex_idxs.push_back(1);//optimizer.lpNodeVi(*outgoing_it, state));
                     coeffs.push_back(1);
 
                     // 0 <= D_i[1] + Y_ij[nu] <= 1 forall nu>1
@@ -820,7 +826,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 
                 }
 
-                cplex_idxs2.push_back(99);//optimizer.lpNodeVi(*outgoing_it, 1));
+                cplex_idxs2.push_back(1);//optimizer.lpNodeVi(*outgoing_it, 1));
                 coeffs2.push_back(-1);
             }
 
@@ -889,6 +895,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             model.addFactor(linearConstraintLeCDTFunctionID, factorVariablesCDT.begin(), factorVariablesCDT.end());
         }
     }
+    //std::cout << "[ConstraintPoolExplicit]: Number of Factors" << model.numberOfFactors() << std::endl;
 }
 
 //template<>
@@ -1081,6 +1088,8 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
 {
     LOG(logINFO) << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection";
 
+    std::cout << "[ConstraintPoolExplicit]: Number of Factors" << model.numberOfFactors() << std::endl;
+    std::cout << "[ConstraintPoolExplicit]: Adding " << constraints.size() << " hard constraints for Detection" << std::endl;
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
         const ConstraintPoolExplicit::DetectionLinearConstraint& constraint = *it;
@@ -1094,13 +1103,13 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs.clear();
             coeffs.clear();
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, state));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, state));
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, state));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.disappearance_node, state));
             coeffs.push_back(-1);
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
             coeffs.push_back(-1);
 
             // A_i[nu] = 1 => V_i[nu] = 1 v V_i[0] = 1
@@ -1183,13 +1192,13 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             cplex_idxs.clear();
             coeffs.clear();
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, state));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.disappearance_node, state));
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, state));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, state));
             coeffs.push_back(-1);
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 0));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, 0));
             coeffs.push_back(-1);
 
             // V_i[nu] = 1 => A_i[nu] = 1 v A_i[0] = 1
@@ -1273,10 +1282,10 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             coeffs.clear();
 
             // assume both nodes are given
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
             coeffs.push_back(1);
 
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 0));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, 0));
             coeffs.push_back(1);
 
             // V_i[0] = 0 => 1 <= A_i[0]
@@ -1338,7 +1347,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         {
             cplex_idxs.clear();
             coeffs.clear();
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.disappearance_node, 0));
             coeffs.push_back(1);
             // V_i[0] = 0
             // 1 <= V_i <= m
@@ -1389,7 +1398,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         {
             cplex_idxs.clear();
             coeffs.clear();
-            cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.appearance_node, 0));
+            cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.appearance_node, 0));
             coeffs.push_back(1);
             // A_i[0] = 0
             // 1 <= A_i <= m
@@ -1435,6 +1444,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
             //std::cout << " &&& Factor" << model.numberOfFactors() -1 << " numVar" << model[model.numberOfFactors()-1].numberOfVariables() << std::endl;
         }
     }
+    std::cout << "[ConstraintPoolExplicit]: Number of Factors " << model.numberOfFactors() << std::endl;
 }
 
 ////------------------------------------------------------------------------
@@ -1494,7 +1504,7 @@ void ConstraintPoolExplicit::add_constraint_type_to_model<ConstraintPoolExplicit
         std::stringstream constraint_name;
         constraint_name << "fix node value of " << constraint.node << " to " << constraint.value;
 
-        cplex_idxs.push_back(99);//optimizer.lpNodeVi(constraint.node, constraint.value));
+        cplex_idxs.push_back(1);//optimizer.lpNodeVi(constraint.node, constraint.value));
         coeffs.push_back(1);
 
         //optimizer.addConstraint(cplex_idxs.begin(), cplex_idxs.end(), coeffs.begin(), 1, 1, constraint_name.str().c_str());

@@ -36,7 +36,11 @@ public: // typedefs
 
 public: // API
     // constructor
-    ConsTrackingExplicitInferenceModel(const Parameter& param, double ep_gap, double cplex_timeout);
+    ConsTrackingExplicitInferenceModel(
+            const Parameter& param,
+            double ep_gap,
+            double cplex_timeout,
+            opengm::learning::Weights<double>& inferenceWeights);
 
     // build the inference model from the given graph
     virtual void build_from_graph(const HypothesesGraph&);
@@ -70,11 +74,15 @@ public: // API
                                     const std::string &ground_truth_filename);
 
     // structured learning tracking inference model
-    opengm::learning::Weights<double> inferenceWeights_;
     GraphicalModelType model();
     unsigned int get_number_of_division_nodes();
+    unsigned int get_number_of_transition_nodes();
+    unsigned int get_number_of_appearance_nodes();
+    unsigned int get_number_of_disappearance_nodes();
+    opengm::learning::Weights<double>& getWeights(){ return inferenceWeights_; }
 
 protected: // methods
+    opengm::learning::Weights<double>& inferenceWeights_;
     void add_appearance_nodes( const HypothesesGraph& );
     void add_disappearance_nodes( const HypothesesGraph& );
     void add_transition_nodes( const HypothesesGraph& );
@@ -130,6 +138,7 @@ protected: // members
 template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
+    std::cout << "in add_constraints" << std::endl;
     //constraint_pool_.add_constraints_to_problem(model_, optimizer);
     linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
 }
