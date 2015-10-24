@@ -64,7 +64,8 @@ public:
             double border_width = 0,
             boost::python::object transition_classifier = boost::python::object(),
             bool with_optical_correction = false,
-            SolverType solver = CplexSolver):
+            SolverType solver = CplexSolver,
+            bool withNormalization = true):
             max_number_objects(max_number_objects),
             detection(detection),
             detectionNoWeight(0),
@@ -92,7 +93,8 @@ public:
             transition_weight(transition_weight),
             transition_classifier(transition_classifier),
             with_optical_correction(with_optical_correction),
-            solver_(solver)
+            solver_(solver),
+            withNormalization(withNormalization)
         {}
 
         // empty parameter needed for python
@@ -134,6 +136,7 @@ public:
         boost::python::object transition_classifier;
         bool with_optical_correction;
         SolverType solver_;
+        bool withNormalization;
 
     private:
         // python extensions:

@@ -102,11 +102,13 @@ public:
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(
             ConservationExplicitTracking::Parameter& param,
-            opengm::learning::Weights<double>& trackingWeights);
+            opengm::learning::Weights<double>& trackingWeights,
+            bool withNormalization);
     PGMLINK_EXPORT virtual void prepareTracking(
             ConservationExplicitTracking& pgm,
             ConservationExplicitTracking::Parameter& param,
-            opengm::learning::Weights<double>& trackingWeights);
+            opengm::learning::Weights<double>& trackingWeights,
+            bool withNormalization);
     PGMLINK_EXPORT double weight(int);
     PGMLINK_EXPORT void setWeight(int,double);
     PGMLINK_EXPORT void structuredLearning(
@@ -125,7 +127,8 @@ public:
             bool with_constraints = true,
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
-            boost::python::object TransitionClassifier = boost::python::object());
+            boost::python::object TransitionClassifier = boost::python::object(),
+            bool withNormalization = true);
 
     PGMLINK_EXPORT void structuredLearningFromParam(ConservationExplicitTracking::Parameter& param);
 
@@ -146,7 +149,8 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
-            ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver);
+            ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver,
+            bool withNormalization = true);
 
     PGMLINK_EXPORT void setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights);
 

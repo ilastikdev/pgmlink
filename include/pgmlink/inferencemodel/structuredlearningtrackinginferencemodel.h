@@ -29,17 +29,21 @@ public:
         const Parameter& inferenceParam,
         double ep_gap,
         double cplex_timeout,
-        opengm::learning::Weights<double>& inferenceWeights):
+        opengm::learning::Weights<double>& inferenceWeights,
+        bool withNormalization):
         ConsTrackingExplicitInferenceModel(
             inferenceParam,
             ep_gap,
             cplex_timeout,
-            inferenceWeights)
+            inferenceWeights),
+        withNormalization_(withNormalization)
     {}
 
     virtual size_t add_division_factors(const HypothesesGraph&, size_t);
     virtual size_t add_transition_factors(const HypothesesGraph&, size_t);
     virtual size_t add_detection_factors(const HypothesesGraph&, size_t);
+protected:
+    bool withNormalization_;
 };
 } // namespace pgmlink
 

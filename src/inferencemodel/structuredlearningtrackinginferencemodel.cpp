@@ -29,6 +29,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
     double minEnergyD = 0.0;//(double)std::numeric_limits<double>::infinity();
     double maxEnergyD = 0.0;
 
+    std::cout << "withNormalization_ " << withNormalization_ << "  inferenceWeights_ " << &inferenceWeights_ << std::endl;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
         //std::cout << " node " << traxel_map_[n] << std::endl;
@@ -247,6 +248,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
                 //std::cout << "energies" << std::endl;
                 energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
+                assert(maxEnergyP >= energy);
+                assert(energy >= minEnergyP);
                 energiesPnorm(coords.begin()) = ((double)energy-minEnergyP)/(maxEnergyP-minEnergyP);
                 energiesP(coords.begin()) = energy;
 
@@ -259,7 +262,9 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     maxEnergyPnew = energiesPnorm(coords.begin());
 
                 if (var_idx == 0){ // A
-                    energiesAnorm(coords.begin()) = (state-minEnergyA)/(maxEnergyA-minEnergyA);// * cost[var_idx];
+                    assert(maxEnergyA >= energy);
+                    assert(energy >= minEnergyA);
+                    energiesAnorm(coords.begin()) = ((double)state-minEnergyA)/(maxEnergyA-minEnergyA);// * cost[var_idx];
                     energiesA(coords.begin()) = state;// * cost[var_idx];
 //                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
 
@@ -269,7 +274,9 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                         maxEnergyAnew = energiesAnorm(coords.begin());
                 }
                 else{ // D
-                    energiesDnorm(coords.begin()) = (state-minEnergyD)/(maxEnergyD-minEnergyD);// * cost[var_idx];
+                    assert(maxEnergyD >= state);
+                    assert(state >= minEnergyD);
+                    energiesDnorm(coords.begin()) = ((double)state-minEnergyD)/(maxEnergyD-minEnergyD);// * cost[var_idx];
                     energiesD(coords.begin()) = state;// * cost[var_idx];
 //                    energiesDVec(coordsVec.begin()) = state;// * cost[var_idx];
 
@@ -292,6 +299,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 // only pay detection energy if both variables are on
 
                 energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy;
+                assert(maxEnergyP >= energy);
+                assert(energy >= minEnergyP);
                 energiesPnorm(coords.begin()) = ((double)energy-minEnergyP)/(maxEnergyP-minEnergyP);
                 energiesP(coords.begin()) = energy;
 
@@ -450,8 +459,11 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         varShape.push_back((size_t)param_.max_number_objects+1);
         varShape.push_back((size_t)param_.max_number_objects+1);
 
-//        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
-        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,featuresNorm);
+        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies;
+        if(withNormalization_)
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,featuresNorm);
+        else
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,features);
 
 //        std::vector<marray::Marray<double>> featuresVec;
 //        featuresVec.push_back(energiesPVec);
@@ -503,6 +515,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
     double minEnergy = (double)std::numeric_limits<double>::infinity();
     double maxEnergy = 0.0;
 
+    std::cout << "withNormalization_ " << withNormalization_ << "  inferenceWeights_ " << &inferenceWeights_ << std::endl;
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
 //        size_t vi[] = { arc_map_[a] };
@@ -583,7 +596,9 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state
                            << "] = " << energy;
             coords[0] = state;
-            energiesNorm(coords.begin()) = (energy-minEnergy)/(maxEnergy-minEnergy);
+            assert(maxEnergy >= energy);
+            assert(energy >= minEnergy);
+            energiesNorm(coords.begin()) = ((double)energy-minEnergy)/(maxEnergy-minEnergy);
             energies(coords.begin()) = energy;
 
             if (energiesNorm(coords.begin()) < minEnergyNew)
@@ -607,8 +622,11 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         std::vector<size_t> varShape;
         varShape.push_back((size_t)1+param_.max_number_objects);
 
-//        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
-        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,featuresNorm);
+        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies;
+        if(withNormalization_)
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,features);
+        else
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,featuresNorm);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
@@ -650,6 +668,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     double minEnergy = (double)std::numeric_limits<double>::infinity();
     double maxEnergy = 0.0;
 
+    std::cout << "withNormalization_ " << withNormalization_ << "  inferenceWeights_ " << &inferenceWeights_ << std::endl;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
         if (div_node_map_.count(n) == 0)
@@ -709,7 +728,6 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 
     std::cout << "minEnergyDiv  " << minEnergy << std::endl;
     std::cout << "maxEnergyDiv " << maxEnergy << std::endl;
-
     double minEnergyNew = (double)std::numeric_limits<double>::infinity();
     double maxEnergyNew = 0.0;
 
@@ -741,7 +759,9 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 //            std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: tr=" << tr << " state=" << state << " division[" << state
 //                           << "] = " << energy << std::endl;
             coords[0] = state;
-            energiesNorm(coords.begin()) = (energy-minEnergy)/(maxEnergy-minEnergy);
+            assert(maxEnergy >= energy);
+            assert(energy >= minEnergy);
+            energiesNorm(coords.begin()) = ((double)energy-minEnergy)/(maxEnergy-minEnergy);
             energies(coords.begin()) = energy;
 
             if (energiesNorm(coords.begin()) < minEnergyNew)
@@ -764,8 +784,11 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         std::vector<size_t> varShape;
         varShape.push_back((size_t)2);
 
-//        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,features);
-        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies (varShape,inferenceWeights_,weightIDs,featuresNorm);
+        opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies;
+        if(withNormalization_)
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,features);
+        else
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,featuresNorm);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);

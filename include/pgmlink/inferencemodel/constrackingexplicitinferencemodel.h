@@ -132,7 +132,6 @@ protected: // members
     std::string ground_truth_filename_;
     std::map<std::pair<size_t, size_t>, size_t > cplex_variable_id_map_;
     std::map<std::pair<size_t, std::pair<size_t, size_t> >, size_t> cplex_factor_id_map_;
-
 };
 
 template<class INF>

@@ -99,7 +99,8 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
 void StructuredLearningTracking::prepareTracking(
         ConservationExplicitTracking& pgm,
         ConservationExplicitTracking::Parameter& param,
-        opengm::learning::Weights<double>& trackingWeights)
+        opengm::learning::Weights<double>& trackingWeights,
+        bool withNormalization)
 {
     inference_model_param_.max_number_objects = param.max_number_objects;
     inference_model_param_.with_constraints = param.with_constraints;
@@ -121,7 +122,7 @@ void StructuredLearningTracking::prepareTracking(
     inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
 
     boost::shared_ptr<InferenceModel> inference_model =
-        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param,trackingWeights));
+        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param,trackingWeights,withNormalization));
 
     numWeights_ = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model)->getWeights().size();
     pgm.setInferenceModel(inference_model);
@@ -129,7 +130,8 @@ void StructuredLearningTracking::prepareTracking(
 
 boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(
         ConservationExplicitTracking::Parameter& param,
-        opengm::learning::Weights<double>& trackingWeights)
+        opengm::learning::Weights<double>& trackingWeights,
+        bool withNormalization)
 {
 
     ep_gap_ = param.ep_gap;
@@ -139,7 +141,8 @@ boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_m
             inference_model_param_,
             ep_gap_,
             cplex_timeout_,
-            trackingWeights);
+            trackingWeights,
+            withNormalization);
 }
 
 
@@ -333,7 +336,8 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-        ConservationExplicitTracking::SolverType solver)
+        ConservationExplicitTracking::SolverType solver,
+        bool withNormalization)
 {
     std::cout << "in StructuredLearningTracking::get_structured_learning_tracking_parameters" << std::endl;
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
@@ -394,7 +398,8 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
         border_width,
         transition_classifier,
         with_optical_correction_,
-        solver//,
+        solver,
+        withNormalization
 //        trainingToHardConstraints,
 //        num_threads
     );
@@ -433,7 +438,8 @@ void StructuredLearningTracking::structuredLearningFromParam(ConservationExplici
         param.with_constraints,
         param.uncertainty_param,
         param.cplex_timeout,
-        param.transition_classifier);
+        param.transition_classifier,
+        param.withNormalization);
 }
 
 void StructuredLearningTracking::setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights)
@@ -513,7 +519,8 @@ void StructuredLearningTracking::structuredLearning(
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
-        boost::python::object transition_classifier
+        boost::python::object transition_classifier,
+        bool withNormalization
         )
 {
 
@@ -527,6 +534,7 @@ void StructuredLearningTracking::structuredLearning(
     trackingWeights_.setWeight(4,disappearance_cost);
 
     DSS sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_, trackingWeights_);
+    std::cout << " weights REFERENCE" << &sltDataset.getWeights() << std::endl;
 
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
@@ -617,7 +625,7 @@ void StructuredLearningTracking::structuredLearning(
             ++numArcs;
         }
 
-        prepareTracking(pgm, param, sltDataset.getWeights());
+        prepareTracking(pgm, param, sltDataset.getWeights(),withNormalization);
         inference_model.push_back(pgm.getInferenceModel());
         std::cout << "build from graph " << std::endl;
         inference_model[m]->build_from_graph(*(graph[m]));
