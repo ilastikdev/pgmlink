@@ -1008,18 +1008,21 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     if (use_classifier_prior_)
     {
         LOG(logINFO) << "Using classifier prior";
+        std::cout << "Using classifier prior" << std::endl;
         param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
+        std::cout << "Using size dependent prior" << std::endl;
         param.detection = NegLnDetection(weights[0]); // weight
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
         LOG(logINFO) << "Using hard prior";
+        std::cout << "Using hard prior" << std::endl;
         // assume a quasi geometric distribution
         std::vector<double> prob_vector;
         double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
@@ -1771,18 +1774,21 @@ void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Par
     if (use_classifier_prior_)
     {
         LOG(logINFO) << "Using classifier prior";
+        std::cout << "Using classifier prior" << std::endl;
         param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
+        std::cout << "Using size dependent prior" << std::endl;
         param.detection = NegLnDetection(weights[0]); // weight
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
         LOG(logINFO) << "Using hard prior";
+        std::cout << "Using hard prior" << std::endl;
         // assume a quasi geometric distribution
         std::vector<double> prob_vector;
         double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)

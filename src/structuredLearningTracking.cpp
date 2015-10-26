@@ -100,7 +100,8 @@ void StructuredLearningTracking::prepareTracking(
         ConservationExplicitTracking& pgm,
         ConservationExplicitTracking::Parameter& param,
         opengm::learning::Weights<double>& trackingWeights,
-        bool withNormalization)
+        bool withNormalization,
+        bool withClassifierPrior)
 {
     inference_model_param_.max_number_objects = param.max_number_objects;
     inference_model_param_.with_constraints = param.with_constraints;
@@ -120,6 +121,10 @@ void StructuredLearningTracking::prepareTracking(
     inference_model_param_.forbidden_cost = param.forbidden_cost;
     inference_model_param_.appearance_cost = param.appearance_cost_fn;
     inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
+
+    std::cout << "[StructuredLearningTracking::prepareTracking] use_classifier_prior_" << use_classifier_prior_ << std::endl;
+    use_classifier_prior_ = withClassifierPrior;
+    std::cout << "[StructuredLearningTracking::prepareTracking] use_classifier_prior_" << use_classifier_prior_ << std::endl;
 
     boost::shared_ptr<InferenceModel> inference_model =
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(create_inference_model(param,trackingWeights,withNormalization));
@@ -337,7 +342,8 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
         double cplex_timeout,
         boost::python::api::object transition_classifier,
         ConservationExplicitTracking::SolverType solver,
-        bool withNormalization)
+        bool withNormalization,
+        bool withClassifierPrior)
 {
     std::cout << "in StructuredLearningTracking::get_structured_learning_tracking_parameters" << std::endl;
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
@@ -399,10 +405,15 @@ ConservationExplicitTracking::Parameter StructuredLearningTracking::get_structur
         transition_classifier,
         with_optical_correction_,
         solver,
-        withNormalization
+        withNormalization,
+        withClassifierPrior
 //        trainingToHardConstraints,
 //        num_threads
     );
+    std::cout << "[StructuredLearningTracking::get_structured_learning_tracking_parameters] use_classifier_prior_" << use_classifier_prior_ << std::endl;
+    use_classifier_prior_ = withClassifierPrior;
+    std::cout << "[StructuredLearningTracking::get_structured_learning_tracking_parameters] use_classifier_prior_" << use_classifier_prior_ << std::endl;
+
     std::cout << "AFTER CONSTRUCTING ConservationExplicitTracking::Parameter param" << std::endl;
 
     std::vector<double> model_weights = {
@@ -456,19 +467,22 @@ void StructuredLearningTracking::setParameterWeights(ConservationExplicitTrackin
 
     if (use_classifier_prior_)
     {
-        LOG(logINFO) << "Using classifier prior";
+        LOG(logINFO) << "[StructuredLearningTracking::setParameterWeights] Using classifier prior" << std::endl;
+        std::cout << "Using classifier prior";
         param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
+        std::cout << "[StructuredLearningTracking::setParameterWeights] Using size dependent prior" << std::endl;
         param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
         LOG(logINFO) << "Using hard prior";
+        std::cout << "[StructuredLearningTracking::setParameterWeights] Using hard prior" << std::endl;
         // assume a quasi geometric distribution
         std::vector<double> prob_vector;
         double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
@@ -520,7 +534,8 @@ void StructuredLearningTracking::structuredLearning(
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::object transition_classifier,
-        bool withNormalization
+        bool withNormalization,
+        bool withClassifierPrior
         )
 {
 
@@ -568,6 +583,7 @@ void StructuredLearningTracking::structuredLearning(
                    crops_[m].lower_bound()[3] <= traxel_map[node].Z() and traxel_map[node].Z() <= crops_[m].upper_bound()[3] ){
 
                     selected_nodes[node] = true;
+                    std::cout << "node : " << traxel_map[node] << std::endl;
                 }
             }
         }
@@ -578,10 +594,14 @@ void StructuredLearningTracking::structuredLearning(
             HypothesesGraph::Node from = hypotheses_graph_->source(a);
             HypothesesGraph::Node to = hypotheses_graph_->target(a);
 
-            if(selected_nodes[from] and selected_nodes[to])
+            if(selected_nodes[from] and selected_nodes[to]){
                 selected_arcs[a] = true;
-            else
+                std::cout << "ARC  in the subgraph : " << traxel_map[from] << "  --->  " << traxel_map[to] << std::endl;
+            }
+            else{
                 selected_arcs[a] = false;
+                //std::cout << "ARC OUT the subgraph : " << traxel_map[from] << "  --->  " << traxel_map[to] << std::endl;
+            }
         }
 
         hypothesesSubGraph.push_back(boost::make_shared<HypothesesGraph>());
@@ -625,7 +645,7 @@ void StructuredLearningTracking::structuredLearning(
             ++numArcs;
         }
 
-        prepareTracking(pgm, param, sltDataset.getWeights(),withNormalization);
+        prepareTracking(pgm, param, sltDataset.getWeights(),withNormalization,withClassifierPrior);
         inference_model.push_back(pgm.getInferenceModel());
         std::cout << "build from graph " << std::endl;
         inference_model[m]->build_from_graph(*(graph[m]));
@@ -639,6 +659,7 @@ void StructuredLearningTracking::structuredLearning(
 
         std::cout << "setGraphicalModel" << std::endl;
         sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->model());
+        std::cout << "sltDataset.getModel(m).numberOfVariables()--->" << sltDataset.getModel(m).numberOfVariables() << std::endl;
 
         sltDataset.resizeGTS(m);
 
@@ -662,6 +683,7 @@ void StructuredLearningTracking::structuredLearning(
                 m,
                 (size_t) indexArcs,
                 (size_t) arc_label);
+            std::cout << indexArcs << "  arc_label: " << indexArcs << " " << traxel_map_sub_graph[graph[m]->source(a)] << " ---> " << traxel_map_sub_graph[graph[m]->target(a)] << "  " << arc_label << std::endl;
             ++indexArcs;
         }
         assert ( indexArcs == number_of_transition_nodes);
@@ -673,8 +695,9 @@ void StructuredLearningTracking::structuredLearning(
 
             sltDataset.setGTS(
                 m,
-                (size_t) numArcs + traxel_map[n].Id-1,
+                (size_t) indexArcs + indexAppNodes,
                 (size_t)appearance_labels[n]);
+            std::cout << indexArcs + indexAppNodes << "  appearance_label: " << indexAppNodes << " " << traxel_map_sub_graph[n] << " " << traxel_map_sub_graph[n].Id << " " " " << appearance_labels[n] << std::endl;
             ++indexAppNodes;
         }
         assert ( indexAppNodes == number_of_appearance_nodes );
@@ -686,8 +709,9 @@ void StructuredLearningTracking::structuredLearning(
 
             sltDataset.setGTS(
                 m,
-                (size_t) numArcs + numNodes + traxel_map[n].Id-1,
+                (size_t) indexArcs + indexAppNodes + indexDisAppNodes,
                 (size_t)disappearance_labels[n]);
+            std::cout << indexArcs + indexAppNodes + indexDisAppNodes << "  disappearance_label: " << indexDisAppNodes << " " << traxel_map_sub_graph[n] << " " << traxel_map_sub_graph[n].Id << " " << disappearance_labels[n] << std::endl;
             ++indexDisAppNodes;
         }
         assert ( indexDisAppNodes == number_of_disappearance_nodes);
@@ -705,19 +729,27 @@ void StructuredLearningTracking::structuredLearning(
 
                 sltDataset.setGTS(
                     m,
-                    (size_t) numArcs + 2*numNodes + indexDivNodes,
+                    (size_t) indexArcs + indexAppNodes + indexDisAppNodes + indexDivNodes,
                     (size_t)division_labels[n]);
+                std::cout << indexArcs + indexAppNodes + indexDisAppNodes + indexDivNodes << "   division_label: " << indexDivNodes << " " << traxel_map_sub_graph[n] << " " << division_labels[n] << std::endl;
                 ++indexDivNodes;
             }
         }
         assert ( indexDivNodes == number_of_division_nodes);
 
-        std::cout << "BUILD MODEL WITH LOSS" << std::endl;
+        std::cout << "sltDataset.getModel(m).numberOfVariables()--->" << sltDataset.getModel(m).numberOfVariables() << std::endl;
 
         for(size_t i=0; i<sltDataset.getModel(m).numberOfVariables();++i)
+            std::cout << " model " << m << "     i: " << i << "  :   " << sltDataset.getGT(m)[i] << std::endl;
+
+        std::cout << "done for model " << m << std::endl;
+
 
         sltDataset.build_model_with_loss(m);
+        std::cout << "done     build_model_with_loss     for model " << m << std::endl;
     } // for model m
+
+    std::cout << " DONE BUILD FOR ALL MODELS" << std::endl;
 
     for(size_t i=0; i<5; ++i)
         std::cout << sltDataset.getWeights()[i] << " ";
@@ -745,8 +777,8 @@ void StructuredLearningTracking::structuredLearning(
 
     //infPara.tolerance_ = 0.0001;
     infPara.epGap_ = ep_gap;
-    //infPara.verbose_ = true;
-    infPara.verbose_ = false;
+    infPara.verbose_ = true;
+    //infPara.verbose_ = false;
     infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;

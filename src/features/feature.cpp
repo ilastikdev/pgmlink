@@ -138,6 +138,7 @@ double NegLnDetection::operator ()(const Traxel& tr, size_t state) const
     {
         arg = 0.0000000001;
     }
+    std::cout << "--->w<---";
     double result = w_ * -1 * log(arg);
     if (result == -0)
         return 0.0;
@@ -155,6 +156,7 @@ double NegLnDetectionNoWeight::operator ()(const Traxel& tr, size_t state) const
     {
         arg = 0.0000000001;
     }
+    std::cout << "--->n<---" << std::endl;
     double result = -1 * log(arg);
     if (result == -0)
         return 0.0;
