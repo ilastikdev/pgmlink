@@ -5,7 +5,6 @@
 #include <opengm/functions/learnable/lweightedsum_of_functions.hxx>
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include <boost/python.hpp>
-#include <limits>
 
 namespace pgmlink
 {
@@ -20,7 +19,9 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         g.get(node_tracklet());
 
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors";
-    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors" << std::endl;
+//    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors: " << std::endl;
+//    std::cout << "getModelStartTime " << getModelStartTime() << std::endl;
+//    std::cout << "getModelEndTime " << getModelEndTime() << std::endl;
 
     double minEnergyP = 0.0;//(double)std::numeric_limits<double>::infinity();
     double maxEnergyP = 0.0;
@@ -151,15 +152,15 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
     std::cout << "maxEnergyDis " << maxEnergyD << std::endl;
 
     double minEnergyPnew = 0.0;//(double)std::numeric_limits<double>::infinity();
-    double maxEnergyPnew = 0.0;
+    double maxEnergyPnew = 1.0;
     double minEnergyAnew = 0.0;//(double)std::numeric_limits<double>::infinity();
-    double maxEnergyAnew = 0.0;
+    double maxEnergyAnew = 1.0;
     double minEnergyDnew = 0.0;//(double)std::numeric_limits<double>::infinity();
-    double maxEnergyDnew = 0.0;
+    double maxEnergyDnew = 1.0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
 
-        std::cout << "[add_detection_factors]:" << traxel_map_[n] << std::endl;
+        std::cout << "[add_detection_factors]:" << traxel_map_[n] << "   factor index = " << model_.numberOfFactors() << std::endl;
         size_t num_vars = 0;
         std::vector<size_t> vi;
         std::vector<double> cost;
@@ -174,7 +175,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         {
             vi.push_back(app_node_map_[n]);
             // "<" holds if there are only tracklets in the first frame
-            if (node_begin_time <= g.earliest_timestep())
+            //if (node_begin_time <= g.earliest_timestep())
+            if (node_begin_time <= getModelStartTime())
             {
                 // pay no appearance costs in the first timestep
                 cost.push_back(0.);
@@ -191,7 +193,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         {
             vi.push_back(dis_node_map_[n]);
             // "<" holds if there are only tracklets in the last frame
-            if (node_end_time < g.latest_timestep())
+            //if (node_end_time < g.latest_timestep())
+            if (node_end_time < getModelEndTime())
             {
                 energy = param_.disappearance_cost(traxel_map_[n]);
 
@@ -207,7 +210,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         std::vector<size_t> coords(num_vars, 0);
 //        std::vector<size_t> coordsSym(num_vars, 0);
 
-        //std::cout << "define energies" << std::endl;
         std::vector<size_t> shape(num_vars, (param_.max_number_objects + 1));
         marray::Marray<double> energies(shape.begin(), shape.end(), param_.forbidden_cost);
         marray::Marray<double> energiesP(shape.begin(), shape.end(), param_.forbidden_cost);
@@ -249,7 +251,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 // or a disappearance in the next timeframe. Hence, add the cost of appearance/disappearance
                 // to the detection cost
 
-                std::cout << " state: " <<state << "   cost: " << cost[var_idx] << std::endl;
+                std::cout << " state: " <<state << "   cost: " << cost[var_idx] << "    maxEnergyA = " << maxEnergyA << std::endl;
                 energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
                 assert(maxEnergyP >= energy);
                 assert(energy >= minEnergyP);
@@ -265,11 +267,18 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                     maxEnergyPnew = energiesPnorm(coords.begin());
 
                 if (var_idx == 0){ // A
-                    assert(maxEnergyA >= energy);
-                    assert(energy >= minEnergyA);
-                    energiesAnorm(coords.begin()) = ((double)state-minEnergyA)/(maxEnergyA-minEnergyA);// * cost[var_idx];
-                    energiesA(coords.begin()) = state;// * cost[var_idx];
-//                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
+                    assert(maxEnergyA >= state);
+                    assert(state >= minEnergyA);
+                    if (node_begin_time <= getModelStartTime())
+                    {
+                        energiesAnorm(coords.begin()) = 0.0;//((double)state-minEnergyA)/(maxEnergyA-minEnergyA);// * cost[var_idx];
+                        energiesA(coords.begin()) = 0.0;//state;// * cost[var_idx];
+    //                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
+                    }else{
+                        energiesAnorm(coords.begin()) = ((double)state-minEnergyA)/(maxEnergyA-minEnergyA);// * cost[var_idx];
+                        energiesA(coords.begin()) = state;// * cost[var_idx];
+    //                    energiesAVec(coordsVec.begin()) = state;// * cost[var_idx];
+                    }
 
                     //if (energiesAnorm(coords.begin()) < minEnergyAnew)
                     //    minEnergyAnew = energiesAnorm(coords.begin());
@@ -279,9 +288,15 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 else{ // D
                     assert(maxEnergyD >= state);
                     assert(state >= minEnergyD);
-                    energiesDnorm(coords.begin()) = ((double)state-minEnergyD)/(maxEnergyD-minEnergyD);// * cost[var_idx];
-                    energiesD(coords.begin()) = state;// * cost[var_idx];
+                    if (node_end_time < getModelEndTime()){
+                        energiesDnorm(coords.begin()) = ((double)state-minEnergyD)/(maxEnergyD-minEnergyD);// * cost[var_idx];
+                        energiesD(coords.begin()) = state;// * cost[var_idx];
 //                    energiesDVec(coordsVec.begin()) = state;// * cost[var_idx];
+                    }
+                    else{
+                        energiesDnorm(coords.begin()) = 0.0;//((double)state-minEnergyD)/(maxEnergyD-minEnergyD);// * cost[var_idx];
+                        energiesD(coords.begin()) = 0.0;//state;// * cost[var_idx];
+                    }
 
                     //if (energiesDnorm(coords.begin()) < minEnergyDnew)
                     //    minEnergyDnew = energiesDnorm(coords.begin());
@@ -343,72 +358,72 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 //            std::cout << energiesVec(coordsVec.begin()) << " ";
 //        }
 //        std::cout << std::endl;
-        std::cout << "energiesDet .........DETECTION........" << std::endl;
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                coords[0] = state;
-                coords[1] = state2;
-                //if(coords[1]==0) energiesPnorm(coords.begin()) = 0;
-                //if(coords[0]==0) energiesPnorm(coords.begin()) = 0;
-                std::cout <<  energiesP(coords.begin()) << " ";
-            }
-            std::cout << std::endl;
-        }
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                coords[0] = state;
-                coords[1] = state2;
-                //if(coords[1]>0) energiesP(coords.begin()) = 0;
-                //if(coords[0]==0) energiesP(coords.begin()) = 0;
-                std::cout <<  energiesPnorm(coords.begin()) << " ";
-            }
-            std::cout << std::endl;
-        }
+//        std::cout << "energiesDet .........DETECTION........" << std::endl;
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                //if(coords[1]==0) energiesPnorm(coords.begin()) = 0;
+//                //if(coords[0]==0) energiesPnorm(coords.begin()) = 0;
+//                std::cout <<  energiesP(coords.begin()) << " ";
+//            }
+//            std::cout << std::endl;
+//        }
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                //if(coords[1]>0) energiesP(coords.begin()) = 0;
+//                //if(coords[0]==0) energiesP(coords.begin()) = 0;
+//                std::cout <<  energiesPnorm(coords.begin()) << " ";
+//            }
+//            std::cout << std::endl;
+//        }
 //        for (size_t i = 0; i < (param_.max_number_objects+1)*(param_.max_number_objects+1); ++i){
 //            coordsVec[0] = i;
 //            //if(coords[1]>3) energiesPVec(coordsVec.begin()) = 0;
 //            std::cout << energiesPVec(coordsVec.begin()) << " ";
 //        }
 //        std::cout << std::endl;
-        std::cout << "energiesApp ..........APPEARANCE......." << std::endl;
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                coords[0] = state;
-                coords[1] = state2;
-                std::cout << energiesA(coords.begin()) << " ";
-            }
-            std::cout << std::endl;
-        }
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                coords[0] = state;
-                coords[1] = state2;
-                std::cout << energiesAnorm(coords.begin()) << " ";
-            }
-            std::cout << std::endl;
-        }
+//        std::cout << "energiesApp ..........APPEARANCE......." << std::endl;
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                std::cout << energiesA(coords.begin()) << " ";
+//            }
+//            std::cout << std::endl;
+//        }
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                std::cout << energiesAnorm(coords.begin()) << " ";
+//            }
+//            std::cout << std::endl;
+//        }
 //        for (size_t i = 0; i < (param_.max_number_objects+1)*(param_.max_number_objects+1); ++i){
 //            coordsVec[0] = i;
 //            std::cout << energiesAVec(coordsVec.begin()) << " ";
 //        }
 //        std::cout << std::endl;
-        std::cout << "energiesDis .........DISAPPEARANCE........" << std::endl;
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                coords[0] = state;
-                coords[1] = state2;
-                std::cout << energiesD(coords.begin()) << " ";
-            }
-            std::cout << std::endl;
-        }
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
-                coords[0] = state;
-                coords[1] = state2;
-                std::cout << energiesDnorm(coords.begin()) << " ";
-            }
-            std::cout << std::endl;
-        }
+//        std::cout << "energiesDis .........DISAPPEARANCE........" << std::endl;
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                std::cout << energiesD(coords.begin()) << " ";
+//            }
+//            std::cout << std::endl;
+//        }
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
+//                coords[0] = state;
+//                coords[1] = state2;
+//                std::cout << energiesDnorm(coords.begin()) << " ";
+//            }
+//            std::cout << std::endl;
+//        }
 //        for (size_t i = 0; i < (param_.max_number_objects+1)*(param_.max_number_objects+1); ++i){
 //            coordsVec[0] = i;
 //            std::cout << energiesDVec(coordsVec.begin()) << " ";
@@ -420,14 +435,16 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 //            for (size_t state2 = 0; state2 <= param_.max_number_objects; ++state2){
 //                coords[0] = state;
 //                coords[1] = state2;
-//                //std::cout << errorMA(coords.begin()) << " ";
-//                if(errorMA(coords.begin()) >  0.00000000000001)
+//                std::cout << errorMA(coords.begin()) << " ";
+//                if(errorMA(coords.begin()) >  0.0000001)
 //                    noErrorFlag &= false;
 //            }
-//            //std::cout << std::endl;
+//            std::cout << std::endl;
 //        }
-//        if(!noErrorFlag)
+//        if(!noErrorFlag){
 //            std::cout << "==================================================================>ERROR in MA" << std::endl;
+//            assert(false);
+//        }
 
 //        std::cout << "param_.detection_weight = " << param_.detection_weight << std::endl;
 //        for (int i = 0; i < 5; ++i)
@@ -494,6 +511,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
     } // end for node n
 
+//    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add detection factors: " << model_.numberOfFactors() << std::endl;
     std::cout << "minEnergyDet new " << minEnergyPnew << std::endl;
     std::cout << "maxEnergyDet new " << maxEnergyPnew << std::endl;
     std::cout << "minEnergyApp new " << minEnergyAnew << std::endl;
@@ -513,7 +531,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         g.get(node_tracklet());
 
     LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors";
-    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors" << std::endl;
+    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors" << model_.numberOfFactors() << std::endl;
 
     double minEnergy = (double)std::numeric_limits<double>::infinity();
     double maxEnergy = 0.0;
@@ -543,8 +561,8 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
     std::cout << "minEnergyTran  " << minEnergy << std::endl;
     std::cout << "maxEnergyTran " << maxEnergy << std::endl;
 
-    double minEnergyNew = (double)std::numeric_limits<double>::infinity();
-    double maxEnergyNew = 0.0;
+    double minEnergyNew = 0.0;//(double)std::numeric_limits<double>::infinity();
+    double maxEnergyNew = 1.0;
 
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
@@ -559,7 +577,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         tr1 = traxel_map_[g.source(a)];
         tr2 = traxel_map_[g.target(a)];
 
-        std::cout << "[add_transition_factors]: " << tr1 << "  " << tr2 << std::endl;
+        std::cout << "[add_transition_factors]: " << tr1 << "  " << tr2 << "   factor index = " << model_.numberOfFactors() << std::endl;
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
             //double energy = param_.transition(get_transition_probability(tr1, tr2, state));
@@ -604,19 +622,20 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
 
-        std::cout << "energies ==========================TRANSITION================================" << std::endl;
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            coords[0] = state;
-            std::cout << energies(coords.begin()) << " ";
-        }
-        std::cout << std::endl;
-        for (size_t state = 0; state <= param_.max_number_objects; ++state){
-            coords[0] = state;
-            std::cout << energiesNorm(coords.begin()) << " ";
-        }
-        std::cout << std::endl;
+//        std::cout << "energies ==========================TRANSITION================================" << std::endl;
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            coords[0] = state;
+//            std::cout << energies(coords.begin()) << " ";
+//        }
+//        std::cout << std::endl;
+//        for (size_t state = 0; state <= param_.max_number_objects; ++state){
+//            coords[0] = state;
+//            std::cout << energiesNorm(coords.begin()) << " ";
+//        }
+//        std::cout << std::endl;
     }
 
+//    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add transition factors" << std::endl;
     std::cout << "minEnergyTran new " << minEnergyNew << std::endl;
     std::cout << "maxEnergyTran new " << maxEnergyNew << std::endl;
     return factorIndex;
@@ -665,8 +684,8 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 
     std::cout << "minEnergyDiv  " << minEnergy << std::endl;
     std::cout << "maxEnergyDiv " << maxEnergy << std::endl;
-    double minEnergyNew = (double)std::numeric_limits<double>::infinity();
-    double maxEnergyNew = 0.0;
+    double minEnergyNew = 0.0;//(double)std::numeric_limits<double>::infinity();
+    double maxEnergyNew = 1.0;
 
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -683,7 +702,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         Traxel tr;
         tr = traxel_map_[n];
 
-        std::cout << "[add_division_factors]: " << tr << std::endl;
+        std::cout << "[add_division_factors]: " << tr << "   factor index = " << model_.numberOfFactors() << std::endl;
         for (size_t state = 0; state <= 1; ++state)
         {
             double energy;
@@ -732,19 +751,20 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
 
-        std::cout << "=========================DIVISION=================================" << std::endl;
-        for (size_t state = 0; state < 2; ++state){
-            coords[0] = state;
-            std::cout << energies(coords.begin()) << " ";
-        }
-        std::cout << std::endl;
-        for (size_t state = 0; state < 2; ++state){
-            coords[0] = state;
-            std::cout << energiesNorm(coords.begin()) << " ";
-        }
-        std::cout << std::endl;
+//        std::cout << "=========================DIVISION=================================" << std::endl;
+//        for (size_t state = 0; state < 2; ++state){
+//            coords[0] = state;
+//            std::cout << energies(coords.begin()) << " ";
+//        }
+//        std::cout << std::endl;
+//        for (size_t state = 0; state < 2; ++state){
+//            coords[0] = state;
+//            std::cout << energiesNorm(coords.begin()) << " ";
+//        }
+//        std::cout << std::endl;
     }
 
+//    std::cout << "StructuredLearningTrackingInferenceModel::add_finite_factors: add division factors" << std::endl;
     std::cout << "minEnergyDiv New " << minEnergyNew << std::endl;
     std::cout << "maxEnergyDiv New " << maxEnergyNew << std::endl;
 
