@@ -647,7 +647,11 @@ void StructuredLearningTracking::structuredLearning(
 
         prepareTracking(pgm, param, sltDataset.getWeights(),withNormalization,withClassifierPrior);
         inference_model.push_back(pgm.getInferenceModel());
+
         std::cout << "build from graph " << std::endl;
+        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->setModelStartTime(crops_[m].lower_bound()[0]);
+        boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->setModelEndTime(crops_[m].upper_bound()[0]);
+
         inference_model[m]->build_from_graph(*(graph[m]));
 
         std::cout << "set_inference_params" << std::endl;
@@ -739,11 +743,17 @@ void StructuredLearningTracking::structuredLearning(
 
         std::cout << "sltDataset.getModel(m).numberOfVariables()--->" << sltDataset.getModel(m).numberOfVariables() << std::endl;
 
-        for(size_t i=0; i<sltDataset.getModel(m).numberOfVariables();++i)
-            std::cout << " model " << m << "     i: " << i << "  :   " << sltDataset.getGT(m)[i] << std::endl;
+//        for(size_t i=0; i<sltDataset.getModel(m).numberOfVariables();++i)
+//            std::cout << " model " << m << "     i: " << i << "  :   " << sltDataset.getGT(m)[i] << std::endl;
 
-        std::cout << "done for model " << m << std::endl;
-
+//        for(size_t f=0; f<sltDataset.getModel(m).numberOfFactors();++f){
+//            std::cout << " model " << m << "  factor   " << f << std::endl;
+//            for(auto v=sltDataset.getModel(m).variablesOfFactorBegin(f); v!=sltDataset.getModel(m).variablesOfFactorEnd(f); ++v){
+//                std::cout << *v << " ";
+//            }
+//            std::cout << std::endl;
+//        }
+//        std::cout << "done for model " << m << std::endl;
 
         sltDataset.build_model_with_loss(m);
         std::cout << "done     build_model_with_loss     for model " << m << std::endl;
@@ -777,8 +787,8 @@ void StructuredLearningTracking::structuredLearning(
 
     //infPara.tolerance_ = 0.0001;
     infPara.epGap_ = ep_gap;
-    infPara.verbose_ = true;
-    //infPara.verbose_ = false;
+    //infPara.verbose_ = true;
+    infPara.verbose_ = false;
     infPara.challengeHeuristic_ = infPara.Weighted;//Random;
 
     infPara.useSoftConstraints_ = false;
