@@ -14,7 +14,6 @@
 #include "pgmlink/inferencemodel/constrackingexplicitinferencemodel.h"
 #include "pgmlink/reasoner_constracking.h"
 
-
 namespace pgmlink
 {
 
@@ -42,8 +41,27 @@ public:
     virtual size_t add_division_factors(const HypothesesGraph&, size_t);
     virtual size_t add_transition_factors(const HypothesesGraph&, size_t);
     virtual size_t add_detection_factors(const HypothesesGraph&, size_t);
+
+    void setModelStartTime(size_t time){
+        modelStartTime_ = time;
+    }
+
+    void setModelEndTime(size_t time){
+        modelEndTime_ = time;
+    }
+
+    size_t getModelStartTime(){
+        return modelStartTime_;
+    }
+
+    size_t getModelEndTime(){
+        return modelEndTime_;
+    }
+
 protected:
     bool withNormalization_;
+    size_t modelStartTime_;
+    size_t modelEndTime_;
 };
 } // namespace pgmlink
 
