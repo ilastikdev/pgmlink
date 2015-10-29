@@ -524,7 +524,8 @@ void StructuredLearningTracking::structuredLearning(
     trackingWeights_.setWeight(3,appearance_cost);
     trackingWeights_.setWeight(4,disappearance_cost);
 
-    DSS sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_, trackingWeights_);
+//    DSS sltDataset(numCrops_, crops_, numWeights_, numLabels_, ndim_, hypotheses_graph_, trackingWeights_);
+    DSS sltDataset(crops_, trackingWeights_);
 
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
