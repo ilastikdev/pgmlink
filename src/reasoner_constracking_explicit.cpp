@@ -293,7 +293,6 @@ void ConservationExplicitTracking::perturbedInference(HypothesesGraph & hypothes
     // fix some node values beforehand
     if(use_app_node_labels_to_fix_values_)
     {
-        std::cout << "use_app_node_labels_to_fix_values_"<< use_app_node_labels_to_fix_values_ << std::endl;
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 

@@ -27,19 +27,11 @@ public:
    {}
 
    StructuredLearningTrackingDataset(
-       //pgmlink::StructuredLearningTrackingInferenceModel::IndexType numModels,
        std::vector<pgmlink::FieldOfView> crops,
-       //pgmlink::StructuredLearningTrackingInferenceModel::IndexType numWeights,
-       //pgmlink::StructuredLearningTrackingInferenceModel::LabelType numLabels,
-       //int ndim,
-       //boost::shared_ptr<pgmlink::HypothesesGraph> hypothesesGraph,
        opengm::learning::Weights<double>& trackingWeights
    )
    {
        pgmlink::StructuredLearningTrackingInferenceModel::IndexType numModels =crops.size();
-//     std::cout << "Number of crops and crops size do not match!!!" << std::endl; // use assert
-//           return;
-//       }
 
        this->lossParams_.resize(numModels);
        this->isCached_.resize(numModels);

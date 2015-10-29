@@ -129,14 +129,7 @@ double ConservationTracking::forbidden_cost() const
 {
     return forbidden_cost_;
 }
-/*
-void ConservationTracking::fixNodeToAppearanceLabel( HypothesesGraph& hypothesesGraph, int node, double label)
-{
-    std::cout << "in ConservationTracking::fixNodeToAppearanceLabe " << std::endl;
-    boost::static_pointer_cast<ConsTrackingInferenceModel>(getInferenceModel())->fixNodeToAppearanceLabel( hypothesesGraph, node, label);
 
-}
-*/
 std::string ConservationTracking::get_export_filename(size_t iteration, const std::string& orig_file_name)
 {
     std::stringstream export_filename;
@@ -318,13 +311,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     // fix some node values beforehand
     if(use_app_node_labels_to_fix_values_)
     {
-        std::cout << "use_app_node_labels_to_fix_values_"<< use_app_node_labels_to_fix_values_ << std::endl;
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 
     if(training_to_hard_constraints_)
     {
-        std::cout << "ConsTracking::Adding Training to Node Variables" << std::endl;
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->fixNodesToLabels(hypotheses);
 
     }

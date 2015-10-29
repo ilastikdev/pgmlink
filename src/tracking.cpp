@@ -744,11 +744,7 @@ void ConsTracking::addAppearanceLabel(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
 
-            //            if(gt_app_label[node]==0)
-//                hypotheses_graph_->add_appearance_label(node, gt_app_label[node] + 1); // shifted for +1
-//            hypotheses_graph_->add_appearance_label(node, gt_app_label[node] + cellCount );
             hypotheses_graph_->add_appearance_label(node, cellCount + 1 );
         }
 }
@@ -764,11 +760,6 @@ void ConsTracking::addDisappearanceLabel(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << cellCount << std::endl;
-
-//            if(gt_dis_label[node]==0)
-//                hypotheses_graph_->add_disappearance_label(node, gt_dis_label[node] + 1); // shifted for +1
-//            hypotheses_graph_->add_disappearance_label(node, gt_dis_label[node] + cellCount);
             hypotheses_graph_->add_disappearance_label(node, cellCount+1);
         }
 }
@@ -784,9 +775,7 @@ void ConsTracking::addDivisionLabel(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " ConsTracking::DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << gt_div_label[node] << "   " << cellCount << std::endl;
-            hypotheses_graph_->add_division_label(node, cellCount+1); // shifted for +1
-            //std::cout << " ConsTracking::DIVISION Label     : [" << time << "] : " << traxel_map[node].Id << ": "  << gt_div_label[node] << " new value   " << std::endl;
+            hypotheses_graph_->add_division_label(node, cellCount+1);
         }
 }
 
@@ -796,8 +785,6 @@ bool ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, doub
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
     HypothesesGraph::node_timestep_map& timestep_map = hypotheses_graph_->get(node_timestep());
-    //typedef property_map<traxel_arc_id, HypothesesGraph::base_graph>::type traxel_arc_id_map;
-    //traxel_arc_id_map& arc_id_map = g.get(traxel_arc_id());
     property_map< arc_label, HypothesesGraph::base_graph>::type& gt_arc_label = hypotheses_graph_->get(arc_label());
 
     bool found = false;
@@ -807,16 +794,11 @@ bool ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, doub
             for(HypothesesGraph::base_graph::OutArcIt arc(*hypotheses_graph_, node); arc != lemon::INVALID; ++arc){
                 to = hypotheses_graph_->target(arc);
                 if (traxel_map[to].Id == endLabel){
-                    //std::cout << " ConsTracking::ARC Label                                 : [" << timestep_map[node] << "," << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << ")=("<< hypotheses_graph_->id(node) << "," << hypotheses_graph_->id(to)<<"): "  << cellCount << std::endl;
                     hypotheses_graph_->add_arc_label(arc, cellCount+1); // shifted for +1
                     found = true;
-                    //std::cout << " ConsTracking::ARC Label                                 : [" << timestep_map[node] << "," << timestep_map[to] << "] : (" << traxel_map[node].Id << " ---> " << traxel_map[to].Id << ")=("<< hypotheses_graph_->id(node) << "," << hypotheses_graph_->id(to)<<"): "  << cellCount << " new value=" << gt_arc_label[arc]<< std::endl;
                 }
             }
         }
-    if(not found){
-        std::cout << "[ConsTracking::addArcLabel] You have tried to set a label of an arc that does not exist!" << std::endl;
-    }
     return found;
 }
 
@@ -831,16 +813,8 @@ void ConsTracking::addFirstLabels(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-
-            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             //hypotheses_graph_->add_disappearance_label(node,0+1);// must be there for dense training in structured learning
-
-            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << gt_app_label[node] << "   " << cellCount << std::endl;
-//            if(gt_app_label[node]==0)
-//                hypotheses_graph_->add_appearance_label(node, gt_app_label[node] + 1); // shifted for +1
-//            hypotheses_graph_->add_appearance_label(node, gt_app_label[node] + cellCount);
             hypotheses_graph_->add_appearance_label(node, cellCount+1);
-            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << gt_app_label[node] << " new value   " << std::endl;
         }
 }
 
@@ -855,14 +829,7 @@ void ConsTracking::addLastLabels(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << gt_dis_label[node] << "   " << cellCount << std::endl;
-//            if(gt_dis_label[node]==0)
-//                hypotheses_graph_->add_disappearance_label(node, gt_dis_label[node] + 1); // shifted for +1
-//            hypotheses_graph_->add_disappearance_label(node,gt_dis_label[node] + cellCount);
             hypotheses_graph_->add_disappearance_label(node,cellCount+1);
-            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << gt_dis_label[node] << " new value "<< std::endl;
-
-            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << 0 << std::endl;
             //hypotheses_graph_->add_appearance_label(node,0+1); // must be there for dense training in structured learning
         }
 }
@@ -879,19 +846,8 @@ void ConsTracking::addIntermediateLabels(int time, int label, double cellCount)
 
     for(node_timestep_map_t::ItemIt node(timestep_map, time); node != lemon::INVALID; ++node)
         if (traxel_map[node].Id == label){
-            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << gt_dis_label[node] << "   " << cellCount << std::endl;
-//            if(gt_dis_label[node]==0)
-//                hypotheses_graph_->add_disappearance_label(node, gt_dis_label[node] + 1); // shifted for +1
-//            hypotheses_graph_->add_disappearance_label(node,gt_dis_label[node] + cellCount);
             hypotheses_graph_->add_disappearance_label(node,cellCount+1);
-            //std::cout << " ConsTracking::DISAPPEARANCE Label: [" << time << "] : " << traxel_map[node].Id << ": "  << gt_dis_label[node] << " new value  " << std::endl;
-
-            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << gt_app_label[node] << "   " << cellCount << std::endl;
-//            if(gt_app_label[node]==0)
-//                hypotheses_graph_->add_appearance_label(node, gt_app_label[node] + 1); // shifted for +1
-//            hypotheses_graph_->add_appearance_label(node,gt_app_label[node] + cellCount);
             hypotheses_graph_->add_appearance_label(node,cellCount+1);
-            //std::cout << " ConsTracking::APPEARANCE Label   : [" << time << "] : " << traxel_map[node].Id << ": "  << gt_app_label[node] << " new value  " << std::endl;
         }
 }
 

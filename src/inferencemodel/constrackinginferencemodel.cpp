@@ -741,7 +741,6 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(), cplex_param_));
 #endif
 
-    //std::cout << "=========================================== in set_inference_parameters if(param_.with_constraints)" << std::endl;
     if(param_.with_constraints)
     {
         LOG(logINFO) << "add_constraints";

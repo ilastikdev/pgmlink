@@ -254,9 +254,9 @@ bool StructuredLearningTracking::addArcLabel(int startTime, int startLabel, int 
                 }
             }
         }
-    if(not found){
-        std::cout << "[StructuredLearningTracking::addArcLabel] You have tried to set a label of an arc that does not exist!" << std::endl;
-    }
+//    if(not found){
+//        std::cout << "[StructuredLearningTracking::addArcLabel] You have tried to set a label of an arc that does not exist!" << std::endl;
+//    }
     return found;
 }
 
@@ -700,9 +700,9 @@ void StructuredLearningTracking::structuredLearning(
         sltDataset.build_model_with_loss(m);
     } // for model m
 
-    for(size_t i=0; i<5; ++i)
-        std::cout << sltDataset.getWeights()[i] << " ";
-    std::cout << std::endl;
+//    for(size_t i=0; i<5; ++i)
+//        std::cout << sltDataset.getWeights()[i] << " ";
+//    std::cout << std::endl;
 
     opengm::learning::StructMaxMargin<DSS>::Parameter para;
     para.optimizerParameter_.lambda = 1.00;
