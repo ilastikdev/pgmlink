@@ -73,8 +73,8 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
             {
                 constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
                 constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
+//                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
+//                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
             }
         }
     }
@@ -92,8 +92,8 @@ void ConsTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
                 HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
                 constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
                 constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+//                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
+//                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
             }
         }
     }
@@ -104,86 +104,58 @@ void ConsTrackingInferenceModel::fixNodesToLabels( HypothesesGraph& g)
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = g.get(node_traxel());
 
-    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------appearance_labels" << std::endl;
     assert(g.has_property(appearance_label()));
     property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
     typedef property_map<appearance_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
     for (value_it_type value_it = ++appearance_labels.beginValue(); value_it != appearance_labels.endValue(); ++value_it)
     {
-        //std::cout << "--->" << *value_it << std::endl;
         property_map<appearance_label, HypothesesGraph::base_graph>::type::ItemIt node_it(appearance_labels, *value_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            //std::cout << "------>" << g.id(node_it) << "   " << appearance_labels[node_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[node_it], appearance_labels[node_it]-1));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[node_it], appearance_labels[node_it]-1));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[node_it], appearance_labels[node_it]-1));
         }
     }
 
-    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------disappearance_labels" << std::endl;
     assert(g.has_property(disappearance_label()));
     property_map<disappearance_label, HypothesesGraph::base_graph>::type &disappearance_labels = g.get(disappearance_label());
     typedef property_map<disappearance_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
     for (value_it_type value_it = ++disappearance_labels.beginValue(); value_it != disappearance_labels.endValue(); ++value_it)
     {
-        //std::cout << "--->" << *value_it << std::endl;
         property_map<disappearance_label, HypothesesGraph::base_graph>::type::ItemIt node_it(disappearance_labels, *value_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            //std::cout << g.id(node_it) << "------>" << dis_node_map_[node_it] << "   " << disappearance_labels[node_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[node_it], disappearance_labels[node_it]-1));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[node_it], disappearance_labels[node_it]-1));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[node_it], disappearance_labels[node_it]-1));
         }
     }
 
-    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------division_labels" << std::endl;
     assert(g.has_property(division_label()));
     property_map<division_label, HypothesesGraph::base_graph>::type &division_labels = g.get(division_label());
     typedef property_map<division_label, HypothesesGraph::base_graph>::type::ValueIt value_it_type;
     for (value_it_type value_it = ++division_labels.beginValue(); value_it != division_labels.endValue(); ++value_it)
     {
-        //std::cout << "--->" << *value_it << std::endl;
         property_map<division_label, HypothesesGraph::base_graph>::type::ItemIt node_it(division_labels, *value_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            //std::cout << g.id(node_it) << "------>" << div_node_map_[node_it] << "   " << division_labels[node_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(div_node_map_[node_it], division_labels[node_it]-1));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(div_node_map_[node_it], division_labels[node_it]-1));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(div_node_map_[node_it], division_labels[node_it]-1));
         }
     }
 
-    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------arc_labels" << std::endl;
     assert(g.has_property(arc_label()));
     property_map<arc_label, HypothesesGraph::base_graph>::type &arc_labels = g.get(arc_label());
     typedef property_map<arc_label, HypothesesGraph::base_graph>::type::ValueIt arc_value_it_type;
     for (arc_value_it_type value_it = ++arc_labels.beginValue(); value_it != arc_labels.endValue(); ++value_it)
     {
-        //std::cout << "--->" << *value_it << std::endl;
         property_map<arc_label, HypothesesGraph::base_graph>::type::ItemIt arc_it(arc_labels, *value_it);
         for (; arc_it != lemon::INVALID; ++arc_it)
         {
-
-
-
-            //std::cout << "hypoGraph--->" << g.id(arc_it) << "---openGM--->" << arc_map_[arc_it] << "   " << traxel_map[g.source(arc_it)] << "   "  << traxel_map[g.target(arc_it)] << "   " << arc_labels[arc_it]-1 << std::endl;
             constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(arc_map_[arc_it], arc_labels[arc_it]-1));
 
         }
     }
-
-//    std::cout << "ConsTrackingInferenceModel::fixNodesToLabels-------------------list of hypoGraph and openGM and cplex variable ids" << std::endl;
-//    std::cout << "NODES:" << std::endl;
-//    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
-//    {
-//        std::cout << "hypoGraph " << g.id(n) << "     openGM: " << app_node_map_[n] << " " << dis_node_map_[n] << " " << div_node_map_[n] << " " << std::endl;
-//        for (size_t state = 1; state < model_.numberOfLabels(app_node_map_[n]); ++state)
-//        {
-//            std::cout << "hypoGraph " << std::endl;
-//            std::cout << "               " << optimizer_->lpNodeVi(app_node_map_[n], state)<< std::cout;
-//        }
-//    }
-
 }
 
 
@@ -686,11 +658,11 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
                                            param_.with_disappearance,
                                            param_.with_misdetections_allowed);
 
-    linear_constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
-                                           param_.with_divisions,
-                                           param_.with_appearance,
-                                           param_.with_disappearance,
-                                           param_.with_misdetections_allowed);
+//    linear_constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
+//                                           param_.with_divisions,
+//                                           param_.with_appearance,
+//                                           param_.with_disappearance,
+//                                           param_.with_misdetections_allowed);
 
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -712,7 +684,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
             size_t appearance_node = app_node_map_[n];
 
             constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node,division_node,transition_nodes));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
         }
 
         ////
@@ -727,7 +699,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
             size_t disappearance_node = dis_node_map_[n];
 
             constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes,disappearance_node));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingLinearConstraint(transition_nodes,disappearance_node));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingLinearConstraint(transition_nodes,disappearance_node));
         }
 
         ////
@@ -736,7 +708,7 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
         if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
         {
             constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
+//            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
         }
     }
 

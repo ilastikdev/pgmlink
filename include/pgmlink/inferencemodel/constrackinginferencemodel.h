@@ -121,7 +121,7 @@ protected: // members
     cplex_optimizer::Parameter cplex_param_;
     boost::shared_ptr<cplex_optimizer> optimizer_;
     pgm::ConstraintPool constraint_pool_;
-    pgm::ConstraintPool linear_constraint_pool_;
+    //pgm::ConstraintPool linear_constraint_pool_;
 
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;
