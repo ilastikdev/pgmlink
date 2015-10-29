@@ -938,7 +938,6 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
 
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
-    //boost::function<double(const double)> transition;
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
     
@@ -1008,21 +1007,18 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     if (use_classifier_prior_)
     {
         LOG(logINFO) << "Using classifier prior";
-        std::cout << "Using classifier prior" << std::endl;
         param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
-        std::cout << "Using size dependent prior" << std::endl;
         param.detection = NegLnDetection(weights[0]); // weight
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
         LOG(logINFO) << "Using hard prior";
-        std::cout << "Using hard prior" << std::endl;
         // assume a quasi geometric distribution
         std::vector<double> prob_vector;
         double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
@@ -1069,10 +1065,7 @@ EventVectorVector ConsTracking::resolve_mergers(
     ConservationTracking::Parameter param
 )
 {
-    // TODO Redundancy to track(). -> Problem?
-    //boost::function<double(const double)> transition;
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
-    //transition = NegLnTransition(transition_weight);
     transition = param.transition;
 
     std::cout << "-> resolving mergers" << std::endl;
@@ -1713,7 +1706,6 @@ ConservationExplicitTracking::Parameter ConsExplicitTracking::get_conservation_t
 
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
-    //boost::function<double(const double)> transition;
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
 
@@ -1774,21 +1766,18 @@ void ConsExplicitTracking::setParameterWeights(ConservationExplicitTracking::Par
     if (use_classifier_prior_)
     {
         LOG(logINFO) << "Using classifier prior";
-        std::cout << "Using classifier prior" << std::endl;
         param.detection = NegLnDetection(weights[0]);
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
-        std::cout << "Using size dependent prior" << std::endl;
         param.detection = NegLnDetection(weights[0]); // weight
         param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
     }
     else
     {
         LOG(logINFO) << "Using hard prior";
-        std::cout << "Using hard prior" << std::endl;
         // assume a quasi geometric distribution
         std::vector<double> prob_vector;
         double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
@@ -1835,10 +1824,7 @@ EventVectorVector ConsExplicitTracking::resolve_mergers(
     ConservationExplicitTracking::Parameter param
 )
 {
-    // TODO Redundancy to track(). -> Problem?
-    //boost::function<double(const double)> transition;
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
-    //transition = NegLnTransition(transition_weight);
     transition = param.transition;
 
     std::cout << "-> resolving mergers" << std::endl;

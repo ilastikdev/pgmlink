@@ -429,9 +429,7 @@ void ConsTrackingExplicitInferenceModel::set_inference_params(size_t numberOfSol
     if(param_.with_constraints)
     {
         LOG(logINFO) << "add_constraints";
-        std::cout << "add_constraints" << std::endl;
         add_constraints(*optimizer2_);
-        std::cout << "END add_constraints" << std::endl;
     }
     else
     {

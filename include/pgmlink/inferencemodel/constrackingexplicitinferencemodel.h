@@ -137,7 +137,6 @@ protected: // members
 template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
-    std::cout << "in add_constraints" << std::endl;
     //constraint_pool_.add_constraints_to_problem(model_, optimizer);
     linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
 }
