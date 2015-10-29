@@ -635,14 +635,10 @@ void StructuredLearningTracking::structuredLearning(
         sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->model());
         sltDataset.resizeGTS(m);
 
-        node_traxel_map& traxel_map_sub_graph = hypothesesSubGraph[m]->get(node_traxel());
-        HypothesesGraph::node_timestep_map& timestep_map = graph[m]->get(node_timestep());
-
         property_map< appearance_label, HypothesesGraph::base_graph>::type& appearance_labels = graph[m]->get(appearance_label());
         property_map< disappearance_label, HypothesesGraph::base_graph>::type& disappearance_labels = graph[m]->get(disappearance_label());
         property_map< division_label, HypothesesGraph::base_graph>::type& division_labels = graph[m]->get(division_label());
         property_map< arc_label, HypothesesGraph::base_graph>::type& arc_labels = graph[m]->get(arc_label());
-        property_map< traxel_arc_id, HypothesesGraph::base_graph>::type& arc_id_map_sub = graph[m]->get(traxel_arc_id());
 
         size_t number_of_transition_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_transition_nodes();
         size_t indexArcs=0;
