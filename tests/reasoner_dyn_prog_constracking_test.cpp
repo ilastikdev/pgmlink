@@ -243,6 +243,103 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_Division ) {
    BOOST_CHECK_EQUAL(count_divisions, 1);
 }
 
+BOOST_AUTO_TEST_CASE( Tracking_Flow_ConservationTracking_Division ) {
+
+   std::cout << "Constructing HypothesesGraph" << std::endl;
+   std::cout << std::endl;
+
+   using lemon::INVALID;
+
+   std::cout << "Adding Traxels to TraxelStore" << std::endl;
+   std::cout << std::endl;
+
+   //  t=1      2      3
+   //                  o
+   //                |
+   //  D ---- D ----
+   //                |
+   //                  o
+   TraxelStore ts;
+   boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+   Traxel n11, n21, n31, n32;
+   feature_array com(feature_array::difference_type(3));
+   feature_array divProb(feature_array::difference_type(1));
+   feature_array detProb(feature_array::difference_type(3));
+   detProb[0] = 0.01; detProb[1] = 0.98; detProb[2] = 0.01;
+   n11.Id = 1; n11.Timestep = 1; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.8;
+   n11.features["com"] = com; n11.features["divProb"] = divProb; n11.features["detProb"] = detProb;
+   add(ts, fs, n11);
+   n21.Id = 10; n21.Timestep = 2; com[0] = 1; com[1] = 1; com[2] = 1; divProb[0] = 0.7;
+   n21.features["com"] = com; n21.features["divProb"] = divProb; n21.features["detProb"] = detProb;
+   add(ts, fs, n21);
+   n31.Id = 11; n31.Timestep = 3; com[0] = 1; com[1] = 0; com[2] = 0; divProb[0] = 0.1;
+   n31.features["com"] = com; n31.features["divProb"] = divProb; n31.features["detProb"] = detProb;
+   add(ts, fs, n31);
+   n32.Id = 13; n32.Timestep = 3; com[0] = 2; com[1] = 2; com[2] = 2; divProb[0] = 0.1;
+   n32.features["com"] = com; n32.features["divProb"] = divProb; n32.features["detProb"] = detProb;
+   add(ts, fs, n32);
+
+
+   std::cout << "Initialize Conservation tracking" << std::endl;
+   std::cout << std::endl;
+
+   FieldOfView fov(0, 0, 0, 0, 4, 5, 5, 5); // tlow, xlow, ylow, zlow, tup, xup, yup, zup
+   ConsTracking tracking = ConsTracking(
+                        2, // max_number_objects
+                        false, // detection_by_volume
+                        double(1.1), // avg_obj_size
+                        20, // max_neighbor_distance
+                        true, //with_divisions
+                        0.3, // division_threshold
+                        "none", // random_forest_filename
+                        fov,
+                        "none",
+                        SolverType::FlowSolver
+                        );
+
+   std::cout << "Run Conservation tracking" << std::endl;
+   std::cout << std::endl;
+
+   std::vector< std::vector<Event> > events = tracking(ts,
+
+                               0, // forbidden_cost
+                               0.0, // ep_gap
+                               false, // with_tracklets
+                               10.0, //division_weight
+                               10.0, //transition_weight
+                               1500., // disappearance_cost,
+                               1500., // appearance_cost
+                               false, //with_merger_resolution
+                               3, //n_dim
+                               5, //transition_parameter
+                               0 //border_width for app/disapp costs
+                               )[0];
+
+   size_t count_moves = 0;
+   size_t count_divisions = 0;
+   size_t t = 1;
+   for (std::vector< std::vector<Event> >::const_iterator it_t = events.begin()+1; it_t != events.end(); ++it_t) {
+       // events:
+       // t = 1: 1x move
+       // t = 2: 1x division
+       BOOST_CHECK_EQUAL(it_t->size(),1);
+
+       for (std::vector<Event>::const_iterator it = (*it_t).begin(); it!=(*it_t).end(); ++it) {
+           Event e = *it;
+           BOOST_CHECK_NE(e.type, Event::Disappearance);
+           BOOST_CHECK_NE(e.type, Event::Appearance);
+
+           if (e.type == Event::Move) {
+               ++count_moves;
+           } else if (e.type == Event::Division) {
+               ++count_divisions;
+           }
+       }
+       ++t;
+   }
+   BOOST_CHECK_EQUAL(count_moves, 1);
+   BOOST_CHECK_EQUAL(count_divisions, 1);
+}
 
 //BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove ) {
 

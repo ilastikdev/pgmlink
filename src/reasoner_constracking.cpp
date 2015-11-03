@@ -19,6 +19,7 @@
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_constrackinferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_perturbedinferencemodel.h"
+#include "pgmlink/inferencemodel/flow_constrackinferencemodel.h"
 
 // perturbations
 #include "pgmlink/inferencemodel/perturbation/gaussian_perturbation.h"
@@ -143,8 +144,12 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
     {
         return boost::make_shared<DynProgConsTrackInferenceModel>(param_);
     }
+    else if(solver_ == SolverType::FlowSolver)
+    {
+        return boost::make_shared<FlowConsTrackInferenceModel>(param_);
+    }
 #else
-    else if(solver_ == SolverType::DynProgSolver)
+    else if(solver_ == SolverType::DynProgSolver || solver_ == SolverType::FlowSolver)
     {
         throw std::runtime_error("Support for dynamic programming solver not built!");
     }
@@ -168,9 +173,9 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_perturbed_inferen
                     param_,
                     perturb);
     }
-    else if (solver_ == SolverType::DPInitCplexSolver)
+    else if (solver_ == SolverType::DPInitCplexSolver || solver_ == SolverType::FlowSolver)
     {
-        throw std::runtime_error("DynProg-initialized CPLEX cannot handle perturbations (yet)");
+        throw std::runtime_error("flow or DynProg-initialized CPLEX cannot handle perturbations (yet)");
     }
 #endif
     else

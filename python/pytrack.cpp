@@ -287,7 +287,9 @@ void export_track()
     enum_<SolverType>("ConsTrackingSolverType")
     .value("CplexSolver", SolverType::CplexSolver)
     .value("DynProgSolver", SolverType::DynProgSolver)
+    .value("FlowSolver", SolverType::FlowSolver)
     .value("DPInitCplexSolver", SolverType::DPInitCplexSolver)
+    .value("FlowInitCplexSolver", SolverType::FlowInitCplexSolver)
     ;
 
     enum_<Event::EventType>("EventType")

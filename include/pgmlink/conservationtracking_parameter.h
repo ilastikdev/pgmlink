@@ -15,7 +15,9 @@ enum class SolverType
 {
     CplexSolver,
     DynProgSolver,
-    DPInitCplexSolver
+    FlowSolver,
+    DPInitCplexSolver,
+    FlowInitCplexSolver
 };
 
 class Parameter
