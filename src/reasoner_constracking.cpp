@@ -312,7 +312,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     // print solution energies
     if(solver_ == SolverType::CplexSolver)
         std::cout << "ILP model eval: " << boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->get_model().evaluate(solutions_.back()) << std::endl;
-    else if(solver_ == SolverType::DynProgSolver)
+    else if(solver_ == SolverType::DynProgSolver || solver_ == SolverType::FlowSolver)
     {
         boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = 
         boost::make_shared<ConsTrackingInferenceModel>(param_);
