@@ -21,6 +21,10 @@
 #include <opengm/inference/lpcplex2.hxx>
 #endif
 
+#ifdef WITH_OPENMP
+#include <omp.h>
+#endif
+
 #include <opengm/learning/loss/hammingloss.hxx>
 #include <opengm/learning/solver/CplexBackend.h>
 #include <opengm/learning/solver/QuadraticSolverBackend.h>
@@ -538,7 +542,12 @@ void StructuredLearningTracking::structuredLearning(
     std::vector<HypothesesGraph*> graph;
     std::vector<boost::shared_ptr<InferenceModel>> inference_model;
         
-    // set up graphical models
+    // set up graphical models in parallel
+    #ifdef WITH_OPENMP
+    omp_lock_t modelLock;
+    omp_init_lock(&modelLock);
+    #pragma omp parallel for
+    #endif
     for(size_t m=0; m<numCrops_; ++m){
         std::cout << std::endl << " GRAPHICAL MODEL.............. " << m << std::endl << std::endl;
 
