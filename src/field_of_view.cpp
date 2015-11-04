@@ -174,11 +174,12 @@ double FieldOfView::spatial_distance_to_border( double /*t*/, double x, double y
     double zub = 1.0;// 2D case
     int vlen = 4;
 
-    if (ub_[3] - lb_[3] > 0 )  //3D case
+    if (ub_[3] - lb_[3] > 1 )  //3D case (in ilastik spatial upper boundaries are NOT included)
     {
         zub = ub_[3];
         vlen = 6;
     }
+
     // the eight corners of the fov cube
     double c1[3], c2[3], c3[3], c4[3], c5[3], c6[3], /*c7[3],*/ c8[3];
     c1[0] = lb_[1];
