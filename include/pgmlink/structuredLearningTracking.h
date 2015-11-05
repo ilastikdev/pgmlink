@@ -66,6 +66,7 @@ public:
         numLabels_(max_number_objects),
         numWeights_(5),
         trackingWeights_((size_t)5)
+
     {
         hypotheses_graph_ = hypotheses_graph;
     }

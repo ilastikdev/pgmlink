@@ -29,13 +29,17 @@ public:
         double ep_gap,
         double cplex_timeout,
         opengm::learning::Weights<double>& inferenceWeights,
-        bool withNormalization):
+        bool withNormalization,
+        FieldOfView fov,
+        double borderWidth):
         ConsTrackingExplicitInferenceModel(
             inferenceParam,
             ep_gap,
             cplex_timeout,
             inferenceWeights),
-        withNormalization_(withNormalization)
+        withNormalization_(withNormalization),
+        fov_(fov),
+        borderWidth_(borderWidth)
     {}
 
     virtual size_t add_division_factors(const HypothesesGraph&, size_t);
@@ -62,6 +66,8 @@ protected:
     bool withNormalization_;
     size_t modelStartTime_;
     size_t modelEndTime_;
+    FieldOfView fov_;
+    double borderWidth_;
 };
 } // namespace pgmlink
 

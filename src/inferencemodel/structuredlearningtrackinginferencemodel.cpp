@@ -76,6 +76,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         } // end for state
     } // end for node n
 
+    double counterApp=0;
+    double counterDis=0;
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
 
@@ -159,16 +161,46 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                         energiesAnorm(coords.begin()) = 0.0;
                         energiesA(coords.begin()) = 0.0;
                     }else{
-                        energiesAnorm(coords.begin()) = ((double)state-minEnergyA)/(maxEnergyA-minEnergyA);
-                        energiesA(coords.begin()) = state;
+                        double t = traxel_map_[n].Timestep, x = traxel_map_[n].X(), y = traxel_map_[n].Y(), z = traxel_map_[n].Z();
+                        double distance = fov_.spatial_distance_to_border(t,x,y,z,false);
+
+                        if (distance < borderWidth_){
+                            double ratio = distance/borderWidth_;
+                            energiesAnorm(coords.begin()) = ((double)ratio*state-minEnergyA)/(maxEnergyA-minEnergyA);
+                            energiesA(coords.begin()) = ratio*state;
+//                            std::cout << "    appearance " << " t= " << t << " traxel= " << traxel_map_[n] << " state= " << state << " distance= " << distance << "  ";
+//                            std::cout << " ratio= " << ratio << "energy= " << energiesA(coords.begin()) << " borderWidth= " << borderWidth_;
+//                            std::cout << "                     state*cost= " << state * cost[var_idx] << " =?= " << energiesA(coords.begin())*inferenceWeights_.getWeight((size_t)3) << " =energy*weight" << std::endl;
+                            if(state==0)
+                                ++counterApp;
+                        }
+                        else{
+                            energiesAnorm(coords.begin()) = ((double)state-minEnergyA)/(maxEnergyA-minEnergyA);
+                            energiesA(coords.begin()) = state;
+                        }
                     }
                 }
                 else{ // D
                     assert(maxEnergyD >= state);
                     assert(state >= minEnergyD);
                     if (node_end_time < getModelEndTime()){
-                        energiesDnorm(coords.begin()) = ((double)state-minEnergyD)/(maxEnergyD-minEnergyD);
-                        energiesD(coords.begin()) = state;
+                        double t = traxel_map_[n].Timestep, x = traxel_map_[n].X(), y = traxel_map_[n].Y(), z = traxel_map_[n].Z();
+                        double distance = fov_.spatial_distance_to_border(t,x,y,z,false);
+
+                        if (distance < borderWidth_){
+                            double ratio = distance/borderWidth_;
+                            energiesDnorm(coords.begin()) = ((double)ratio*state-minEnergyD)/(maxEnergyD-minEnergyD);
+                            energiesD(coords.begin()) = ratio*state;
+//                            std::cout << "dissappearance " << " t= " << t << " traxel= " << traxel_map_[n] << " state= " << state << " distance= " << distance << "  ";
+//                            std::cout << " ratio= " << ratio << "energy= " << energiesD(coords.begin()) << " borderWidth= " << borderWidth_;
+//                            std::cout << "                     state*cost= " << state * cost[var_idx] << " =?= " << energiesD(coords.begin())*inferenceWeights_.getWeight((size_t)4) << " =energy*weight" << std::endl;
+                            if(state==0)
+                                ++counterDis;
+                        }
+                        else{
+                            energiesDnorm(coords.begin()) = ((double)state-minEnergyD)/(maxEnergyD-minEnergyD);
+                            energiesD(coords.begin()) = state;
+                        }
                     }
                     else{
                         energiesDnorm(coords.begin()) = 0.0;
@@ -238,7 +270,8 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         model_.addFactor(funcId, vi.begin(), vi.end());
         detection_f_node_map_[n] = model_.numberOfFactors() - 1;
     } // end for node n
-
+    std::cout << "number of REDUCED border appearance weights    " << counterApp << std::endl;
+    std::cout << "number of REDUCED border disappearance weights " << counterDis << std::endl;
     return factorIndex;
 }
 

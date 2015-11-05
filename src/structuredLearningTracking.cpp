@@ -149,7 +149,9 @@ boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_m
             ep_gap_,
             cplex_timeout_,
             trackingWeights,
-            withNormalization);
+            withNormalization,
+            fov_,
+            param.border_width);
 }
 
 
@@ -484,13 +486,13 @@ void StructuredLearningTracking::setParameterWeights(ConservationExplicitTrackin
 
     //param.transition = NegLnTransition(weights[2]); // TODO: define the default
 
-    param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
+    param.appearance_cost_fn = SpatialBorderAwareWeight(weights[3],
                              param.border_width,
                              false, // true if relative margin to border
                              fov_,
                              tmin);// set appearance cost to zero at t = tmin
 
-    param.disappearance_cost_fn = SpatialBorderAwareWeight(weights[3],
+    param.disappearance_cost_fn = SpatialBorderAwareWeight(weights[4],
                             param.border_width,
                             false, // true if relative margin to border
                             fov_,
