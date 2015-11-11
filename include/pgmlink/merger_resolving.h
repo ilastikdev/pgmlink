@@ -29,6 +29,39 @@
 #include "pgmlink/feature.h"
 #include "pgmlink/pgmlink_export.h"
 
+
+// boost serialization for arma::mat
+namespace boost {
+namespace serialization {
+
+template<class Archive>
+void save(Archive & ar, const arma::Mat<double> &g, const unsigned int)
+{
+    std::stringstream ss;
+    g.save(ss);
+    std::string s = ss.str();
+    ar & s;
+}
+
+template<class Archive>
+void load(Archive & ar, arma::mat & g, const unsigned int)
+{
+    std::string s;
+    ar & s;
+    std::stringstream ss(s);
+    g.load(ss);
+}
+
+template<class Archive>
+void serialize(Archive & ar, arma::Mat<double> & g, const unsigned int version)
+{
+    split_free(ar, g, version);
+}
+
+} // namespace serialization
+} // namespace boost
+
+
 /**
  * @brief Implementation of ideas for merger resolution in the HypothesesGraph environment.
  * @file
@@ -868,6 +901,7 @@ void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
 template<int N, typename T>
 void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
                        vigra::MultiArrayView<N, T>& image,
+                       const vigra::TinyVector<long int, N>& offsets,
                        const size_t timestep,
                        const size_t traxel_id) {
   typedef typename vigra::MultiArrayView<N, T>::key_type KeyType;
@@ -875,15 +909,21 @@ void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
     std::make_pair(timestep, traxel_id)
   );
   if (it == coordinates->end()) {
-    throw std::runtime_error("Traxel not found in coordinates.");
+    throw std::runtime_error(
+      "in update_labelimage(): Traxel not found in coordinates."
+    );
   }
   const arma::mat& traxel_coord = it->second;
   for (size_t index = 0; index < traxel_coord.n_cols; index++){
     KeyType pixel_key;
+    bool valid_pixel = true;
     for (size_t dim = 0; dim < N; dim++) {
-      pixel_key[dim] = traxel_coord(dim, index);
+      pixel_key[dim] = traxel_coord(dim, index) - offsets[dim];
+      if(pixel_key[dim] >= image.shape(dim) || pixel_key[dim] < 0)
+        valid_pixel = false;
     }
-    image[pixel_key] = traxel_id;
+    if(valid_pixel)
+      image[pixel_key] = traxel_id;
   }
 }
 

@@ -9,6 +9,11 @@
 #include <vigra/numpy_array_converters.hxx>
 #include <vigra/tinyvector.hxx>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 
 using namespace std;
 using namespace pgmlink;
@@ -34,9 +39,18 @@ void gmm_priors_and_centers_numpy_to_arma(const vigra::NumpyArray<2, T>& data, f
 class PyTimestepIdCoordinateMap
 {
  public:
-  PyTimestepIdCoordinateMap() : map_() {}
+  PyTimestepIdCoordinateMap() : map_(TimestepIdCoordinateMapPtr(new TimestepIdCoordinateMap)) {}
   void initialize() {if (!map_) map_ = TimestepIdCoordinateMapPtr(new TimestepIdCoordinateMap);}
   TimestepIdCoordinateMapPtr get() {return map_;}
+  void set(TimestepIdCoordinateMapPtr ptr){ map_ = ptr; }
+  size_t size() const
+  {
+      if(!map_)
+      {
+          return 0;
+      }
+      return map_->size();
+  }
  private:
   TimestepIdCoordinateMapPtr map_;
 };
@@ -80,11 +94,38 @@ void py_extract_coord_by_timestep_id(PyTimestepIdCoordinateMap coordinates,
 
 template <int N, typename T>
 void py_update_labelimage(PyTimestepIdCoordinateMap coordinates,
-                          vigra::NumpyArray<N, T>& image,
+                          vigra::NumpyArray<N, T> image,
+                          vigra::NumpyArray<1, vigra::Int64> offsets,
                           const size_t timestep,
                           const size_t traxel_id) {
-  update_labelimage<N, T>(coordinates.get(), image, timestep, traxel_id);
+  vigra::TinyVector<long int, N> offsets_tv;
+  for (size_t idx = 0; idx < N; ++idx) {
+    offsets_tv[idx] = offsets[idx];
+  }
+  update_labelimage<N, T>(coordinates.get(), image, offsets_tv, timestep, traxel_id);
 }
+
+class CoordinateMapPickleSuite : public boost::python::pickle_suite
+{
+public:
+    static std::string getstate(PyTimestepIdCoordinateMap& coordinates)
+    {
+        std::stringstream ss;
+        boost::archive::binary_oarchive oa(ss);
+        TimestepIdCoordinateMapPtr map_ptr = coordinates.get();
+        oa & map_ptr;
+        return ss.str();
+    }
+
+    static void setstate(PyTimestepIdCoordinateMap& coordinates, const std::string& state)
+    {
+        std::stringstream ss(state);
+        boost::archive::binary_iarchive ia(ss);
+        TimestepIdCoordinateMapPtr map_ptr;
+        ia & map_ptr;
+        coordinates.set(map_ptr);
+    }
+};
 
 
 void export_gmm() {
@@ -98,6 +139,8 @@ void export_gmm() {
   class_<PyTimestepIdCoordinateMap>("TimestepIdCoordinateMap")
       .def("initialize", &PyTimestepIdCoordinateMap::initialize)
       .def("get", &PyTimestepIdCoordinateMap::get)
+      .def("size", &PyTimestepIdCoordinateMap::size)
+      .def_pickle(CoordinateMapPickleSuite())
       ;
 
   class_<TimestepIdCoordinateMapPtr>("TimestepIdCoordinateMapPtr");
