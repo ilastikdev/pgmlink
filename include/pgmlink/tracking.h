@@ -177,7 +177,9 @@ public:
           event_vector_dump_filename_(event_vector_dump_filename),
           with_optical_correction_(false),
           solver_(solver),
-          traxel_store_(nullptr)
+          traxel_store_(nullptr),
+          enable_appearance_(true),
+          enable_disappearance_(true)
     {}
 
     PGMLINK_EXPORT
@@ -205,7 +207,9 @@ public:
         solver_(param.solver),
         traxel_store_(&ts),
         hypotheses_graph_(g),
-        uncertainty_param_(uncertainty_param)
+        uncertainty_param_(uncertainty_param),
+        enable_appearance_(true),
+        enable_disappearance_(true)
     {}
 
 
@@ -232,6 +236,7 @@ public:
      */
 
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> build_hypo_graph(TraxelStore& ts, int max_nearest_neighbors=1);
+    PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> prune_to_traxel_descendants(const std::vector<Traxel>& traxels);
 
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_hypo_graph();
     PGMLINK_EXPORT boost::shared_ptr<HypothesesGraph> get_resolved_hypotheses_graph();
@@ -288,8 +293,11 @@ public:
             int n_dim = 3,
             double transition_parameter = 5.,
             bool with_constraints = true,
+            // bool with_multi_frame_moves = true);
             boost::python::object transitionClassifier = boost::python::object());
 
+    PGMLINK_EXPORT void enable_appearance(bool b) { enable_appearance_ = b; }
+    PGMLINK_EXPORT void enable_disappearance(bool b) { enable_disappearance_ = b; }
 
     /**
      * Get state of detection variables after call to operator().
@@ -325,6 +333,8 @@ public:
                                double transition_parameter,
                                double border_width);
 protected:
+    bool enable_appearance_;
+    bool enable_disappearance_;
     int max_number_objects_;
     double max_dist_;
     bool with_divisions_;

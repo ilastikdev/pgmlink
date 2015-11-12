@@ -860,7 +860,7 @@ EventVectorVector ConsTracking::resolve_mergers(
     boost::function<double(const double)> transition;
     transition = NegLnTransition(transition_weight);
 
-    cout << "-> resolving mergers" << endl;
+    std::cout << "-> resolving mergers" << std::endl;
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
     if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
@@ -907,15 +907,28 @@ EventVectorVector ConsTracking::resolve_mergers(
                       solver_);
 //            prune_inactive(resolved_graph);
 
-        cout << "-> constructing resolved events" << endl;
+        std::cout << "-> constructing resolved events" << std::endl;
         boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
         boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
 
-        cout << "-> merging unresolved and resolved events" << endl;
-        // delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
+        std::cout << "-> merging unresolved and resolved events" << std::endl;
+
         boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
         boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
         //      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
+
+        // // multi frame move switch needed?
+        // if (return_multi_frame_moves) {
+        //     cout << "-> constructing multi frame moves" << endl;
+        //     boost::shared_ptr<std::vector<std::vector<Event> > > multi_frame_moves
+        //         = multi_frame_move_events(resolved_graph);
+        //     cout << "-> merging unresolved and resolved events" << endl;
+        //     events_ptr = merge_event_vectors(*events_ptr, *multi_frame_moves);
+        // } else {
+        //     cout << "-> get events of the resolved graph" << endl;
+        //     prune_inactive(resolved_graph);
+        //     events_ptr = events(resolved_graph);
+        // }
 
         // TODO The in serialized event vector written in the track() function
         // will be overwritten. Is this the desired behaviour?
@@ -932,7 +945,7 @@ EventVectorVector ConsTracking::resolve_mergers(
 
         return *events_ptr;
     }
-    cout << "-> done resolving mergers" << endl;
+    std::cout << "-> done resolving mergers" << std::endl;
     return events;
 }
 
@@ -948,6 +961,24 @@ std::vector<std::map<unsigned int, bool> > ConsTracking::detections()
         throw std::runtime_error(
             "MrfTracking::detections(): previous tracking result required");
     }
+}
+
+boost::shared_ptr<HypothesesGraph> ConsTracking::prune_to_traxel_descendants(
+    const std::vector<Traxel>& traxels)
+{
+    LOG(logINFO) << "Pruning unselected nodes and their descendants from hypotheses graph...";
+    std::vector<HypothesesGraph::Node> nodes;
+    // convert traxels to nodes
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = (hypotheses_graph_)->get(node_traxel());
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type::ItemIt ItemItType;
+    for(std::vector<Traxel>::const_iterator t_it = traxels.begin(); t_it != traxels.end(); t_it++) {
+        for(ItemItType n(traxel_map, *t_it); n != lemon::INVALID; ++n) {
+            nodes.push_back(n);
+        }
+    }
+    prune_to_node_descendants(*hypotheses_graph_, nodes);
+    LOG(logINFO) << "Done pruning hypotheses graph.";
+    return hypotheses_graph_;
 }
 
 void ConsTracking::save_ilp_solutions(const std::string& filename)

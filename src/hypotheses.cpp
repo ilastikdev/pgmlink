@@ -280,6 +280,49 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g)
     return g;
 }
 
+HypothesesGraph& prune_to_node_descendants(HypothesesGraph& graph, const std::vector<HypothesesGraph::Node>& start_nodes) {
+    // create property maps if done yet
+    if (!graph.has_property(node_active2())) {
+        graph.add(node_active2());
+    }
+    if (!graph.has_property(arc_active())) {
+        graph.add(arc_active());
+    }
+    // initialize
+    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = graph.get(node_active2());
+    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = graph.get(arc_active());
+    for(HypothesesGraph::NodeIt n(graph); n != lemon::INVALID; ++n) {
+        node_active_map.set(n, 0);
+    }
+    for(HypothesesGraph::ArcIt a(graph); a != lemon::INVALID; ++a) {
+        arc_active_map.set(a, 0);
+    }
+    // loop over all nodes
+    for(std::vector<HypothesesGraph::Node>::const_iterator n_it = start_nodes.begin();
+        n_it != start_nodes.end();
+        n_it++)
+    {
+        set_descendants_active(graph, *n_it);
+    }
+    // call prune_inactive
+    return prune_inactive(graph);
+}
+
+HypothesesGraph& set_descendants_active(HypothesesGraph& graph, const HypothesesGraph::Node& start_node) {
+    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = graph.get(node_active2());
+    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = graph.get(arc_active());
+
+    // only recurse if this node was not yet active
+    if(node_active_map[start_node])
+        return graph;
+
+    node_active_map.set(start_node, 1);
+    for(HypothesesGraph::OutArcIt a(graph, start_node); a != lemon::INVALID; ++a) {
+        arc_active_map.set(a, 1);
+        set_descendants_active(graph, graph.target(a));
+    }
+    return graph;
+}
 
 // Introducing: Three awkward workarounds.
 // We don't want to have ifs everywhere,
@@ -503,7 +546,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             if (with_origin && (*origin_map)[node_at].size() > 0) { // && t > g.earliest_timestep()) {
                 const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
                 const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
-                LOG(logDEBUG1) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+                LOG(logDEBUG3) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
                 resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
             }
 
@@ -702,8 +745,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
         if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep()) {
             const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
             const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
-
-            LOG(logDEBUG1) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+            LOG(logDEBUG3) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
             resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
         }
     }

@@ -486,6 +486,9 @@ PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > resolved_to_events(const HypothesesGraph& g);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph&);
+// prune to specific start nodes
+PGMLINK_EXPORT HypothesesGraph& prune_to_node_descendants(HypothesesGraph& graph, const std::vector<HypothesesGraph::Node>& start_nodes);
+PGMLINK_EXPORT HypothesesGraph& set_descendants_active(HypothesesGraph& graph, const HypothesesGraph::Node& start_node);
 
 // lemon graph format (lgf) serialization
 PGMLINK_EXPORT void write_lgf(const HypothesesGraph&, std::ostream& os,

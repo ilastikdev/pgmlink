@@ -828,8 +828,7 @@ void translate_property_value_map(const HypothesesGraph& src,
 template <typename PropertyTag, typename KeyType>
 void translate_property_bool_map(const HypothesesGraph& src,
                                  const HypothesesGraph& dest,
-                                 std::map<KeyType, KeyType> dict
-                                )
+                                 std::map<KeyType, KeyType> dict)
 {
     // use c++11 and change for loop to:
     // for(bool b : {false, true});
