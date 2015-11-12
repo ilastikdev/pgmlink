@@ -30,6 +30,39 @@
 #include "pgmlink/pgmlink_export.h"
 #include "pgmlink/conservationtracking_parameter.h"
 
+
+// boost serialization for arma::mat
+namespace boost {
+namespace serialization {
+
+template<class Archive>
+void save(Archive & ar, const arma::Mat<double> &g, const unsigned int)
+{
+    std::stringstream ss;
+    g.save(ss);
+    std::string s = ss.str();
+    ar & s;
+}
+
+template<class Archive>
+void load(Archive & ar, arma::mat & g, const unsigned int)
+{
+    std::string s;
+    ar & s;
+    std::stringstream ss(s);
+    g.load(ss);
+}
+
+template<class Archive>
+void serialize(Archive & ar, arma::Mat<double> & g, const unsigned int version)
+{
+    split_free(ar, g, version);
+}
+
+} // namespace serialization
+} // namespace boost
+
+
 /**
  * @brief Implementation of ideas for merger resolution in the HypothesesGraph environment.
  * @file
@@ -186,7 +219,6 @@ private:
     int n_trials_;
     int n_iterations_;
     double threshold_;
-
 };
 
 
@@ -300,7 +332,7 @@ public:
     PGMLINK_EXPORT FeatureExtractorArmadillo(TimestepIdCoordinateMapPtr coordinates);
     PGMLINK_EXPORT virtual std::vector<Traxel> operator()(Traxel& trax, size_t nMergers, unsigned int max_id);
 private:
-    void update_coordinates(Traxel& trax,
+    void update_coordinates(const Traxel& trax,
                             size_t nMergers,
                             unsigned int max_id,
                             arma::Col<size_t> &labels);
@@ -464,7 +496,7 @@ private:
 
     // Add arcs to nodes created to replace merger node.
     void add_arcs_for_replacement_node(HypothesesGraph::Node node,
-                                       Traxel& trax,
+                                       const Traxel& trax,
                                        std::vector<HypothesesGraph::base_graph::Arc> src,
                                        std::vector<HypothesesGraph::base_graph::Arc> dest,
                                        DistanceBase& distance);
@@ -617,13 +649,6 @@ void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
                                   const size_t timestep,
                                   const size_t traxel_id,
                                   const size_t traxel_size);
-
-template<int N, typename T>
-void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
-                       vigra::MultiArrayView<N, T>& image,
-                       const vigra::TinyVector<long int, N>& offsets,
-                       const size_t timestep,
-                       const size_t traxel_id);
 
 ////
 //// IMPLEMENTATIONS ////
@@ -954,7 +979,6 @@ void extract_coord_by_timestep_id(TimestepIdCoordinateMapPtr coordinates,
 template<int N, typename T>
 void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
                        vigra::MultiArrayView<N, T>& image,
-                       TraxelStore& ts,
                        const vigra::TinyVector<long int, N>& offsets,
                        const size_t timestep,
                        const size_t traxel_id)
@@ -971,34 +995,21 @@ void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
     for (size_t index = 0; index < traxel_coord.n_cols; index++)
     {
         KeyType pixel_key;
+        bool valid_pixel = true;
         for (size_t dim = 0; dim < N; dim++)
         {
             pixel_key[dim] = traxel_coord(dim, index) - offsets[dim];
+            if(pixel_key[dim] >= image.shape(dim) || pixel_key[dim] < 0)
+                valid_pixel = false;
         }
-        image[pixel_key] = traxel_id;
+        if(valid_pixel)
+            image[pixel_key] = traxel_id;
     }
 
     // if no pixel was assigned the new ID, change the COM at least (if it is within the given ROI)
     if(traxel_coord.n_cols == 0)
     {
-        TraxelStoreByTimeid::iterator it = (ts.get<by_timeid>().find(boost::make_tuple(timestep, traxel_id)));
-        if(it != ts.get<by_timeid>().end())
-        {
-            feature_array com = it->features["com"];
-            assert(com.size() >= N);
-            KeyType pixel_key;
-            for (size_t dim = 0; dim < N; dim++)
-            {
-                pixel_key[dim] = com[dim] - offsets[dim];
-            }
-
-            image[pixel_key] = traxel_id;
-        }
-        else
-        {
-            throw std::runtime_error("No pixel was assigned the new traxel id, and could not find traxel "
-                                     "in traxel store to assign the COM pixel at least");
-        }
+        throw std::runtime_error("No pixel was assigned the new traxel id!");
     }
 }
 
@@ -1034,7 +1045,7 @@ void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
 
 
 
-}
+} // end namespace pgmlink
 
 
 #endif /* MERGER_RESOLVING_H */

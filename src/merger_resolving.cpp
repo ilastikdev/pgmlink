@@ -23,7 +23,6 @@
 #include "pgmlink/event.h"
 #include "pgmlink/traxels.h"
 
-
 namespace pgmlink
 {
 ////
@@ -178,7 +177,6 @@ GMMInitializeArma::~GMMInitializeArma()
 
 }
 
-
 feature_array GMMInitializeArma::operator()()
 {
     LOG(logDEBUG4) << "GMMInitializeArma::operator() -- entered";
@@ -295,10 +293,11 @@ std::vector<Traxel> FeatureExtractorMCOMsFromPCOMs::operator()(
     feature_array range(it->second.begin() + index1, it->second.begin() + index2);
     for (unsigned int n = 0; n < nMerger; ++n, ++start_id)
     {
-        trax.Id = start_id;
-        trax.features["com"] = feature_array(range.begin() + (3 * n), range.begin() + (3 * (n + 1)));
         res.push_back(trax);
-        LOG(logINFO) << "FeatureExtractorMCOMsFromPCOMs::operator()(): Appended traxel with com (" << trax.features["com"][0] << "," << trax.features["com"][1] << "," << trax.features["com"][2] << ") and id " << trax.Id;
+        Traxel& new_trax = res.back();
+        new_trax.Id = start_id;
+        new_trax.features["com"] = feature_array(range.begin()+(3*n), range.begin()+(3*(n+1)));
+        LOG(logINFO) << "FeatureExtractorMCOMsFromPCOMs::operator()(): Appended traxel with com (" << new_trax.features["com"][0] << "," << new_trax.features["com"][1] << "," << new_trax.features["com"][2] << ") and id " << new_trax.Id;
     }
     return res;
 }
@@ -321,10 +320,12 @@ std::vector<Traxel> FeatureExtractorMCOMsFromMCOMs::operator()(
     std::vector<Traxel> res;
     for (unsigned int n = 0; n < nMerger; ++n, ++start_id)
     {
-        trax.Id = start_id;
-        trax.features["com"] = feature_array(it->second.begin() + (3 * n), it->second.begin() + (3 * (n + 1)));
-        res.push_back(trax);
-        LOG(logDEBUG3) << "FeatureExtractorMCOMsFromMCOMs::operator()(): Appended traxel with com (" << trax.features["com"][0] << "," << trax.features["com"][1] << "," << trax.features["com"][2] << ") and id " << trax.Id;
+        // copy such that we won't modify the original traxel
+        Traxel new_trax = trax;
+        new_trax.Id = start_id;
+        new_trax.features["com"] = feature_array(it->second.begin()+(3*n), it->second.begin()+(3*(n+1)));
+        res.push_back(new_trax);
+        LOG(logDEBUG3) << "FeatureExtractorMCOMsFromMCOMs::operator()(): Appended traxel with com (" << new_trax.features["com"][0] << "," << new_trax.features["com"][1] << "," << new_trax.features["com"][2] << ") and id " << new_trax.Id;
     }
     LOG(logDEBUG3) << std::endl;
     return res;
@@ -373,7 +374,8 @@ std::vector<Traxel> FeatureExtractorArmadillo::operator() (Traxel& trax,
     arma::Col<size_t> unique_labels = arma::unique(labels);
     if(unique_labels.n_elem != nMergers)
     {
-        LOG(logINFO) << "Falling back to kmeans pixel labeling for " << trax << ", as GMMs did not assign each label to at least one pixel";
+        LOG(logINFO) << "Falling back to kmeans pixel labeling for " << trax 
+                     << ", as GMMs did not assign each label to at least one pixel";
         arma::mat centers(3, nMergers);
         mlpack::kmeans::KMeans<> kMeans;
         kMeans.Cluster(it->second, nMergers, labels, centers);
@@ -394,7 +396,7 @@ std::vector<Traxel> FeatureExtractorArmadillo::operator() (Traxel& trax,
     return extractor(trax, nMergers, max_id);
 }
 
-void FeatureExtractorArmadillo::update_coordinates(Traxel& trax,
+void FeatureExtractorArmadillo::update_coordinates(const Traxel& trax,
                                                    size_t nMergers,
                                                    unsigned int max_id,
                                                    arma::Col<size_t>& labels)
@@ -414,8 +416,8 @@ void FeatureExtractorArmadillo::update_coordinates(Traxel& trax,
             std::pair<std::pair<int, unsigned int>, arma::mat>(new_key, coordinates_n)
         );
     }
+    coordinates_->erase(it);
 }
-
 
 ////
 //// FeatureHandlerBase
@@ -909,7 +911,7 @@ void gmm_priors_and_centers(const feature_array& data, feature_array& priors, fe
     centers.resize((k_max * (k_max + 1)) / 2 * ndim);
 
     int n_samples = data.size() / ndim;
-    #   pragma omp parallel for
+    #pragma omp parallel for
     for (int k = 1; k <= k_max; ++k)
     {
         GMM gmm(k, ndim, data);
@@ -929,7 +931,7 @@ void gmm_priors_and_centers_arma(const arma::mat& data, feature_array& priors, f
     centers.resize((k_max * (k_max + 1)) / 2 * ndim);
 
     int n_samples = data.size() / ndim;
-    #   pragma omp parallel for
+    #pragma omp parallel for
     for (int k = 1; k <= k_max; ++k)
     {
         GMMInitializeArma gmm(k, data);

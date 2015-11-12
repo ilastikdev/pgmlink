@@ -13,7 +13,13 @@
 #include "opengm/opengm.hxx"
 #include "pgmlink/ext_opengm/loss_hamming.hxx"
 #include "pgmlink/ext_opengm/loglinearmodel.hxx"
+
+#ifdef WITH_GUROBI
+#include "opengm/inference/lpgurobi.hxx"
+#else
 #include "opengm/inference/lpcplex.hxx"
+#endif
+
 #include "opengm/operations/minimizer.hxx"
 
 
@@ -122,63 +128,62 @@ void StructSvmDlib<LLM>::get_truth_joint_feature_vector( long idx, feature_vecto
 
 template<class LLM>
 void StructSvmDlib<LLM>::separation_oracle(const long idx,
-        const matrix_type_dlib& current_solution,
-        scalar_type_dlib& loss,
-        feature_vector_type_dlib& psi
-                                          ) const
-{
-    std::cout << "\n";
-    std::cout << "Entered separation oracle\n";
-    std::vector<typename LLM::ValueType> weights;
-    for(int i = 0; i < current_solution.nr(); ++i)
-    {
-        weights.push_back(-1 * current_solution(i, 0));
-        std::cout << "weights[" << i << "]: " << current_solution(i, 0) << "\n";
-    }
-    samples_and_loss_[idx].setWeights(weights);
-    samples_[idx].setWeights(weights);
+					   const matrix_type_dlib& current_solution,
+					   scalar_type_dlib& loss,
+					   feature_vector_type_dlib& psi
+					   ) const {
+  std::cout << "\n";
+  std::cout << "Entered separation oracle\n";
+  std::vector<typename LLM::ValueType> weights;
+  for(int i = 0; i < current_solution.nr(); ++i) {
+    weights.push_back(-1*current_solution(i, 0));
+    std::cout << "weights["<<i<<"]: " << current_solution(i,0) << "\n";
+  }
+  samples_and_loss_[idx].setWeights(weights);
+  samples_[idx].setWeights(weights);
 
-    typedef opengm::LPCplex<LLM, opengm::Minimizer> optimizer_type;
-    typename optimizer_type::Parameter params;
-    params.verbose_ = true;
-    params.integerConstraint_ = true;
-    params.epGap_ = 0.01;
-    opengm::InferenceTermination status;
-    optimizer_type inference = optimizer_type(samples_and_loss_[idx], params);
-    status = inference.infer();
-    if(status != opengm::NORMAL)
-    {
-        throw RuntimeError("GraphicalModel::infer(): optimizer terminated unnormally");
-    }
+#ifdef WITH_GUROBI
+  typedef opengm::LPGurobi<LLM, opengm::Minimizer> optimizer_type;
+#else
+  typedef opengm::LPCplex<LLM, opengm::Minimizer> optimizer_type;
+#endif
+  typename optimizer_type::Parameter params;
+  params.verbose_ = true;
+  params.integerConstraint_ = true;
+  params.epGap_ = 0.01;
+  opengm::InferenceTermination status;  
+  optimizer_type inference = optimizer_type(samples_and_loss_[idx], params);
+  status = inference.infer();
+  if(status != opengm::NORMAL) {
+    throw RuntimeError("GraphicalModel::infer(): optimizer terminated unnormally");
+  }
 
 
-    std::vector<typename LLM::LabelType> optimal;
-    status = inference.arg(optimal);
-    if(status != opengm::NORMAL)
-    {
-        throw RuntimeError("GraphicalModel::infer(): solution extraction terminated unnormally");
-    }
-    std::cout << "current[0]: " << optimal[0] << " label[0]: " << labels_[idx][0]  << "\n";
-    std::cout << "current[1]: " << optimal[1] << " label[1]: " << labels_[idx][1]  << "\n";
-    std::cout << "current[2]: " << optimal[2] << " label[2]: " << labels_[idx][2]  << "\n";
-    std::cout << "current[3]: " << optimal[3] << " label[3]: " << labels_[idx][3]  << "\n";
-    std::cout << "etc. etc.\n";
+  std::vector<typename LLM::LabelType> optimal;
+  status = inference.arg(optimal);
+  if(status != opengm::NORMAL) {
+    throw RuntimeError("GraphicalModel::infer(): solution extraction terminated unnormally");
+  }
+  std::cout << "current[0]: " << optimal[0] << " label[0]: " << labels_[idx][0]  << "\n";
+  std::cout << "current[1]: " << optimal[1] << " label[1]: " << labels_[idx][1]  << "\n";
+  std::cout << "current[2]: " << optimal[2] << " label[2]: " << labels_[idx][2]  << "\n";
+  std::cout << "current[3]: " << optimal[3] << " label[3]: " << labels_[idx][3]  << "\n";
+  std::cout << "etc. etc.\n"; 
 
-    std::vector<typename LLM::ValueType> feats(samples_and_loss_[idx].numberOfWeights());
-    samples_and_loss_[idx].weightedFeatureSums( optimal, feats );
-    psi.set_size(samples_[idx].numberOfWeights(), 1);
-    for(long i = 0; i < psi.size(); ++i)
-    {
-        std::cout << "feature[" << i << "]: " << feats[i] << "\n";
-        psi(i, 0) = feats[i];
-    }
+  std::vector<typename LLM::ValueType> feats(samples_and_loss_[idx].numberOfWeights());
+  samples_and_loss_[idx].weightedFeatureSums( optimal, feats );
+  psi.set_size(samples_[idx].numberOfWeights(), 1);
+  for(long i = 0; i < psi.size(); ++i) {
+    std::cout << "feature["<<i <<"]: " << feats[i] << "\n";
+    psi(i,0) = feats[i];
+  }
 
-    loss = -1 * loss_[idx].evaluate(optimal);
-    std::cout << "ground truth energy for idx" << idx << ": " << -1 * samples_[idx].evaluate(labels_[idx]) << "\n";
-    std::cout << "energy for idx" << idx << ": " << -1 * samples_[idx].evaluate(optimal) << "\n";
-    std::cout << "energy incl. loss for idx" << idx << ": " << -1 * samples_and_loss_[idx].evaluate(optimal) << "\n";
-    std::cout << "loss for idx " << idx << ": " << loss << "\n";
-    std::cout << "leaving oracle\n\n";
+  loss = -1*loss_[idx].evaluate(optimal);
+  std::cout << "ground truth energy for idx" << idx <<": "<< -1*samples_[idx].evaluate(labels_[idx])<<"\n";
+  std::cout << "energy for idx" << idx <<": "<< -1*samples_[idx].evaluate(optimal)<<"\n";
+  std::cout << "energy incl. loss for idx" << idx <<": "<< -1*samples_and_loss_[idx].evaluate(optimal)<<"\n";
+  std::cout << "loss for idx "<< idx <<": " << loss << "\n";
+  std::cout << "leaving oracle\n\n";
 }
 
 template<class LLM>

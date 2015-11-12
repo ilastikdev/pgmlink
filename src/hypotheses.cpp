@@ -500,13 +500,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
                 continue;
             }
 
-            if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep())
-            {
-                LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << (*origin_map)[node_at][0];
-                resolver_map[(*origin_map)[node_at][0]].push_back(node_traxel_map[node_at].Id);
-                const std::vector<float>& tmp_feat = (node_traxel_map[node_at].features.find("com"))->second; //node_traxel_map[node_at].features["com"];
-                std::copy(tmp_feat.begin(), tmp_feat.end(),
-                          std::back_insert_iterator<std::vector<unsigned> >(resolver_map[(*origin_map)[node_at][0]]));
+            if (with_origin && (*origin_map)[node_at].size() > 0) { // && t > g.earliest_timestep()) {
+                const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
+                const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
+                LOG(logDEBUG1) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+                resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
             }
 
             LOG(logDEBUG3) << "Number of detected objects: " << get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep);
@@ -636,7 +634,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             {
                 e.traxel_ids.push_back(*it);
             }
-            (*ret)[t - g.earliest_timestep() - 1].push_back(e);
+            (*ret)[t - g.earliest_timestep()].push_back(e);
             LOG(logDEBUG1) << e;
         }
 
@@ -687,9 +685,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
     }
 
     LOG(logDEBUG2) << "events(): last timestep: " << g.latest_timestep();
-    for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at != lemon::INVALID; ++node_at)
+    map<unsigned int, vector<unsigned int> > resolver_map;
+    int t = g.latest_timestep();
+    for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at!=lemon::INVALID; ++node_at) 
     {
-        if(with_mergers && get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep) > 1)
+        if(with_mergers && get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep) > 1) 
         {
             Event e;
             e.type = Event::Merger;
@@ -698,6 +698,25 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             (*ret)[g.latest_timestep() - g.earliest_timestep()].push_back(e);
             LOG(logDEBUG3) << e;
         }
+
+        if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep()) {
+            const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
+            const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
+
+            LOG(logDEBUG1) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+            resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
+        }
+    }
+
+    for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it) {
+        Event e;
+        e.type = Event::ResolvedTo;
+        e.traxel_ids.push_back(map_it->first);
+        for (std::vector<unsigned int>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it) {
+            e.traxel_ids.push_back(*it);
+        }
+        (*ret)[t-g.earliest_timestep()].push_back(e);
+        LOG(logDEBUG1) << e;
     }
     LOG(logDEBUG2) << "events(): done.";
     return ret;
@@ -2110,7 +2129,6 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
     // add arc references
     dest.add(arc_origin_reference());
     graph_copy.arcCrossRef(dest.get(arc_origin_reference()));
-
     graph_copy.run();
 }
 

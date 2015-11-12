@@ -4,9 +4,7 @@
 #include <stdexcept>
 #include <string.h>
 #include <sstream>
-#include <memory.h>
-#include <opengm/inference/lpcplex.hxx>
-#include <opengm/datastructures/marray/marray.hxx>
+#include <memory>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/python.hpp>
@@ -26,18 +24,6 @@
 #include "pgmlink/inferencemodel/perturbation/divmbest_perturbation.h"
 #include "pgmlink/inferencemodel/perturbation/classifier_uncertainty_perturbation.h"
 #include "pgmlink/inferencemodel/perturbation/perturbandmap_perturbation.h"
-
-//added for view-support
-#include "opengm/opengm.hxx"
-#include "opengm/graphicalmodel/graphicalmodel.hxx"
-#include "opengm/functions/modelviewfunction.hxx"
-#include "opengm/functions/view.hxx"
-
-//for computing inverse_sigmoid
-#include <boost/math/distributions/normal.hpp>
-
-
-using namespace std;
 
 namespace pgmlink
 {

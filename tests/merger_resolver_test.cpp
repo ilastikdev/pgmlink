@@ -286,11 +286,9 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
         arc_dist_2.insert(dist_map[arc_it]);
         BOOST_CHECK(g.valid(arc_it));
     }
+
     BOOST_CHECK_EQUAL_COLLECTIONS(arc_dist_1.begin(), arc_dist_1.end(), arc_dist_2.begin(), arc_dist_2.end());
     BOOST_CHECK_EQUAL(arc_count, 9);
-
-
-
 
     // check that deactivated nodes are pruned, i.e. ItemIt(active_map, 0) should be equal  to lemon::INVALID
     property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt deactive_it(active_map, 0);
@@ -319,7 +317,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
             }
         }
     }
-    BOOST_CHECK_EQUAL(resolve_count, 0);
+    BOOST_CHECK_EQUAL(resolve_count, 2);
 
 }
 /*
@@ -1305,5 +1303,29 @@ BOOST_AUTO_TEST_CASE( MergerResolver_extract_coordinates )
   cout << "GMM score: " << gmm.score() << "\n";
   BOOST_CHECK_EQUAL_COLLECTIONS(centers.begin(), centers.end(), arr_res, arr_res+sizeof(arr_res)/sizeof(arr_res[0]));
 } */
+
+BOOST_AUTO_TEST_CASE( arma_mat_serialization ) {
+    arma::mat orig(3,3);
+    orig.randn();
+
+    // save to string
+    string s;
+    {
+      stringstream ss;
+      boost::archive::text_oarchive oa(ss);
+      oa & orig;
+      s = ss.str();
+    }
+
+    // load from string and compare
+    arma::mat loaded;
+    {
+      stringstream ss(s);
+      boost::archive::text_iarchive ia(ss);
+      ia & loaded;
+    }
+
+    BOOST_CHECK(arma::sum(arma::sum(loaded - orig)) < 0.0001);
+}
 
 // EOF

@@ -360,17 +360,17 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 
         for(auto& event : events)
         {
+            // TODO: do not copy the events!
             merger_resolved_events.push_back(resolve_mergers(
-                                                 event,
-                                                 coordinates,
-                                                 ep_gap,
-                                                 transition_weight,
-                                                 with_tracklets,
-                                                 n_dim,
-                                                 transition_parameter,
-                                                 with_constraints,
-                                                 transition_classifier
-                                             ));
+                            event,
+                            coordinates,
+                            ep_gap,
+                            transition_weight,
+                            with_tracklets,
+                            n_dim,
+                            transition_parameter,
+                            with_constraints,
+                            transition_classifier));
         }
 
         // reset solver
@@ -751,10 +751,8 @@ Parameter ConsTracking::get_conservation_tracking_parameters(double forbidden_co
     boost::function<double(const Traxel&, const size_t)> detection, division;
     boost::function<double(const double)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
-    
-    LOG(logDEBUG1) << "division_weight = " << division_weight;
-    LOG(logDEBUG1) << "transition_weight = " << transition_weight;
-    //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+
+        //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
 

@@ -227,8 +227,6 @@ public:
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
             boost::python::object transition_classifier = boost::python::object());
 
-
-
     /**
      * refactoring of operator().
      */

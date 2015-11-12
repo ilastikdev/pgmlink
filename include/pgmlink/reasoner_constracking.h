@@ -3,7 +3,6 @@
 
 #include <map>
 #include <boost/function.hpp>
-
 #include <boost/python.hpp>
 
 #include "pgmlink/pgm.h"
