@@ -419,7 +419,6 @@ typedef double ValueType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
-//<<<<<<< HEAD
 typedef double Energy;
 typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
 typedef pgm::IncomingLinearConstraintFunction<Energy, size_t, size_t> InLinearConsFunc;

@@ -115,7 +115,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             if (node_end_time < getModelEndTime())
             {
                 energy = param_.disappearance_cost(traxel_map_[n]);
-
                 cost.push_back(energy);
             }
             else
@@ -168,9 +167,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                             double ratio = distance/borderWidth_;
                             energiesAnorm(coords.begin()) = ((double)ratio*state-minEnergyA)/(maxEnergyA-minEnergyA);
                             energiesA(coords.begin()) = ratio*state;
-//                            std::cout << "    appearance " << " t= " << t << " traxel= " << traxel_map_[n] << " state= " << state << " distance= " << distance << "  ";
-//                            std::cout << " ratio= " << ratio << "energy= " << energiesA(coords.begin()) << " borderWidth= " << borderWidth_;
-//                            std::cout << "                     state*cost= " << state * cost[var_idx] << " =?= " << energiesA(coords.begin())*inferenceWeights_.getWeight((size_t)3) << " =energy*weight" << std::endl;
                             if(state==0)
                                 ++counterApp;
                         }
@@ -191,9 +187,6 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                             double ratio = distance/borderWidth_;
                             energiesDnorm(coords.begin()) = ((double)ratio*state-minEnergyD)/(maxEnergyD-minEnergyD);
                             energiesD(coords.begin()) = ratio*state;
-//                            std::cout << "dissappearance " << " t= " << t << " traxel= " << traxel_map_[n] << " state= " << state << " distance= " << distance << "  ";
-//                            std::cout << " ratio= " << ratio << "energy= " << energiesD(coords.begin()) << " borderWidth= " << borderWidth_;
-//                            std::cout << "                     state*cost= " << state * cost[var_idx] << " =?= " << energiesD(coords.begin())*inferenceWeights_.getWeight((size_t)4) << " =energy*weight" << std::endl;
                             if(state==0)
                                 ++counterDis;
                         }

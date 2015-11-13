@@ -34,10 +34,6 @@
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
 
-//<<<<<<< HEAD
-//using namespace std;
-//=======
-//>>>>>>> bitbucketchaubold/development
 using boost::shared_ptr;
 using boost::shared_array;
 
@@ -615,7 +611,6 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
             trainingToHardConstraints,
             num_threads);
     uncertainty_param_ = uncertaintyParam;
-
     return ConsTracking::track_from_param(param);
 }
 
