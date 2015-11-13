@@ -256,7 +256,7 @@ bool StructuredLearningTracking::addArcLabel(int startTime, int startLabel, int 
                 to = hypotheses_graph_->target(arc);
                 if (traxel_map[to].Id == endLabel){
                     hypotheses_graph_->add_arc_label(arc, cellCount);
-                    found = true;
+                    return true;
                 }
             }
         }
@@ -553,6 +553,15 @@ void StructuredLearningTracking::structuredLearning(
     for(size_t m=0; m<numCrops_; ++m){
         std::cout << std::endl << " GRAPHICAL MODEL.............. " << m << std::endl << std::endl;
 
+        // lock the model
+        #ifdef WITH_OPENMP
+        omp_set_lock(&modelLock);
+        sltDataset.lockModel(m);
+        omp_unset_lock(&modelLock);
+        #else
+        sltDataset.lockModel(m);
+        #endif
+
         HypothesesGraph::base_graph::NodeMap<bool> selected_nodes(*hypotheses_graph_);
         for (HypothesesGraph::NodeIt n(*hypotheses_graph_); n != lemon::INVALID; ++n)
             selected_nodes[n] = false;
@@ -689,26 +698,38 @@ void StructuredLearningTracking::structuredLearning(
         }
         assert ( indexDisAppNodes == number_of_disappearance_nodes);
 
-        size_t number_of_division_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_division_nodes();
-        std::vector<size_t> division_var_to_node_fun (number_of_division_nodes);
-        size_t indexDivNodes=0;
-        for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
-            size_t number_of_outarcs = 0;
-            for (HypothesesGraph::OutArcIt a(*(graph[m]), n); a != lemon::INVALID; ++a)
-                ++number_of_outarcs;
-            if (number_of_outarcs > 1){
-                division_var_to_node_fun[indexDivNodes] = traxel_map[n].Id;
+        if(boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->param_.with_divisions){
+            size_t number_of_division_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_division_nodes();
+            std::vector<size_t> division_var_to_node_fun (number_of_division_nodes);
+            size_t indexDivNodes=0;
+            for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
+                size_t number_of_outarcs = 0;
+                for (HypothesesGraph::OutArcIt a(*(graph[m]), n); a != lemon::INVALID; ++a)
+                    ++number_of_outarcs;
+                if (number_of_outarcs > 1){
+                    division_var_to_node_fun[indexDivNodes] = traxel_map[n].Id;
 
-                sltDataset.setGTS(
-                    m,
-                    (size_t) indexArcs + indexAppNodes + indexDisAppNodes + indexDivNodes,
-                    (size_t)division_labels[n]);
-                ++indexDivNodes;
+                    sltDataset.setGTS(
+                        m,
+                        (size_t) indexArcs + indexAppNodes + indexDisAppNodes + indexDivNodes,
+                        (size_t)division_labels[n]);
+                    ++indexDivNodes;
+                }
             }
+            assert ( indexDivNodes == number_of_division_nodes);
         }
-        assert ( indexDivNodes == number_of_division_nodes);
 
         sltDataset.build_model_with_loss(m);
+
+        // unlock the model
+        #ifdef WITH_OPENMP
+        omp_set_lock(&modelLock);
+        sltDataset.unlockModel(m);
+        omp_unset_lock(&modelLock);
+        #else
+        sltDataset.unlockModel(m);
+        #endif
+
     } // for model m
 
 //    for(size_t i=0; i<5; ++i)
