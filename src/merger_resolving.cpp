@@ -432,7 +432,6 @@ void FeatureHandlerBase::add_arcs_for_replacement_node(HypothesesGraph& g,
     // get the property_maps needed for adding Arcs
     std::vector<HypothesesGraph::base_graph::Arc>::const_iterator it;
     property_map<arc_distance, HypothesesGraph::base_graph>::type& arc_distances = g.get(arc_distance());
-    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = g.get(arc_active());
     property_map<arc_resolution_candidate, HypothesesGraph::base_graph>::type& arc_resolution_map = g.get(arc_resolution_candidate());
 
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
@@ -446,10 +445,10 @@ void FeatureHandlerBase::add_arcs_for_replacement_node(HypothesesGraph& g,
         HypothesesGraph::Arc arc = g.addArc(from, n);
         arc_ids.push_back(g.id(arc));
         arc_distances.set(arc, dist);
-        arc_active_map.set(arc, true);
+        g.set_arc_active(arc, true);
         arc_resolution_map.set(arc, true);
         LOG(logDEBUG4) << "FeatureHandlerBase::add_arcs_for_replacement_node: add incoming arc (" << traxel_map[g.source(arc)].Id <<
-                       "," << traxel_map[g.target(arc)].Id << ") = " << arc_resolution_map[arc] << " and active = " << arc_active_map[arc];
+                       "," << traxel_map[g.target(arc)].Id << ") = " << arc_resolution_map[arc] << " and active = " << g.get_arc_active(arc);
     }
 
     // add outgoing arcs
@@ -459,16 +458,16 @@ void FeatureHandlerBase::add_arcs_for_replacement_node(HypothesesGraph& g,
         double dist = distance(g, n, to);
         HypothesesGraph::Arc arc = g.addArc(n, to);
         arc_distances.set(arc, dist);
-        arc_active_map.set(arc, true);
+        g.set_arc_active(arc, true);
         arc_resolution_map.set(arc, true);
         arc_ids.push_back(g.id(arc));
         LOG(logDEBUG4) << "FeatureHandlerBase::add_arcs_for_replacement_node: add outgoing arc (" << traxel_map[g.source(arc)].Id <<
-                       "," << traxel_map[g.target(arc)].Id << ") = " << arc_resolution_map[arc] << " and active = " << arc_active_map[arc];
+                       "," << traxel_map[g.target(arc)].Id << ") = " << arc_resolution_map[arc] << " and active = " << g.get_arc_active(arc);
     }
     LOG(logDEBUG4) << "FeatureHandlerBase::add_arcs_for_replacement_node: checking states of arcs";
     for(std::vector<int>::const_iterator arc_it = arc_ids.begin(); arc_it != arc_ids.end(); ++arc_it)
     {
-        assert(arc_active_map[g.arcFromId(*arc_it)]);
+        assert(g.get_arc_active(g.arcFromId(*arc_it)));
     }
 }
 
@@ -489,7 +488,6 @@ void FeatureHandlerFromTraxels::operator()(
 {
 
     // property maps
-    property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
     property_map<node_timestep, HypothesesGraph::base_graph>::type& time_map = g.get(node_timestep());
     property_map<node_originated_from, HypothesesGraph::base_graph>::type& origin_map = g.get(node_originated_from());
@@ -513,7 +511,7 @@ void FeatureHandlerFromTraxels::operator()(
         HypothesesGraph::Node new_node = g.add_node(timestep);
         // MAYBE LOG
         traxel_map.set(new_node, *it);
-        active_map.set(new_node, 1);
+        g.set_node_active(new_node, 1);
         time_map.set(new_node, timestep);
         // add new traxel to traxelstore
         add(*traxel_store_, fs, *it);
@@ -560,12 +558,13 @@ void MergerResolver::deactivate_arcs(std::vector<HypothesesGraph::base_graph::Ar
     // Deactivate Arcs provided by arcs.
     // Useful to deactivate arcs of merger node.
 
-    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = g_->get(arc_active());
+    // property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = g_->get(arc_active());
     property_map<arc_resolution_candidate, HypothesesGraph::base_graph>::type& arc_resolution_map = g_->get(arc_resolution_candidate());
     for (std::vector<HypothesesGraph::base_graph::Arc>::iterator it = arcs.begin(); it != arcs.end(); ++it)
     {
         LOG(logDEBUG3) << "MergerResolver::deactivate_arcs(): setting arc " << g_->id(*it)  << " (" << g_->get(node_traxel())[g_->source((*it))].Id << "," << g_->get(node_traxel())[g_->target((*it))].Id << ") property arc_active to false";
-        arc_active_map.set(*it, false);
+        // arc_active_map.set(*it, false);
+        g_->set_arc_active(*it, false);
         arc_resolution_map.set(*it, false);
     }
 }
@@ -575,12 +574,12 @@ void MergerResolver::deactivate_nodes(std::vector<HypothesesGraph::Node> nodes)
     // Deactivate Nodes provided by nodes.
     // Needed to set all resolved merger nodes inactive.
     std::vector<HypothesesGraph::Node>::iterator it = nodes.begin();
-    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = g_->get(node_active2());
+    // property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = g_->get(node_active2());
     property_map<node_resolution_candidate, HypothesesGraph::base_graph>::type& node_resolution_map = g_->get(node_resolution_candidate());
     for (; it != nodes.end(); ++it)
     {
         LOG(logDEBUG3) << "MergerResolver::deactivate_nodes(): setting Node " << g_->id(*it) << " property node_active2 to 0";
-        node_active_map.set(*it, 0);
+        g_->set_node_active(*it, 0);
         node_resolution_map.set(*it, 0);
     }
 }
@@ -641,14 +640,13 @@ void calculate_gmm_beforehand(HypothesesGraph& g, int n_trials, int n_dimensions
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
     HypothesesGraph::node_timestep_map& timestep_map = g.get(node_timestep());
     HypothesesGraph::node_timestep_map::ValueIt timestep_it = timestep_map.beginValue();
-    property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
 
     for (; timestep_it != timestep_map.endValue(); ++timestep_it)
     {
         HypothesesGraph::node_timestep_map::ItemIt node_it(timestep_map, *timestep_it);
         for (; node_it != lemon::INVALID; ++node_it)
         {
-            int count = active_map[node_it];
+            int count = g.get_node_active(node_it);
             if (count > 1)
             {
                 Traxel trax = traxel_map[node_it];
@@ -658,7 +656,7 @@ void calculate_gmm_beforehand(HypothesesGraph& g, int n_trials, int n_dimensions
                 int curr_idx = 0;
                 for (HypothesesGraph::InArcIt arc_it(g, node_it); arc_it != lemon::INVALID; ++arc_it)
                 {
-                    int count_src = active_map[g.source(arc_it)];
+                    int count_src = g.get_node_active(g.source(arc_it));
                     if (count_src == 1)
                     {
                         const feature_array& com = traxel_map[g.source(arc_it)].features.find("com")->second;
@@ -811,7 +809,7 @@ void resolve_graph(const HypothesesGraph& src,
     }
 
 //  src.add(division_active()).add(arc_active()).add(node_active2());
-    dest.add(division_active()).add(arc_active()).add(node_active2());
+    dest.add(division_active()).add(arc_active()).add(node_active2()).add(division_active_count()).add(node_active_count()).add(arc_active_count());
 
 
     // Storing references in nr and ar, cross references in
@@ -894,6 +892,7 @@ void resolve_graph(const HypothesesGraph& src,
 
     // Remap active maps from subgraph to original hypotheses graph.
     translate_property_bool_map<arc_active, HypothesesGraph::Arc>(dest, src, acr);
+    translate_property_value_map<arc_active_count, HypothesesGraph::Arc>(dest, src, acr);
 }
 
 
