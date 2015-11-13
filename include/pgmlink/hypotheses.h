@@ -428,6 +428,9 @@ public:
     // call this function to add a multi-temporal node (e.g. for tracklets)
     PGMLINK_EXPORT HypothesesGraph::Node add_node(std::vector<node_timestep_map::Value> timesteps);
 
+    // override
+    PGMLINK_EXPORT HypothesesGraph::Arc addArc(HypothesesGraph::Node s, HypothesesGraph::Node t);
+
     // add node with associated traxel
     PGMLINK_EXPORT HypothesesGraph::Node add_traxel(Traxel ts);
 
@@ -442,6 +445,14 @@ public:
 
     // assign ground truth to a node
     PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  , label_type label);
+
+    // getters and setters for active states
+    PGMLINK_EXPORT size_t get_node_active(HypothesesGraph::Node n, int iteration = -1) const;
+    PGMLINK_EXPORT bool get_division_active(HypothesesGraph::Node n, int iteration = -1) const;
+    PGMLINK_EXPORT bool get_arc_active(HypothesesGraph::Arc a, int iteration = -1) const;
+    PGMLINK_EXPORT void set_node_active(HypothesesGraph::Node n, size_t newState, int iteration = -1);
+    PGMLINK_EXPORT void set_division_active(HypothesesGraph::Node n, bool newState, int iteration = -1);
+    PGMLINK_EXPORT void set_arc_active(HypothesesGraph::Arc a, bool newState, int iteration = -1);
 
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;
@@ -466,6 +477,8 @@ public:
                                    size_t max_number_objects,
                                    double transition_parameter) const;
 private:
+    void initialize_node(HypothesesGraph::Node n);
+
     // boost serialize
     friend class boost::serialization::access;
     template< typename Archive >
@@ -495,8 +508,6 @@ PGMLINK_EXPORT void write_lgf(const HypothesesGraph&, std::ostream& os,
                               std::map<std::string, bool> &config);
 PGMLINK_EXPORT void read_lgf(HypothesesGraph&, std::istream& is,
                              std::map<std::string, bool> &config);
-
-
 
 ////
 //// HypothesesBuilder
