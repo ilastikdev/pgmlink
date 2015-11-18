@@ -44,74 +44,12 @@ void FlowConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
     for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n)
     {
         LOG(logDEBUG3) << "Adding node in timestep " << timestep_map[n] << " to FlowGraph" << std::endl;
-        std::vector<double> costs;
+        std::vector<float> costs;
 
-        for(size_t state = 0; state <= param_.max_number_objects; state++)
-        {
-            double energy = 0.0;
-            if (param_.with_tracklets)
-            {
-                // add all detection factors of the internal nodes
-                for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin(); trax_it != tracklet_map[n].end(); ++trax_it)
-                {
-                    double e = param_.detection(*trax_it, state);
-                    energy += e + generateRandomOffset(Detection, e, *trax_it, 0, state);
-                }
-
-                // add all transition factors of the internal arcs
-                Traxel tr_prev;
-                bool first = true;
-                for (std::vector<Traxel>::const_iterator trax_it = tracklet_map[n].begin(); trax_it != tracklet_map[n].end(); ++trax_it)
-                {
-                    LOG(logDEBUG4) << "internal arcs traxel " << *trax_it;
-                    Traxel tr = *trax_it;
-                    if (!first)
-                    {
-                        double e = param_.transition(get_transition_probability(tr_prev, tr, state));
-                        energy += e + generateRandomOffset(Transition, e, tr_prev, tr);
-                    }
-                    else
-                    {
-                        first = false;
-                    }
-                    tr_prev = tr;
-                }
-            }
-            else
-            {
-                // only look at this single traxel
-                energy = param_.detection(traxel_map[n], state);
-                energy += generateRandomOffset(Detection, energy, traxel_map[n], 0, state);
-            }
-
-            energy += getDivMBestOffset(Detection, g, n, HypothesesGraph::Arc(), state);
-
-            costs.push_back(energy);
-
-            LOG(logDEBUG3) << "\tstate " << state << " has score " << costs.back() << std::endl;
-        }
-
-        // add source and sink links
-        int node_begin_time = -1;
-        int node_end_time = -1;
-        if (param_.with_tracklets)
-        {
-            node_begin_time = tracklet_map[n].front().Timestep;
-            node_end_time = tracklet_map[n].back().Timestep;
-        }
+        if(param_.with_tracklets)
+            costs = tracklet_map[n].front().features["detEnergy"];
         else
-        {
-            node_begin_time = traxel_map[n].Timestep;
-            node_end_time = traxel_map[n].Timestep;
-        }
-
-        bool in_first_frame = node_begin_time == first_timestep;
-        bool in_last_frame = node_end_time == last_timestep;
-
-        if(in_first_frame && in_last_frame && param_.with_tracklets)
-        {
-            LOG(logDEBUG3) << "Node " << graph->id(n) << " is full timespan tracklet with state 0 score: " << costs[0];
-        }
+            costs = traxel_map[n].features["detEnergy"];
 
         // for merger resolving: paths can start and end at other timeframes!
         // if(!inference_graph_.getConfig().withAppearance)
@@ -141,32 +79,17 @@ void FlowConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
             tr = traxel_map[n];
         }
 
-        double app_cost = param_.appearance_cost_fn(tr) + generateRandomOffset(Appearance);
-
-        if(param_.with_tracklets)
-        {
-            tr = tracklet_map[n].back();
-        }
-        double dis_cost = param_.disappearance_cost_fn(tr) + generateRandomOffset(Disappearance);
-        LOG(logDEBUG3) << "\tapp-cost " << app_cost << std::endl;
-        LOG(logDEBUG3) << "\tdis-cost " << dis_cost << std::endl;
-
-        // dpct::Graph::NodePtr inf_node = inference_graph_.addNode(timestep_map[n] - first_timestep,
-        //                                                          costs,
-        //                                                          app_score,
-        //                                                          dis_score,
-        //                                                          in_first_frame,
-        //                                                          in_last_frame,
-        //                                                          std::make_shared<ConservationTrackingNodeData>(n, tr));
-
+        std::vector<float> app_costs = tr.features["appEnergy"];
+        std::vector<float> dis_costs = tr.features["disEnergy"];
+        
         std::vector<double> costDeltas;
         std::vector<double> appearanceCostDeltas;
         std::vector<double> disappearanceCostDeltas;
         for(size_t i = 1; i < costs.size(); i++)
         {
             costDeltas.push_back(costs[i] - costs[i-1]);
-            appearanceCostDeltas.push_back(app_cost);
-            disappearanceCostDeltas.push_back(dis_cost);
+            appearanceCostDeltas.push_back(app_costs[i] - app_costs[i-1]);
+            disappearanceCostDeltas.push_back(dis_costs[i] - dis_costs[i-1]);
         }
         assert(costDeltas.size() == param_.max_number_objects);
 
@@ -187,10 +110,24 @@ void FlowConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
         dpct::FlowGraph::Node source = node_reference_map_[graph->source(a)];
         dpct::FlowGraph::Node target = node_reference_map_[graph->target(a)];
 
-        double perturbed_cost = getTransitionArcCost(*graph, a) + getDivMBestOffset(Transition, g, HypothesesGraph::Node(), a, size_t(true));
-        std::vector<double> costDeltas = {perturbed_cost};
-        for(size_t i = 1; i < param_.max_number_objects; ++i)
-            costDeltas.push_back(0.0);
+        Traxel tr1, tr2;
+        if (param_.with_tracklets)
+        {
+            tr1 = tracklet_map[graph->source(a)].back();
+            tr2 = tracklet_map[graph->target(a)].front();
+        }
+        else
+        {
+            tr1 = traxel_map[graph->source(a)];
+            tr2 = traxel_map[graph->target(a)];
+        }
+
+        std::vector<float> costs = tr1.get_feature_store()->get_traxel_features(tr1, tr2)["transEnergy"];
+        std::vector<double> costDeltas;
+        for(size_t i = 1; i < costs.size(); i++)
+        {
+            costDeltas.push_back(costs[i] - costs[i-1]);
+        }
 
         dpct::FlowGraph::Arc inf_arc = inference_graph_.addArc(source,
                                                                   target,
@@ -221,14 +158,17 @@ void FlowConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
                 {
                     tr = traxel_map[n];
                 }
-                double division_cost = param_.division(tr, 1) - param_.division(tr, 0);
-                double perturb_div = generateRandomOffset(Division, division_cost, tr);
-                perturb_div += getDivMBestOffset(Division, g, n, HypothesesGraph::Arc(), size_t(true));
+                std::vector<float> costs = tr.features["divEnergy"];
+                assert(costs.size() == 2);
+                double division_cost = costs[1] - costs[0];
+                // double perturb_div = generateRandomOffset(Division, division_cost, tr);
+                // perturb_div += getDivMBestOffset(Division, g, n, HypothesesGraph::Arc(), size_t(true));
                 LOG(logDEBUG3) << "Adding possible division from " << tr << " with score: "
                                << division_cost << "(div)" << std::endl;
 
                 dpct::FlowGraph::Arc inf_div = inference_graph_.allowMitosis(node_reference_map_[n],
-                                              division_cost + perturb_div);
+                                                division_cost);
+                                              // division_cost + perturb_div);
 
                 div_reference_map_[n] = inf_div;
             }

@@ -13,6 +13,7 @@
 #include "pgmlink/log.h"
 #include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/traxels.h"
+#include "pgmlink/energy_computer.h"
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 #include "pgmlink/inferencemodel/dynprog_constrackinferencemodel.h"
@@ -186,6 +187,22 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
     }
 
     graph->add(relative_uncertainty()).add(node_active_count());
+
+    // additional preparations
+    if(solver_ == SolverType::FlowSolver)
+    {
+        EnergyComputer computeAndStoreEnergies(param_, true);
+
+        // get any traxel from the original hypotheses graph
+        boost::shared_ptr<FeatureStore> fs;
+        for(HypothesesGraph::NodeIt n(hypotheses); n != lemon::INVALID; ++n)
+        {
+            property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = hypotheses.get(node_traxel());
+            fs = traxel_map[n].get_feature_store();
+            break;
+        }
+        computeAndStoreEnergies(*graph, fs);
+    }
 
     return graph;
 }
