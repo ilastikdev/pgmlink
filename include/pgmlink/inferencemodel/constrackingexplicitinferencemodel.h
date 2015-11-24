@@ -9,7 +9,8 @@
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/pgm.h"
-#include "pgmlink/inferencemodel/constraint_pool_explicit.hxx"
+//#include "pgmlink/inferencemodel/constraint_pool_explicit.hxx"
+#include "pgmlink/inferencemodel/constraint_pool.hxx"
 #include "pgmlink/inferencemodel/inferencemodel.h"
 
 namespace pgmlink
@@ -28,9 +29,15 @@ public: // typedefs
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
     typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
     typedef std::vector<LabelType> IlpSolution;
-    typedef PertExplicitGmType GraphicalModelType;
+
+    typedef PertGmType GraphicalModelType;
+//    typedef PertExplicitGmType GraphicalModelType;
+
     //typedef opengm::LPCplex2<PertExplicitGmType, pgm::OpengmModelDeprecated::ogmAccumulator> cplex2_optimizer;
-    typedef opengm::LPCplex2<PertExplicitGmType, opengm::Minimizer> cplex2_optimizer;
+
+    typedef opengm::LPCplex2<PertGmType, opengm::Minimizer> cplex2_optimizer;
+//    typedef opengm::LPCplex2<PertExplicitGmType, opengm::Minimizer> cplex2_optimizer;
+
     typedef std::map<HypothesesGraph::Node, size_t> HypothesesGraphNodeMap;
     typedef std::map<HypothesesGraph::Arc, size_t> HypothesesGraphArcMap;
 
@@ -120,7 +127,7 @@ protected: // members
     cplex2_optimizer::Parameter cplex2_param_;
     boost::shared_ptr<cplex2_optimizer> optimizer2_;
 //    pgm::ConstraintPoolExplicit constraint_pool_;
-    pgm::ConstraintPoolExplicit linear_constraint_pool_;
+    pgm::ConstraintPool linear_constraint_pool_;
 
     // remove?
     unsigned int number_of_transition_nodes_, number_of_division_nodes_;
@@ -138,6 +145,7 @@ template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
     //constraint_pool_.add_constraints_to_problem(model_, optimizer);
+    std::cout << " if slt ---------------------------> I should GET here\n";
     linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
 }
 

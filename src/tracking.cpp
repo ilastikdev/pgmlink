@@ -335,6 +335,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         ConservationTracking::Parameter param)
 {
 
+    std::cout << "A I am here 0" << std::endl;
     build_hypo_graph(ts);
 
     // TODO need solution without copying the event vector

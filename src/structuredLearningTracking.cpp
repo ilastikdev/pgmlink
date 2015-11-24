@@ -754,12 +754,13 @@ void StructuredLearningTracking::structuredLearning(
 //    infPara.maxNumConstraintsPerIter_ = 10;
 
     infPara.epGap_ = ep_gap;
-    infPara.verbose_ = false;
+    infPara.verbose_ = true;//false;
+    //infPara.numberOfThreads_ = 8;
     infPara.challengeHeuristic_ = infPara.Weighted;
-
     infPara.useSoftConstraints_ = false;
-
+std::cout << "I am here 0.0\n";
     learner.learn<INFCPLEX>(infPara);
+std::cout << "I am here 1\n";
     const DSS::Weights& weights = learner.getWeights();
     
     for (size_t i=0; i<weights.numberOfWeights(); ++i){

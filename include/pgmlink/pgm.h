@@ -57,19 +57,17 @@ public:
 
     typedef opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> LWeightedSumOfFunctionsType;
 
-/*
-    typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
-    typedef IncomingLinearConstraintFunction<Energy, size_t, size_t> InLinearConsFunc;
-    typedef OutgoingLinearConstraintFunction<Energy, size_t, size_t> OutLinearConsFunc;
-    typedef OutgoingNoDivLinearConstraintFunction<Energy, size_t, size_t> OutNoDivLinearConsFunc;
-    typedef DetectionLinearConstraintFunction<Energy, size_t, size_t> DetLinearConsFunc;
-    typedef FixNodeValueLinearConstraintFunction<Energy, size_t, size_t> FixNodeValLinearConsFunc;
-*/
+//    typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
+//    typedef IncomingLinearConstraintFunction<Energy, size_t, size_t> InLinearConsFunc;
+//    typedef OutgoingLinearConstraintFunction<Energy, size_t, size_t> OutLinearConsFunc;
+//    typedef OutgoingNoDivLinearConstraintFunction<Energy, size_t, size_t> OutNoDivLinearConsFunc;
+//    typedef DetectionLinearConstraintFunction<Energy, size_t, size_t> DetLinearConsFunc;
+//    typedef FixNodeValueLinearConstraintFunction<Energy, size_t, size_t> FixNodeValLinearConsFunc;
 
 //    typedef OPENGM_TYPELIST_8(ExplicitFunction, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>, LWeightedSumOfFunctionsType) ogmFunctionsTypelist;
 
     typedef opengm::meta::TypeListGenerator<ExplicitFunction, LWeightedSumOfFunctionsType, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
-    //typedef opengm::meta::TypeListGenerator<LinearConstraintFunctionType, ExplicitFunction, LWeightedSumOfFunctionsType, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
+    //typedef opengm::meta::TypeListGenerator<ExplicitFunction, LinearConstraintFunctionType, LWeightedSumOfFunctionsType, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc, InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc, marray::Marray<Energy>>::type ogmFunctionsTypelist;
     typedef opengm::GraphicalModel<Energy, opengm::Adder, ogmFunctionsTypelist> ogmGraphicalModel;
     typedef opengm::Factor<ogmGraphicalModel> ogmFactor;
     typedef opengm::Minimizer ogmAccumulator;
@@ -419,18 +417,20 @@ typedef double ValueType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
+
 typedef double Energy;
 typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
+
 typedef pgm::IncomingLinearConstraintFunction<Energy, size_t, size_t> InLinearConsFunc;
 typedef pgm::OutgoingLinearConstraintFunction<Energy, size_t, size_t> OutLinearConsFunc;
 typedef pgm::OutgoingNoDivLinearConstraintFunction<Energy, size_t, size_t> OutNoDivLinearConsFunc;
 typedef pgm::DetectionLinearConstraintFunction<Energy, size_t, size_t> DetLinearConsFunc;
 typedef pgm::FixNodeValueLinearConstraintFunction<Energy, size_t, size_t> FixNodeValLinearConsFunc;
 
-
 typedef opengm::GraphicalModel
 <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
   < LinearConstraintFunctionType,
+    InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
     opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
     opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
   >::type,
@@ -438,15 +438,16 @@ typedef opengm::GraphicalModel
 PertGmType;
 
 
-typedef opengm::GraphicalModel
-<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-  < LinearConstraintFunctionType,
-    opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
-    opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
-  >::type,
-  opengm::DiscreteSpace<IndexType, LabelType>
->
-PertExplicitGmType;
+//typedef opengm::GraphicalModel
+//<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
+//  < LinearConstraintFunctionType,
+//    InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
+//    opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
+//    opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
+//  >::type,
+//  opengm::DiscreteSpace<IndexType, LabelType>
+//>
+//PertExplicitGmType;
 
 } /* namespace pgmlink */
 

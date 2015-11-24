@@ -70,10 +70,10 @@ void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
         {
             if(timestep_map[n] == earliest_timestep)
             {
-//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
-//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
             }
         }
     }
@@ -89,10 +89,10 @@ void ConsTrackingExplicitInferenceModel::fixFirstDisappearanceNodesToLabels(
             if(timestep_map[n] == earliest_timestep)
             {
                 HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
-//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
-//                constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
-                linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(app_node_map_[n], appearance_labels[orig_n]));
+//                constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
             }
         }
     }
@@ -342,12 +342,12 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
 {
     LOG(logDEBUG) << "ConsTrackingExplicitInferenceModel::add_constraints";
 
-//    constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
+//    constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
 //                                           param_.with_divisions,
 //                                           param_.with_appearance,
 //                                           param_.with_disappearance,
 //                                           param_.with_misdetections_allowed);
-    linear_constraint_pool_ = pgm::ConstraintPoolExplicit(param_.forbidden_cost,
+    linear_constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
                                            param_.with_divisions,
                                            param_.with_appearance,
                                            param_.with_disappearance,
@@ -372,8 +372,8 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
             }
             size_t appearance_node = app_node_map_[n];
 
-//            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingConstraint(appearance_node,division_node,transition_nodes));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
+//            constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingConstraint(appearance_node,division_node,transition_nodes));
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
         }
 
         ////
@@ -387,8 +387,8 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
             }
             size_t disappearance_node = dis_node_map_[n];
 
-//            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingConstraint(transition_nodes,disappearance_node));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::IncomingLinearConstraint(transition_nodes,disappearance_node));
+//            constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingConstraint(transition_nodes,disappearance_node));
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingLinearConstraint(transition_nodes,disappearance_node));
         }
 
         ////
@@ -396,8 +396,8 @@ void ConsTrackingExplicitInferenceModel::add_constraints_to_pool(const Hypothese
         ////
         if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
         {
-//            constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
-            linear_constraint_pool_.add_constraint(pgm::ConstraintPoolExplicit::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
+//            constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
         }
     }
 
