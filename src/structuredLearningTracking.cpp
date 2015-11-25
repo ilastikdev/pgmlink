@@ -754,7 +754,7 @@ void StructuredLearningTracking::structuredLearning(
 //    infPara.maxNumConstraintsPerIter_ = 10;
 
     infPara.epGap_ = ep_gap;
-    infPara.verbose_ = true;//false;
+    infPara.verbose_ = false;
     //infPara.numberOfThreads_ = 8;
     infPara.challengeHeuristic_ = infPara.Weighted;
     infPara.useSoftConstraints_ = false;

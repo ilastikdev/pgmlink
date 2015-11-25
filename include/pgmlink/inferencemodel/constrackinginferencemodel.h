@@ -144,7 +144,7 @@ template<class INF>
 void ConsTrackingInferenceModel::add_constraints(INF &optimizer)
 {
     constraint_pool_.add_constraints_to_problem(model_, optimizer);
-    std::cout << " if slt ---------------------------> I should NOT get here\n";
+    std::cout << " track ---------------------------> I should get here\n";
     //linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
 }
 

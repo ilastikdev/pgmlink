@@ -145,7 +145,7 @@ template<class INF>
 void ConsTrackingExplicitInferenceModel::add_constraints(INF &optimizer)
 {
     //constraint_pool_.add_constraints_to_problem(model_, optimizer);
-    std::cout << " if slt ---------------------------> I should GET here\n";
+    std::cout << " slt ---------------------------> I should GET here\n";
     linear_constraint_pool_.add_constraints_to_model(model_, optimizer);
 }
 

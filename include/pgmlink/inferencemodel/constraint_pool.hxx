@@ -6,7 +6,7 @@
 #include <memory.h>
 #include <string.h>
 #include <opengm/inference/lpcplex.hxx>
-//#include <opengm/inference/lpcplex2.hxx>
+#include <opengm/inference/lpcplex2.hxx>
 #include <boost/serialization/serialization.hpp>
 
 #include "pgmlink/pgm.h"
@@ -22,7 +22,7 @@ namespace pgm
 typedef PertGmType ConstraintPoolOpengmModel;
 
 typedef opengm::LPCplex<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
-//typedef opengm::LPCplex2<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
+typedef opengm::LPCplex2<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplex2Optimizer;
 //------------------------------------------------------------------------
 // ConstraintPool
 //------------------------------------------------------------------------
@@ -676,12 +676,12 @@ void ConstraintPool::add_constraint_type_to_problem<ConstraintPoolOpengmModel,
 // specialization for IncomingLinearConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
+     ConstraintPoolCplex2Optimizer,
      IncomingLinearConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
      ConstraintPool::IncomingLinearConstraint>
      (
          ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
+         ConstraintPoolCplex2Optimizer& optimizer,
          const std::vector<ConstraintPool::IncomingLinearConstraint>& constraints
      );
 
@@ -689,23 +689,23 @@ void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
 // specialization for OutgoingLinearConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
+     ConstraintPoolCplex2Optimizer,
      OutgoingLinearConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
      ConstraintPool::OutgoingLinearConstraint>
      (
          ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
+         ConstraintPoolCplex2Optimizer& optimizer,
          const std::vector<ConstraintPool::OutgoingLinearConstraint>& constraints
      );
 
 template<>
 void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
+     ConstraintPoolCplex2Optimizer,
      OutgoingNoDivLinearConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
      ConstraintPool::OutgoingLinearConstraint>
      (
          ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
+         ConstraintPoolCplex2Optimizer& optimizer,
          const std::vector<ConstraintPool::OutgoingLinearConstraint>& constraints
      );
 
@@ -713,12 +713,12 @@ void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
 // specialization for DetectionLinearConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
+     ConstraintPoolCplex2Optimizer,
      DetectionLinearConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
      ConstraintPool::DetectionLinearConstraint>
      (
          ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
+         ConstraintPoolCplex2Optimizer& optimizer,
          const std::vector<ConstraintPool::DetectionLinearConstraint>& constraints
      );
 
@@ -726,12 +726,12 @@ void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
 // specialization for FixNodeValueLinearConstraintFunction
 template<>
 void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
-     ConstraintPoolCplexOptimizer,
+     ConstraintPoolCplex2Optimizer,
      FixNodeValueLinearConstraintFunction<ConstraintPool::ValueType, ConstraintPool::IndexType, ConstraintPool::LabelType>,
      ConstraintPool::FixNodeValueLinearConstraint>
      (
          ConstraintPoolOpengmModel& model,
-         ConstraintPoolCplexOptimizer& optimizer,
+         ConstraintPoolCplex2Optimizer& optimizer,
          const std::vector<ConstraintPool::FixNodeValueLinearConstraint>& constraints
      );
 

@@ -1,3 +1,6 @@
+#ifndef OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#define OPENGM_UNSIGNED_INTEGER_POW_HXX_
+#endif
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
 
 namespace pgmlink
