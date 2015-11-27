@@ -26,7 +26,6 @@
 #include "pgmlink/reasoner.h"
 #include "pgmlink/merger_resolving_grammar.h"
 #include "pgmlink/reasoner_constracking.h"
-#include "pgmlink/reasoner_constracking_explicit.h"
 #include "pgmlink/features/feature.h"
 #include "pgmlink/pgmlink_export.h"
 
@@ -537,21 +536,9 @@ PGMLINK_EXPORT void resolve_graph(const HypothesesGraph &src,
                                   const double transition_parameter = 5,
                                   const bool with_constraints = true,
                                   boost::python::object transitionClassifier = boost::python::object(),
-                                  ConservationTracking::SolverType solver = ConservationTracking::CplexSolver);
-
-PGMLINK_EXPORT void resolve_graph_explicit(const HypothesesGraph &src,
-                                  HypothesesGraph& dest,
-                                  //boost::function<double(const double)> transition,
-                                  boost::function<double(const Traxel&, const Traxel&, const size_t)> transition,
-                                  double ep_gap,
-                                  bool with_tracklets,
-                                  const double transition_parameter = 5,
-                                  const bool with_constraints = true,
-                                  boost::python::object transitionClassifier = boost::python::object(),
-                                  ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver,
-                                  bool with_merger_resolution = true,
-                                  int n_dim = 3);
-
+                                  ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+                                  int n_dim = 2
+                                  );
 
 ////
 //// transfer graph to graph containing only subset of nodes based on tags

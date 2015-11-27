@@ -6,7 +6,7 @@
 
 #ifndef FUNKEY_BINARY_FILE
 #define FUNKEY_BINARY_FILE @FUNKEY_BINARY_FILE@
-#endif // FUNKEY_BINARY_FILE
+#endif
 
 #ifndef STRUCTURED_LEARNING_TRACKING_H
 #define STRUCTURED_LEARNING_TRACKING_H
@@ -25,14 +25,14 @@
 #include "pgmlink/merger_resolving.h"
 #include "pgmlink/hypotheses.h"
 #include <boost/python.hpp>
-#include "pgmlink/reasoner_constracking_explicit.h"
+#include "pgmlink/reasoner_constracking.h"
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/structured_learning_tracking_dataset.h"
 
 namespace pgmlink
 {
 
-  class StructuredLearningTracking : public ConsExplicitTracking
+  class StructuredLearningTracking : public ConsTracking
 {
 public:
     PGMLINK_EXPORT
@@ -47,11 +47,11 @@ public:
         const std::string& random_forest_filename = "none",
         FieldOfView fov = FieldOfView(),
         const std::string& event_vector_dump_filename = "none",
-        ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver,
+        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
         int ndim = 2
         ):
 
-        ConsExplicitTracking(
+        ConsTracking(
             max_number_objects,
             size_dependent_detection_prob,
             avg_obj_size,
@@ -65,7 +65,8 @@ public:
             ndim),
         numLabels_(max_number_objects),
         numWeights_(5),
-        trackingWeights_((size_t)5)
+        trackingWeights_((size_t)5),
+        numThreads_(1)
 
     {
         hypotheses_graph_ = hypotheses_graph;
@@ -102,12 +103,12 @@ public:
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(
-            ConservationExplicitTracking::Parameter& param,
+            ConservationTracking::Parameter& param,
             opengm::learning::Weights<double>& trackingWeights,
             bool withNormalization);
     PGMLINK_EXPORT virtual void prepareTracking(
-            ConservationExplicitTracking& pgm,
-            ConservationExplicitTracking::Parameter& param,
+            ConservationTracking& pgm,
+            ConservationTracking::Parameter& param,
             opengm::learning::Weights<double>& trackingWeights,
             bool withNormalization,
             bool withClassifierPrior);
@@ -130,12 +131,14 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object TransitionClassifier = boost::python::object(),
+            unsigned int num_threads = 1,
             bool withNormalization = true,
-            bool withClassifierPrior = true);
+            bool withClassifierPrior = true,
+            bool verbose = false);
 
-    PGMLINK_EXPORT void structuredLearningFromParam(ConservationExplicitTracking::Parameter& param);
+    PGMLINK_EXPORT void structuredLearningFromParam(ConservationTracking::Parameter& param);
 
-    PGMLINK_EXPORT ConservationExplicitTracking::Parameter get_structured_learning_tracking_parameters(
+    PGMLINK_EXPORT ConservationTracking::Parameter get_structured_learning_tracking_parameters(
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
@@ -152,11 +155,14 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
-            ConservationExplicitTracking::SolverType solver = ConservationExplicitTracking::CplexSolver,
+            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+            bool training_to_hard_constraints = false,
+            unsigned int num_threads = 1,
             bool withNormalization = true,
-            bool withClassifierPrior = true);
+            bool withClassifierPrior = true,
+            bool verbose = false);
 
-    PGMLINK_EXPORT void setParameterWeights(ConservationExplicitTracking::Parameter& param,std::vector<double> weights);
+    PGMLINK_EXPORT void setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights);
 
 public:
     int numCrops_;
@@ -164,6 +170,7 @@ public:
     int numWeights_;
     int numLabels_;
     opengm::learning::Weights<double> trackingWeights_;
+    double numThreads_;
 
 protected:
     StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;

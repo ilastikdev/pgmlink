@@ -67,11 +67,4 @@ public:
 };
 } // datasets
 } // opengm
-
-
-
-
-
-
-
 #endif // OPENGM_DATASET_H

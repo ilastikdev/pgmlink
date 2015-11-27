@@ -4,10 +4,11 @@
 namespace pgmlink
 {
 
-ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
+ConsTrackingInferenceModel::ConsTrackingInferenceModel(
+        const Parameter& param,
         double ep_gap,
         double cplex_timeout,
-        double num_threads):
+        unsigned int num_threads):
     InferenceModel(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
@@ -20,9 +21,6 @@ ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param,
     cplex_param_.integerConstraint_ = true;
     cplex_param_.epGap_ = ep_gap;
     cplex_param_.timeLimit_ = cplex_timeout;
-    //cplex_param_.integerConstraintNodeVar_ = true;
-    //cplex_param_.relaxation_ = cplex_param_.TightPolytope;
-    //cplex_param_.useSoftConstraints_ = false;
     cplex_param_.numberOfThreads_ = num_threads;
 }
 
@@ -279,6 +277,18 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
 
 unsigned int ConsTrackingInferenceModel::get_number_of_division_nodes(){
     return number_of_division_nodes_;
+}
+
+unsigned int ConsTrackingInferenceModel::get_number_of_transition_nodes(){
+    return number_of_transition_nodes_;
+}
+
+unsigned int ConsTrackingInferenceModel::get_number_of_appearance_nodes(){
+    return number_of_appearance_nodes_;
+}
+
+unsigned int ConsTrackingInferenceModel::get_number_of_disappearance_nodes(){
+    return number_of_disappearance_nodes_;
 }
 
 void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
@@ -673,12 +683,6 @@ void ConsTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& 
                                            param_.with_appearance,
                                            param_.with_disappearance,
                                            param_.with_misdetections_allowed);
-
-//    linear_constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
-//                                           param_.with_divisions,
-//                                           param_.with_appearance,
-//                                           param_.with_disappearance,
-//                                           param_.with_misdetections_allowed);
 
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {

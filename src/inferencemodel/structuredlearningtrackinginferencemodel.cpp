@@ -9,11 +9,49 @@
 namespace pgmlink
 {
 
+void StructuredLearningTrackingInferenceModel::fixFirstDisappearanceNodesToLabels(
+        const HypothesesGraph &g,
+        const HypothesesGraph& tracklet_graph,
+        std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> >& traxel2tracklet_map
+        )
+{
+    assert(g.has_property(appearance_label()));
+    property_map<appearance_label, HypothesesGraph::base_graph>::type &appearance_labels = g.get(appearance_label());
+
+    if(!param_.with_tracklets)
+    {
+        property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = g.get(node_timestep());
+        int earliest_timestep = *(timestep_map.beginValue());
+
+        for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+        {
+            if(timestep_map[n] == earliest_timestep)
+            {
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[n]));
+            }
+        }
+    }
+    else
+    {
+        // in the tracklet graph, the respective label is overwritten by later traxels in the tracklet,
+        // get the first original node and use its label
+        property_map<node_timestep, HypothesesGraph::base_graph>::type &timestep_map = tracklet_graph.get(node_timestep());
+        int earliest_timestep = *(timestep_map.beginValue());
+
+        for (HypothesesGraph::NodeIt n(tracklet_graph); n != lemon::INVALID; ++n)
+        {
+            if(timestep_map[n] == earliest_timestep)
+            {
+                HypothesesGraph::Node orig_n = traxel2tracklet_map[n][0];
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(app_node_map_[n], appearance_labels[orig_n]));
+                linear_constraint_pool_.add_constraint(pgm::ConstraintPool::FixNodeValueLinearConstraint(dis_node_map_[n], appearance_labels[orig_n]));
+            }
+        }
+    }
+}
 size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    ////
-    //// add detection factors
-    ////
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
@@ -146,7 +184,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 // or a disappearance in the next timeframe. Hence, add the cost of appearance/disappearance
                 // to the detection cost
 
-                energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
+                energies(coords.begin()) = learningWeights_.getWeight((size_t)0) * energy + state * cost[var_idx]; // state == m
                 assert(maxEnergyP >= energy);
                 assert(energy >= minEnergyP);
                 energiesPnorm(coords.begin()) = ((double)energy-minEnergyP)/(maxEnergyP-minEnergyP);
@@ -211,7 +249,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
                 coords[0] = state;
                 coords[1] = state;
 
-                energies(coords.begin()) = inferenceWeights_.getWeight((size_t)0) * energy;
+                energies(coords.begin()) = learningWeights_.getWeight((size_t)0) * energy;
                 assert(maxEnergyP >= energy);
                 assert(energy >= minEnergyP);
                 energiesPnorm(coords.begin()) = ((double)energy-minEnergyP)/(maxEnergyP-minEnergyP);
@@ -253,28 +291,25 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
 
         opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies;
         if(withNormalization_)
-            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,featuresNorm);
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,featuresNorm);
         else
-            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,features);
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,features);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
 
-        // sorting only works because appearance nodes have lower variable indices than disappearances
+        // sorting only works because appearance nodes have lower variable indices than disappearance nodes
         // and the matrix is constructed such that appearances are along coords[0], ...
         sort(vi.begin(), vi.end());
         model_.addFactor(funcId, vi.begin(), vi.end());
         detection_f_node_map_[n] = model_.numberOfFactors() - 1;
     } // end for node n
-    std::cout << "number of REDUCED border appearance weights    " << counterApp << std::endl;
-    std::cout << "number of REDUCED border disappearance weights " << counterDis << std::endl;
+    LOG(logDEBUG) << "number of REDUCED border appearance weights    " << counterApp << std::endl;
+    LOG(logDEBUG) << "number of REDUCED border disappearance weights " << counterDis << std::endl;
     return factorIndex;
 }
 
 size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const HypothesesGraph& g, size_t factorIndex)
 {
-    ////
-    //// add transition factors
-    ////
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
@@ -344,9 +379,9 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 
         opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies;
         if(withNormalization_)
-            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,features);
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,features);
         else
-            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,featuresNorm);
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,featuresNorm);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
@@ -361,9 +396,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
     {
         return factorIndex;
     }
-    ////
-    //// add division factors
-    ////
+
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map_ = g.get(node_traxel());
     property_map<node_tracklet, HypothesesGraph::base_graph>::type& tracklet_map_ =
         g.get(node_tracklet());
@@ -384,7 +417,6 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         for (size_t state = 0; state <= 1; ++state)
         {
             double energy;
-            //energy = param_.division(tr, state);
             energy = param_.divisionNoWeight(tr, state);
 
             if (energy < minEnergy)
@@ -439,9 +471,9 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 
         opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t> funEnergies;
         if(withNormalization_)
-            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,features);
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,features);
         else
-            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,inferenceWeights_,weightIDs,featuresNorm);
+            funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,featuresNorm);
 
         typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
@@ -450,4 +482,121 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
 
     return factorIndex;
 }
+
+void StructuredLearningTrackingInferenceModel::add_constraints_to_pool(const HypothesesGraph& g)
+{
+    LOG(logDEBUG) << "StructuredLearningTrackingInferenceModel::add_constraints_to_pool";
+
+    linear_constraint_pool_ = pgm::ConstraintPool(param_.forbidden_cost,
+                                           param_.with_divisions,
+                                           param_.with_appearance,
+                                           param_.with_disappearance,
+                                           param_.with_misdetections_allowed);
+
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        {
+            std::vector<size_t> transition_nodes;
+            for (HypothesesGraph::OutArcIt a(g, n); a != lemon::INVALID; ++a)
+            {
+                transition_nodes.push_back(arc_map_[a]);
+            }
+
+            int division_node = -1;
+            if(div_node_map_.count(n) > 0)
+            {
+                division_node = div_node_map_[n];
+            }
+            size_t appearance_node = app_node_map_[n];
+
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::OutgoingLinearConstraint(appearance_node,division_node,transition_nodes));
+        }
+
+        {
+            std::vector<size_t> transition_nodes;
+            for (HypothesesGraph::InArcIt a(g, n); a != lemon::INVALID; ++a)
+            {
+                transition_nodes.push_back(arc_map_[a]);
+            }
+            size_t disappearance_node = dis_node_map_[n];
+
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::IncomingLinearConstraint(transition_nodes,disappearance_node));
+        }
+
+        if (app_node_map_.count(n) > 0 && dis_node_map_.count(n) > 0)
+        {
+            linear_constraint_pool_.add_constraint(pgm::ConstraintPool::DetectionLinearConstraint((size_t)dis_node_map_[n],(size_t)app_node_map_[n]));
+        }
+    }
+}
+
+void StructuredLearningTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
+        const std::string &feature_filename,
+        const std::string &constraints_filename,
+        const std::string &ground_truth_filename)
+{
+    ground_truth_filename_ = ground_truth_filename;
+
+#ifdef WITH_MODIFIED_OPENGM
+    optimizer2_ = boost::shared_ptr<cplex2_optimizer>(new cplex2_optimizer(get_model(),
+                 cplex2_param_,
+                 numberOfSolutions,
+                 feature_filename,
+                 constraints_filename,
+                 ground_truth_filename));
+
+    cplex_variable_id_map_ = optimizer_->get_cplex_variable_id_map();
+    cplex_factor_id_map_ = optimizer_->get_cplex_factor_id_map();
+#else
+    optimizer2_ = boost::shared_ptr<cplex2_optimizer>(new cplex2_optimizer(get_model(), cplex2_param_));
+#endif
+
+    if(param_.with_constraints)
+    {
+        LOG(logINFO) << "add_constraints";
+        add_constraints(*optimizer2_);
+    }
+    else
+    {
+        throw std::runtime_error("GraphicalModel::infer(): inference with soft constraints is not implemented yet. "
+                                 "The conservation tracking factor graph has been saved to file");
+    }
+}
+
+ConsTrackingInferenceModel::IlpSolution StructuredLearningTrackingInferenceModel::infer()
+{
+
+    opengm::InferenceTermination status = optimizer2_->infer();
+    if (status != opengm::NORMAL)
+    {
+        throw std::runtime_error("GraphicalModel::infer(): optimizer terminated abnormally");
+    }
+
+    IlpSolution solution;
+    opengm::InferenceTermination statusExtract = optimizer2_->arg(solution);
+    if (statusExtract != opengm::NORMAL)
+    {
+        throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
+    }
+
+    return solution;
+}
+
+ConsTrackingInferenceModel::IlpSolution StructuredLearningTrackingInferenceModel::extractSolution(size_t k,
+        const std::string &ground_truth_filename)
+{
+    IlpSolution solution;
+#ifdef WITH_MODIFIED_OPENGM
+    optimizer_->set_export_file_names("", "", ground_truth_filename);
+#endif
+    opengm::InferenceTermination status = optimizer2_->arg(solution, k);
+
+    if (status != opengm::NORMAL)
+    {
+        throw std::runtime_error("GraphicalModel::infer(): solution extraction terminated abnormally");
+    }
+
+    return solution;
+}
+
 } // namespace pgmlink

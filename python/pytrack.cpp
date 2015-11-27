@@ -12,7 +12,6 @@
 #include "../include/pgmlink/features/tracking_feature_extractor.h"
 #include "../include/pgmlink/features/feature_extraction.h"
 #include "../include/pgmlink/reasoner_constracking.h"
-#include "../include/pgmlink/reasoner_constracking_explicit.h"
 #include "../include/pgmlink/tracking.h"
 #include "../include/pgmlink/structuredLearningTracking.h"
 #include "../include/pgmlink/log.h"
@@ -261,7 +260,6 @@ void export_track()
     ;
 
     class_<ConservationTracking::Parameter>("ConservationTrackingParameter");
-    class_<ConservationExplicitTracking::Parameter>("ConservationExplicitTrackingParameter");
 
     class_<ConservationTracking::Parameter>("ConservationTrackingParameter")
     .def("register_detection_func", &ConservationTracking::Parameter::register_detection_func)
@@ -271,16 +269,6 @@ void export_track()
     .def("register_disappearance_func", &ConservationTracking::Parameter::register_disappearance_func)
     .def("register_motion_model3_func", &ConservationTracking::Parameter::register_motion_model3_func)
     .def("register_motion_model4_func", &ConservationTracking::Parameter::register_motion_model4_func)
-    ;
-
-    class_<ConservationExplicitTracking::Parameter>("ConservationExplicitTrackingParameter")
-    .def("register_explicit_detection_func", &ConservationExplicitTracking::Parameter::register_explicit_detection_func)
-    .def("register_explicit_division_func", &ConservationExplicitTracking::Parameter::register_explicit_division_func)
-    .def("register_explicit_transition_func", &ConservationExplicitTracking::Parameter::register_explicit_transition_func)
-    .def("register_explicit_appearance_func", &ConservationExplicitTracking::Parameter::register_explicit_appearance_func)
-    .def("register_explicit_disappearance_func", &ConservationExplicitTracking::Parameter::register_explicit_disappearance_func)
-    .def("register_explicit_motion_model3_func", &ConservationExplicitTracking::Parameter::register_explicit_motion_model3_func)
-    .def("register_explicit_motion_model4_func", &ConservationExplicitTracking::Parameter::register_explicit_motion_model4_func)
     ;
 
     class_<ConsTracking>("ConsTracking",
@@ -337,19 +325,10 @@ void export_track()
     .def("perturbedInference", &ConservationTracking::perturbedInference)
     .def("fixLabeledAppearanceNodes", &ConservationTracking::enableFixingLabeledAppearanceNodes)
     ;
-    class_<ConservationExplicitTracking, boost::noncopyable>("ConservationExplicitTracking",
-            init<ConservationExplicitTracking::Parameter>(args("parameters")))
-    .def("perturbedInference", &ConservationExplicitTracking::perturbedInference)
-    .def("fixLabeledAppearanceNodes", &ConservationExplicitTracking::enableFixingLabeledAppearanceNodes)
-    ;
 
     enum_<ConservationTracking::SolverType>("ConsTrackingSolverType")
     .value("CplexSolver", ConservationTracking::CplexSolver)
     .value("DynProgSolver", ConservationTracking::DynProgSolver)
-    ;
-    enum_<ConservationExplicitTracking::SolverType>("StructuredLearningTrackingSolverType")
-    .value("CplexSolver", ConservationExplicitTracking::CplexSolver)
-    .value("DynProgSolver", ConservationExplicitTracking::DynProgSolver)
     ;
 
     enum_<Event::EventType>("EventType")
@@ -401,7 +380,7 @@ void export_track()
 
     class_<StructuredLearningTracking>("StructuredLearningTracking",
                                        init<boost::shared_ptr<HypothesesGraph>, int, bool, double, double, bool, double,
-                                       string, FieldOfView, string, ConservationExplicitTracking::SolverType,int>(
+                                       string, FieldOfView, string, ConservationTracking::SolverType,int>(
                              args("hypotheses_graph",
                                   "max_number_objects",
                                   "size_dependent_detection_prob",

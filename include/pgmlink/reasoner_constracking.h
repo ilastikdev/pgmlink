@@ -51,6 +51,8 @@ public:
             bool with_misdetections_allowed = true,
             bool with_appearance = true,
             bool with_disappearance = true,
+            bool withMergerResolution = true,
+            int nDim = 3,
             double transition_parameter = 5,
             bool with_constraints = true,
             UncertaintyParameter uncertainty_param = UncertaintyParameter(),
@@ -63,7 +65,10 @@ public:
             bool with_optical_correction = false,
             SolverType solver = CplexSolver,
             bool trainingToHardConstraints = false,
-            unsigned int num_threads = 0):
+            unsigned int num_threads = 0,
+            bool withNormalization = true,
+            bool withClassifierPrior = true,
+            bool verbose = false):
             max_number_objects(max_number_objects),
             detection(detection),
             detectionNoWeight(0),
@@ -80,6 +85,8 @@ public:
             with_misdetections_allowed(with_misdetections_allowed),
             with_appearance(with_appearance),
             with_disappearance(with_disappearance),
+            with_merger_resolution(withMergerResolution),
+            n_dim(nDim),
             transition_parameter(transition_parameter),
             with_constraints(with_constraints),
             uncertainty_param(uncertainty_param),
@@ -91,7 +98,10 @@ public:
             with_optical_correction(with_optical_correction),
             solver_(solver),
             training_to_hard_constraints(trainingToHardConstraints),
-            num_threads(num_threads)
+            num_threads(num_threads),
+            withNormalization(withNormalization),
+            withClassifierPrior(withClassifierPrior),
+            verbose(verbose)
         {}
 
         // empty parameter needed for python
@@ -118,6 +128,8 @@ public:
         bool with_misdetections_allowed;
         bool with_appearance;
         bool with_disappearance;
+        bool with_merger_resolution;
+        int n_dim;
         double transition_parameter;
         bool with_constraints;
         UncertaintyParameter uncertainty_param;
@@ -133,6 +145,9 @@ public:
         SolverType solver_;
         bool training_to_hard_constraints;
         unsigned int num_threads;
+        bool withNormalization;
+        bool withClassifierPrior;
+        bool verbose;
 
     private:
         // python extensions:

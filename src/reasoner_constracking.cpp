@@ -307,13 +307,11 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 
-    if(training_to_hard_constraints_)
+    if(training_to_hard_constraints_ and !with_structured_learning_)
     {
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->fixNodesToLabels(hypotheses);
 
     }
-
-
 
     if(solver_ == CplexSolver)
     {
