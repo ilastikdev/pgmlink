@@ -165,6 +165,11 @@ void export_track()
     .def_pickle(TemplatedPickleSuite<EventVector>() )
     ;
 
+    class_<vector<Traxel> >("TraxelVector")
+    .def(vector_indexing_suite<vector<Traxel> >())
+    .def_pickle(TemplatedPickleSuite< std::vector<Traxel> >() )
+    ;
+
     class_<vector<vector<Event> > >("NestedEventVector")
     .def(vector_indexing_suite<vector<vector<Event> > >())
     .def_pickle(TemplatedPickleSuite<EventVectorVector>() )
