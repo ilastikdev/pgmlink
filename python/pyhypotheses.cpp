@@ -20,6 +20,7 @@ using namespace pgmlink;
 using namespace boost::python;
 
 typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_m;
+typedef property_map<node_tracklet, HypothesesGraph::base_graph>::type NodeTrackletMap;
 typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcActiveMap;
 typedef property_map<node_active2, HypothesesGraph::base_graph>::type NodeActiveMap;
 typedef property_map<division_active, HypothesesGraph::base_graph>::type DivisionActiveMap;
@@ -40,6 +41,16 @@ node_traxel_m& addNodeTraxelMap(HypothesesGraph* g)
 node_traxel_m& getNodeTraxelMap(HypothesesGraph* g)
 {
     return g->get(node_traxel());
+}
+
+NodeTrackletMap& getNodeTrackletMap(HypothesesGraph* g)
+{
+    return g->get(node_tracklet());
+}
+
+std::vector<Traxel> get_item_NodeTrackletMap(NodeTrackletMap& map, const NodeTrackletMap::Key& k)
+{
+    return map[k];
 }
 
 NodeActiveMap& getNodeActiveMap(HypothesesGraph* g)
@@ -216,6 +227,16 @@ size_t num_active_incoming_arcs(const HypothesesGraph& g, const HypothesesGraph:
     return num_active;
 }
 
+/**
+ * @brief create a tracklet graph and return the new graph
+ */
+boost::shared_ptr<HypothesesGraph> pyGenerateTrackletGraph(const HypothesesGraph& traxel_graph)
+{
+    boost::shared_ptr<HypothesesGraph> tracklet_graph(new HypothesesGraph());
+    generateTrackletGraph2(traxel_graph, *tracklet_graph);
+    return tracklet_graph;
+}
+
 void export_hypotheses()
 {
     class_<HypothesesGraph::Arc>("Arc");
@@ -253,6 +274,10 @@ void export_hypotheses()
     class_< NodeTimestepMap, boost::noncopyable >("NodeTimestepMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
     .def("__getitem__", &get_item_NodeTimestepMap)
     .def("__setitem__", &NodeTimestepMap::set);
+
+    class_< NodeTrackletMap, boost::noncopyable >("NodeTrackletMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
+    .def("__getitem__", &get_item_NodeTrackletMap)
+    .def("__setitem__", &NodeTrackletMap::set);
 
     // node origin reference map
     class_< NodeOriginReferenceMap, boost::noncopyable >("NodeOriginReferenceMap", init<const HypothesesGraph&>(args("hypotheses_graph")))
@@ -311,6 +336,8 @@ void export_hypotheses()
     .def("baseNode", baseNode2)
     .def("runningNode", runningNode2)
     .def("oppositeNode", &HypothesesGraph::oppositeNode)
+
+    // hypotheses graph specifics
     .def("addTraxel", &HypothesesGraph::add_traxel)
     .def("initLabelingMaps", &HypothesesGraph::init_labeling_maps)
     .def("addArcLabel" , &HypothesesGraph::add_arc_label )
@@ -321,10 +348,12 @@ void export_hypotheses()
     .def("set_injected_solution", &features::set_injected_solution)
     .def("write_hypotheses_graph_state", &HypothesesGraph::write_hypotheses_graph_state)
     .def("num_active_incoming_arcs", &num_active_incoming_arcs)
+    .def("generate_tracklet_graph", &pyGenerateTrackletGraph)
 
     // extensions
     .def("addNodeTraxelMap", &addNodeTraxelMap, return_internal_reference<>())
     .def("getNodeTraxelMap", &getNodeTraxelMap, return_internal_reference<>())
+    .def("getNodeTrackletMap", &getNodeTrackletMap, return_internal_reference<>())
     .def("getNodeActiveMap", &getNodeActiveMap, return_internal_reference<>())
     .def("getArcActiveMap", &getArcActiveMap, return_internal_reference<>())
     .def("getDivisionActiveMap", &getDivisionActiveMap, return_internal_reference<>())

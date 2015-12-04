@@ -3,7 +3,7 @@
 namespace pgmlink
 {
 
-InferenceModel::InferenceModel(const InferenceModel::Parameter &param):
+InferenceModel::InferenceModel(const Parameter &param):
     param_(param),
     transition_predictions_(new TransitionPredictionsMap())
 {

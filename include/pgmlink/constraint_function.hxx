@@ -38,9 +38,13 @@ public:
 
     template<class SHAPE_ITERATOR>
     ConstraintFunction(SHAPE_ITERATOR shape_begin,
-                       SHAPE_ITERATOR shape_end):
+                       SHAPE_ITERATOR shape_end,
+                       const std::vector<I>& variable_indices,
+                       const std::vector<I>& index_reordering):
         FunctionBaseType(),
-        shape_(shape_begin, shape_end)
+        shape_(shape_begin, shape_end),
+        ordering_(index_reordering),
+        variable_indices_(variable_indices)
     {}
 
     ConstraintFunction() {}
@@ -55,6 +59,8 @@ public:
         {
             configuration.push_back(labels[i]);
         }
+        assert(configuration.size() == this->ordering_.size());
+        indexsorter::reorder_inverse(configuration, ordering_);
 
         return get_energy_of_configuration(configuration);
     }
@@ -93,6 +99,8 @@ protected:
 
     std::vector<I> shape_;
     T forbidden_energy_;
+    std::vector<I> ordering_;
+    std::vector<I> variable_indices_;
 };
 
 template<class T, class I, class L>
@@ -182,8 +190,10 @@ class IncomingConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
-                               SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end)
+                               SHAPE_ITERATOR shape_end,
+                               const std::vector<I>& variable_indices,
+                               const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering)
     {}
 
     IncomingConstraintFunction() {}
@@ -208,6 +218,11 @@ protected:
             return 0.0;
         }
         else
+            std::cout << "Found invalid config Incoming" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
         {
             return this->forbidden_energy_;
         }
@@ -272,8 +287,10 @@ class OutgoingConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
-                               SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+                               SHAPE_ITERATOR shape_end,
+                               const std::vector<I>& variable_indices,
+                               const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering),
         with_divisions_(true)
     {}
 
@@ -308,6 +325,12 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid configuration for Outgoing" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
+            std::cout << "\tAppearances: " << num_appearing_objects << " \n\tDivision: " << division << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -386,8 +409,10 @@ class OutgoingNoDivConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     OutgoingNoDivConstraintFunction(SHAPE_ITERATOR shape_begin,
-                                    SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end)
+                                    SHAPE_ITERATOR shape_end,
+                                    const std::vector<I>& variable_indices,
+                                    const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering)
     {}
 
     OutgoingNoDivConstraintFunction() {}
@@ -413,6 +438,11 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid config for OutgoingNoDiv" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -473,8 +503,10 @@ class DetectionConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
-                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+                                SHAPE_ITERATOR shape_end,
+                                const std::vector<I>& variable_indices,
+                                const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering),
         with_appearance_(true),
         with_disappearance_(true),
         with_misdetections_(true)
@@ -515,6 +547,11 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid config for Detection" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -597,8 +634,10 @@ class FixNodeValueConstraintFunction: public ConstraintFunction<T, I, L>
 public:
     template<class SHAPE_ITERATOR>
     FixNodeValueConstraintFunction(SHAPE_ITERATOR shape_begin,
-                                SHAPE_ITERATOR shape_end):
-        ConstraintFunction<T, I, L>(shape_begin, shape_end),
+                                SHAPE_ITERATOR shape_end,
+                                const std::vector<I>& variable_indices,
+                                const std::vector<I>& index_reordering):
+        ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering),
         value(0)
     {}
 
@@ -620,6 +659,11 @@ protected:
         }
         else
         {
+            std::cout << "Found invalid config for FixNodeValue" << std::endl;
+            std::cout << "\tVariables: ";
+            for(auto v : this->variable_indices_)
+                std::cout << v << " ";
+            std::cout << std::endl;
             return this->forbidden_energy_;
         }
     }
@@ -692,11 +736,26 @@ using pgmlink::pgm::OutgoingNoDivConstraintFunction;
 using pgmlink::pgm::DetectionConstraintFunction;
 using pgmlink::pgm::FixNodeValueConstraintFunction;
 
+using pgmlink::pgm::IncomingLinearConstraintFunction;
+using pgmlink::pgm::OutgoingLinearConstraintFunction;
+using pgmlink::pgm::OutgoingNoDivLinearConstraintFunction;
+using pgmlink::pgm::DetectionLinearConstraintFunction;
+using pgmlink::pgm::FixNodeValueLinearConstraintFunction;
+
 //------------------------------------------------------------------------
 /// \cond HIDDEN_SYMBOLS
 /// FunctionRegistration
 template<class T, class I, class L>
 struct FunctionRegistration< IncomingConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
+template<class T, class I, class L>
+struct FunctionRegistration< IncomingLinearConstraintFunction<T, I, L> >
 {
     enum ID
     {
@@ -714,7 +773,25 @@ struct FunctionRegistration< OutgoingConstraintFunction<T, I, L> >
 };
 
 template<class T, class I, class L>
+struct FunctionRegistration< OutgoingLinearConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
+template<class T, class I, class L>
 struct FunctionRegistration< OutgoingNoDivConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
+template<class T, class I, class L>
+struct FunctionRegistration< OutgoingNoDivLinearConstraintFunction<T, I, L> >
 {
     enum ID
     {
@@ -732,7 +809,25 @@ struct FunctionRegistration< DetectionConstraintFunction<T, I, L> >
 };
 
 template<class T, class I, class L>
+struct FunctionRegistration< DetectionLinearConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
+template<class T, class I, class L>
 struct FunctionRegistration< FixNodeValueConstraintFunction<T, I, L> >
+{
+    enum ID
+    {
+        Id = opengm::FUNCTION_TYPE_ID_OFFSET
+    };
+};
+
+template<class T, class I, class L>
+struct FunctionRegistration< FixNodeValueLinearConstraintFunction<T, I, L> >
 {
     enum ID
     {
@@ -810,6 +905,67 @@ void FunctionSerialization<IncomingConstraintFunction<T, I, L> >::deserialize
     throw std::logic_error("not yet implemented");
 }
 
+// LINEAR
+
+template<class T, class I, class L>
+class FunctionSerialization< IncomingLinearConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const IncomingLinearConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const IncomingLinearConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const IncomingLinearConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, IncomingLinearConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<IncomingLinearConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const IncomingLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<IncomingLinearConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const IncomingLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< IncomingLinearConstraintFunction<T, I, L> >::serialize
+(
+    const IncomingLinearConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<IncomingLinearConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    IncomingLinearConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
 //------------------------------------------------------------------------
 /// Serialization for the outgoing constraint function
 template<class T, class I, class L>
@@ -865,6 +1021,67 @@ void FunctionSerialization<OutgoingConstraintFunction<T, I, L> >::deserialize
     INDEX_INPUT_ITERATOR indexOutIterator,
     VALUE_INPUT_ITERATOR valueOutIterator,
     OutgoingConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+// LINEAR
+
+template<class T, class I, class L>
+class FunctionSerialization< OutgoingLinearConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const OutgoingLinearConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const OutgoingLinearConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const OutgoingLinearConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, OutgoingLinearConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingLinearConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const OutgoingLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingLinearConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const OutgoingLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< OutgoingLinearConstraintFunction<T, I, L> >::serialize
+(
+    const OutgoingLinearConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<OutgoingLinearConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    OutgoingLinearConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me
@@ -932,6 +1149,67 @@ void FunctionSerialization<OutgoingNoDivConstraintFunction<T, I, L> >::deseriali
     throw std::logic_error("not yet implemented");
 }
 
+// LINEAR
+
+template<class T, class I, class L>
+class FunctionSerialization< OutgoingNoDivLinearConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const OutgoingNoDivLinearConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const OutgoingNoDivLinearConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const OutgoingNoDivLinearConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, OutgoingNoDivLinearConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingNoDivLinearConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const OutgoingNoDivLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<OutgoingNoDivLinearConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const OutgoingNoDivLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< OutgoingNoDivLinearConstraintFunction<T, I, L> >::serialize
+(
+    const OutgoingNoDivLinearConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<OutgoingNoDivLinearConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    OutgoingNoDivLinearConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
 //------------------------------------------------------------------------
 /// Serialization for the detection constraint function
 template<class T, class I, class L>
@@ -993,8 +1271,69 @@ void FunctionSerialization<DetectionConstraintFunction<T, I, L> >::deserialize
     throw std::logic_error("not yet implemented");
 }
 
+// LINEAR
+
+template<class T, class I, class L>
+class FunctionSerialization< DetectionLinearConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const DetectionLinearConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const DetectionLinearConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const DetectionLinearConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, DetectionLinearConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<DetectionLinearConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const DetectionLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<DetectionLinearConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const DetectionLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< DetectionLinearConstraintFunction<T, I, L> >::serialize
+(
+    const DetectionLinearConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<DetectionLinearConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    DetectionLinearConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
 //------------------------------------------------------------------------
-/// Serialization for the incoming constraint function
+/// Serialization for Marray
 template<>
 class FunctionSerialization< marray::Marray<double> >
 {
@@ -1051,7 +1390,7 @@ void FunctionSerialization<marray::Marray<double> >::deserialize
 }
 
 //------------------------------------------------------------------------
-/// Serialization for the outgoing constraint function
+/// Serialization for the fix node value constraint function
 template<class T, class I, class L>
 class FunctionSerialization< FixNodeValueConstraintFunction<T, I, L> >
 {
@@ -1105,6 +1444,67 @@ void FunctionSerialization<FixNodeValueConstraintFunction<T, I, L> >::deserializ
     INDEX_INPUT_ITERATOR indexOutIterator,
     VALUE_INPUT_ITERATOR valueOutIterator,
     FixNodeValueConstraintFunction<T, I, L> & dst
+)
+{
+    //TODO implement me
+    throw std::logic_error("not yet implemented");
+}
+
+// LINEAR
+
+template<class T, class I, class L>
+class FunctionSerialization< FixNodeValueLinearConstraintFunction<T, I, L> >
+{
+public:
+    static size_t indexSequenceSize(const FixNodeValueLinearConstraintFunction<T, I, L> &);
+    static size_t valueSequenceSize(const FixNodeValueLinearConstraintFunction<T, I, L> &);
+
+    template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+    static void serialize(const FixNodeValueLinearConstraintFunction<T, I, L>  &, INDEX_OUTPUT_ITERATOR, VALUE_OUTPUT_ITERATOR );
+
+    template<class INDEX_INPUT_ITERATOR , class VALUE_INPUT_ITERATOR>
+    static void deserialize( INDEX_INPUT_ITERATOR, VALUE_INPUT_ITERATOR, FixNodeValueLinearConstraintFunction<T, I, L>  &);
+};
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<FixNodeValueLinearConstraintFunction<T, I, L> >::indexSequenceSize
+(
+    const FixNodeValueLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.dimension() + 1;
+}
+
+template<class T, class I, class L>
+inline size_t FunctionSerialization<FixNodeValueLinearConstraintFunction<T, I, L> >::valueSequenceSize
+(
+    const FixNodeValueLinearConstraintFunction<T, I, L> & src
+)
+{
+    return src.size();
+}
+
+template<class T, class I, class L>
+template<class INDEX_OUTPUT_ITERATOR, class VALUE_OUTPUT_ITERATOR >
+void FunctionSerialization< FixNodeValueLinearConstraintFunction<T, I, L> >::serialize
+(
+    const FixNodeValueLinearConstraintFunction<T, I, L> & src,
+    INDEX_OUTPUT_ITERATOR indexOutIterator,
+    VALUE_OUTPUT_ITERATOR valueOutIterator
+)
+{
+    //TODO implement me
+    // see opengm::ExplicitFunction -> FunctionSerialization
+    throw std::logic_error("not yet implemented");
+}
+
+template<class T, class I, class L>
+template<class INDEX_INPUT_ITERATOR, class VALUE_INPUT_ITERATOR >
+void FunctionSerialization<FixNodeValueLinearConstraintFunction<T, I, L> >::deserialize
+(
+    INDEX_INPUT_ITERATOR indexOutIterator,
+    VALUE_INPUT_ITERATOR valueOutIterator,
+    FixNodeValueLinearConstraintFunction<T, I, L> & dst
 )
 {
     //TODO implement me

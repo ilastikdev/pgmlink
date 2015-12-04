@@ -18,11 +18,16 @@ namespace pgmlink
 class PerturbedInferenceModel : public ConsTrackingInferenceModel
 {
 public: // API
-    PerturbedInferenceModel(const ConsTrackingInferenceModel::Parameter& param,
-        boost::shared_ptr<Perturbation> perturbation,
-        double ep_gap,
-        double cplex_timeout,
-        unsigned int num_threads = 1);
+//<<<<<<< HEAD
+//    PerturbedInferenceModel(const ConsTrackingInferenceModel::Parameter& param,
+//        boost::shared_ptr<Perturbation> perturbation,
+//        double ep_gap,
+//        double cplex_timeout,
+//        unsigned int num_threads = 1);
+//=======
+    PerturbedInferenceModel(const Parameter& param,
+        boost::shared_ptr<Perturbation> perturbation);
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,

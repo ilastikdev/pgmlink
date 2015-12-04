@@ -1,6 +1,6 @@
 #ifdef WITH_DPCT
 
-#include "pgmlink/inferencemodel/dynprog_constrackinginferencemodel.h"
+#include "pgmlink/inferencemodel/dynprog_constrackinferencemodel.h"
 #include <stdexcept>
 #include <memory>
 #include <dpct/magnusson.h>
@@ -9,7 +9,7 @@
 namespace pgmlink
 {
 
-DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(const InferenceModel::Parameter &param):
+DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(const Parameter &param):
     InferenceModel(param),
     inference_graph_(dpct::Graph::Configuration(param.with_appearance, param.with_disappearance, param.with_divisions))
 {
@@ -71,8 +71,10 @@ double DynProgConsTrackInferenceModel::evaluate_motion_model(dpct::Node* a,
 std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 {
     LOG(logINFO) << "Starting Tracking...";
-    dpct::Magnusson tracker(&inference_graph_, false, true, false);
-
+    // Magnusson(Graph* graph, bool withSwap, bool usedArcsScoreZero = true, bool useFastFirstIter = false);
+    dpct::Magnusson tracker(&inference_graph_, param_.with_swap, true, false);
+    tracker.setMaxNumberOfPaths(param_.max_number_paths);
+    
     // set up motion model function if one was specified
     if(param_.motion_model3 || param_.motion_model4)
     {
@@ -213,7 +215,7 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 
         if(in_first_frame && in_last_frame && param_.with_tracklets)
         {
-            LOG(logINFO) << "Node " << graph->id(n) << " is full timespan tracklet with state 0 score: " << scoreDeltas[0];
+            LOG(logDEBUG3) << "Node " << graph->id(n) << " is full timespan tracklet with state 0 score: " << scoreDeltas[0];
         }
 
         // for merger resolving: paths can start and end at other timeframes!
@@ -244,13 +246,13 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
             tr = traxel_map[n];
         }
 
-        double app_score = -1.0 * param_.appearance_cost(tr) - generateRandomOffset(Appearance);
+        double app_score = -1.0 * param_.appearance_cost_fn(tr) - generateRandomOffset(Appearance);
 
         if(param_.with_tracklets)
         {
             tr = tracklet_map[n].back();
         }
-        double dis_score = -1.0 * param_.disappearance_cost(tr) - generateRandomOffset(Disappearance);
+        double dis_score = -1.0 * param_.disappearance_cost_fn(tr) - generateRandomOffset(Disappearance);
         LOG(logDEBUG3) << "\tapp-score " << app_score << std::endl;
         LOG(logDEBUG3) << "\tdis-score " << dis_score << std::endl;
 
@@ -437,9 +439,11 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
 
     // add counting properties for analysis of perturbed models
-    g.add(arc_active_count()).add(node_active_count()).add(division_active_count());
+    g.add(arc_active_count()).add(node_active_count()).add(division_active_count()).add(arc_value_count());
     property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
         g.get(arc_active_count());
+    property_map<arc_value_count, HypothesesGraph::base_graph>::type& arc_values =
+        g.get(arc_value_count());
     property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
         g.get(node_active_count());
     property_map<division_active_count, HypothesesGraph::base_graph>::type& active_divisions_count =
@@ -452,6 +456,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
         {
             active_arcs_count.set(a, std::vector<bool>());
+            arc_values.set(a, std::vector<size_t>());
         }
         for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
         {
@@ -484,6 +489,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     {
         active_arcs.set(a, false);
         active_arcs_count.get_value(a).push_back(0);
+        arc_values.get_value(a).push_back(0);
     }
 
     // function used to increase number of objects per node
@@ -515,9 +521,9 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                  ++arc_id_it)
             {
                 HypothesesGraph::Arc a = g.arcFromId(*arc_id_it);
-//                assert(active_arcs[a] == false);
                 active_arcs.set(a, true);
                 active_arcs_count.get_value(a)[iterStep] = true;
+                arc_values.get_value(a)[iterStep]++;
             }
         }
         else
@@ -538,11 +544,13 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
         {
             active_arcs.set(g.arcFromId((traxel_arc_id_map[a])), true);
             active_arcs_count.get_value(g.arcFromId((traxel_arc_id_map[a])))[iterStep] = true;
+            arc_values.get_value(g.arcFromId((traxel_arc_id_map[a])))[iterStep]++;
         }
         else
         {
             active_arcs.set(a, true);
             active_arcs_count.get_value(a)[iterStep] = true;
+            arc_values.get_value(a)[iterStep]++;
         }
     };
 
@@ -550,7 +558,6 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
     // for each path, increment the number of cells the nodes and arcs along the path
     for(dpct::TrackingAlgorithm::Path& p : solution_paths_)
     {
-//        std::cout << "\rLooking at path " << num_paths++  << " of length " << p.size() << std::flush;
         // a path starts at the dummy-source and goes to the dummy-sink. these arcs are of type dummy, and thus skipped
         bool first_arc_on_path = true;
         for(dpct::Arc* a : p)
@@ -622,6 +629,7 @@ void DynProgConsTrackInferenceModel::conclude(HypothesesGraph& g,
                             LOG(logDEBUG3) << "Found arc to activate for division!" << std::endl;
                             active_arcs.set(oa, true);
                             active_arcs_count.get_value(oa)[iterStep] = true;
+                            arc_values.get_value(oa)[iterStep]++;
                             break;
                         }
                     }

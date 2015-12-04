@@ -21,8 +21,9 @@ BOOST_AUTO_TEST_CASE(IncomingFunctionTest)
 {
     // T1, T2, V nodes with label space 3
     std::vector<size_t> shape = {3, 3, 3};
+    std::vector<size_t> ordering = {0, 1, 2};
 
-    IncomingConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end());
+    IncomingConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end(), ordering, ordering);
     constraint_func.set_forbidden_energy(200.0);
     std::vector<size_t> labeling = {1, 2, 3};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
@@ -44,8 +45,9 @@ BOOST_AUTO_TEST_CASE(OutgoingFunctionTest)
 {
     // A, D, T1, T2
     std::vector<size_t> shape = {3, 3, 3, 3};
+    std::vector<size_t> ordering = {0, 1, 2, 3};
 
-    OutgoingConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end());
+    OutgoingConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end(), ordering, ordering);
     constraint_func.set_forbidden_energy(200.0);
     std::vector<size_t> labeling = {3, 0, 2, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);
@@ -73,8 +75,9 @@ BOOST_AUTO_TEST_CASE(DetectionFunctionTest)
 {
     // V,A nodes with label space 3
     std::vector<size_t> shape = {3, 3};
+    std::vector<size_t> ordering = {0, 1};
 
-    DetectionConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end());
+    DetectionConstraintFunction<double, size_t, size_t> constraint_func(shape.begin(), shape.end(), ordering, ordering);
     constraint_func.set_forbidden_energy(200.0);
     std::vector<size_t> labeling = {1, 1};
     BOOST_CHECK_EQUAL(constraint_func(labeling.begin()), 0.0);

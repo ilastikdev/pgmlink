@@ -142,6 +142,18 @@ struct property_map<arc_active_count, Graph>
 template <typename Graph>
 const std::string property_map<arc_active_count, Graph>::name = "arc_active_count";
 
+// arc_value_count
+struct arc_value_count {};
+template <typename Graph>
+struct property_map<arc_value_count, Graph>
+{
+    typedef IterableEditableValueMap< Graph, typename Graph::Arc, std::vector<size_t> > type;
+    //typedef lemon::IterableIntMap< Graph, typename Graph::Arc> type;
+    static const std::string name;
+};
+template <typename Graph>
+const std::string property_map<arc_value_count, Graph>::name = "arc_value_count";
+
 // division_active_count
 struct division_active_count {};
 template <typename Graph>
@@ -416,6 +428,9 @@ public:
     // call this function to add a multi-temporal node (e.g. for tracklets)
     PGMLINK_EXPORT HypothesesGraph::Node add_node(std::vector<node_timestep_map::Value> timesteps);
 
+    // override
+    PGMLINK_EXPORT HypothesesGraph::Arc addArc(HypothesesGraph::Node s, HypothesesGraph::Node t);
+
     // add node with associated traxel
     PGMLINK_EXPORT HypothesesGraph::Node add_traxel(Traxel ts);
 
@@ -431,6 +446,14 @@ public:
 
     // assign ground truth to a node
     PGMLINK_EXPORT void add_arc_label( HypothesesGraph::Arc  , label_type label);
+
+    // getters and setters for active states
+    PGMLINK_EXPORT size_t get_node_active(HypothesesGraph::Node n, int iteration = -1) const;
+    PGMLINK_EXPORT bool get_division_active(HypothesesGraph::Node n, int iteration = -1) const;
+    PGMLINK_EXPORT bool get_arc_active(HypothesesGraph::Arc a, int iteration = -1) const;
+    PGMLINK_EXPORT void set_node_active(HypothesesGraph::Node n, size_t newState, int iteration = -1);
+    PGMLINK_EXPORT void set_division_active(HypothesesGraph::Node n, bool newState, int iteration = -1);
+    PGMLINK_EXPORT void set_arc_active(HypothesesGraph::Arc a, bool newState, int iteration = -1);
 
     PGMLINK_EXPORT const std::set<HypothesesGraph::node_timestep_map::Value>& timesteps() const;
     PGMLINK_EXPORT node_timestep_map::Value earliest_timestep() const;
@@ -456,6 +479,8 @@ public:
                                    size_t max_number_objects,
                                    double transition_parameter) const;
 private:
+    void initialize_node(HypothesesGraph::Node n);
+
     // boost serialize
     friend class boost::serialization::access;
     template< typename Archive >
@@ -476,14 +501,15 @@ PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > resolved_to_events(const HypothesesGraph& g);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph&);
+// prune to specific start nodes
+PGMLINK_EXPORT HypothesesGraph& prune_to_node_descendants(HypothesesGraph& graph, const std::vector<HypothesesGraph::Node>& start_nodes);
+PGMLINK_EXPORT HypothesesGraph& set_descendants_active(HypothesesGraph& graph, const HypothesesGraph::Node& start_node);
 
 // lemon graph format (lgf) serialization
 PGMLINK_EXPORT void write_lgf(const HypothesesGraph&, std::ostream& os,
                               std::map<std::string, bool> &config);
 PGMLINK_EXPORT void read_lgf(HypothesesGraph&, std::istream& is,
                              std::map<std::string, bool> &config);
-
-
 
 ////
 //// HypothesesBuilder

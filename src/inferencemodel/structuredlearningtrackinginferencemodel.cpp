@@ -140,7 +140,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             }
             else
             {
-                energy = param_.appearance_cost(traxel_map_[n]);
+                energy = param_.appearance_cost_fn(traxel_map_[n]);
                 cost.push_back(energy);
             }
             ++num_vars;
@@ -152,7 +152,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
             // "<" holds if there are only tracklets in the last frame
             if (node_end_time < getModelEndTime())
             {
-                energy = param_.disappearance_cost(traxel_map_[n]);
+                energy = param_.disappearance_cost_fn(traxel_map_[n]);
                 cost.push_back(energy);
             }
             else

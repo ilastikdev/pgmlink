@@ -34,6 +34,7 @@ HypothesesGraph::Node HypothesesGraph::add_node(node_timestep_map::Value timeste
     HypothesesGraph::Node node = addNode();
     timestep_m.set(node, timestep);
     timesteps_.insert( timestep );
+    initialize_node(node);
     return node;
 }
 
@@ -47,7 +48,63 @@ HypothesesGraph::Node HypothesesGraph::add_node(std::vector<node_timestep_map::V
         timestep_m.set(node, *it);
         timesteps_.insert( *it );
     }
+    initialize_node(node);
     return node;
+}
+
+void HypothesesGraph::initialize_node(HypothesesGraph::Node n)
+{
+    if(this->has_property(node_active_count()))
+    {
+        property_map<node_active_count, HypothesesGraph::base_graph>::type& node_active_count_map = this->get(node_active_count());
+        size_t num_solutions = 0;
+        for (HypothesesGraph::NodeIt n_it(*this); n_it != lemon::INVALID; ++n_it)
+        {
+            if(n_it == n)
+                continue;
+            num_solutions = node_active_count_map[n_it].size();
+            break;
+        }
+
+        node_active_count_map.get_value(n) = std::vector<size_t>(num_solutions, 0);
+    }
+
+    if(this->has_property(division_active_count()))
+    {
+        property_map<division_active_count, HypothesesGraph::base_graph>::type& division_active_count_map = this->get(division_active_count());
+        size_t num_solutions = 0;
+        for (HypothesesGraph::NodeIt n_it(*this); n_it != lemon::INVALID; ++n_it)
+        {
+            if(n_it == n)
+                continue;
+            num_solutions = division_active_count_map[n_it].size();
+            break;
+        }
+
+        division_active_count_map.get_value(n) = std::vector<bool>(num_solutions, false);
+    }
+}
+
+HypothesesGraph::Arc HypothesesGraph::addArc(HypothesesGraph::Node s, HypothesesGraph::Node t)
+{
+    Arc a = PropertyGraph<lemon::ListDigraph>::addArc(s,t);
+
+    if(this->has_property(arc_active_count()))
+    {
+        property_map<arc_active_count, HypothesesGraph::base_graph>::type& arc_active_count_map = this->get(arc_active_count());
+        size_t num_solutions = 0;
+        for (HypothesesGraph::ArcIt a_it(*this); a_it != lemon::INVALID; ++a_it)
+        {
+            if(a_it == a)
+                continue;
+            num_solutions = arc_active_count_map[a_it].size();
+            break;
+        }
+
+        arc_active_count_map.get_value(a) = std::vector<bool>(num_solutions, false);
+    }
+
+    return a;
 }
 
 void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn)
@@ -286,6 +343,49 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g)
     return g;
 }
 
+HypothesesGraph& prune_to_node_descendants(HypothesesGraph& graph, const std::vector<HypothesesGraph::Node>& start_nodes) {
+    // create property maps if done yet
+    if (!graph.has_property(node_active2())) {
+        graph.add(node_active2());
+    }
+    if (!graph.has_property(arc_active())) {
+        graph.add(arc_active());
+    }
+    // initialize
+    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = graph.get(node_active2());
+    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = graph.get(arc_active());
+    for(HypothesesGraph::NodeIt n(graph); n != lemon::INVALID; ++n) {
+        node_active_map.set(n, 0);
+    }
+    for(HypothesesGraph::ArcIt a(graph); a != lemon::INVALID; ++a) {
+        arc_active_map.set(a, 0);
+    }
+    // loop over all nodes
+    for(std::vector<HypothesesGraph::Node>::const_iterator n_it = start_nodes.begin();
+        n_it != start_nodes.end();
+        n_it++)
+    {
+        set_descendants_active(graph, *n_it);
+    }
+    // call prune_inactive
+    return prune_inactive(graph);
+}
+
+HypothesesGraph& set_descendants_active(HypothesesGraph& graph, const HypothesesGraph::Node& start_node) {
+    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = graph.get(node_active2());
+    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = graph.get(arc_active());
+
+    // only recurse if this node was not yet active
+    if(node_active_map[start_node])
+        return graph;
+
+    node_active_map.set(start_node, 1);
+    for(HypothesesGraph::OutArcIt a(graph, start_node); a != lemon::INVALID; ++a) {
+        arc_active_map.set(a, 1);
+        set_descendants_active(graph, graph.target(a));
+    }
+    return graph;
+}
 
 // Introducing: Three awkward workarounds.
 // We don't want to have ifs everywhere,
@@ -463,7 +563,10 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
         with_division_detection = true;
         if (map_type_id == 2)
         {
-            divisions_vector = &g.get(division_active_count());
+            if(g.has_property(division_active_count()))
+                divisions_vector = &g.get(division_active_count());
+            else
+                with_division_detection = false;
         }
         else
         {
@@ -506,13 +609,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
                 continue;
             }
 
-            if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep())
-            {
-                LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << (*origin_map)[node_at][0];
-                resolver_map[(*origin_map)[node_at][0]].push_back(node_traxel_map[node_at].Id);
-                const std::vector<float>& tmp_feat = (node_traxel_map[node_at].features.find("com"))->second; //node_traxel_map[node_at].features["com"];
-                std::copy(tmp_feat.begin(), tmp_feat.end(),
-                          std::back_insert_iterator<std::vector<unsigned> >(resolver_map[(*origin_map)[node_at][0]]));
+            if (with_origin && (*origin_map)[node_at].size() > 0) { // && t > g.earliest_timestep()) {
+                const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
+                const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
+                LOG(logDEBUG3) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+                resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
             }
 
             LOG(logDEBUG3) << "Number of detected objects: " << get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep);
@@ -633,6 +734,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
                 }
             }
         }
+        // resolved to
         for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it)
         {
             Event e;
@@ -642,7 +744,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             {
                 e.traxel_ids.push_back(*it);
             }
-            (*ret)[t - g.earliest_timestep() - 1].push_back(e);
+            (*ret)[t - g.earliest_timestep()].push_back(e);
             LOG(logDEBUG1) << e;
         }
 
@@ -693,9 +795,11 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
     }
 
     LOG(logDEBUG2) << "events(): last timestep: " << g.latest_timestep();
-    for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at != lemon::INVALID; ++node_at)
+    map<unsigned int, vector<unsigned int> > resolver_map;
+    int t = g.latest_timestep();
+    for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at!=lemon::INVALID; ++node_at) 
     {
-        if(with_mergers && get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep) > 1)
+        if(with_mergers && get_active_node(nodes, nodes2, nodes_vector, map_type_id, node_at, iterationStep) > 1) 
         {
             Event e;
             e.type = Event::Merger;
@@ -704,6 +808,24 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             (*ret)[g.latest_timestep() - g.earliest_timestep()].push_back(e);
             LOG(logDEBUG3) << e;
         }
+
+        if (with_origin && (*origin_map)[node_at].size() > 0 && t > g.earliest_timestep()) {
+            const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
+            const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
+            LOG(logDEBUG3) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+            resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
+        }
+    }
+
+    for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it) {
+        Event e;
+        e.type = Event::ResolvedTo;
+        e.traxel_ids.push_back(map_it->first);
+        for (std::vector<unsigned int>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it) {
+            e.traxel_ids.push_back(*it);
+        }
+        (*ret)[t-g.earliest_timestep()].push_back(e);
+        LOG(logDEBUG1) << e;
     }
     LOG(logDEBUG2) << "events(): done.";
     return ret;
@@ -1320,6 +1442,11 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
         writer.nodeMap("division_active", g.get(division_active()));
     }
 
+    if(config["division_active_count"])
+    {
+        writer.nodeMap("division_active_count", g.get(division_active_count()), TypeToStrConverter<vector<bool> >());
+    }
+
     if(config["merger_resolved_to"])
     {
         writer.nodeMap("merger_resolved_to", g.get(merger_resolved_to()), TypeToStrConverter<vector<unsigned int> >());
@@ -1383,6 +1510,11 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
     if(config["arc_active_count"])
     {
         writer.arcMap("arc_active_count", g.get(arc_active_count()), TypeToStrConverter<vector<bool> >());
+    }
+
+    if(config["arc_value_count"])
+    {
+        writer.arcMap("arc_value_count", g.get(arc_value_count()), TypeToStrConverter<vector<size_t> >());
     }
 
     if(config["node_traxel"])
@@ -1462,6 +1594,12 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
         reader.nodeMap("division_active", g.get(division_active()));
     }
 
+    if(config["division_active_count"])
+    {
+        g.add(division_active_count());
+        reader.nodeMap("division_active_count", g.get(division_active_count()), StrToTypeConverter<vector<bool> >());
+    }
+
     if(config["merger_resolved_to"])
     {
         g.add(merger_resolved_to());
@@ -1538,6 +1676,12 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     {
         g.add(arc_active_count());
         reader.arcMap("arc_active_count", g.get(arc_active_count()), StrToTypeConverter<vector<bool> >());
+    }
+
+    if(config["arc_value_count"])
+    {
+        g.add(arc_value_count());
+        reader.arcMap("arc_value_count", g.get(arc_value_count()), StrToTypeConverter<vector<size_t> >());
     }
 
     if(config["node_traxel"])
@@ -1790,6 +1934,12 @@ void PropertyGraph<lemon::ListDigraph>::copy(PropertyGraph<lemon::ListDigraph>& 
         graph_copy.nodeMap(src.get(division_active()), dest.get(division_active()));
     }
 
+    if(src.has_property(division_active_count()))
+    {
+        dest.add(division_active_count());
+        graph_copy.nodeMap(src.get(division_active_count()), dest.get(division_active_count()));
+    }
+
     if(src.has_property(merger_resolved_to()))
     {
         dest.add(merger_resolved_to());
@@ -1872,6 +2022,12 @@ void PropertyGraph<lemon::ListDigraph>::copy(PropertyGraph<lemon::ListDigraph>& 
     {
         dest.add(arc_active_count());
         graph_copy.arcMap(src.get(arc_active_count()), dest.get(arc_active_count()));
+    }
+
+    if(src.has_property(arc_value_count()))
+    {
+        dest.add(arc_value_count());
+        graph_copy.arcMap(src.get(arc_value_count()), dest.get(arc_value_count()));
     }
 
     if(src.has_property(node_traxel()))
@@ -1974,6 +2130,12 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
         graph_copy.nodeMap(src.get(division_active()), dest.get(division_active()));
     }
 
+    if(src.has_property(division_active_count()))
+    {
+        dest.add(division_active_count());
+        graph_copy.nodeMap(src.get(division_active_count()), dest.get(division_active_count()));
+    }
+
     if(src.has_property(merger_resolved_to()))
     {
         dest.add(merger_resolved_to());
@@ -2058,6 +2220,12 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
         graph_copy.arcMap(src.get(arc_active_count()), dest.get(arc_active_count()));
     }
 
+    if(src.has_property(arc_value_count()))
+    {
+        dest.add(arc_value_count());
+        graph_copy.arcMap(src.get(arc_value_count()), dest.get(arc_value_count()));
+    }
+
     if(src.has_property(node_traxel()))
     {
         dest.add(node_traxel());
@@ -2094,7 +2262,6 @@ void PropertyGraph<lemon::ListDigraph>::copy_subgraph(PropertyGraph<lemon::ListD
     // add arc references
     dest.add(arc_origin_reference());
     graph_copy.arcCrossRef(dest.get(arc_origin_reference()));
-
     graph_copy.run();
 }
 
@@ -2318,5 +2485,129 @@ void HypothesesGraph::save_to_graphviz_dot_file(const std::string &filename,
 
     LOG(logINFO) << "Done saving hypotheses graph to graphviz dot" << std::endl;
 }
+
+size_t HypothesesGraph::get_node_active(HypothesesGraph::Node n, int iteration) const
+{
+    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = this->get(node_active2());
+    if(this->has_property(node_active_count()))
+    {
+        property_map<node_active_count, HypothesesGraph::base_graph>::type& node_active_count_map = this->get(node_active_count());
+        size_t val = false;
+        assert(node_active_count_map[n].size() > 0);
+        if(iteration >= 0)
+        {
+            assert(node_active_count_map[n].size() > iteration);
+            val = node_active_count_map[n][iteration];
+        }
+        else
+            val = node_active_count_map[n].back();
+        assert(node_active_map[n] == val);
+        return val;
+    }
+
+    return node_active_map[n];
+}
+
+bool HypothesesGraph::get_division_active(HypothesesGraph::Node n, int iteration) const
+{
+    property_map<division_active, HypothesesGraph::base_graph>::type& division_active_map = this->get(division_active());
+    if(this->has_property(division_active_count()))
+    {
+        property_map<division_active_count, HypothesesGraph::base_graph>::type& division_active_count_map = this->get(division_active_count());
+        bool val = false;
+        assert(division_active_count_map[n].size() > 0);
+        if(iteration >= 0)
+        {
+            assert(division_active_count_map[n].size() > iteration);
+            val = division_active_count_map[n][iteration];
+        }
+        else
+            val = division_active_count_map[n].back();
+        assert(division_active_map[n] == val);
+        return val;
+    }
+
+    return division_active_map[n];
+}
+
+bool HypothesesGraph::get_arc_active(HypothesesGraph::Arc a, int iteration) const
+{
+    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = this->get(arc_active());
+    if(this->has_property(arc_active_count()))
+    {
+        property_map<arc_active_count, HypothesesGraph::base_graph>::type& arc_active_count_map = this->get(arc_active_count());
+        bool val = false;
+        assert(arc_active_count_map[a].size() > 0);
+        if(iteration >= 0)
+        {
+            assert(arc_active_count_map[a].size() > iteration);
+            val = arc_active_count_map[a][iteration];
+        }
+        else
+            val = arc_active_count_map[a].back();
+        assert(arc_active_map[a] == val);
+        return val;
+    }
+
+    return arc_active_map[a];
+}
+
+void HypothesesGraph::set_node_active(HypothesesGraph::Node n, size_t newState, int iteration)
+{
+    property_map<node_active2, HypothesesGraph::base_graph>::type& node_active_map = this->get(node_active2());
+    node_active_map.set(n, newState);
+
+    if(this->has_property(node_active_count()))
+    {
+        property_map<node_active_count, HypothesesGraph::base_graph>::type& node_active_count_map = this->get(node_active_count());
+        
+        assert(node_active_count_map[n].size() > 0);
+        if(iteration >= 0)
+        {
+            node_active_count_map.get_value(n)[iteration] = newState;
+        }
+        else
+            node_active_count_map.get_value(n).back() = newState;
+    }
+}
+
+void HypothesesGraph::set_division_active(HypothesesGraph::Node n, bool newState, int iteration)
+{
+    property_map<division_active, HypothesesGraph::base_graph>::type& division_active_map = this->get(division_active());
+    division_active_map.set(n, newState);
+
+    if(this->has_property(division_active_count()))
+    {
+        property_map<division_active_count, HypothesesGraph::base_graph>::type& division_active_count_map = this->get(division_active_count());
+        
+        assert(division_active_count_map[n].size() > 0);
+        if(iteration >= 0)
+        {
+            division_active_count_map.get_value(n)[iteration] = newState;
+        }
+        else
+            division_active_count_map.get_value(n).back() = newState;
+    }
+}
+
+void HypothesesGraph::set_arc_active(HypothesesGraph::Arc a, bool newState, int iteration)
+{
+    property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = this->get(arc_active());
+    arc_active_map.set(a, newState);
+
+    if(this->has_property(arc_active_count()))
+    {
+        property_map<arc_active_count, HypothesesGraph::base_graph>::type& arc_active_count_map = this->get(arc_active_count());
+        
+        assert(arc_active_count_map[a].size() > 0);
+        if(iteration >= 0)
+        {
+            arc_active_count_map.get_value(a)[iteration] = newState;
+        }
+        else
+            arc_active_count_map.get_value(a).back() = newState;
+    }
+}
+
 
 } /* namespace pgmlink */

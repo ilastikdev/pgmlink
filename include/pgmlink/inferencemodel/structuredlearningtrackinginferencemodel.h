@@ -34,7 +34,8 @@ public:
         double borderWidth,
         unsigned int num_threads):
 
-        ConsTrackingInferenceModel(inferenceParam, ep_gap,cplex_timeout,num_threads),
+//        ConsTrackingInferenceModel(inferenceParam, ep_gap,cplex_timeout,num_threads),
+        ConsTrackingInferenceModel(inferenceParam),
         withNormalization_(withNormalization),
         fov_(fov),
         borderWidth_(borderWidth),

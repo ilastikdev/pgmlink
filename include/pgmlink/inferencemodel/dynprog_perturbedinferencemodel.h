@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <opengm/datastructures/marray/marray.hxx>
-#include "dynprog_constrackinginferencemodel.h"
+#include "dynprog_constrackinferencemodel.h"
 #include "pgmlink/uncertaintyParameter.h"
 #include "pgmlink/inferencemodel/perturbation/perturbation.h"
 
@@ -20,7 +20,7 @@ namespace pgmlink
 class DynProgPerturbedInferenceModel : public DynProgConsTrackInferenceModel
 {
 public: // API
-    DynProgPerturbedInferenceModel(const InferenceModel::Parameter& param,
+    DynProgPerturbedInferenceModel(const Parameter& param,
                                    boost::shared_ptr<Perturbation> perturbation);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,

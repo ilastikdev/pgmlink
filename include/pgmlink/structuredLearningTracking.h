@@ -26,6 +26,7 @@
 #include "pgmlink/hypotheses.h"
 #include <boost/python.hpp>
 #include "pgmlink/reasoner_constracking.h"
+#include "pgmlink/conservationtracking_parameter.h"
 #include "pgmlink/inferencemodel/structuredlearningtrackinginferencemodel.h"
 #include "pgmlink/structured_learning_tracking_dataset.h"
 
@@ -38,7 +39,7 @@ public:
     PGMLINK_EXPORT
     StructuredLearningTracking(
         boost::shared_ptr<HypothesesGraph> hypotheses_graph,
-        int max_number_objects = 3,
+        unsigned int max_number_objects = 3,
         bool size_dependent_detection_prob = false,
         double avg_obj_size = 30.0,
         double max_neighbor_distance = 20,
@@ -47,8 +48,9 @@ public:
         const std::string& random_forest_filename = "none",
         FieldOfView fov = FieldOfView(),
         const std::string& event_vector_dump_filename = "none",
-        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
-        int ndim = 2
+//        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+        SolverType solver = SolverType::CplexSolver,
+        unsigned int ndim = 2
         ):
 
         ConsTracking(
@@ -103,12 +105,14 @@ public:
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(
-            ConservationTracking::Parameter& param,
+//            ConservationTracking::Parameter& param,
+            Parameter& param,
             opengm::learning::Weights<double>& trackingWeights,
             bool withNormalization);
     PGMLINK_EXPORT virtual void prepareTracking(
             ConservationTracking& pgm,
-            ConservationTracking::Parameter& param,
+//            ConservationTracking::Parameter& param,
+            Parameter& param,
             opengm::learning::Weights<double>& trackingWeights,
             bool withNormalization,
             bool withClassifierPrior);
@@ -136,9 +140,11 @@ public:
             bool withClassifierPrior = true,
             bool verbose = false);
 
-    PGMLINK_EXPORT void structuredLearningFromParam(ConservationTracking::Parameter& param);
+//    PGMLINK_EXPORT void structuredLearningFromParam(ConservationTracking::Parameter& param);
+    PGMLINK_EXPORT void structuredLearningFromParam(Parameter& param);
 
-    PGMLINK_EXPORT ConservationTracking::Parameter get_structured_learning_tracking_parameters(
+//    PGMLINK_EXPORT ConservationTracking::Parameter get_structured_learning_tracking_parameters(
+      PGMLINK_EXPORT Parameter get_structured_learning_tracking_parameters(
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
@@ -148,21 +154,23 @@ public:
             double disappearance_cost = 0,
             double appearance_cost = 0,
             bool with_merger_resolution = true,
-            int n_dim = 3,
+            unsigned int n_dim = 3,
             double transition_parameter = 5.,
             double border_width = 0,
             bool with_constraints = true,
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
-            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+//            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
+            SolverType solver = SolverType::CplexSolver,
             bool training_to_hard_constraints = false,
             unsigned int num_threads = 1,
             bool withNormalization = true,
             bool withClassifierPrior = true,
             bool verbose = false);
 
-    PGMLINK_EXPORT void setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights);
+//    PGMLINK_EXPORT void setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights);
+    PGMLINK_EXPORT void setParameterWeights(Parameter& param,std::vector<double> sltWeights);
 
 public:
     int numCrops_;
@@ -173,7 +181,7 @@ public:
     double numThreads_;
 
 protected:
-    StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;
+//    StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;
     double ep_gap_;
     double cplex_timeout_;
     double division_weight_;

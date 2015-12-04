@@ -27,7 +27,7 @@ namespace pgmlink
 class PerturbAndMapPerturbation : public Perturbation
 {
 public: // API
-    PerturbAndMapPerturbation(const Parameter& perturbation_param, const InferenceModel::Parameter& inf_param);
+    PerturbAndMapPerturbation(const Perturbation::Parameter& perturbation_param, const pgmlink::Parameter& inf_param);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,
                                         double energy = 0,

@@ -3,7 +3,6 @@
 
 #include <map>
 #include <boost/function.hpp>
-
 #include <boost/python.hpp>
 
 #include "pgmlink/pgm.h"
@@ -14,6 +13,7 @@
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include "pgmlink/inferencemodel/perturbation/perturbation.h"
 #include "pgmlink/inferencemodel/perturbedinferencemodel.h"
+#include "pgmlink/conservationtracking_parameter.h"
 
 #include <opengm/opengm.hxx>
 #include <opengm/graphicalmodel/graphicalmodel.hxx>
@@ -26,226 +26,229 @@ class Traxel;
 class ConservationTracking : public Reasoner
 {
 public:
-    enum SolverType
-    {
-        CplexSolver,
-        DynProgSolver
-    };
+//<<<<<<< HEAD
+//    enum SolverType
+//    {
+//        CplexSolver,
+//        DynProgSolver
+//    };
 
-    class Parameter
-    {
-    public:
+//    class Parameter
+//    {
+//    public:
 
-        Parameter(
-            unsigned int max_number_objects,
-            boost::function<double (const Traxel&, const size_t)> detection,
-            boost::function<double (const Traxel&, const size_t)> division,
-            //boost::function<double (const double)> transition,
-            boost::function<double (const Traxel&, const Traxel&, const size_t)> transition,
-            double forbidden_cost = 0,
-            double ep_gap = 0.01,
-            bool with_tracklets = false,
-            bool with_divisions = true,
-            boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
-            boost::function<double (const Traxel&)> appearance_cost_fn = ConstantFeature(500.0),
-            bool with_misdetections_allowed = true,
-            bool with_appearance = true,
-            bool with_disappearance = true,
-            bool withMergerResolution = true,
-            int nDim = 3,
-            double transition_parameter = 5,
-            bool with_constraints = true,
-            UncertaintyParameter uncertainty_param = UncertaintyParameter(),
-            double cplex_timeout = 1e75,
-            double division_weight = 10,
-            double detection_weight = 10,
-            double transition_weight = 10,
-            double border_width = 0,
-            boost::python::object transition_classifier = boost::python::object(),
-            bool with_optical_correction = false,
-            SolverType solver = CplexSolver,
-            bool trainingToHardConstraints = false,
-            unsigned int num_threads = 0,
-            bool withNormalization = true,
-            bool withClassifierPrior = true,
-            bool verbose = false):
-            max_number_objects(max_number_objects),
-            detection(detection),
-            detectionNoWeight(0),
-            division(division),
-            divisionNoWeight(0),
-            transition(transition),
-            border_width(border_width),
-            forbidden_cost(forbidden_cost),
-            ep_gap(ep_gap),
-            with_tracklets(with_tracklets),
-            with_divisions(with_divisions),
-            disappearance_cost_fn(disappearance_cost_fn),
-            appearance_cost_fn(appearance_cost_fn),
-            with_misdetections_allowed(with_misdetections_allowed),
-            with_appearance(with_appearance),
-            with_disappearance(with_disappearance),
-            with_merger_resolution(withMergerResolution),
-            n_dim(nDim),
-            transition_parameter(transition_parameter),
-            with_constraints(with_constraints),
-            uncertainty_param(uncertainty_param),
-            cplex_timeout(cplex_timeout),
-            division_weight(division_weight),
-            detection_weight(detection_weight),
-            transition_weight(transition_weight),
-            transition_classifier(transition_classifier),
-            with_optical_correction(with_optical_correction),
-            solver_(solver),
-            training_to_hard_constraints(trainingToHardConstraints),
-            num_threads(num_threads),
-            withNormalization(withNormalization),
-            withClassifierPrior(withClassifierPrior),
-            verbose(verbose)
-        {}
+//        Parameter(
+//            unsigned int max_number_objects,
+//            boost::function<double (const Traxel&, const size_t)> detection,
+//            boost::function<double (const Traxel&, const size_t)> division,
+//            //boost::function<double (const double)> transition,
+//            boost::function<double (const Traxel&, const Traxel&, const size_t)> transition,
+//            double forbidden_cost = 0,
+//            double ep_gap = 0.01,
+//            bool with_tracklets = false,
+//            bool with_divisions = true,
+//            boost::function<double (const Traxel&)> disappearance_cost_fn = ConstantFeature(500.0),
+//            boost::function<double (const Traxel&)> appearance_cost_fn = ConstantFeature(500.0),
+//            bool with_misdetections_allowed = true,
+//            bool with_appearance = true,
+//            bool with_disappearance = true,
+//            bool withMergerResolution = true,
+//            int nDim = 3,
+//            double transition_parameter = 5,
+//            bool with_constraints = true,
+//            UncertaintyParameter uncertainty_param = UncertaintyParameter(),
+//            double cplex_timeout = 1e75,
+//            double division_weight = 10,
+//            double detection_weight = 10,
+//            double transition_weight = 10,
+//            double border_width = 0,
+//            boost::python::object transition_classifier = boost::python::object(),
+//            bool with_optical_correction = false,
+//            SolverType solver = CplexSolver,
+//            bool trainingToHardConstraints = false,
+//            unsigned int num_threads = 0,
+//            bool withNormalization = true,
+//            bool withClassifierPrior = true,
+//            bool verbose = false):
+//            max_number_objects(max_number_objects),
+//            detection(detection),
+//            detectionNoWeight(0),
+//            division(division),
+//            divisionNoWeight(0),
+//            transition(transition),
+//            border_width(border_width),
+//            forbidden_cost(forbidden_cost),
+//            ep_gap(ep_gap),
+//            with_tracklets(with_tracklets),
+//            with_divisions(with_divisions),
+//            disappearance_cost_fn(disappearance_cost_fn),
+//            appearance_cost_fn(appearance_cost_fn),
+//            with_misdetections_allowed(with_misdetections_allowed),
+//            with_appearance(with_appearance),
+//            with_disappearance(with_disappearance),
+//            with_merger_resolution(withMergerResolution),
+//            n_dim(nDim),
+//            transition_parameter(transition_parameter),
+//            with_constraints(with_constraints),
+//            uncertainty_param(uncertainty_param),
+//            cplex_timeout(cplex_timeout),
+//            division_weight(division_weight),
+//            detection_weight(detection_weight),
+//            transition_weight(transition_weight),
+//            transition_classifier(transition_classifier),
+//            with_optical_correction(with_optical_correction),
+//            solver_(solver),
+//            training_to_hard_constraints(trainingToHardConstraints),
+//            num_threads(num_threads),
+//            withNormalization(withNormalization),
+//            withClassifierPrior(withClassifierPrior),
+//            verbose(verbose)
+//        {}
 
-        // empty parameter needed for python
-        Parameter() {}
+//        // empty parameter needed for python
+//        Parameter() {}
 
-        // settings
-        unsigned int max_number_objects;
-        boost::function<double (const Traxel&, const size_t)> detection;
-        boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
-        boost::function<double (const Traxel&, const size_t)> division;
-        boost::function<double (const Traxel&, const size_t)> divisionNoWeight;
-        boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
-        //boost::function<double (const double)> transition;
-        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
-        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
-        double motion_model3_default;
-        double motion_model4_default;
-        double forbidden_cost;
-        double ep_gap;
-        bool with_tracklets;
-        bool with_divisions;
-        boost::function<double (const Traxel&)> disappearance_cost_fn;
-        boost::function<double (const Traxel&)> appearance_cost_fn;
-        bool with_misdetections_allowed;
-        bool with_appearance;
-        bool with_disappearance;
-        bool with_merger_resolution;
-        int n_dim;
-        double transition_parameter;
-        bool with_constraints;
-        UncertaintyParameter uncertainty_param;
-        double cplex_timeout;
-        double division_weight;
-        double detection_weight;
-        double transition_weight;
-        double appearance_weight;
-        double disappearance_weight;
-        double border_width;
-        boost::python::object transition_classifier;
-        bool with_optical_correction;
-        SolverType solver_;
-        bool training_to_hard_constraints;
-        unsigned int num_threads;
-        bool withNormalization;
-        bool withClassifierPrior;
-        bool verbose;
+//        // settings
+//        unsigned int max_number_objects;
+//        boost::function<double (const Traxel&, const size_t)> detection;
+//        boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
+//        boost::function<double (const Traxel&, const size_t)> division;
+//        boost::function<double (const Traxel&, const size_t)> divisionNoWeight;
+//        boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
+//        //boost::function<double (const double)> transition;
+//        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
+//        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
+//        double motion_model3_default;
+//        double motion_model4_default;
+//        double forbidden_cost;
+//        double ep_gap;
+//        bool with_tracklets;
+//        bool with_divisions;
+//        boost::function<double (const Traxel&)> disappearance_cost_fn;
+//        boost::function<double (const Traxel&)> appearance_cost_fn;
+//        bool with_misdetections_allowed;
+//        bool with_appearance;
+//        bool with_disappearance;
+//        bool with_merger_resolution;
+//        int n_dim;
+//        double transition_parameter;
+//        bool with_constraints;
+//        UncertaintyParameter uncertainty_param;
+//        double cplex_timeout;
+//        double division_weight;
+//        double detection_weight;
+//        double transition_weight;
+//        double appearance_weight;
+//        double disappearance_weight;
+//        double border_width;
+//        boost::python::object transition_classifier;
+//        bool with_optical_correction;
+//        SolverType solver_;
+//        bool training_to_hard_constraints;
+//        unsigned int num_threads;
+//        bool withNormalization;
+//        bool withClassifierPrior;
+//        bool verbose;
 
-    private:
-        // python extensions:
-        double python_caller_det_div(boost::python::object func, const Traxel& t, const size_t state)
-        {
-            assert(1 == PyCallable_Check(func.ptr()));
-            // PyGILState_STATE pygilstate = PyGILState_Ensure();
-            boost::python::object py_result = func(t, state);
-            double result = boost::python::extract<double>(py_result);
-            // PyGILState_Release(pygilstate);
-            return result;
-        }
+//    private:
+//        // python extensions:
+//        double python_caller_det_div(boost::python::object func, const Traxel& t, const size_t state)
+//        {
+//            assert(1 == PyCallable_Check(func.ptr()));
+//            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+//            boost::python::object py_result = func(t, state);
+//            double result = boost::python::extract<double>(py_result);
+//            // PyGILState_Release(pygilstate);
+//            return result;
+//        }
 
-        double python_caller_dis_appear(boost::python::object func, const Traxel& t)
-        {
-            assert(1 == PyCallable_Check(func.ptr()));
-            // PyGILState_STATE pygilstate = PyGILState_Ensure();
-            boost::python::object py_result = func(t);
-            double result = boost::python::extract<double>(py_result);
-            // PyGILState_Release(pygilstate);
-            return result;
-        }
+//        double python_caller_dis_appear(boost::python::object func, const Traxel& t)
+//        {
+//            assert(1 == PyCallable_Check(func.ptr()));
+//            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+//            boost::python::object py_result = func(t);
+//            double result = boost::python::extract<double>(py_result);
+//            // PyGILState_Release(pygilstate);
+//            return result;
+//        }
 
-        //double python_caller_trans(boost::python::object func, double distance)
-        double python_caller_trans(boost::python::object func, const Traxel& a, const Traxel& b, const size_t state)
-        {
-            assert(1 == PyCallable_Check(func.ptr()));
-            // PyGILState_STATE pygilstate = PyGILState_Ensure();
-            //boost::python::object py_result = func(distance);
-            boost::python::object py_result = func(a, b, state);
-            double result = boost::python::extract<double>(py_result);
-            // PyGILState_Release(pygilstate);
-            return result;
-        }
+//        //double python_caller_trans(boost::python::object func, double distance)
+//        double python_caller_trans(boost::python::object func, const Traxel& a, const Traxel& b, const size_t state)
+//        {
+//            assert(1 == PyCallable_Check(func.ptr()));
+//            // PyGILState_STATE pygilstate = PyGILState_Ensure();
+//            //boost::python::object py_result = func(distance);
+//            boost::python::object py_result = func(a, b, state);
+//            double result = boost::python::extract<double>(py_result);
+//            // PyGILState_Release(pygilstate);
+//            return result;
+//        }
 
-        double python_caller_motion_model3(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c)
-        {
-            assert(1 == PyCallable_Check(func.ptr()));
-            boost::python::object py_result = func(a, b, c);
-            double result = boost::python::extract<double>(py_result);
-            return result;
-        }
+//        double python_caller_motion_model3(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c)
+//        {
+//            assert(1 == PyCallable_Check(func.ptr()));
+//            boost::python::object py_result = func(a, b, c);
+//            double result = boost::python::extract<double>(py_result);
+//            return result;
+//        }
 
-        double python_caller_motion_model4(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c, const Traxel& d)
-        {
-            assert(1 == PyCallable_Check(func.ptr()));
-            boost::python::object py_result = func(a, b, c, d);
-            double result = boost::python::extract<double>(py_result);
-            return result;
-        }
-    public:
-        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
-        void register_detection_func(boost::python::object func)
-        {
-            detection = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
-        }
+//        double python_caller_motion_model4(boost::python::object func, const Traxel& a, const Traxel& b, const Traxel& c, const Traxel& d)
+//        {
+//            assert(1 == PyCallable_Check(func.ptr()));
+//            boost::python::object py_result = func(a, b, c, d);
+//            double result = boost::python::extract<double>(py_result);
+//            return result;
+//        }
+//    public:
+//        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
+//        void register_detection_func(boost::python::object func)
+//        {
+//            detection = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
+//        }
 
-        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
-        void register_division_func(boost::python::object func)
-        {
-            division = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
-        }
+//        /// Expects a function with signature (Traxel traxel, size_t state) -> double energy
+//        void register_division_func(boost::python::object func)
+//        {
+//            division = boost::bind(&ConservationTracking::Parameter::python_caller_det_div, this, func, _1, _2);
+//        }
 
-        /// Expects a function with signature (double distance) -> double energy
-        void register_transition_func(boost::python::object func)
-        {
-            //transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1);
-            transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1, _2, _3);
-        }
+//        /// Expects a function with signature (double distance) -> double energy
+//        void register_transition_func(boost::python::object func)
+//        {
+//            //transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1);
+//            transition = boost::bind(&ConservationTracking::Parameter::python_caller_trans, this, func, _1, _2, _3);
+//        }
 
-        /// Expects a function with signature (Traxel traxel) -> double energy
-        void register_appearance_func(boost::python::object func)
-        {
-            appearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
-        }
+//        /// Expects a function with signature (Traxel traxel) -> double energy
+//        void register_appearance_func(boost::python::object func)
+//        {
+//            appearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+//        }
 
-        /// Expects a function with signature (Traxel traxel) -> double energy
-        void register_disappearance_func(boost::python::object func)
-        {
-            disappearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
-        }
+//        /// Expects a function with signature (Traxel traxel) -> double energy
+//        void register_disappearance_func(boost::python::object func)
+//        {
+//            disappearance_cost_fn = boost::bind(&ConservationTracking::Parameter::python_caller_dis_appear, this, func, _1);
+//        }
 
-        /// Expects a function with signature (Traxel, Traxel, Traxel) -> double energy
-        void register_motion_model3_func(boost::python::object func, double default_value)
-        {
-            motion_model3 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model3, this, func, _1, _2, _3);
-            motion_model3_default = default_value;
-        }
+//        /// Expects a function with signature (Traxel, Traxel, Traxel) -> double energy
+//        void register_motion_model3_func(boost::python::object func, double default_value)
+//        {
+//            motion_model3 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model3, this, func, _1, _2, _3);
+//            motion_model3_default = default_value;
+//        }
 
-        /// Expects a function with signature (Traxel, Traxel, Traxel, Traxel) -> double energy
-        void register_motion_model4_func(boost::python::object func, double default_value)
-        {
-            motion_model4 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model4, this, func, _1, _2, _3, _4);
-            motion_model4_default = default_value;
-        }
-    };
+//        /// Expects a function with signature (Traxel, Traxel, Traxel, Traxel) -> double energy
+//        void register_motion_model4_func(boost::python::object func, double default_value)
+//        {
+//            motion_model4 = boost::bind(&ConservationTracking::Parameter::python_caller_motion_model4, this, func, _1, _2, _3, _4);
+//            motion_model4_default = default_value;
+//        }
+//    };
 
-public:
+//public:
+//=======
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     typedef std::vector<pgm::OpengmModelDeprecated::ogmInference::LabelType> IlpSolution;
 
     ConservationTracking(const Parameter& param);
@@ -255,6 +258,13 @@ public:
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
     virtual void perturbedInference(HypothesesGraph&);
+
+    /**
+    Run the dynamic programming solver first and then use it as initialization
+    for the globally optimal solver.
+    */
+    void twoStageInference(HypothesesGraph & hypotheses);
+
     void enableFixingLabeledAppearanceNodes();
 
     double forbidden_cost() const;
@@ -272,7 +282,10 @@ public:
 
     HypothesesGraph *get_prepared_graph(HypothesesGraph &hypotheses);
     //boost::shared_ptr<InferenceModel> create_inference_model();
-    virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
+
+
+    //    virtual boost::shared_ptr<InferenceModel> create_inference_model(ConservationTracking::Parameter& param);
+    virtual boost::shared_ptr<InferenceModel> create_inference_model(Parameter& param);
     boost::shared_ptr<InferenceModel> create_inference_model();
     void setInferenceModel(boost::shared_ptr<InferenceModel> inference_model);
     boost::shared_ptr<InferenceModel> getInferenceModel();
@@ -313,8 +326,8 @@ protected: // members
 
     double transition_parameter_;
 
+    Parameter param_;
     UncertaintyParameter uncertainty_param_;
-    ConsTrackingInferenceModel::Parameter inference_model_param_;
     Perturbation::Parameter perturbed_inference_model_param_;
 
     double cplex_timeout_;

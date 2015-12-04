@@ -448,6 +448,7 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
     add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_fix_node_value_constraints);
+//<<<<<<< HEAD
 }
 
 template<class GM, class INF>
@@ -536,40 +537,50 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, remapped_outgoing_no_div_linear_constraints);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, remapped_detection_linear_constraints);
     add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, remapped_fix_node_value_linear_constraints);
+//=======
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
-    LOG(logINFO) << "[ConstraintPool] add_constraint_type_to_problem: Using soft constraints";
-    std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
+//<<<<<<< HEAD
+//    LOG(logINFO) << "[ConstraintPool] add_constraint_type_to_problem: Using soft constraints";
+
+
+
+//    std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
+
+//=======
+//    LOG(logINFO) << "[ConstraintPool]: Using soft constraints";
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
     {
         const CONSTRAINT_TYPE& constraint = *it;
+
+        // set up indices and shape
         std::vector<IndexType> indices;
         constraint_indices(indices, constraint);
         if(indices.size() < 2)
-        {
             continue;
-        }
 
         std::vector<IndexType> shape;
         for(std::vector<IndexType>::iterator idx = indices.begin(); idx != indices.end(); ++idx)
-        {
             shape.push_back(model.numberOfLabels(*idx));
-        }
 
-        // see if the function is already present in our map and model
-        if(constraint_functions.find(shape) == constraint_functions.end())
-        {
-            constraint_functions[shape] = new FUNCTION_TYPE(shape.begin(), shape.end());
-            constraint_functions[shape]->set_forbidden_energy(big_m_);
-            configure_function(constraint_functions[shape], *it);
-        }
+        // reorder variable indices ascending
+        std::vector<IndexType> reordering;
+        indexsorter::sort_indices(indices.begin(), indices.end(), reordering);
 
-        // create factor
-        OpengmFactor< FUNCTION_TYPE > factor(*constraint_functions[shape], indices.begin(), indices.end());
-        factor.add_to(model);
+        // create function
+        FUNCTION_TYPE f(shape.begin(), shape.end(), indices, reordering);
+        f.set_forbidden_energy(big_m_);
+        configure_function(&f, *it);
+
+        // create function and factor
+        indexsorter::reorder(indices, reordering);
+        typename GM::FunctionIdentifier fid = model.addFunction( f );
+        model.addFactor(fid, indices.begin(), indices.end());
     }
 }
 

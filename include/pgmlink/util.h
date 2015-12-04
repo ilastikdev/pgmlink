@@ -62,6 +62,23 @@ void reorder( std::vector<T> & data, const std::vector<std::size_t> & order )
     data.swap( tmp );
 }
 
+template <typename T>
+void reorder_inverse( std::vector<T> & data, const std::vector<std::size_t> & order )
+{
+    if(data.size() != order.size())
+    {
+        std::stringstream ss;
+        ss << "indexsorter::reorder_inverse(): data and order vector must have the same size (data size " << data.size() << " vs. order size " << order.size() << ")";
+        throw std::invalid_argument(ss.str());
+    }
+    std::vector<T> tmp(data);
+    for ( std::size_t i = 0; i < order.size(); ++i )
+    {
+        tmp[order[i]] = data[i];
+    }
+    data.swap( tmp );
+}
+
 } /* namespace indexsorter */
 
 } /* namespace pgmlink */

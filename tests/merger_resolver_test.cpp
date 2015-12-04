@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
     //    o ----- o
 
     HypothesesGraph g;
-    g.add(node_traxel()).add(arc_distance()).add(arc_active()).add(node_active2());
+    g.add(node_traxel()).add(arc_distance()).add(arc_active()).add(node_active2()).add(arc_active_count()).add(node_active_count());
     feature_array com(3, 0);
     feature_array pCOM(6 * 3, 0);
     TraxelStore ts;
@@ -204,7 +204,21 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
     HypothesesGraph::Arc a11_21 = g.addArc(n11, n21);
     HypothesesGraph::Arc a11_22 = g.addArc(n11, n22);
 
-
+    //initialize vectors
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count =
+        g.get(arc_active_count());
+    property_map<node_active_count, HypothesesGraph::base_graph>::type& active_nodes_count =
+        g.get(node_active_count());
+    
+    for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
+    {
+        std::cout << "Setting arc " << g.id(a) << " to {false}" << std::endl;
+        active_arcs_count.set(a, {false});
+    }
+    for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
+    {
+        active_nodes_count.set(n, {0});
+    }
 
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
     traxel_map.set(n11, t11);
@@ -212,13 +226,13 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
     traxel_map.set(n22, t22);
 
     property_map<arc_active, HypothesesGraph::base_graph>::type& arc_map = g.get(arc_active());
-    arc_map.set(a11_21, true);
-    arc_map.set(a11_22, true);
+    g.set_arc_active(a11_21, true);
+    g.set_arc_active(a11_22, true);
 
     property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
-    active_map.set(n11, 3);
-    active_map.set(n21, 2);
-    active_map.set(n22, 1);
+    g.set_node_active(n11, 3);
+    g.set_node_active(n21, 2);
+    g.set_node_active(n22, 1);
 
     property_map<arc_distance, HypothesesGraph::base_graph>::type& dist_map = g.get(arc_distance());
 
@@ -286,11 +300,9 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
         arc_dist_2.insert(dist_map[arc_it]);
         BOOST_CHECK(g.valid(arc_it));
     }
+
     BOOST_CHECK_EQUAL_COLLECTIONS(arc_dist_1.begin(), arc_dist_1.end(), arc_dist_2.begin(), arc_dist_2.end());
     BOOST_CHECK_EQUAL(arc_count, 9);
-
-
-
 
     // check that deactivated nodes are pruned, i.e. ItemIt(active_map, 0) should be equal  to lemon::INVALID
     property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt deactive_it(active_map, 0);
@@ -319,7 +331,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
             }
         }
     }
-    BOOST_CHECK_EQUAL(resolve_count, 0);
+    BOOST_CHECK_EQUAL(resolve_count, 2);
 
 }
 /*
@@ -1305,5 +1317,29 @@ BOOST_AUTO_TEST_CASE( MergerResolver_extract_coordinates )
   cout << "GMM score: " << gmm.score() << "\n";
   BOOST_CHECK_EQUAL_COLLECTIONS(centers.begin(), centers.end(), arr_res, arr_res+sizeof(arr_res)/sizeof(arr_res[0]));
 } */
+
+BOOST_AUTO_TEST_CASE( arma_mat_serialization ) {
+    arma::mat orig(3,3);
+    orig.randn();
+
+    // save to string
+    string s;
+    {
+      stringstream ss;
+      boost::archive::text_oarchive oa(ss);
+      oa & orig;
+      s = ss.str();
+    }
+
+    // load from string and compare
+    arma::mat loaded;
+    {
+      stringstream ss(s);
+      boost::archive::text_iarchive ia(ss);
+      ia & loaded;
+    }
+
+    BOOST_CHECK(arma::sum(arma::sum(loaded - orig)) < 0.0001);
+}
 
 // EOF

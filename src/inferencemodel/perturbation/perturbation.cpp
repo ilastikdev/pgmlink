@@ -3,8 +3,8 @@
 namespace pgmlink
 {
 
-Perturbation::Perturbation(const Parameter &perturbation_param,
-                           const InferenceModel::Parameter &inf_param):
+Perturbation::Perturbation(const Perturbation::Parameter &perturbation_param,
+                           const pgmlink::Parameter &inf_param):
     standard_gaussian_distribution(0.0, 1.0),
     rng_(42),
     random_normal_(rng_, boost::normal_distribution<>(0, 1)),

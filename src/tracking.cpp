@@ -332,7 +332,8 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         double cplex_timeout,
         TimestepIdCoordinateMapPtr coordinates,
         boost::python::object transition_classifier,
-        ConservationTracking::Parameter param)
+        Parameter param)
+//        ConservationTracking::Parameter param)
 {
 
      build_hypo_graph(ts);
@@ -358,11 +359,17 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
 
     if (with_merger_resolution)
     {
+        // always run merger resolving with CPLEX
+        SolverType chosen_solver = solver_;
+        solver_ = SolverType::CplexSolver;
+
         EventVectorVectorVector merger_resolved_events;
 
         for(auto& event : events)
         {
+            // TODO: do not copy the events!
             merger_resolved_events.push_back(resolve_mergers(
+//<<<<<<< HEAD
                                                  event,
                                                  coordinates,
                                                  ep_gap,
@@ -374,7 +381,21 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                                                  transition_classifier,
                                                  param
                                              ));
+//=======
+//                            event,
+//                            coordinates,
+//                            ep_gap,
+//                            transition_weight,
+//                            with_tracklets,
+//                            n_dim,
+//                            transition_parameter,
+//                            with_constraints,
+//                            transition_classifier));
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
         }
+
+        // reset solver
+        solver_ = chosen_solver;
 
         return merger_resolved_events;
     }
@@ -589,7 +610,7 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
         bool trainingToHardConstraints,
         unsigned int num_threads)
 {
-    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+    Parameter param = get_conservation_tracking_parameters(
             forbidden_cost,
             ep_gap,
             with_tracklets,
@@ -613,7 +634,8 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     return ConsTracking::track_from_param(param);
 }
 
-void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
+//void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
+void ConsTracking::prepareTracking(ConservationTracking& pgm, Parameter& param)
 {}
 
 void ConsTracking::plot_hypotheses_graph(
@@ -630,7 +652,7 @@ void ConsTracking::plot_hypotheses_graph(
         double border_width)
 {
     // reuse the parameter construction method to get configured functions
-    ConservationTracking::Parameter param = get_conservation_tracking_parameters(
+    Parameter param = get_conservation_tracking_parameters(
             0,
             0,
             with_tracklets,
@@ -662,50 +684,89 @@ void ConsTracking::plot_hypotheses_graph(
                                 transition_parameter);
 }
 
-EventVectorVectorVector ConsTracking::track_from_param(ConservationTracking::Parameter& param,
+EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
                                                        bool fixLabeledNodes)
 {
+//<<<<<<< HEAD
 
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+//=======
+    // original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
+    // HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
     ConservationTracking pgm(param);
 
-    pgm.labels_export_file_name_ = tracking_labels_export_file_name_;
-    if(fixLabeledNodes)
+    if(param.solver == SolverType::DPInitCplexSolver)
     {
-        pgm.enableFixingLabeledAppearanceNodes();
+//<<<<<<< HEAD
+//        pgm.enableFixingLabeledAppearanceNodes();
+//    }
+
+//    prepareTracking(pgm, param);
+
+//    pgm.perturbedInference(*hypotheses_graph_);
+
+//    size_t num_solutions = uncertainty_param_.numberOfIterations;
+//    if (num_solutions == 1)
+//    {
+//        std::cout << "-> storing state of detection vars" << std::endl;
+//        last_detections_ = state_of_nodes(*hypotheses_graph_);
+//=======
+        pgm.twoStageInference(*hypotheses_graph_);
+
+        // the hypotheses graph now contains the results of first and 
+        // second stage. Here we only take the 2nd stage and return that.
+        EventVectorVectorVector eventVec(1);
+        eventVec[0] = *events(*hypotheses_graph_, 1);
+        return eventVec;
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     }
-
-    prepareTracking(pgm, param);
-
-    pgm.perturbedInference(*hypotheses_graph_);
-
-    size_t num_solutions = uncertainty_param_.numberOfIterations;
-    if (num_solutions == 1)
+    else
     {
-        std::cout << "-> storing state of detection vars" << std::endl;
-        last_detections_ = state_of_nodes(*hypotheses_graph_);
+        pgm.labels_export_file_name_ = tracking_labels_export_file_name_;
+        if(fixLabeledNodes)
+        {
+            pgm.enableFixingLabeledAppearanceNodes();
+        }
+        pgm.perturbedInference(*hypotheses_graph_);
+
+//<<<<<<< HEAD
+//    std::cout << "-> constructing unresolved events" << std::endl;
+//=======
+        size_t num_solutions = uncertainty_param_.numberOfIterations;
+        if (num_solutions == 1)
+        {
+            std::cout << "-> storing state of detection vars" << std::endl;
+            last_detections_ = state_of_nodes(*hypotheses_graph_);
+        }
+
+        //  PyGILState_Release(gilstate);
+
+
+        //TODO: conceptual problem here:
+        //revise prune_inactive//events
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
+
+        std::cout << "-> constructing unresolved events" << std::endl;
+
+        EventVectorVectorVector all_ev(num_solutions);
+        for (size_t i = 0; i < num_solutions; ++i)
+        {
+            all_ev[i] = *events(*hypotheses_graph_, i);
+        }
+
+        if(event_vector_dump_filename_ != "none")
+        {
+            // store the traxel store and the resulting event vector
+            std::ofstream ofs(event_vector_dump_filename_.c_str());
+            boost::archive::text_oarchive out_archive(ofs);
+            out_archive << all_ev[0];
+        }
+
+        return all_ev;
     }
-
-    std::cout << "-> constructing unresolved events" << std::endl;
-
-    EventVectorVectorVector all_ev(num_solutions);
-    for (size_t i = 0; i < num_solutions; ++i)
-    {
-        all_ev[i] = *events(*hypotheses_graph_, i);
-    }
-
-    if(event_vector_dump_filename_ != "none")
-    {
-        // store the traxel store and the resulting event vector
-        std::ofstream ofs(event_vector_dump_filename_.c_str());
-        boost::archive::text_oarchive out_archive(ofs);
-        out_archive << all_ev[0];
-    }
-
-    return all_ev;
-
 }
 void ConsTracking::addLabels()
 {
@@ -836,8 +897,13 @@ void ConsTracking::addIntermediateLabels(int time, int label, double cellCount)
         }
 }
 
-ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(
+//<<<<<<< HEAD
+//ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(
+//        double forbidden_cost,
+//=======
+Parameter ConsTracking::get_conservation_tracking_parameters(
         double forbidden_cost,
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
         double ep_gap,
         bool with_tracklets,
         double detection_weight,
@@ -846,15 +912,20 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         double disappearance_cost,
         double appearance_cost,
         bool with_merger_resolution,
-        int n_dim,
+        unsigned int n_dim,
         double transition_parameter,
         double border_width,
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-        ConservationTracking::SolverType solver,
+//<<<<<<< HEAD
+//        ConservationTracking::SolverType solver,
+//        bool trainingToHardConstraints,
+//=======
+        SolverType solver,
         bool trainingToHardConstraints,
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
         unsigned int num_threads)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
@@ -881,16 +952,21 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
     boost::function<double(const Traxel&, const size_t)> detection, division;
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
+//<<<<<<< HEAD
     
     LOG(logDEBUG1) << "division_weight = " << division_weight;
     LOG(logDEBUG1) << "transition_weight = " << transition_weight;
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
 
+//=======
+
+//        //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
     LOG(logDEBUG1) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
 
-    ConservationTracking::Parameter param(
+    Parameter param(
         max_number_objects_,
         detection,
         division,
@@ -918,7 +994,10 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
         with_optical_correction_,
         solver,
         trainingToHardConstraints,
-        num_threads
+        num_threads,
+        true, // withNormalization
+        true, // withClassifierPrior
+        false // verbose
     );
 
     std::vector<double> model_weights = {
@@ -935,14 +1014,14 @@ ConservationTracking::Parameter ConsTracking::get_conservation_tracking_paramete
     return param;
 }
 
-void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
+void ConsTracking::setParameterWeights(Parameter& param,std::vector<double> ctWeights)
 {
 
-    param.detection_weight  =weights[0];
-    param.division_weight   =weights[1];
-    param.transition_weight =weights[2];
-    param.appearance_weight = weights[3];
-    param.disappearance_weight = weights[4];
+    param.detection_weight  =ctWeights[0];
+    param.division_weight   =ctWeights[1];
+    param.transition_weight =ctWeights[2];
+    param.appearance_weight = ctWeights[3];
+    param.disappearance_weight = ctWeights[4];
 
     size_t tmin = hypotheses_graph_->earliest_timestep();
     size_t tmax = hypotheses_graph_->latest_timestep();
@@ -950,14 +1029,14 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
     if (use_classifier_prior_)
     {
         LOG(logINFO) << "Using classifier prior";
-        param.detection = NegLnDetection(weights[0]);
-        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        param.detection = NegLnDetection(ctWeights[0]);
+        param.detectionNoWeight = NegLnDetectionNoWeight(ctWeights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
-        param.detection = NegLnDetection(weights[0]); // weight
-        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        param.detection = NegLnDetection(ctWeights[0]); // weight
+        param.detectionNoWeight = NegLnDetectionNoWeight(ctWeights[0]);
     }
     else
     {
@@ -974,21 +1053,21 @@ void ConsTracking::setParameterWeights(ConservationTracking::Parameter& param,st
         }
         prob_vector.insert(prob_vector.begin(), 1 - sum);
 
-        param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
-        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
+        param.detection = boost::bind<double>(NegLnConstant(ctWeights[0], prob_vector), _2);
+        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(ctWeights[0], prob_vector), _2);
     }
 
-    param.division = NegLnDivision(weights[1]);
-    param.divisionNoWeight = NegLnDivisionNoWeight(weights[1]);
-    //param.transition = NegLnTransition(weights[2]); // TODO: define the default
+    param.division = NegLnDivision(ctWeights[1]);
+    param.divisionNoWeight = NegLnDivisionNoWeight(ctWeights[1]);
+    //param.transition = NegLnTransition(ctWeights[2]); // TODO: define the default
 
-    param.appearance_cost_fn = SpatialBorderAwareWeight(weights[4],
+    param.appearance_cost_fn = SpatialBorderAwareWeight(ctWeights[4],
                              param.border_width,
                              false, // true if relative margin to border
                              fov_,
                              tmin);// set appearance cost to zero at t = tmin
 
-    param.disappearance_cost_fn = SpatialBorderAwareWeight(weights[3],
+    param.disappearance_cost_fn = SpatialBorderAwareWeight(ctWeights[3],
                             param.border_width,
                             false, // true if relative margin to border
                             fov_,
@@ -1005,13 +1084,18 @@ EventVectorVector ConsTracking::resolve_mergers(
     double transition_parameter,
     bool with_constraints,
     boost::python::object transitionClassifier,
-    ConservationTracking::Parameter param
+//    ConservationTracking::Parameter param
+    Parameter param
 )
 {
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     transition = param.transition;
 
-    std::cout << "-> resolving mergers" << std::endl;
+//<<<<<<< HEAD
+//    std::cout << "-> resolving mergers" << std::endl;
+//=======
+    LOG(logINFO) << "-> resolving mergers";
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
     if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
@@ -1056,17 +1140,24 @@ EventVectorVector ConsTracking::resolve_mergers(
                       with_constraints,
                       transitionClassifier,
                       solver_);
-//            prune_inactive(resolved_graph);
+//<<<<<<< HEAD
+////            prune_inactive(resolved_graph);
 
-        std::cout << "-> constructing resolved events" << std::endl;
-        boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
-        boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
+//        std::cout << "-> constructing resolved events" << std::endl;
+//        boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
+//        boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
 
-        std::cout << "-> merging unresolved and resolved events" << std::endl;
-        // delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
-        boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
-        boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
-        //      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
+//        std::cout << "-> merging unresolved and resolved events" << std::endl;
+//        // delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
+//        boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
+//        boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
+//        //      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
+//=======
+
+        LOG(logINFO) << "-> constructing resolved events";
+        prune_inactive(*resolved_graph_);
+        boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
         // TODO The in serialized event vector written in the track() function
         // will be overwritten. Is this the desired behaviour?
@@ -1099,6 +1190,25 @@ std::vector<std::map<unsigned int, bool> > ConsTracking::detections()
         throw std::runtime_error(
             "MrfTracking::detections(): previous tracking result required");
     }
+}
+
+boost::shared_ptr<HypothesesGraph> ConsTracking::prune_to_traxel_descendants(
+    const std::vector<Traxel>& traxels)
+{
+    LOG(logINFO) << "Pruning unselected nodes and their descendants from hypotheses graph...";
+    std::vector<HypothesesGraph::Node> nodes;
+    
+    // convert traxels to nodes
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = (hypotheses_graph_)->get(node_traxel());
+    typedef property_map<node_traxel, HypothesesGraph::base_graph>::type::ItemIt ItemItType;
+    for(std::vector<Traxel>::const_iterator t_it = traxels.begin(); t_it != traxels.end(); t_it++) {
+        for(ItemItType n(traxel_map, *t_it); n != lemon::INVALID; ++n) {
+            nodes.push_back(n);
+        }
+    }
+    prune_to_node_descendants(*hypotheses_graph_, nodes);
+    LOG(logINFO) << "Done pruning hypotheses graph.";
+    return hypotheses_graph_;
 }
 
 void ConsTracking::save_ilp_solutions(const std::string& filename)
@@ -1156,7 +1266,7 @@ void ConsTracking::createStructuredLearningFiles(std::string feature_file_name,
 void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
-                                      ConservationTracking::Parameter param)
+                                      Parameter param)
 {
 
     //create empty files that opengm can append to

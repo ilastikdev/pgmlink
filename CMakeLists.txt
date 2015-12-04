@@ -45,7 +45,8 @@ message( "\nConfiguring pgmlink:" )
 
 # dependencies
 find_package( ANN REQUIRED )
-find_package( Cplex REQUIRED )
+find_package( Cplex )
+find_package( GUROBI )
 find_package( VIGRA REQUIRED )
 find_package( Lemon REQUIRED )
 find_package( Boost REQUIRED COMPONENTS serialization program_options python)
@@ -67,6 +68,28 @@ if(WITH_MODIFIED_OPENGM)
     add_definitions(-DWITH_MODIFIED_OPENGM)
 endif(WITH_MODIFIED_OPENGM)
 
+# check which optimization package is found:
+set(FORCE_GUROBI false CACHE BOOL "If GUROBI and CPLEX are found, by default we build against CPLEX. Setting this to true forces to build against GUROBI")
+if(CPLEX_FOUND)
+    set(OPTIMIZER_INCLUDE_DIRS ${CPLEX_INCLUDE_DIRS})
+    set(OPTIMIZER_LIBRARIES ${CPLEX_LIBRARIES})
+
+    if(GUROBI_FOUND AND FORCE_GUROBI)
+        set(OPTIMIZER_INCLUDE_DIRS ${GUROBI_INCLUDE_DIR})
+        set(OPTIMIZER_LIBRARIES ${GUROBI_LIBRARY} ${GUROBI_CXX_LIBRARY})
+        add_definitions(-DWITH_GUROBI)
+    endif()
+else()
+    if(GUROBI_FOUND)
+        set(OPTIMIZER_INCLUDE_DIRS ${GUROBI_INCLUDE_DIR})
+        set(OPTIMIZER_LIBRARIES ${GUROBI_LIBRARY} ${GUROBI_CXX_LIBRARY})
+        add_definitions(-DWITH_GUROBI)
+    else()
+        message(ERROR "No optimizer found at all!")
+    endif()
+endif()
+
+# hdf5
 if(WIN32)
   # FindHDF5 is broken on Windows
   # it wrongly discovers the dlls instead of the lib files
@@ -84,7 +107,8 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include/)
 # include external headers as system includes so we do not have to cope with their warnings
-include_directories(SYSTEM ${PYTHON_INCLUDE_DIR} ${ANN_INCLUDE_DIR} ${Opengm_INCLUDE_DIR} ${CPLEX_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Xml2_INCLUDE_DIR} ${DPCT_INCLUDE_DIR})
+
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIR} ${ANN_INCLUDE_DIR} ${OPTIMIZER_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Opengm_INCLUDE_DIR} ${Xml2_INCLUDE_DIR} ${DPCT_INCLUDE_DIR})
 
 # CPLEX switch to be compatible with STL
 ADD_DEFINITIONS(-DIL_STD)
@@ -107,7 +131,7 @@ ADD_DEFINITIONS(-DWITH_CPLEX)
 # print out the dependencies
 message(STATUS "Dependencies include dirs (you should check if they match the found libs):")
 message(STATUS "  ANN: ${ANN_INCLUDE_DIR}")
-message(STATUS "  Cplex: ${CPLEX_INCLUDE_DIR}")
+message(STATUS "  Optimizer: ${OPTIMIZER_INCLUDE_DIR}")
 message(STATUS "  VIGRA: ${VIGRA_INCLUDE_DIR}")
 message(STATUS "  Lemon: ${LEMON_INCLUDE_DIR}")
 message(STATUS "  Boost: ${Boost_INCLUDE_DIRS}")
@@ -196,13 +220,20 @@ endif(WIN32)
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/include )
 
-target_link_libraries(pgmlink ${PYTHON_LIBRARY} ${ANN_LIBRARIES} ${Boost_LIBRARIES}  ${CPLEX_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES} ${DPCT_LIBRARIES})
+target_link_libraries(pgmlink ${PYTHON_LIBRARY} ${ANN_LIBRARIES} ${Boost_LIBRARIES} ${OPTIMIZER_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES} ${DPCT_LIBRARIES})
 
 # Install target pgmlink
 install(TARGETS pgmlink
 	ARCHIVE DESTINATION lib
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin)
+
+# install headers
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+        DESTINATION include
+        PATTERN ".h"
+        PATTERN ".hxx"
+        PATTERN ".git" EXCLUDE)
 
 # API documentation with Doxygen
 find_package(Doxygen)
@@ -218,7 +249,7 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 # tools
-#add_subdirectory(tools/)
+add_subdirectory(tools/)
 
 # Tests
 if(WITH_TESTS)

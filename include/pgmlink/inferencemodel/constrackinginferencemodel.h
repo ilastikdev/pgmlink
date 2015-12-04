@@ -36,11 +36,17 @@ public:
     typedef std::map<HypothesesGraph::Node, size_t> HypothesesGraphNodeMap;
     typedef std::map<HypothesesGraph::Arc, size_t> HypothesesGraphArcMap;
 
-public:
-    ConsTrackingInferenceModel(const Parameter& param,
-                               double ep_gap,
-                               double cplex_timeout,
-                               unsigned int num_threads=1);
+//<<<<<<< HEAD
+//public:
+//    ConsTrackingInferenceModel(const Parameter& param,
+//                               double ep_gap,
+//                               double cplex_timeout,
+//                               unsigned int num_threads=1);
+//=======
+public: // API
+    // constructor
+    ConsTrackingInferenceModel(const Parameter& param);
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
     virtual void build_from_graph(const HypothesesGraph&);
 
@@ -58,13 +64,27 @@ public:
                               const std::string& constraints_filename,
                               const std::string& ground_truth_filename);
 
-    IlpSolution extractSolution(size_t k, const std::string& ground_trugh_filename);
+    IlpSolution extractSolution(size_t k, const std::string& ground_truth_filename);
+    void set_starting_point(const IlpSolution& solution);
 
+//<<<<<<< HEAD
+//=======
+    // write or extract results to hypotheses graph
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     virtual void conclude(HypothesesGraph &g,
                           HypothesesGraph &tracklet_graph,
                           std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
                           IlpSolution &solution);
 
+//<<<<<<< HEAD
+//=======
+    IlpSolution extract_solution_from_graph(const HypothesesGraph &g,
+                          const HypothesesGraph &tracklet_graph,
+                          const std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > &tracklet2traxel_node_map,
+                          size_t solutionIndex=0) const;
+
+    // output
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     void printResults(const HypothesesGraph &g);
     void write_labeledgraph_to_file(const HypothesesGraph & g,
                                     const std::string &ground_truth_filename);
@@ -94,6 +114,14 @@ protected:
         const std::vector<size_t>& shape,
         const marray::Marray<double>& energies);
 
+//<<<<<<< HEAD
+//=======
+//    GraphicalModelType::FunctionIdentifier add_marray_as_explicit_function(
+//        const std::vector<size_t>& shape,
+//        const marray::Marray<double>& energies);
+
+    // retrieve node and arc maps
+//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     HypothesesGraphNodeMap& get_division_node_map();
     HypothesesGraphNodeMap& get_appearance_node_map();
     HypothesesGraphNodeMap& get_disappearance_node_map();

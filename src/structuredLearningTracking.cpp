@@ -102,29 +102,30 @@ std::vector<double> computeDetProb(double vol, std::vector<double> means, std::v
 }
 void StructuredLearningTracking::prepareTracking(
         ConservationTracking& pgm,
-        ConservationTracking::Parameter& param,
+//        ConservationTracking::Parameter& param,
+        Parameter& param,
         opengm::learning::Weights<double>& trackingWeights,
         bool withNormalization,
         bool withClassifierPrior)
 {
-    inference_model_param_.max_number_objects = param.max_number_objects;
-    inference_model_param_.with_constraints = param.with_constraints;
-    inference_model_param_.with_tracklets = param.with_tracklets;
-    inference_model_param_.with_divisions = param.with_divisions;
-    inference_model_param_.with_appearance = param.with_appearance;
-    inference_model_param_.with_disappearance = param.with_disappearance;
-    inference_model_param_.with_misdetections_allowed = param.with_misdetections_allowed;
-    inference_model_param_.with_optical_correction = param.with_optical_correction;
-    inference_model_param_.detection = param.detection;
-    inference_model_param_.detectionNoWeight = param.detectionNoWeight;
-    inference_model_param_.division = param.division;
-    inference_model_param_.divisionNoWeight = param.divisionNoWeight;
-    inference_model_param_.transition = param.transition;
-    inference_model_param_.transition_parameter = param.transition_parameter;
-    inference_model_param_.transition_classifier = param.transition_classifier;
-    inference_model_param_.forbidden_cost = param.forbidden_cost;
-    inference_model_param_.appearance_cost = param.appearance_cost_fn;
-    inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
+//    inference_model_param_.max_number_objects = param.max_number_objects;
+//    inference_model_param_.with_constraints = param.with_constraints;
+//    inference_model_param_.with_tracklets = param.with_tracklets;
+//    inference_model_param_.with_divisions = param.with_divisions;
+//    inference_model_param_.with_appearance = param.with_appearance;
+//    inference_model_param_.with_disappearance = param.with_disappearance;
+//    inference_model_param_.with_misdetections_allowed = param.with_misdetections_allowed;
+//    inference_model_param_.with_optical_correction = param.with_optical_correction;
+//    inference_model_param_.detection = param.detection;
+//    inference_model_param_.detectionNoWeight = param.detectionNoWeight;
+//    inference_model_param_.division = param.division;
+//    inference_model_param_.divisionNoWeight = param.divisionNoWeight;
+//    inference_model_param_.transition = param.transition;
+//    inference_model_param_.transition_parameter = param.transition_parameter;
+//    inference_model_param_.transition_classifier = param.transition_classifier;
+//    inference_model_param_.forbidden_cost = param.forbidden_cost;
+//    inference_model_param_.appearance_cost = param.appearance_cost_fn;
+//    inference_model_param_.disappearance_cost = param.disappearance_cost_fn;
 
     use_classifier_prior_ = withClassifierPrior;
 
@@ -136,7 +137,8 @@ void StructuredLearningTracking::prepareTracking(
 }
 
 boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_model(
-        ConservationTracking::Parameter& param,
+//        ConservationTracking::Parameter& param,
+        Parameter& param,
         opengm::learning::Weights<double>& trackingWeights,
         bool withNormalization)
 {
@@ -145,7 +147,8 @@ boost::shared_ptr<InferenceModel> StructuredLearningTracking::create_inference_m
     cplex_timeout_ = param.cplex_timeout;
 
         return boost::make_shared<StructuredLearningTrackingInferenceModel>(
-            inference_model_param_,
+//            inference_model_param_,
+            param,
             ep_gap_,
             cplex_timeout_,
             trackingWeights,
@@ -318,7 +321,8 @@ bool StructuredLearningTracking::exportCrop(FieldOfView crop)//, const std::stri
     return true;
 }
 
-ConservationTracking::Parameter StructuredLearningTracking::get_structured_learning_tracking_parameters(
+//ConservationTracking::Parameter StructuredLearningTracking::get_structured_learning_tracking_parameters(
+Parameter StructuredLearningTracking::get_structured_learning_tracking_parameters(
         double forbidden_cost,
         double ep_gap,
         bool with_tracklets,
@@ -328,14 +332,15 @@ ConservationTracking::Parameter StructuredLearningTracking::get_structured_learn
         double disappearance_cost,
         double appearance_cost,
         bool with_merger_resolution,
-        int n_dim,
+        unsigned int n_dim,
         double transition_parameter,
         double border_width,
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-        ConservationTracking::SolverType solver,
+//        ConservationTracking::SolverType solver,
+        SolverType solver,
         bool training_to_hard_constraints,
         unsigned int num_threads,
         bool withNormalization,
@@ -373,7 +378,8 @@ ConservationTracking::Parameter StructuredLearningTracking::get_structured_learn
 
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
-    ConservationTracking::Parameter param(
+//    ConservationTracking::Parameter param(
+    Parameter param(
         max_number_objects_,
         detection,
         division,
@@ -422,7 +428,8 @@ ConservationTracking::Parameter StructuredLearningTracking::get_structured_learn
     return param;
 }
 
-void StructuredLearningTracking::structuredLearningFromParam(ConservationTracking::Parameter& param)
+//void StructuredLearningTracking::structuredLearningFromParam(ConservationTracking::Parameter& param)
+void StructuredLearningTracking::structuredLearningFromParam(Parameter& param)
 {
     transition_= param.transition;
     StructuredLearningTracking::structuredLearning(
@@ -446,14 +453,15 @@ void StructuredLearningTracking::structuredLearningFromParam(ConservationTrackin
         param.withNormalization);
 }
 
-void StructuredLearningTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
+//void StructuredLearningTracking::setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights)
+void StructuredLearningTracking::setParameterWeights(Parameter& param,std::vector<double> sltWeights)
 {
 
-    param.detection_weight  =weights[0];
-    param.division_weight   =weights[1];
-    param.transition_weight =weights[2];
-    param.appearance_weight = weights[3];
-    param.disappearance_weight = weights[4];
+    param.detection_weight  =sltWeights[0];
+    param.division_weight   =sltWeights[1];
+    param.transition_weight =sltWeights[2];
+    param.appearance_weight = sltWeights[3];
+    param.disappearance_weight = sltWeights[4];
 
     size_t tmin = hypotheses_graph_->earliest_timestep();
     size_t tmax = hypotheses_graph_->latest_timestep();
@@ -461,14 +469,14 @@ void StructuredLearningTracking::setParameterWeights(ConservationTracking::Param
     if (use_classifier_prior_)
     {
         LOG(logINFO) << "[StructuredLearningTracking::setParameterWeights] Using classifier prior";
-        param.detection = NegLnDetection(weights[0]);
-        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        param.detection = NegLnDetection(sltWeights[0]);
+        param.detectionNoWeight = NegLnDetectionNoWeight(sltWeights[0]);
     }
     else if (use_size_dependent_detection_)
     {
         LOG(logINFO) << "Using size dependent prior";
-        param.detection = NegLnDetection(weights[0]);
-        param.detectionNoWeight = NegLnDetectionNoWeight(weights[0]);
+        param.detection = NegLnDetection(sltWeights[0]);
+        param.detectionNoWeight = NegLnDetectionNoWeight(sltWeights[0]);
     }
     else
     {
@@ -485,22 +493,22 @@ void StructuredLearningTracking::setParameterWeights(ConservationTracking::Param
         }
         prob_vector.insert(prob_vector.begin(), 1 - sum);
 
-        param.detection = boost::bind<double>(NegLnConstant(weights[0], prob_vector), _2);
-        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(weights[0], prob_vector), _2);
+        param.detection = boost::bind<double>(NegLnConstant(sltWeights[0], prob_vector), _2);
+        param.detectionNoWeight = boost::bind<double>(NegLnConstantNoWeight(sltWeights[0], prob_vector), _2);
     }
 
-    param.division = NegLnDivision(weights[1]);
-    param.divisionNoWeight = NegLnDivisionNoWeight(weights[1]);
+    param.division = NegLnDivision(sltWeights[1]);
+    param.divisionNoWeight = NegLnDivisionNoWeight(sltWeights[1]);
 
     //param.transition = NegLnTransition(weights[2]);
 
-    param.appearance_cost_fn = SpatialBorderAwareWeight(weights[3],
+    param.appearance_cost_fn = SpatialBorderAwareWeight(sltWeights[3],
                              param.border_width,
                              false, // true if relative margin to border
                              fov_,
                              tmin);// set appearance cost to zero at t = tmin
 
-    param.disappearance_cost_fn = SpatialBorderAwareWeight(weights[4],
+    param.disappearance_cost_fn = SpatialBorderAwareWeight(sltWeights[4],
                             param.border_width,
                             false, // true if relative margin to border
                             fov_,
@@ -609,7 +617,8 @@ void StructuredLearningTracking::structuredLearning(
         hypothesesSubGraph.push_back(boost::make_shared<HypothesesGraph>());
         HypothesesGraph::copy_subgraph(*hypotheses_graph_, *(hypothesesSubGraph[m]),selected_nodes,selected_arcs);
 
-        ConservationTracking::Parameter param = get_structured_learning_tracking_parameters(
+//        ConservationTracking::Parameter param = get_structured_learning_tracking_parameters(
+        Parameter param = get_structured_learning_tracking_parameters(
             forbidden_cost,
             ep_gap,
             with_tracklets,
@@ -770,10 +779,10 @@ void StructuredLearningTracking::structuredLearning(
     infPara.useSoftConstraints_ = false;
 
     learner.learn<INFCPLEX>(infPara);
-    const DSS::Weights& weights = learner.getWeights();
+    const DSS::Weights& learnedWeights = learner.getWeights();
     
-    for (size_t i=0; i<weights.numberOfWeights(); ++i){
-      trackingWeights_.setWeight(i, weights.getWeight(i));
+    for (size_t i=0; i<learnedWeights.numberOfWeights(); ++i){
+        trackingWeights_.setWeight(i, learnedWeights.getWeight(i));
     }
 
 //////////////////////////////////////////////
@@ -797,7 +806,7 @@ void StructuredLearningTracking::structuredLearning(
 }
 
 double StructuredLearningTracking::weight(int index){
-  return trackingWeights_.getWeight(index);
+    return trackingWeights_.getWeight(index);
 }
 
 void StructuredLearningTracking::setWeight(int index, double val){

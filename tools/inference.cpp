@@ -1,7 +1,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "pgmlink/pgm.h"
-#include "pgmlink/constraint_pool.hxx"
+#include "pgmlink/inferencemodel/constraint_pool.hxx"
 #include <opengm/graphicalmodel/graphicalmodel_hdf5.hxx>
 #include <opengm/inference/icm.hxx>
 #include <opengm/inference/lazyflipper.hxx>
