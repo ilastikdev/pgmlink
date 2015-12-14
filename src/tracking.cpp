@@ -333,7 +333,6 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         TimestepIdCoordinateMapPtr coordinates,
         boost::python::object transition_classifier,
         Parameter param)
-//        ConservationTracking::Parameter param)
 {
 
      build_hypo_graph(ts);
@@ -369,7 +368,6 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         {
             // TODO: do not copy the events!
             merger_resolved_events.push_back(resolve_mergers(
-//<<<<<<< HEAD
                                                  event,
                                                  coordinates,
                                                  ep_gap,
@@ -381,17 +379,6 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                                                  transition_classifier,
                                                  param
                                              ));
-//=======
-//                            event,
-//                            coordinates,
-//                            ep_gap,
-//                            transition_weight,
-//                            with_tracklets,
-//                            n_dim,
-//                            transition_parameter,
-//                            with_constraints,
-//                            transition_classifier));
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
         }
 
         // reset solver
@@ -576,16 +563,7 @@ boost::shared_ptr<HypothesesGraph> ConsTracking::get_resolved_hypotheses_graph()
     }
     return resolved_graph_;
 }
-/*
-void ConsTracking::fixNodeToAppearanceLabel( HypothesesGraph& hypothesesGraph, int node, double label)
-{
-    //boost::static_pointer_cast<ConservationTracking>(
-    //tracker.pgm_->fixNodeToAppearanceLabel( tracker, node, label);
-    std::cout << "in ConsTracking::fixNodeToAppearanceLabel" << ConsTracking::getPGM() << std::endl;
-    ConsTracking::getPGM()->fixNodeToAppearanceLabel( hypothesesGraph, node, label);
 
-}
-*/
 boost::shared_ptr<ConservationTracking> ConsTracking::getPGM()
 {
     return ConsTracking::pgm_;
@@ -634,7 +612,6 @@ EventVectorVectorVector ConsTracking::track(double forbidden_cost,
     return ConsTracking::track_from_param(param);
 }
 
-//void ConsTracking::prepareTracking(ConservationTracking& pgm, ConservationTracking::Parameter& param)
 void ConsTracking::prepareTracking(ConservationTracking& pgm, Parameter& param)
 {}
 
@@ -687,33 +664,14 @@ void ConsTracking::plot_hypotheses_graph(
 EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
                                                        bool fixLabeledNodes)
 {
-//<<<<<<< HEAD
 
     original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
     HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
-//=======
-    // original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
-    // HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
     ConservationTracking pgm(param);
 
     if(param.solver == SolverType::DPInitCplexSolver)
     {
-//<<<<<<< HEAD
-//        pgm.enableFixingLabeledAppearanceNodes();
-//    }
-
-//    prepareTracking(pgm, param);
-
-//    pgm.perturbedInference(*hypotheses_graph_);
-
-//    size_t num_solutions = uncertainty_param_.numberOfIterations;
-//    if (num_solutions == 1)
-//    {
-//        std::cout << "-> storing state of detection vars" << std::endl;
-//        last_detections_ = state_of_nodes(*hypotheses_graph_);
-//=======
         pgm.twoStageInference(*hypotheses_graph_);
 
         // the hypotheses graph now contains the results of first and 
@@ -721,7 +679,6 @@ EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
         EventVectorVectorVector eventVec(1);
         eventVec[0] = *events(*hypotheses_graph_, 1);
         return eventVec;
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     }
     else
     {
@@ -732,22 +689,12 @@ EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
         }
         pgm.perturbedInference(*hypotheses_graph_);
 
-//<<<<<<< HEAD
-//    std::cout << "-> constructing unresolved events" << std::endl;
-//=======
         size_t num_solutions = uncertainty_param_.numberOfIterations;
         if (num_solutions == 1)
         {
             std::cout << "-> storing state of detection vars" << std::endl;
             last_detections_ = state_of_nodes(*hypotheses_graph_);
         }
-
-        //  PyGILState_Release(gilstate);
-
-
-        //TODO: conceptual problem here:
-        //revise prune_inactive//events
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
         std::cout << "-> constructing unresolved events" << std::endl;
 
@@ -897,13 +844,8 @@ void ConsTracking::addIntermediateLabels(int time, int label, double cellCount)
         }
 }
 
-//<<<<<<< HEAD
-//ConservationTracking::Parameter ConsTracking::get_conservation_tracking_parameters(
-//        double forbidden_cost,
-//=======
 Parameter ConsTracking::get_conservation_tracking_parameters(
         double forbidden_cost,
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
         double ep_gap,
         bool with_tracklets,
         double detection_weight,
@@ -919,13 +861,8 @@ Parameter ConsTracking::get_conservation_tracking_parameters(
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         boost::python::api::object transition_classifier,
-//<<<<<<< HEAD
-//        ConservationTracking::SolverType solver,
-//        bool trainingToHardConstraints,
-//=======
         SolverType solver,
         bool trainingToHardConstraints,
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
         unsigned int num_threads)
 {
     LOG(logDEBUG1) << "max_number_objects  \t" << max_number_objects_  ;
@@ -952,16 +889,11 @@ Parameter ConsTracking::get_conservation_tracking_parameters(
     boost::function<double(const Traxel&, const size_t)> detection, division;
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
-//<<<<<<< HEAD
     
     LOG(logDEBUG1) << "division_weight = " << division_weight;
     LOG(logDEBUG1) << "transition_weight = " << transition_weight;
+
     //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
-
-//=======
-
-//        //border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
     LOG(logDEBUG1) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
 
@@ -1059,7 +991,7 @@ void ConsTracking::setParameterWeights(Parameter& param,std::vector<double> ctWe
 
     param.division = NegLnDivision(ctWeights[1]);
     param.divisionNoWeight = NegLnDivisionNoWeight(ctWeights[1]);
-    //param.transition = NegLnTransition(ctWeights[2]); // TODO: define the default
+    //param.transition = NegLnTransition(ctWeights[2]);
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(ctWeights[4],
                              param.border_width,
@@ -1084,18 +1016,13 @@ EventVectorVector ConsTracking::resolve_mergers(
     double transition_parameter,
     bool with_constraints,
     boost::python::object transitionClassifier,
-//    ConservationTracking::Parameter param
     Parameter param
 )
 {
     boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     transition = param.transition;
 
-//<<<<<<< HEAD
-//    std::cout << "-> resolving mergers" << std::endl;
-//=======
     LOG(logINFO) << "-> resolving mergers";
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
     if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
@@ -1140,24 +1067,10 @@ EventVectorVector ConsTracking::resolve_mergers(
                       with_constraints,
                       transitionClassifier,
                       solver_);
-//<<<<<<< HEAD
-////            prune_inactive(resolved_graph);
-
-//        std::cout << "-> constructing resolved events" << std::endl;
-//        boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_moves = multi_frame_move_events(*resolved_graph_);
-//        boost::shared_ptr<std::vector< std::vector<Event> > > resolved_tos = resolved_to_events(*resolved_graph_);
-
-//        std::cout << "-> merging unresolved and resolved events" << std::endl;
-//        // delete extractor; // TO DELETE FIRST CREATE VIRTUAL DTORS
-//        boost::shared_ptr<EventVectorVector> events_tmp = merge_event_vectors(events, *multi_frame_moves);
-//        boost::shared_ptr<EventVectorVector> events_ptr = merge_event_vectors(*events_tmp, *resolved_tos);
-//        //      all_ev[0] = *merge_event_vectors(*ev, *multi_frame_moves);
-//=======
 
         LOG(logINFO) << "-> constructing resolved events";
         prune_inactive(*resolved_graph_);
         boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
         // TODO The in serialized event vector written in the track() function
         // will be overwritten. Is this the desired behaviour?

@@ -569,15 +569,9 @@ PGMLINK_EXPORT void resolve_graph(const HypothesesGraph &src,
                                   const double transition_parameter = 5,
                                   const bool with_constraints = true,
                                   boost::python::object transitionClassifier = boost::python::object(),
-//<<<<<<< HEAD
-//                                  ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
                                   SolverType solver = SolverType::CplexSolver,
                                   unsigned int n_dim = 2
                                   );
-//=======
-//                                  SolverType solver = SolverType::CplexSolver);
-
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
 ////
 //// transfer graph to graph containing only subset of nodes based on tags

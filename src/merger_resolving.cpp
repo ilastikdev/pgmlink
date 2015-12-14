@@ -775,22 +775,9 @@ void resolve_graph(const HypothesesGraph& src,
                    const double transition_parameter,
                    const bool with_constraints,
                    boost::python::object transitionClassifier,
-//<<<<<<< HEAD
-
-//                   ConservationTracking::SolverType solver,
                    SolverType solver,
-
-
-//                   bool with_merger_resolution,
                    unsigned int n_dim
-//                   bool training_to_hard_constraints,
-//                   unsigned int num_threads,
-//                   bool withNormalization,
-//                   bool withClassifierPrior
                    )
-//=======
-//                   SolverType solver)
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 {
 
     // Optimize the graph built by the class MergerResolver.
@@ -828,7 +815,6 @@ void resolve_graph(const HypothesesGraph& src,
         dest.add(node_originated_from());
     }
 
-//  src.add(division_active()).add(arc_active()).add(node_active2());
     dest.add(division_active()).add(arc_active()).add(node_active2()).add(division_active_count()).add(node_active_count()).add(arc_active_count());
 
 

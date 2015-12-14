@@ -63,46 +63,12 @@ ConservationTracking::ConservationTracking(const Parameter &param)
       transition_weight_(param.transition_weight),
       transition_classifier_(param.transition_classifier),
       with_optical_correction_(param.with_optical_correction),
-//<<<<<<< HEAD
       solver_(param.solver),
       use_app_node_labels_to_fix_values_(false),
       with_structured_learning_(false),
       training_to_hard_constraints_(param.training_to_hard_constraints),
       param_(param)
 {
-//    inference_model_param_.max_number_objects = max_number_objects_;
-
-//    inference_model_param_.with_constraints = with_constraints_;
-//    inference_model_param_.with_tracklets = with_tracklets_;
-//    inference_model_param_.with_divisions = with_divisions_;
-//    inference_model_param_.with_appearance = with_appearance_;
-//    inference_model_param_.with_disappearance = with_disappearance_;
-//    inference_model_param_.with_misdetections_allowed = with_misdetections_allowed_;
-//    inference_model_param_.with_optical_correction = with_optical_correction_;
-
-//    inference_model_param_.detection = detection_;
-//    inference_model_param_.detectionNoWeight = detectionNoWeight_;
-//    inference_model_param_.division = division_;
-//    inference_model_param_.divisionNoWeight = divisionNoWeight_;
-//    inference_model_param_.transition = transition_;
-//    inference_model_param_.transition_parameter = transition_parameter_;
-//    inference_model_param_.transition_classifier = transition_classifier_;
-
-//    inference_model_param_.forbidden_cost = forbidden_cost_;
-//    inference_model_param_.appearance_cost = appearance_cost_;
-//    inference_model_param_.disappearance_cost = disappearance_cost_;
-
-//    inference_model_param_.motion_model3 = param.motion_model3;
-//    inference_model_param_.motion_model4 = param.motion_model4;
-//    inference_model_param_.motion_model3_default = param.motion_model3_default;
-//    inference_model_param_.motion_model4_default = param.motion_model4_default;
-
-//=======
-//      solver_(param.solver),
-//      use_app_node_labels_to_fix_values_(false),
-//      param_(param)
-//{
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     perturbed_inference_model_param_.distributionId = uncertainty_param_.distributionId;
     perturbed_inference_model_param_.distributionParam = uncertainty_param_.distributionParam;
     perturbed_inference_model_param_.detection_weight = detection_weight_;
@@ -164,7 +130,6 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
     }
 }
 
-//boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(ConservationTracking::Parameter& param)
 boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(Parameter& param)
 {
     if(solver_ == SolverType::CplexSolver)
@@ -174,14 +139,11 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(P
             return inference_model_;
         }
         else
-//            return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,ep_gap_,cplex_timeout_);
-//            return boost::make_shared<ConsTrackingInferenceModel>(param,ep_gap_,cplex_timeout_);
             return boost::make_shared<ConsTrackingInferenceModel>(param);
     }
 #ifdef WITH_DPCT
     else if(solver_ == SolverType::DynProgSolver)
     {
-//        return boost::make_shared<DynProgConsTrackInferenceModel>(inference_model_param_);
         return boost::make_shared<DynProgConsTrackInferenceModel>(param);
     }
 #else
@@ -196,14 +158,7 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model()
 {
     if(solver_ == SolverType::CplexSolver)
     {
-//<<<<<<< HEAD
-//            return boost::make_shared<ConsTrackingInferenceModel>(inference_model_param_,
-//                                                              ep_gap_,
-//                                                              cplex_timeout_,
-//                                                              num_threads_);
-//=======
         return boost::make_shared<ConsTrackingInferenceModel>(param_);
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     }
 #ifdef WITH_DPCT
     else if(solver_ == SolverType::DynProgSolver)
@@ -256,7 +211,6 @@ HypothesesGraph* ConservationTracking::get_prepared_graph(HypothesesGraph & hypo
     if (with_tracklets_)
     {
         LOG(logINFO) << "ConservationTracking::perturbedInference: generating tracklet graph";
-//        tracklet_graph_.clear();
         tracklet2traxel_node_map_ = generateTrackletGraph2(hypotheses, tracklet_graph_);
         graph = &tracklet_graph_;
     }
@@ -334,17 +288,6 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
 {
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
-//    graph->save_to_graphviz_dot_file("/Users/chaubold/Desktop/sabrina_mnd200_trackletgraph.dot",
-//                                     inference_model_param_.with_tracklets,
-//                                     inference_model_param_.with_divisions,
-//                                     inference_model_param_.detection,
-//                                     inference_model_param_.division,
-//                                     inference_model_param_.transition,
-//                                     inference_model_param_.disappearance_cost,
-//                                     inference_model_param_.appearance_cost,
-//                                     inference_model_param_.max_number_objects,
-//                                     inference_model_param_.transition_parameter);
-
     LOG(logINFO) << "ConservationTracking::perturbedInference: number of iterations: " << uncertainty_param_.numberOfIterations;
     LOG(logINFO) << "ConservationTracking::perturbedInference: perturb using method with Id " << uncertainty_param_.distributionId;
     LOG(logDEBUG) << "ConservationTracking::perturbedInference: formulate ";
@@ -380,17 +323,13 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
         inference_model->fixFirstDisappearanceNodesToLabels(hypotheses, tracklet_graph_, tracklet2traxel_node_map_);
     }
 
-//<<<<<<< HEAD
     if(training_to_hard_constraints_ and !with_structured_learning_)
     {
         boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->fixNodesToLabels(hypotheses);
 
     }
 
-//    if(solver_ == CplexSolver)
-//=======
     if(solver_ == SolverType::CplexSolver)
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     {
         if(with_structured_learning_){
             boost::static_pointer_cast<ConsTrackingInferenceModel>(inference_model)->set_inference_params(

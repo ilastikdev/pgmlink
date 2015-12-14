@@ -21,48 +21,7 @@ enum EnergyType {Appearance = 0, Disappearance = 1, Detection = 2, Transition = 
  */
 class InferenceModel
 {
-//<<<<<<< HEAD
-//public: // Parameter object
-//    class Parameter
-//    {
-//    public:
-//        size_t max_number_objects;
-
-//        bool with_constraints;
-//        bool with_tracklets;
-//        bool with_divisions;
-//        bool with_optical_correction;
-//        bool with_misdetections_allowed;
-//        bool with_appearance;
-//        bool with_disappearance;
-
-//        boost::function<double (const Traxel&, const size_t)> detection;
-//        boost::function<double (const Traxel&, const size_t)> detectionNoWeight;
-//        boost::function<double (const Traxel&, const size_t)> division;
-//        boost::function<double (const Traxel&, const size_t)> divisionNoWeight;
-//        //boost::function<double (const double)> transition;
-//        boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
-//        double transition_parameter;
-//        boost::python::object transition_classifier;
-
-//        boost::function<double (const Traxel&)> disappearance_cost;
-//        boost::function<double (const Traxel&)> appearance_cost;
-//        double forbidden_cost;
-
-//        double detection_weight;
-//        double appearance_weight;
-//        double disappearance_weight;
-//        double division_weight;
-//        double transition_weight;
-//        boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
-//        boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;
-//        double motion_model3_default;
-//        double motion_model4_default;
-//    };
-
-//=======
 public: // typedefs
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
 
 public: // API

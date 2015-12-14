@@ -48,7 +48,6 @@ public:
         const std::string& random_forest_filename = "none",
         FieldOfView fov = FieldOfView(),
         const std::string& event_vector_dump_filename = "none",
-//        ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
         SolverType solver = SolverType::CplexSolver,
         unsigned int ndim = 2
         ):
@@ -105,13 +104,11 @@ public:
     PGMLINK_EXPORT void addLastLabels(int, int, double );
     PGMLINK_EXPORT void addIntermediateLabels(int, int, double );
     PGMLINK_EXPORT virtual boost::shared_ptr<InferenceModel> create_inference_model(
-//            ConservationTracking::Parameter& param,
             Parameter& param,
             opengm::learning::Weights<double>& trackingWeights,
             bool withNormalization);
     PGMLINK_EXPORT virtual void prepareTracking(
             ConservationTracking& pgm,
-//            ConservationTracking::Parameter& param,
             Parameter& param,
             opengm::learning::Weights<double>& trackingWeights,
             bool withNormalization,
@@ -140,10 +137,8 @@ public:
             bool withClassifierPrior = true,
             bool verbose = false);
 
-//    PGMLINK_EXPORT void structuredLearningFromParam(ConservationTracking::Parameter& param);
     PGMLINK_EXPORT void structuredLearningFromParam(Parameter& param);
 
-//    PGMLINK_EXPORT ConservationTracking::Parameter get_structured_learning_tracking_parameters(
       PGMLINK_EXPORT Parameter get_structured_learning_tracking_parameters(
             double forbidden_cost = 0,
             double ep_gap = 0.01,
@@ -161,7 +156,6 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             boost::python::object transition_classifier = boost::python::object(),
-//            ConservationTracking::SolverType solver = ConservationTracking::CplexSolver,
             SolverType solver = SolverType::CplexSolver,
             bool training_to_hard_constraints = false,
             unsigned int num_threads = 1,
@@ -169,7 +163,6 @@ public:
             bool withClassifierPrior = true,
             bool verbose = false);
 
-//    PGMLINK_EXPORT void setParameterWeights(ConservationTracking::Parameter& param,std::vector<double> weights);
     PGMLINK_EXPORT void setParameterWeights(Parameter& param,std::vector<double> sltWeights);
 
 public:
@@ -181,7 +174,6 @@ public:
     double numThreads_;
 
 protected:
-//    StructuredLearningTrackingInferenceModel::Parameter inference_model_param_;
     double ep_gap_;
     double cplex_timeout_;
     double division_weight_;

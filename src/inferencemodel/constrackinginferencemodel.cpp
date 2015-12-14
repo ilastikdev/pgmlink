@@ -4,15 +4,7 @@
 namespace pgmlink
 {
 
-//<<<<<<< HEAD
-//ConsTrackingInferenceModel::ConsTrackingInferenceModel(
-//        const Parameter& param,
-//        double ep_gap,
-//        double cplex_timeout,
-//        unsigned int num_threads):
-//=======
 ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param):
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     InferenceModel(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
@@ -750,7 +742,6 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
     //cplex_param_.relaxation_ = cplex_param_.TightPolytope;
     //cplex_param_.useSoftConstraints_ = false;
 
-
 #ifdef WITH_MODIFIED_OPENGM
     optimizer_ = boost::shared_ptr<cplex_optimizer>(new cplex_optimizer(get_model(),
                  cplex_param_,
@@ -1174,11 +1165,9 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
     }
 }
 
-//<<<<<<< HEAD
 ConsTrackingInferenceModel::GraphicalModelType ConsTrackingInferenceModel::model(){
     return model_;
 }
-//=======
 ConsTrackingInferenceModel::IlpSolution ConsTrackingInferenceModel::extract_solution_from_graph(
   const HypothesesGraph &g,
   const HypothesesGraph &tracklet_graph,
@@ -1357,7 +1346,5 @@ void ConsTrackingInferenceModel::set_starting_point(const IlpSolution& solution)
 {
     optimizer_->setStartingPoint(solution.begin());
 }
-
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
 } // namespace pgmlink

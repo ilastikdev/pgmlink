@@ -112,34 +112,6 @@ vector<vector<vector<Event> > > pythonStructuredLearningTracking(
     object transition_classifier)
 {
     vector<vector<vector<Event> > > result;
-//    // release the GIL
-//    Py_BEGIN_ALLOW_THREADS
-//    try
-//    {
-//        result = tr(ts,
-//                    forbidden_cost,
-//                    ep_gap,
-//                    with_tracklets,
-//                    division_weight,
-//                    transition_weight,
-//                    disappearance_cost,
-//                    appearance_cost,
-//                    with_merger_resolution,
-//                    n_dim,
-//                    transition_parameter,
-//                    border_width,
-//                    with_constraints,
-//                    uncertaintyParam,
-//                    cplex_timeout,
-//                    coordinates,
-//                    transition_classifier);
-//    }
-//    catch (std::exception& e)
-//    {
-//        Py_BLOCK_THREADS
-//        throw;
-//    }
-//    Py_END_ALLOW_THREADS
     return result;
 }
 
@@ -153,7 +125,6 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
         double transition_parameter,
         bool with_constraints,
         object transitionClassifier,
-//        ConservationTracking::Parameter& param)
         Parameter& param)
 {
     EventVectorVector result;
@@ -166,41 +137,12 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
     }
     catch (std::exception& e)
     {
-//        std::cerr << "resolve merger call was not successful" << e;
         Py_BLOCK_THREADS
         throw;
     }
     Py_END_ALLOW_THREADS
     return result;
 }
-
-// void pywrite_all_funkey_features(ConsTracking& tracking,
-//                                  TraxelStore& ts,
-//                                  UncertaintyParameter& uncertaintyParam,
-//                                  double forbidden_cost,
-//                                  int ndim,
-//                                  bool with_tracklets,
-//                                  double transition_parameter,
-//                                  double border_width)
-// {
-//     vector<vector<double>> parameterlist;
-
-//     for(size_t i = 0; i < 5; i++)
-//     {
-//         vector<double> params(5);
-//         params[i] = 1.0;
-//         parameterlist.push_back(params);
-//     }
-
-//     tracking.write_funkey_features(ts,
-//                                    parameterlist,
-//                                    uncertaintyParam,
-//                                    forbidden_cost,
-//                                    ndim,
-//                                    with_tracklets,
-//                                    transition_parameter,
-//                                    border_width);
-// }
 
 feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract1)(const Traxel& t1) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
 feature_array    (pgmlink::feature_extraction::FeatureExtractor::*extract2)(const Traxel& t1, const Traxel& t2) const = &pgmlink::feature_extraction::FeatureExtractor::extract;
@@ -265,22 +207,6 @@ void export_track()
     .def("set_cplex_timeout", &ChaingraphTracking::set_cplex_timeout)
     ;
 
-//<<<<<<< HEAD
-//    class_<ConservationTracking::Parameter>("ConservationTrackingParameter");
-
-//    class_<ConservationTracking::Parameter>("ConservationTrackingParameter")
-//    .def("register_detection_func", &ConservationTracking::Parameter::register_detection_func)
-//    .def("register_division_func", &ConservationTracking::Parameter::register_division_func)
-//    .def("register_transition_func", &ConservationTracking::Parameter::register_transition_func)
-//    .def("register_appearance_func", &ConservationTracking::Parameter::register_appearance_func)
-//    .def("register_disappearance_func", &ConservationTracking::Parameter::register_disappearance_func)
-//    .def("register_motion_model3_func", &ConservationTracking::Parameter::register_motion_model3_func)
-//    .def("register_motion_model4_func", &ConservationTracking::Parameter::register_motion_model4_func)
-//    ;
-
-//    class_<ConsTracking>("ConsTracking",
-//                         init<int, bool, double, double, bool, double, string, FieldOfView, string, ConservationTracking::SolverType,int>(
-//=======
     class_<Parameter>("ConservationTrackingParameter")
     .def("register_detection_func", &Parameter::register_detection_func)
     .def("register_division_func", &Parameter::register_division_func)
@@ -317,7 +243,6 @@ void export_track()
 
     class_<ConsTracking>("ConsTracking",
                          init<unsigned int, bool, double, double, bool, double, string, FieldOfView, string, SolverType, unsigned int>(
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
                              args("max_number_objects",
                                   "size_dependent_detection_prob",
                                   "avg_obj_size",
@@ -354,7 +279,6 @@ void export_track()
     .def("HamminglossOfFiles", &ConsTracking::hammingloss_of_files)
     .def("save_ilp_solutions", &ConsTracking::save_ilp_solutions)
     .def("get_conservation_tracking_parameters", &ConsTracking::get_conservation_tracking_parameters)
-    //.def("fixNodeToAppearanceLabel", &ConsTracking::fixNodeToAppearanceLabel)
     .def("addLabels", &ConsTracking::addLabels)
     .def("addAppearanceLabel", &ConsTracking::addAppearanceLabel)
     .def("addDisappearanceLabel", &ConsTracking::addDisappearanceLabel)
@@ -428,7 +352,6 @@ void export_track()
 
     class_<StructuredLearningTracking>("StructuredLearningTracking",
                                        init<boost::shared_ptr<HypothesesGraph>, unsigned int, bool, double, double, bool, double,
-//                                       string, FieldOfView, string, ConservationTracking::SolverType,int>(
                                        string, FieldOfView, string, SolverType,unsigned int>(
                              args("hypotheses_graph",
                                   "max_number_objects",

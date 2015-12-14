@@ -19,14 +19,8 @@
 #include <pgmlink/ext_opengm/indicator_function.hxx>
 #include <opengm/operations/adder.hxx>
 #include <opengm/utilities/metaprogramming.hxx>
-//<<<<<<< HEAD
-//#include "opengm/functions/modelviewfunction.hxx"
-//#include "opengm/functions/view.hxx"
-//#include "opengm/functions/unary_loss_function.hxx"
-//=======
 #include <opengm/functions/modelviewfunction.hxx>
 #include <opengm/functions/view.hxx>
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/graph.h"
@@ -41,7 +35,6 @@ namespace pgm
 using boost::shared_ptr;
 
 
-//typedef opengm::GraphicalModel<double, opengm::Adder> OpengmModel;
 typedef opengm::ExplicitFunction<double> ExplicitFunction;
 typedef opengm::FunctionDecoratorWeighted< opengm::IndicatorFunction<double> > FeatureFunction;
 typedef opengm::HammingFunction<double> LossFunction;
@@ -422,7 +415,6 @@ typedef double ValueType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::OperatorType OperatorType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::LabelType LabelType;
 typedef pgm::OpengmModelDeprecated::ogmGraphicalModel::IndexType IndexType;
-//<<<<<<< HEAD
 
 typedef double Energy;
 typedef opengm::LinearConstraintFunction<double,size_t,size_t> LinearConstraintFunctionType;
@@ -449,30 +441,6 @@ typedef opengm::GraphicalModel
   >::type,
   opengm::DiscreteSpace<IndexType, LabelType> >
 PertGmType;
-//=======
-
-
-// typedef opengm::GraphicalModel
-// <ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-// <opengm::ModelViewFunction<pgm::OpengmModelDeprecated::ogmGraphicalModel, marray::Marray<ValueType> > , marray::Marray<ValueType>, InConsFunc, OutConsFunc, OutNoDivConsFunc, DetConsFunc, FixNodeValConsFunc >::type,
-// opengm::DiscreteSpace<IndexType, LabelType> >
-// PertGmType;
-
-
-//typedef pgm::OpengmModelDeprecated::ogmGraphicalModel PertGmType;
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
-
-
-//typedef opengm::GraphicalModel
-//<ValueType, OperatorType,  typename opengm::meta::TypeListGenerator
-//  < LinearConstraintFunctionType,
-//    InLinearConsFunc, OutLinearConsFunc, OutNoDivLinearConsFunc, DetLinearConsFunc, FixNodeValLinearConsFunc,
-//    opengm::ExplicitFunction<ValueType, IndexType, LabelType>,
-//    opengm::functions::learnable::LWeightedSumOfFunctions<ValueType, IndexType, LabelType>
-//  >::type,
-//  opengm::DiscreteSpace<IndexType, LabelType>
-//>
-//PertExplicitGmType;
 
 } /* namespace pgmlink */
 

@@ -17,12 +17,10 @@ namespace pgmlink
 namespace pgm
 {
 
-//typedef OpengmModelDeprecated::ogmGraphicalModel ConstraintPoolOpengmModel;
-//typedef opengm::LPCplex<ConstraintPoolConstraintPoolOpengmModel,OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
 typedef PertGmType ConstraintPoolOpengmModel;
-
 typedef opengm::LPCplex<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplexOptimizer;
 typedef opengm::LPCplex2<pgmlink::PertGmType, OpengmModelDeprecated::ogmAccumulator> ConstraintPoolCplex2Optimizer;
+
 //------------------------------------------------------------------------
 // ConstraintPool
 //------------------------------------------------------------------------
@@ -448,7 +446,6 @@ void ConstraintPool::add_constraints_to_problem(GM& model, INF& inf, std::map<si
     add_constraint_type_to_problem<GM, INF, OutgoingNoDivConstraintFunction<ValueType, IndexType, LabelType>, OutgoingConstraint>(model, inf, remapped_outgoing_no_div_constraints);
     add_constraint_type_to_problem<GM, INF, DetectionConstraintFunction<ValueType, IndexType, LabelType>, DetectionConstraint>(model, inf, remapped_detection_constraints);
     add_constraint_type_to_problem<GM, INF, FixNodeValueConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueConstraint>(model, inf, remapped_fix_node_value_constraints);
-//<<<<<<< HEAD
 }
 
 template<class GM, class INF>
@@ -537,23 +534,13 @@ void ConstraintPool::add_constraints_to_model(GM& model, INF& inf, std::map<size
     add_constraint_type_to_model<GM, INF, OutgoingNoDivLinearConstraintFunction<ValueType, IndexType, LabelType>, OutgoingLinearConstraint>(model, inf, remapped_outgoing_no_div_linear_constraints);
     add_constraint_type_to_model<GM, INF, DetectionLinearConstraintFunction<ValueType, IndexType, LabelType>, DetectionLinearConstraint>(model, inf, remapped_detection_linear_constraints);
     add_constraint_type_to_model<GM, INF, FixNodeValueLinearConstraintFunction<ValueType, IndexType, LabelType>, FixNodeValueLinearConstraint>(model, inf, remapped_fix_node_value_linear_constraints);
-//=======
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
 }
 
 template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
 void ConstraintPool::add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints)
 {
-//<<<<<<< HEAD
-//    LOG(logINFO) << "[ConstraintPool] add_constraint_type_to_problem: Using soft constraints";
+    LOG(logINFO) << "[ConstraintPool] add_constraint_type_to_problem: Using soft constraints";
 
-
-
-//    std::map< std::vector<IndexType>, FUNCTION_TYPE* > constraint_functions;
-
-//=======
-//    LOG(logINFO) << "[ConstraintPool]: Using soft constraints";
-//>>>>>>> c0ae1ffa3bed35ac471972fc3c7c0dcd5a44ffe7
     for(typename std::vector<CONSTRAINT_TYPE>::const_iterator it = constraints.begin(); it != constraints.end(); ++it)
     {
         const CONSTRAINT_TYPE& constraint = *it;
