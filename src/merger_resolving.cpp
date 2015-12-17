@@ -768,8 +768,9 @@ HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler)
 
 void resolve_graph(const HypothesesGraph& src,
                    HypothesesGraph& dest,
+                   Parameter& paramFromPython,
                    //boost::function<double(const double)> transition,
-                   boost::function<double(const Traxel&, const Traxel&, const size_t)> transition,
+                   //boost::function<double(const Traxel&, const Traxel&, const size_t)> transition,
                    double ep_gap,
                    bool with_tracklets,
                    const double transition_parameter,
@@ -840,7 +841,7 @@ void resolve_graph(const HypothesesGraph& src,
     prob.push_back(0.0);
     prob.push_back(1.0);
     boost::function<double(const Traxel&, const size_t)> division = NegLnDivision(1); // weight 1
-    // boost::function<double(const double)> transition = NegLnTransition(1); // weight 1
+    boost::function<double(const double)> transition = NegLnTransition(1); // weight 1
     boost::function<double(const Traxel&, const size_t)> detection = boost::bind<double>(NegLnConstant(1, prob), _2);
     translate_property_value_map<node_traxel, HypothesesGraph::Node>(src, dest, nr);
     translate_property_value_map<arc_distance, HypothesesGraph::Arc>(src, dest, ar);
@@ -864,11 +865,11 @@ void resolve_graph(const HypothesesGraph& src,
     // Construct conservation tracking and
     // do inference.
     Parameter param(
-        (unsigned int)1, //max_number_objects_,
-        detection, //detection,
+        (unsigned int)1, // max_number_objects_
+        detection, // detection
         division, // division
         transition, // transition
-        0.0, // forbidden_cost_,
+        0.0, //forbidden_cost_
         ep_gap, // ep_gap_
         with_tracklets, // with_tracklets_
         false, // with_divisions_
@@ -880,26 +881,57 @@ void resolve_graph(const HypothesesGraph& src,
         true, // with_merger_resolution
         n_dim,
         transition_parameter,
-        true,// with_constraints,
-        UncertaintyParameter(),// uncertaintyParam,
-        1e75,// cplex_timeout,
-        0.,//division_weight,
-        0.,//detection_weight,
+        true,// with_constraints
+        UncertaintyParameter(),// uncertaintyParam
+        1e75,// cplex_timeout
+        0.,//division_weight
+        0.,//detection_weight
         1.,//transition_weight
         0.,//border_width
         transitionClassifier,
-        false,
+        false, // with_optical_correction
         solver,
-        false,//training_to_hard_constraints,
-        (unsigned int)1,//num_threads,
-        false,//withNormalization,
+        false,//training_to_hard_constraints
+        (unsigned int)1,//num_threads
+        false,//withNormalization
         false,//withClassifierPrior
         false // verbose
         );
+//    param.max_number_objects = (unsigned int)1; //max_number_objects_,
+//    param.detection = detection; //detection,
+//    param.division = division; // division
+//    param.transition = transition; // transition
+//    param.forbidden_cost = 0.0; // forbidden_cost_
+//    param.ep_gap = ep_gap; // ep_gap_
+//    param.with_tracklets = with_tracklets; // with_tracklets_
+//    param.with_divisions = false; // with_divisions_
+//    param.disappearance_cost_fn = disappearance_cost; // disappearance_cost_
+//    param.appearance_cost_fn = appearance_cost; // appearance_cost
+//    param.with_misdetections_allowed = false; // with_misdetections_allowed
+//    param.with_appearance = false; // with appearance
+//    param.with_disappearance = false; // with disappearance
+//    param.with_merger_resolution = true; // with_merger_resolution
+//    param.n_dim = n_dim;
+//    param.transition_parameter = transition_parameter;
+//    param.with_constraints = true;// with_constraints
+//    param.uncertainty_param = UncertaintyParameter();// uncertaintyParam
+//    param.cplex_timeout = 1e75;// cplex_timeout
+//    param.division_weight = 0.;//division_weight
+//    param.detection_weight = 0.;//detection_weight
+//    param.transition_weight = 1.;//transition_weight
+//    param.border_width = 0.;//border_width
+//    param.transition_classifier = transitionClassifier;
+//    param.with_optical_correction = false; // with_optical_correction
+//    param.solver = solver;
+//    param.training_to_hard_constraints = false;//training_to_hard_constraints
+//    param.num_threads = (unsigned int)1;//num_threads
+//    param.withNormalization = false;//withNormalization
+//    param.withClassifierPrior = false;//withClassifierPrior
+//    param.verbose = false; // verbose
 
     ConservationTracking pgm(param);
 
-    pgm.perturbedInference(dest);
+    pgm.perturbedInference(dest,param);
 
     // Remap results from clones to original nodes.
     merge_split_divisions(dest, division_splits, arc_cross_reference_divisions);

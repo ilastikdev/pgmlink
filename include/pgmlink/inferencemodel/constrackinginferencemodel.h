@@ -38,7 +38,7 @@ public:
 
 public: // API
     // constructor
-    ConsTrackingInferenceModel(const Parameter& param);
+    ConsTrackingInferenceModel(Parameter& param);
 
     virtual void build_from_graph(const HypothesesGraph&);
 

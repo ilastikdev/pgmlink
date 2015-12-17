@@ -18,7 +18,7 @@ namespace pgmlink
 class PerturbedInferenceModel : public ConsTrackingInferenceModel
 {
 public: // API
-    PerturbedInferenceModel(const Parameter& param,
+    PerturbedInferenceModel(Parameter& param,
         boost::shared_ptr<Perturbation> perturbation);
 
     virtual double generateRandomOffset(EnergyType parameterIndex,

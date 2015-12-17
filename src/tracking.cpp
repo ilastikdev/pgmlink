@@ -315,7 +315,9 @@ bool all_true (InputIterator first, InputIterator last, UnaryPredicate pred)
 ////
 //// class ConsTracking
 ////
-EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
+EventVectorVectorVector ConsTracking::operator()(
+        TraxelStore& ts,
+        Parameter& param,
         double forbidden_cost,
         double ep_gap,
         bool with_tracklets,
@@ -331,8 +333,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
         UncertaintyParameter uncertaintyParam,
         double cplex_timeout,
         TimestepIdCoordinateMapPtr coordinates,
-        boost::python::object transition_classifier,
-        Parameter param)
+        boost::python::object transition_classifier)
 {
 
      build_hypo_graph(ts);
@@ -369,6 +370,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
             // TODO: do not copy the events!
             merger_resolved_events.push_back(resolve_mergers(
                                                  event,
+                                                 param,
                                                  coordinates,
                                                  ep_gap,
                                                  transition_weight,
@@ -376,8 +378,7 @@ EventVectorVectorVector ConsTracking::operator()(TraxelStore& ts,
                                                  n_dim,
                                                  transition_parameter,
                                                  with_constraints,
-                                                 transition_classifier,
-                                                 param
+                                                 transition_classifier
                                              ));
         }
 
@@ -687,7 +688,7 @@ EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
         {
             pgm.enableFixingLabeledAppearanceNodes();
         }
-        pgm.perturbedInference(*hypotheses_graph_);
+        pgm.perturbedInference(*hypotheses_graph_,param);
 
         size_t num_solutions = uncertainty_param_.numberOfIterations;
         if (num_solutions == 1)
@@ -887,7 +888,8 @@ Parameter ConsTracking::get_conservation_tracking_parameters(
 
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
-    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    //boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    boost::function<double (const double)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
     
     LOG(logDEBUG1) << "division_weight = " << division_weight;
@@ -991,7 +993,7 @@ void ConsTracking::setParameterWeights(Parameter& param,std::vector<double> ctWe
 
     param.division = NegLnDivision(ctWeights[1]);
     param.divisionNoWeight = NegLnDivisionNoWeight(ctWeights[1]);
-    //param.transition = NegLnTransition(ctWeights[2]);
+    param.transition = NegLnTransition(ctWeights[2]);
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(ctWeights[4],
                              param.border_width,
@@ -1008,6 +1010,7 @@ void ConsTracking::setParameterWeights(Parameter& param,std::vector<double> ctWe
 
 EventVectorVector ConsTracking::resolve_mergers(
     EventVectorVector& events,
+    Parameter& param,
     TimestepIdCoordinateMapPtr coordinates,
     double ep_gap,
     double transition_weight,
@@ -1015,14 +1018,14 @@ EventVectorVector ConsTracking::resolve_mergers(
     int n_dim,
     double transition_parameter,
     bool with_constraints,
-    boost::python::object transitionClassifier,
-    Parameter param
+    boost::python::object transitionClassifier
 )
 {
-    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
-    transition = param.transition;
-
     LOG(logINFO) << "-> resolving mergers";
+
+    //boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    //transition = param.transition;
+
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
     if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
@@ -1060,7 +1063,8 @@ EventVectorVector ConsTracking::resolve_mergers(
         HypothesesGraph g_res;
         resolve_graph(*resolved_graph_,
                       g_res,
-                      transition,
+                      param,
+                      //param.transition,
                       ep_gap,
                       with_tracklets,
                       transition_parameter,

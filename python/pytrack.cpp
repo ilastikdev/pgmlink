@@ -44,7 +44,11 @@ vector<vector<Event> > pythonChaingraphTracking(ChaingraphTracking& tr, TraxelSt
     return result;
 }
 
-vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
+vector<vector<vector<Event> > > pythonConsTracking(
+        ConsTracking& tr,
+        TraxelStore& ts,
+        Parameter& param,
+        TimestepIdCoordinateMapPtr& coordinates,
         double forbidden_cost,
         double ep_gap,
         bool   with_tracklets,
@@ -67,6 +71,7 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
     try
     {
         result = tr(ts,
+                    param,
                     forbidden_cost,
                     ep_gap,
                     with_tracklets,
@@ -94,7 +99,9 @@ vector<vector<vector<Event> > > pythonConsTracking(ConsTracking& tr, TraxelStore
 }
 
 vector<vector<vector<Event> > > pythonStructuredLearningTracking(
-    StructuredLearningTracking& tr, TraxelStore& ts, TimestepIdCoordinateMapPtr& coordinates,
+    StructuredLearningTracking& tr,
+    TraxelStore& ts,
+    TimestepIdCoordinateMapPtr& coordinates,
     double forbidden_cost,
     double ep_gap,
     bool   with_tracklets,
@@ -117,6 +124,7 @@ vector<vector<vector<Event> > > pythonStructuredLearningTracking(
 
 EventVectorVector python_resolve_mergers(ConsTracking& tracker,
         EventVectorVector& events,
+        Parameter& param,
         TimestepIdCoordinateMapPtr& coordinates,
         double ep_gap,
         double transition_weight,
@@ -124,16 +132,15 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
         int n_dim,
         double transition_parameter,
         bool with_constraints,
-        object transitionClassifier,
-        Parameter& param)
+        object transitionClassifier)
 {
     EventVectorVector result;
     // release the GIL
     Py_BEGIN_ALLOW_THREADS
     try
     {
-        result = tracker.resolve_mergers(events, coordinates, ep_gap, transition_weight,
-                                         with_tracklets, n_dim, transition_parameter, with_constraints, transitionClassifier, param);
+        result = tracker.resolve_mergers(events, param, coordinates, ep_gap, transition_weight,
+                                         with_tracklets, n_dim, transition_parameter, with_constraints, transitionClassifier);
     }
     catch (std::exception& e)
     {
@@ -256,7 +263,7 @@ void export_track()
                                   "spatial dimension")))
     .def(init<boost::shared_ptr<HypothesesGraph>,
          TraxelStore&,
-         Parameter,
+         Parameter&,
          UncertaintyParameter,
          FieldOfView,
          bool,

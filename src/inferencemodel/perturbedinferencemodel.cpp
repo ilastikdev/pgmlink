@@ -6,7 +6,7 @@
 namespace pgmlink
 {
 
-PerturbedInferenceModel::PerturbedInferenceModel(const Parameter& param,
+PerturbedInferenceModel::PerturbedInferenceModel(Parameter& param,
                                                  boost::shared_ptr<Perturbation> perturbation):
     ConsTrackingInferenceModel(param),
     perturbation_(perturbation)

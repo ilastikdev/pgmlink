@@ -30,7 +30,6 @@
 #include "pgmlink/pgmlink_export.h"
 #include "pgmlink/conservationtracking_parameter.h"
 
-
 // boost serialization for arma::mat
 namespace boost {
 namespace serialization {
@@ -562,8 +561,9 @@ public:
 ////
 PGMLINK_EXPORT void resolve_graph(const HypothesesGraph &src,
                                   HypothesesGraph& dest,
+                                  Parameter& param,
                                   //boost::function<double(const double)> transition,
-                                  boost::function<double(const Traxel&, const Traxel&, const size_t)> transition,
+                                  //boost::function<double(const Traxel&, const Traxel&, const size_t)> transition,
                                   double ep_gap,
                                   bool with_tracklets,
                                   const double transition_parameter = 5,

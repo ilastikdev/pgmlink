@@ -34,7 +34,7 @@ public:
     virtual void infer();
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
-    virtual void perturbedInference(HypothesesGraph&);
+    virtual void perturbedInference(HypothesesGraph&, Parameter&);
 
     /**
     Run the dynamic programming solver first and then use it as initialization
@@ -84,8 +84,8 @@ protected: // members
     boost::function<double (const Traxel&, const size_t)> detectionNoWeight_;
     boost::function<double (const Traxel&, const size_t)> division_;
     boost::function<double (const Traxel&, const size_t)> divisionNoWeight_;
-    //boost::function<double (const double)> transition_;
-    boost::function<double (const Traxel&, const Traxel&, const size_t)> transition_;
+    boost::function<double (const double)> transition_;
+    //boost::function<double (const Traxel&, const Traxel&, const size_t)> transition_;
 
     double forbidden_cost_;
     std::vector<IlpSolution> solutions_;

@@ -4,7 +4,7 @@
 namespace pgmlink
 {
 
-ConsTrackingInferenceModel::ConsTrackingInferenceModel(const Parameter& param):
+ConsTrackingInferenceModel::ConsTrackingInferenceModel(Parameter& param):
     InferenceModel(param),
     number_of_transition_nodes_(0),
     number_of_division_nodes_(0),
@@ -474,8 +474,8 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
                     Traxel tr = *trax_it;
                     if (!first)
                     {
-                        //e = param_.transition( get_transition_probability(tr_prev, tr, state) );
-                        e = param_.transition( tr_prev, tr, state);
+                        e = param_.transition( get_transition_probability(tr_prev, tr, state) );
+                        //e = param_.transition( tr_prev, tr, state);
                         energy += e;
                         energy += generateRandomOffset(Transition, e, tr_prev, tr);
                     }
@@ -573,8 +573,8 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
                 tr2 = traxel_map_[g.target(a)];
             }
 
-            //double energy = param_.transition(get_transition_probability(tr1, tr2, state));
-            double energy = param_.transition(tr1, tr2, state);
+            double energy = param_.transition(get_transition_probability(tr1, tr2, state));
+            //double energy = param_.transition(tr1, tr2, state);
             energy += generateRandomOffset(Transition, energy, tr1, tr2);
 
             LOG(logDEBUG2) << "ConsTrackingInferenceModel::add_finite_factors: transition[" << state

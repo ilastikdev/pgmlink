@@ -3,11 +3,11 @@
 namespace pgmlink
 {
 
-InferenceModel::InferenceModel(const Parameter &param):
+InferenceModel::InferenceModel(Parameter &param):
     param_(param),
     transition_predictions_(new TransitionPredictionsMap())
 {
-
+    //param_ = param;
 }
 
 InferenceModel::~InferenceModel()

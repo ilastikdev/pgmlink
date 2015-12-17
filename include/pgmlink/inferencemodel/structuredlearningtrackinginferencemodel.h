@@ -25,7 +25,7 @@ class StructuredLearningTrackingInferenceModel : public ConsTrackingInferenceMod
 {
 public:
     StructuredLearningTrackingInferenceModel(
-        const Parameter& inferenceParam,
+        Parameter& inferenceParam,
         double ep_gap,
         double cplex_timeout,
         opengm::learning::Weights<double>& learningWeights,

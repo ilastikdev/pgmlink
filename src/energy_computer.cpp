@@ -107,8 +107,8 @@ void EnergyComputer::computeDetectionEnergy(HypothesesGraph& graph, boost::share
                 LOG(logDEBUG4) << "internal arcs traxel " << *trax_it;
                 Traxel tr = *trax_it;
                 if(!first)
-//                    energy += param_.transition( get_transition_probability(tr_prev, tr, state) );
-                    energy += param_.transition( tr_prev, tr, state);
+                    energy += param_.transition( get_transition_probability(tr_prev, tr, state) );
+//                    energy += param_.transition( tr_prev, tr, state);
                 else
                     first = false;
                 tr_prev = tr;
@@ -278,8 +278,8 @@ void EnergyComputer::computeTransitionEnergy(HypothesesGraph& graph, boost::shar
     feature_array energyPerCellCount;
     for (size_t state = 0; state <= param_.max_number_objects; ++state)
     {
-//        energyPerCellCount.push_back(param_.transition(get_transition_probability(tr1, tr2, state)));
-        energyPerCellCount.push_back(param_.transition(tr1, tr2, state));
+        energyPerCellCount.push_back(param_.transition(get_transition_probability(tr1, tr2, state)));
+//        energyPerCellCount.push_back(param_.transition(tr1, tr2, state));
     }
 
 	convexifyEnergies(energyPerCellCount);

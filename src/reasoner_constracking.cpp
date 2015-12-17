@@ -132,14 +132,16 @@ boost::shared_ptr<Perturbation> ConservationTracking::create_perturbation()
 
 boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(Parameter& param)
 {
+    param_ = param;
     if(solver_ == SolverType::CplexSolver)
     {
         if (inference_model_){
             with_structured_learning_ = true;
             return inference_model_;
         }
-        else
+        else{
             return boost::make_shared<ConsTrackingInferenceModel>(param);
+        }
     }
 #ifdef WITH_DPCT
     else if(solver_ == SolverType::DynProgSolver)
@@ -284,7 +286,7 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 #endif
 }
 
-void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
+void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, Parameter& param)
 {
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
@@ -308,7 +310,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)
     LOG(logDEBUG) << "------------> Beginning Iteration 0 <-----------\n";
 
     // instanciate inference model
-    boost::shared_ptr<InferenceModel> inference_model = create_inference_model();
+    boost::shared_ptr<InferenceModel> inference_model = create_inference_model(param);
 
     inference_model->param_.detection_weight = detection_weight_;
     inference_model->param_.division_weight = division_weight_;

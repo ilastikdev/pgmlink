@@ -25,7 +25,7 @@ public: // typedefs
     typedef std::map<std::pair<Traxel, Traxel >, std::pair<double, double > > TransitionPredictionsMap;
 
 public: // API
-    InferenceModel(const Parameter& param);
+    InferenceModel(Parameter& param);
     ~InferenceModel();
 
     // set a transition_predictions_map that was cached from a previous inference
@@ -69,7 +69,7 @@ protected: // methods
 protected: // members
     boost::shared_ptr<TransitionPredictionsMap> transition_predictions_;
 public:
-    Parameter param_;
+    Parameter& param_;
 };
 
 } // namespace pgmlink

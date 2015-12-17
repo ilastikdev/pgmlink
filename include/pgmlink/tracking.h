@@ -187,7 +187,7 @@ public:
     PGMLINK_EXPORT
     ConsTracking(boost::shared_ptr<HypothesesGraph> g,
                  TraxelStore& ts,
-                 Parameter param,
+                 Parameter& param,
                  UncertaintyParameter uncertainty_param,
                  FieldOfView fov = FieldOfView(),
                  bool size_dependent_detection_prob = false,
@@ -214,7 +214,11 @@ public:
         enable_disappearance_(true)
     {}
 
-    PGMLINK_EXPORT EventVectorVectorVector operator()(TraxelStore& ts,
+    ConsTracking() {}
+
+    PGMLINK_EXPORT EventVectorVectorVector operator()(
+            TraxelStore& ts,
+            Parameter& param,
             double forbidden_cost = 0,
             double ep_gap = 0.01,
             bool with_tracklets = true,
@@ -230,8 +234,7 @@ public:
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
             double cplex_timeout = 1e+75,
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
-            boost::python::object transition_classifier = boost::python::object(),
-            Parameter param = Parameter());
+            boost::python::object transition_classifier = boost::python::object());
 
     /**
      * refactoring of operator().
@@ -292,6 +295,7 @@ public:
 
     PGMLINK_EXPORT EventVectorVector resolve_mergers(
             EventVectorVector &events,
+            Parameter& param,
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
             double ep_gap = 0.01,
             double transition_weight = 10.0,
@@ -300,8 +304,7 @@ public:
             double transition_parameter = 5.,
             bool with_constraints = true,
             // bool with_multi_frame_moves = true);
-            boost::python::object transitionClassifier = boost::python::object(),
-            Parameter param = Parameter()
+            boost::python::object transitionClassifier = boost::python::object()
             );
 
     PGMLINK_EXPORT void enable_appearance(bool b) { enable_appearance_ = b; }

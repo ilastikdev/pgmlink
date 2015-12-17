@@ -345,7 +345,8 @@ Parameter StructuredLearningTracking::get_structured_learning_tracking_parameter
 
     Traxels empty;
     boost::function<double(const Traxel&, const size_t)> detection, division;
-    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
+    boost::function<double (const double)> transition;
+//    boost::function<double(const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
 
     LOG(logDEBUG1) << "division_weight = " << division_weight;
@@ -405,7 +406,7 @@ Parameter StructuredLearningTracking::get_structured_learning_tracking_parameter
 
 void StructuredLearningTracking::structuredLearningFromParam(Parameter& param)
 {
-    transition_= param.transition;
+    //transition_= param.transition;
     StructuredLearningTracking::structuredLearning(
         param.forbidden_cost,
         param.ep_gap,
@@ -473,7 +474,7 @@ void StructuredLearningTracking::setParameterWeights(Parameter& param,std::vecto
     param.division = NegLnDivision(sltWeights[1]);
     param.divisionNoWeight = NegLnDivisionNoWeight(sltWeights[1]);
 
-    //param.transition = NegLnTransition(weights[2]);
+    param.transition = NegLnTransition(sltWeights[2]); // not needed if defined in python via register...
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(sltWeights[3],
                              param.border_width,
@@ -615,7 +616,7 @@ void StructuredLearningTracking::structuredLearning(
             verbose);
         uncertainty_param_ = uncertaintyParam;
 
-        param.transition = transition_;
+        //param.transition = transition_;
         ConservationTracking pgm(param);
 
 
