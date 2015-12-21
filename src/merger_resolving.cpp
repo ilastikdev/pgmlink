@@ -792,7 +792,7 @@ void resolve_graph(const HypothesesGraph& src,
     // those properties unless you explicitly say so
     // is desirable.
 
-    LOG(logDEBUG) << "resolve_graph() entered";
+    LOG(logINFO) << "resolve_graph() entered";
 
     // add properties
     if (!dest.has_property(node_traxel()))
@@ -817,7 +817,6 @@ void resolve_graph(const HypothesesGraph& src,
     }
 
     dest.add(division_active()).add(arc_active()).add(node_active2()).add(division_active_count()).add(node_active_count()).add(arc_active_count());
-
 
     // Storing references in nr and ar, cross references in
     // ncr and acr.
@@ -860,7 +859,7 @@ void resolve_graph(const HypothesesGraph& src,
     boost::function<double(const Traxel&)> appearance_cost = ConstantFeature(0.0);
     boost::function<double(const Traxel&)> disappearance_cost = ConstantFeature(0.0);
 
-    LOG(logDEBUG) << "resolve_graph(): calling conservation tracking";
+    LOG(logINFO) << "resolve_graph(): calling conservation tracking";
 
     // Construct conservation tracking and
     // do inference.
@@ -1001,7 +1000,7 @@ void duplicate_division_nodes(HypothesesGraph& graph,
     // Requires cleanup (see merge_split_divisions) after
     // inference.
 
-    LOG(logDEBUG) << "duplicate_division_nodes(): enter";
+    LOG(logINFO) << "duplicate_division_nodes(): enter";
     typedef property_map<division_active, HypothesesGraph::base_graph>::type DivisionMap;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type TraxelMap;
     typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcMap;
@@ -1020,7 +1019,7 @@ void duplicate_division_nodes(HypothesesGraph& graph,
             division_it != lemon::INVALID;
             ++division_it)
     {
-        LOG(logDEBUG2) << "duplicate_division_nodes(): looping over division node: "
+        LOG(logINFO) << "duplicate_division_nodes(): looping over division node: "
                        << "with " << lemon::countOutArcs(graph, division_it) << " outgoing arcs";
 
         if (lemon::countOutArcs(graph, division_it) < 4)
@@ -1052,14 +1051,14 @@ void duplicate_division_nodes(HypothesesGraph& graph,
             const HypothesesGraph::Node& target = graph.target(arc_it);
             if (origin_map[target].size() > 0)
             {
-                LOG(logDEBUG3) << "duplicate_division_nodes(): originated from merger " << origin_map[target][0];
+                LOG(logINFO) << "duplicate_division_nodes(): originated from merger " << origin_map[target][0];
             }
             if (origin_map[target].size() > 0 &&
                     (switch_node_id == 0 ||
                      switch_node_id == origin_map[target][0])
                )
             {
-                LOG(logDEBUG3) << "duplicate_division_nodes(): copying outgoing arcs";
+                LOG(logINFO) << "duplicate_division_nodes(): copying outgoing arcs";
                 const HypothesesGraph::Arc& arc = graph.addArc(node, target);
                 arc_map.set(arc, true);
                 distance_map.set(arc, distance_map[arc_it]);

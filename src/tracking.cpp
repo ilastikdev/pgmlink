@@ -1091,7 +1091,7 @@ EventVectorVector ConsTracking::resolve_mergers(
 
         return *events_ptr;
     }
-    std::cout << "-> done resolving mergers" << std::endl;
+    LOG(logINFO) << "-> done resolving mergers";
     return events;
 }
 
