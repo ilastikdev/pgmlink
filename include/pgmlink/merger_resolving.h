@@ -165,39 +165,92 @@ public:
 
 };
 
+//<<<<<<< HEAD
 
-class GMMWithInitialized
-    : public ClusteringMlpackBase
+//class GMMWithInitialized
+//    : public ClusteringMlpackBase
+//{
+//private:
+//    GMMWithInitialized();
+//    int k_;
+//    int n_;
+//    const feature_array& data_;
+//    double score_;
+//    int n_trials_;
+//    const std::vector<arma::vec>& means_;
+//    const std::vector<arma::mat>& covs_;
+//    const arma::vec& weights_;
+//public:
+//    // constructor needs to specify number of dimensions
+//    // for 2D data, ilastik provides coordinates with 3rd dimension 0
+//    // which will cause singular covariance matrix
+//    // therefore add option for dimensionality
+//    PGMLINK_EXPORT GMMWithInitialized(int k, int n, const feature_array& data, int n_trials,
+//                                      const std::vector<arma::vec>& means,
+//                                      const std::vector<arma::mat>& covs, const arma::vec& locWeights)
+//        : k_(k), n_(n), data_(data), score_(0.0), n_trials_(n_trials), means_(means), covs_(covs), weights_(locWeights)
+//    {}
+
+//    PGMLINK_EXPORT virtual feature_array operator()();
+//    PGMLINK_EXPORT double score() const;
+
+//};
+
+
+//class GMMInitializeArma
+//    : public ClusteringMlpackBase
+//=======
+/**
+ * @brief GMM that can be initialized with means, covariances and weights
+ */
+class GMMWithInitialized 
+: public ClusteringMlpackBase 
 {
-private:
-    GMMWithInitialized();
-    int k_;
-    int n_;
-    const feature_array& data_;
-    double score_;
-    int n_trials_;
-    const std::vector<arma::vec>& means_;
-    const std::vector<arma::mat>& covs_;
-    const arma::vec& weights_;
-public:
-    // constructor needs to specify number of dimensions
-    // for 2D data, ilastik provides coordinates with 3rd dimension 0
-    // which will cause singular covariance matrix
-    // therefore add option for dimensionality
-    PGMLINK_EXPORT GMMWithInitialized(int k, int n, const feature_array& data, int n_trials,
-                                      const std::vector<arma::vec>& means,
-                                      const std::vector<arma::mat>& covs, const arma::vec& locWeights)
-        : k_(k), n_(n), data_(data), score_(0.0), n_trials_(n_trials), means_(means), covs_(covs), weights_(locWeights)
-    {}
+ private:
+  GMMWithInitialized();
+  int k_;
+  int n_;
+  int n_iterations_;
+  double threshold_;
 
-    PGMLINK_EXPORT virtual feature_array operator()();
-    PGMLINK_EXPORT double score() const;
+  // store pointer to data, which could be either given as feature array or armadillo matrix
+  const feature_array* data_;
+  const arma::mat* arma_data_;
 
+  double score_;
+  int n_trials_;
+  const std::vector<arma::vec>& means_;
+  const std::vector<arma::mat>& covs_;
+  const arma::vec& weights_;
+  arma::Col<size_t> labels_;
+ public:
+  // constructor needs to specify number of dimensions
+  // for 2D data, ilastik provides coordinates with 3rd dimension 0
+  // which will cause singular covariance matrix
+  // therefore add option for dimensionality
+  PGMLINK_EXPORT GMMWithInitialized(int k, int n, const arma::mat& data, int n_trials,
+                                    const std::vector<arma::vec>& means, 
+                                    const std::vector<arma::mat>& covs, const arma::vec& weights)
+  : k_(k), n_(n), data_(NULL), arma_data_(&data), score_(0.0), n_trials_(n_trials), means_(means), covs_(covs), weights_(weights), n_iterations_(30), threshold_(0.000001)
+  {}
+
+  PGMLINK_EXPORT GMMWithInitialized(int k, int n, const feature_array& data, int n_trials,
+                                    const std::vector<arma::vec>& means, 
+                                    const std::vector<arma::mat>& covs, const arma::vec& weights)
+  : k_(k), n_(n), data_(&data), arma_data_(NULL), score_(0.0), n_trials_(n_trials), means_(means), covs_(covs), weights_(weights) , n_iterations_(30), threshold_(0.000001)
+  {}
+
+  PGMLINK_EXPORT virtual feature_array operator()();
+  PGMLINK_EXPORT double score() const;
+  PGMLINK_EXPORT arma::Col<size_t> labels() const;  
 };
 
-
-class GMMInitializeArma
-    : public ClusteringMlpackBase
+/**
+ * @brief GMM that uses armadillo matrices as input data
+ */
+class GMMInitializeArma 
+: public ClusteringMlpackBase 
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 {
 
 public:
@@ -264,11 +317,30 @@ void get_centers(const arma::Mat<T>& data, const arma::Col<size_t> labels, arma:
  *
  *
  */
-class FeatureExtractorBase
-{
-public:
-    virtual std::vector<Traxel> operator()(Traxel& trax, size_t nMergers, unsigned int max_id) = 0;
-protected:
+//<<<<<<< HEAD
+//class FeatureExtractorBase
+//{
+//public:
+//    virtual std::vector<Traxel> operator()(Traxel& trax, size_t nMergers, unsigned int max_id) = 0;
+//protected:
+//=======
+class FeatureExtractorBase {
+ public:
+  virtual std::vector<Traxel> operator()(Traxel& trax, size_t nMergers, unsigned int max_id) = 0;
+
+  // add version that also takes an initialization - but ignores it by default
+  virtual std::vector<Traxel> operator()(Traxel& trax,
+                                         size_t nMergers,
+                                         unsigned int max_id,
+                                         const std::vector<arma::vec>& means, 
+                                         const std::vector<arma::mat>& covs, 
+                                         const arma::vec& weights)
+  {
+    return operator()(trax, nMergers, max_id);
+  }
+
+ protected:
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 };
 
 
@@ -330,16 +402,36 @@ class FeatureExtractorArmadillo
 public:
     PGMLINK_EXPORT FeatureExtractorArmadillo(TimestepIdCoordinateMapPtr coordinates);
     PGMLINK_EXPORT virtual std::vector<Traxel> operator()(Traxel& trax, size_t nMergers, unsigned int max_id);
+//<<<<<<< HEAD
+//=======
+    PGMLINK_EXPORT virtual std::vector<Traxel> operator() (Traxel& trax,
+                                                   size_t nMergers,
+                                                   unsigned int max_id,
+                                                   const std::vector<arma::vec>& means, 
+                                                   const std::vector<arma::mat>& covs, 
+                                                   const arma::vec& weights);
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 private:
     void update_coordinates(const Traxel& trax,
                             size_t nMergers,
                             unsigned int max_id,
-                            arma::Col<size_t> &labels);
+//<<<<<<< HEAD
+//                            arma::Col<size_t> &labels);
+//    FeatureExtractorArmadillo();
+//    TimestepIdCoordinateMapPtr coordinates_;
+//};
+
+
+//=======
+                            arma::Col<size_t>& labels);
+    void kmeansFallback(size_t nMergers, 
+                        arma::Col<size_t>& labels, 
+                        feature_array& merger_coms, 
+                        const arma::mat& coords);
     FeatureExtractorArmadillo();
     TimestepIdCoordinateMapPtr coordinates_;
 };
-
-
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 
 ////
 //// DistanceBase
@@ -367,99 +459,154 @@ public:
 ////
 //// FeatureHandlerBase
 ////
-class FeatureHandlerBase
+//<<<<<<< HEAD
+//class FeatureHandlerBase
+//{
+//public:
+//    PGMLINK_EXPORT
+//    void add_arcs_for_replacement_node(HypothesesGraph& g,
+//                                       HypothesesGraph::Node n,
+//                                       const std::vector<HypothesesGraph::base_graph::Arc>& sources,
+//                                       const std::vector<HypothesesGraph::base_graph::Arc>& targets,
+//                                       DistanceBase& distance);
+//public:
+//    PGMLINK_EXPORT
+//    virtual void operator()(HypothesesGraph& g,
+//                            HypothesesGraph::Node n,
+//                            std::size_t n_merger,
+//                            unsigned int max_id,
+//                            int timestep,
+//                            const std::vector<HypothesesGraph::base_graph::Arc>& sources,
+//                            const std::vector<HypothesesGraph::base_graph::Arc>& targets,
+//                            std::vector<unsigned int>& new_ids
+//                           ) = 0;
+//=======
+class FeatureHandlerBase 
 {
-public:
-    PGMLINK_EXPORT
-    void add_arcs_for_replacement_node(HypothesesGraph& g,
-                                       HypothesesGraph::Node n,
-                                       const std::vector<HypothesesGraph::base_graph::Arc>& sources,
-                                       const std::vector<HypothesesGraph::base_graph::Arc>& targets,
-                                       DistanceBase& distance);
-public:
-    PGMLINK_EXPORT
-    virtual void operator()(HypothesesGraph& g,
-                            HypothesesGraph::Node n,
-                            std::size_t n_merger,
-                            unsigned int max_id,
-                            int timestep,
-                            const std::vector<HypothesesGraph::base_graph::Arc>& sources,
-                            const std::vector<HypothesesGraph::base_graph::Arc>& targets,
-                            std::vector<unsigned int>& new_ids
-                           ) = 0;
+ public:
+  PGMLINK_EXPORT 
+  void add_arcs_for_replacement_node(HypothesesGraph& g,
+                                     HypothesesGraph::Node n,
+                                     const std::vector<HypothesesGraph::base_graph::Arc>& sources,
+                                     const std::vector<HypothesesGraph::base_graph::Arc>& targets,
+                                     DistanceBase& distance);
+ public:
+  PGMLINK_EXPORT 
+  virtual void operator()(HypothesesGraph& g,
+                          HypothesesGraph::Node n,
+                          std::size_t n_merger,
+                          unsigned int max_id,
+                          int timestep,
+                          const std::vector<HypothesesGraph::base_graph::Arc>& sources,
+                          const std::vector<HypothesesGraph::base_graph::Arc>& targets,
+                          std::vector<unsigned int>& new_ids,
+                          size_t n_dimensions
+                          ) = 0;
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 };
 
 
 ////
 //// FeatureHandlerFromTraxels
 ////
-class FeatureHandlerFromTraxels
-    : public FeatureHandlerBase
-{
-private:
-    FeatureExtractorBase& extractor_;
-    DistanceBase& base_;
-    TraxelStore* traxel_store_;
-    // FeatureHandlerFromTraxelsMCOMsFromPCOMs() {};
-public:
-    PGMLINK_EXPORT
-    FeatureHandlerFromTraxels(FeatureExtractorBase& extractor,
-                              DistanceBase& base,
-                              TraxelStore* ts)
-        : extractor_(extractor), base_(base), traxel_store_(ts)
-    {}
+//<<<<<<< HEAD
+//class FeatureHandlerFromTraxels
+//    : public FeatureHandlerBase
+//{
+//private:
+//    FeatureExtractorBase& extractor_;
+//    DistanceBase& base_;
+//    TraxelStore* traxel_store_;
+//    // FeatureHandlerFromTraxelsMCOMsFromPCOMs() {};
+//public:
+//    PGMLINK_EXPORT
+//    FeatureHandlerFromTraxels(FeatureExtractorBase& extractor,
+//                              DistanceBase& base,
+//                              TraxelStore* ts)
+//        : extractor_(extractor), base_(base), traxel_store_(ts)
+//    {}
 
-    PGMLINK_EXPORT
-    virtual void operator()(HypothesesGraph& g,
-                            HypothesesGraph::Node n,
-                            std::size_t n_merger,
-                            unsigned int max_id,
-                            int timestep,
-                            const std::vector<HypothesesGraph::base_graph::Arc>& sources,
-                            const std::vector<HypothesesGraph::base_graph::Arc>& targets,
-                            std::vector<unsigned int>& new_ids
-                           );
+//    PGMLINK_EXPORT
+//    virtual void operator()(HypothesesGraph& g,
+//                            HypothesesGraph::Node n,
+//                            std::size_t n_merger,
+//                            unsigned int max_id,
+//                            int timestep,
+//                            const std::vector<HypothesesGraph::base_graph::Arc>& sources,
+//                            const std::vector<HypothesesGraph::base_graph::Arc>& targets,
+//                            std::vector<unsigned int>& new_ids
+//                           );
+//=======
+class FeatureHandlerFromTraxels 
+: public FeatureHandlerBase 
+{
+ private:
+  FeatureExtractorBase& extractor_;
+  DistanceBase& base_;
+  // FeatureHandlerFromTraxelsMCOMsFromPCOMs() {};
+ public:
+  PGMLINK_EXPORT 
+  FeatureHandlerFromTraxels(FeatureExtractorBase& extractor,
+                            DistanceBase& base)
+  : extractor_(extractor), base_(base)
+  {}
+
+  PGMLINK_EXPORT 
+  virtual void operator()(HypothesesGraph& g,
+                          HypothesesGraph::Node n,
+                          std::size_t n_merger,
+                          unsigned int max_id,
+                          int timestep,
+                          const std::vector<HypothesesGraph::base_graph::Arc>& sources,
+                          const std::vector<HypothesesGraph::base_graph::Arc>& targets,
+                          std::vector<unsigned int>& new_ids,
+                          size_t n_dimensions
+                          );
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 };
 
 
 ////
-//// ResolveAmbiguousArcsBase
-////
-class ResolveAmbiguousArcsBase
-{
-public:
-    virtual HypothesesGraph& operator()(HypothesesGraph* g) = 0;
-};
+//<<<<<<< HEAD
+////// ResolveAmbiguousArcsBase
+//////
+//class ResolveAmbiguousArcsBase
+//{
+//public:
+//    virtual HypothesesGraph& operator()(HypothesesGraph* g) = 0;
+//};
 
 
-////
-//// ResolveAmbiguousArcsGreedy
-////
-class ResolveAmbiguousArcsGreedy
-    : public ResolveAmbiguousArcsBase
-{
-public:
-    PGMLINK_EXPORT virtual HypothesesGraph& operator()(HypothesesGraph* g);
-};
+//////
+////// ResolveAmbiguousArcsGreedy
+//////
+//class ResolveAmbiguousArcsGreedy
+//    : public ResolveAmbiguousArcsBase
+//{
+//public:
+//    PGMLINK_EXPORT virtual HypothesesGraph& operator()(HypothesesGraph* g);
+//};
 
 
-////
-//// ReasonerMaxOneArc
-////
-class ReasonerMaxOneArc : public Reasoner
-{
-};
+//////
+////// ReasonerMaxOneArc
+//////
+//class ReasonerMaxOneArc : public Reasoner
+//{
+//};
 
 
-////
-//// ResolveAmbiguousArcsPgm
-////
-class ResolveAmbiguousArcsPgm : public ReasonerMaxOneArc, private ResolveAmbiguousArcsBase
-{
-};
+//////
+////// ResolveAmbiguousArcsPgm
+//////
+//class ResolveAmbiguousArcsPgm : public ReasonerMaxOneArc, private ResolveAmbiguousArcsBase
+//{
+//};
 
 
-////
+//////
+//=======
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 //// MergerResolver
 ////
 /**
@@ -473,86 +620,154 @@ class ResolveAmbiguousArcsPgm : public ReasonerMaxOneArc, private ResolveAmbiguo
  * The classes for application in the conservation tracking environment are provided. For the use in other settings,
  * the appropriate classes have to be specified accordingly.
  */
+//<<<<<<< HEAD
 
-class MergerResolver
+//class MergerResolver
+//{
+//private:
+//    HypothesesGraph* g_;
+
+//    // default constructor should be private (no object without specified graph allowed)
+//    MergerResolver();
+
+//    // collect arcs from ArcIterator and store them in vector
+//    // tested
+//    template <typename ArcIterator>
+//    void collect_arcs(ArcIterator,
+//                      std::vector<HypothesesGraph::base_graph::Arc>&);
+
+//    // template <typename ClusteringAlg>
+//    // do a more general way!
+//    // void calculate_centers(HypothesesGraph::Node,
+//    // int nMergers);
+
+//    // Add arcs to nodes created to replace merger node.
+//    void add_arcs_for_replacement_node(HypothesesGraph::Node node,
+//                                       const Traxel& trax,
+//                                       std::vector<HypothesesGraph::base_graph::Arc> src,
+//                                       std::vector<HypothesesGraph::base_graph::Arc> dest,
+//                                       DistanceBase& distance);
+
+//    // Deactivate arcs of merger node.
+//    void deactivate_arcs(std::vector<HypothesesGraph::base_graph::Arc> arcs);
+
+//    // Deactivate all resolved merger nodes
+//    void deactivate_nodes(std::vector<HypothesesGraph::Node> nodes);
+
+//    // Get maximum id for given timestep
+//    unsigned int get_max_id(int ts);
+
+//    // Split merger node into appropiately many new nodes.
+//    void refine_node(HypothesesGraph::Node,
+//                     std::size_t,
+//                     FeatureHandlerBase& handler);
+
+//public:
+//    PGMLINK_EXPORT MergerResolver(HypothesesGraph* g)
+//        : g_(g)
+//    {
+//        if (!g_)
+//        {
+//            throw std::runtime_error("HypotesesGraph* g_ is a null pointer!");
+//        }
+//        if (!g_->has_property(merger_resolved_to()))
+//        {
+//            g_->add(merger_resolved_to());
+//        }
+//        if (!g_->has_property(node_active2()))
+//        {
+//            throw std::runtime_error("HypothesesGraph* g_ does not have property node_active2!");
+//        }
+//        if (!g_->has_property(arc_active()))
+//        {
+//            throw std::runtime_error("HypothesesGraph* g_ does not have property arc_active!");
+//        }
+//        if (!g_->has_property(arc_distance()))
+//        {
+//            throw std::runtime_error("HypothesesGraph* g_ does not have property arc_distance!");
+//        }
+//        if (!g_->has_property(node_originated_from()))
+//        {
+//            g_->add(node_originated_from());
+//        }
+//        if (!g_->has_property(node_resolution_candidate()))
+//        {
+//            g_->add(node_resolution_candidate());
+//        }
+//        if (!g_->has_property(arc_resolution_candidate()))
+//        {
+//            g_->add(arc_resolution_candidate());
+//        }
+//    }
+
+//    PGMLINK_EXPORT HypothesesGraph* resolve_mergers(FeatureHandlerBase& handler);
+//=======
+   
+class MergerResolver 
 {
-private:
-    HypothesesGraph* g_;
+ private:
+  HypothesesGraph* g_;
+  size_t n_dimensions_;
 
-    // default constructor should be private (no object without specified graph allowed)
-    MergerResolver();
+  // default constructor should be private (no object without specified graph allowed)
+  MergerResolver();
+    
+  // collect arcs from ArcIterator and store them in vector
+  // tested
+  template <typename ArcIterator>
+  void collect_arcs(ArcIterator,
+                    std::vector<HypothesesGraph::base_graph::Arc>&);
 
-    // collect arcs from ArcIterator and store them in vector
-    // tested
-    template <typename ArcIterator>
-    void collect_arcs(ArcIterator,
-                      std::vector<HypothesesGraph::base_graph::Arc>&);
+  // template <typename ClusteringAlg>
+  // do a more general way!
+  // void calculate_centers(HypothesesGraph::Node,
+  // int nMergers);
 
-    // template <typename ClusteringAlg>
-    // do a more general way!
-    // void calculate_centers(HypothesesGraph::Node,
-    // int nMergers);
+  // Add arcs to nodes created to replace merger node.
+  void add_arcs_for_replacement_node(HypothesesGraph::Node node,
+                                     const Traxel& trax,
+                                     std::vector<HypothesesGraph::base_graph::Arc> src,
+                                     std::vector<HypothesesGraph::base_graph::Arc> dest,
+                                     DistanceBase& distance);
 
-    // Add arcs to nodes created to replace merger node.
-    void add_arcs_for_replacement_node(HypothesesGraph::Node node,
-                                       const Traxel& trax,
-                                       std::vector<HypothesesGraph::base_graph::Arc> src,
-                                       std::vector<HypothesesGraph::base_graph::Arc> dest,
-                                       DistanceBase& distance);
+  // Deactivate arcs of merger node.
+  void deactivate_arcs(std::vector<HypothesesGraph::base_graph::Arc> arcs);
 
-    // Deactivate arcs of merger node.
-    void deactivate_arcs(std::vector<HypothesesGraph::base_graph::Arc> arcs);
+  // Deactivate all resolved merger nodes
+  void deactivate_nodes(std::vector<HypothesesGraph::Node> nodes);
 
-    // Deactivate all resolved merger nodes
-    void deactivate_nodes(std::vector<HypothesesGraph::Node> nodes);
+  // Get maximum id for given timestep
+  unsigned int get_max_id(int ts);
 
-    // Get maximum id for given timestep
-    unsigned int get_max_id(int ts);
+  // Split merger node into appropiately many new nodes.
+  void refine_node(HypothesesGraph::Node,
+                   std::size_t,
+                   FeatureHandlerBase& handler);
 
-    // Split merger node into appropiately many new nodes.
-    void refine_node(HypothesesGraph::Node,
-                     std::size_t,
-                     FeatureHandlerBase& handler);
+ public:
+  PGMLINK_EXPORT MergerResolver(HypothesesGraph* g, size_t num_dimensions) 
+  : g_(g), n_dimensions_(num_dimensions)
+  {
+    if (!g_)
+      throw std::runtime_error("HypotesesGraph* g_ is a null pointer!");
+    if (!g_->has_property(merger_resolved_to()))
+      g_->add(merger_resolved_to());
+    if (!g_->has_property(node_active2()))
+      throw std::runtime_error("HypothesesGraph* g_ does not have property node_active2!");
+    if (!g_->has_property(arc_active()))
+      throw std::runtime_error("HypothesesGraph* g_ does not have property arc_active!");
+    if (!g_->has_property(arc_distance()))
+      throw std::runtime_error("HypothesesGraph* g_ does not have property arc_distance!");
+    if (!g_->has_property(node_originated_from()))
+      g_->add(node_originated_from());
+    if (!g_->has_property(node_resolution_candidate()))
+      g_->add(node_resolution_candidate());
+    if (!g_->has_property(arc_resolution_candidate()))
+      g_->add(arc_resolution_candidate());
+  }
 
-public:
-    PGMLINK_EXPORT MergerResolver(HypothesesGraph* g)
-        : g_(g)
-    {
-        if (!g_)
-        {
-            throw std::runtime_error("HypotesesGraph* g_ is a null pointer!");
-        }
-        if (!g_->has_property(merger_resolved_to()))
-        {
-            g_->add(merger_resolved_to());
-        }
-        if (!g_->has_property(node_active2()))
-        {
-            throw std::runtime_error("HypothesesGraph* g_ does not have property node_active2!");
-        }
-        if (!g_->has_property(arc_active()))
-        {
-            throw std::runtime_error("HypothesesGraph* g_ does not have property arc_active!");
-        }
-        if (!g_->has_property(arc_distance()))
-        {
-            throw std::runtime_error("HypothesesGraph* g_ does not have property arc_distance!");
-        }
-        if (!g_->has_property(node_originated_from()))
-        {
-            g_->add(node_originated_from());
-        }
-        if (!g_->has_property(node_resolution_candidate()))
-        {
-            g_->add(node_resolution_candidate());
-        }
-        if (!g_->has_property(arc_resolution_candidate()))
-        {
-            g_->add(arc_resolution_candidate());
-        }
-    }
-
-    PGMLINK_EXPORT HypothesesGraph* resolve_mergers(FeatureHandlerBase& handler);
+  PGMLINK_EXPORT HypothesesGraph* resolve_mergers(FeatureHandlerBase& handler);
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 };
 
 
@@ -1044,9 +1259,33 @@ void update_labelimage(const TimestepIdCoordinateMapPtr& coordinates,
    traxel_map.set(node, trax);
    } */
 
+//<<<<<<< HEAD
 
 
+//} // end namespace pgmlink
+//=======
+/**
+ * @brief Output std vectors of stuff
+ * 
+ * @param stream output stream
+ * @param feats the vector of stuff
+ */
+template<class T>
+std::ostream& operator<<(std::ostream& stream, const std::vector<T>& feats)
+{
+  stream << "(";
+  for(typename std::vector<T>::const_iterator f_it = feats.begin(); f_it != feats.end(); ++f_it)
+  {
+    if(f_it != feats.begin())
+      stream << ", ";
+    stream << *f_it;
+  }
+  stream << ")";
+  return stream;
+}
+  
 } // end namespace pgmlink
+//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 
 
 #endif /* MERGER_RESOLVING_H */

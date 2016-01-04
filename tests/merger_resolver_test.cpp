@@ -31,11 +31,17 @@ using namespace std;
 using namespace boost;
 
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE( MergerResolver_no_mergers )
 {
     HypothesesGraph src;
     HypothesesGraph dest;
     TraxelStore ts;
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_no_mergers) {
+  HypothesesGraph src;
+  HypothesesGraph dest;
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 
     src.add(node_active())
     .add(arc_active())
@@ -46,11 +52,19 @@ BOOST_AUTO_TEST_CASE( MergerResolver_no_mergers )
     .add(arc_resolution_candidate())
     .add(arc_distance());
 
+<<<<<<< HEAD
     MergerResolver m(&src);
     FeatureExtractorMCOMsFromGMM extractor(2);
     DistanceFromCOMs distance;
     FeatureHandlerFromTraxels handler(extractor, distance, &ts);
     m.resolve_mergers(handler);
+=======
+  MergerResolver m(&src, 2);
+  FeatureExtractorMCOMsFromGMM extractor(2);
+  DistanceFromCOMs distance;
+  FeatureHandlerFromTraxels handler(extractor, distance);
+  m.resolve_mergers(handler);
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 
 
     HypothesesGraph::Node n1 = src.add_node(1);
@@ -120,6 +134,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_subgraph )
 }
 
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE( MergerResolver_constructor )
 {
     HypothesesGraph g;
@@ -214,6 +229,135 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
     {
         std::cout << "Setting arc " << g.id(a) << " to {false}" << std::endl;
         active_arcs_count.set(a, {false});
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_constructor ) {
+  HypothesesGraph g;
+  BOOST_CHECK_THROW(MergerResolver m(&g, 2), std::runtime_error);
+  g.add(node_active2());
+  BOOST_CHECK_THROW(MergerResolver m(&g, 2), std::runtime_error);
+  g.add(arc_active());
+  BOOST_CHECK_THROW(MergerResolver m(&g, 2), std::runtime_error);
+  g.add(arc_distance());
+  MergerResolver m(&g, 2);
+  BOOST_CHECK_EQUAL(m.g_, &g);
+  // check that merger_resolved_to property has been added
+  BOOST_CHECK(m.g_->has_property(merger_resolved_to()));
+  BOOST_CHECK(m.g_->has_property(node_originated_from()));
+
+  // check exception on intialization with null pointer
+  HypothesesGraph* G = 0; // = hyp_builder.build();
+  BOOST_CHECK_THROW(MergerResolver M(G, 2), std::runtime_error);
+}
+
+
+BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 ) {
+  LOG(logINFO) << "Starting test MergerResolver_resolve_mergers_3";
+  //  t=1       2
+  //       --- (2)
+  //     |
+  //   (3) --- (1)
+
+  // -> each of the nodes in timesteps t has a possible arc to all nodes in t+1
+  //    o ----- o
+  //     |     |
+  //      -----
+  //     | | | |
+  //    o --x-- o
+  //     | | | |
+  //      -----
+  //     |     |
+  //    o ----- o
+
+  HypothesesGraph g;
+  g.add(node_traxel()).add(arc_distance()).add(arc_active()).add(node_active2());
+  feature_array com(3,0);
+  feature_array pCOM(6*3, 0);
+
+  pCOM[0]  = 3;
+  pCOM[3]  = 1;
+  pCOM[6]  = 6;
+  pCOM[9]  = 1;
+  pCOM[12] = 3;
+  pCOM[15] = 6;
+
+  Traxel t11;
+  t11.Timestep = 1;
+  t11.Id = 11;
+  com[0] = 3; t11.features["com"] = com;
+  t11.features["possibleCOMs"] = pCOM;
+
+  Traxel t21;
+  t21.Timestep = 2;
+  t21.Id = 21;
+  com[0] = 1.5; t21.features["com"] = com;
+  t21.features["possibleCOMs"] = pCOM;
+
+  Traxel t22;
+  t22.Timestep = 2;
+  t22.Id = 22;
+  com[0] = 3; t22.features["com"] = com;
+
+  HypothesesGraph::Node n11 = g.add_node(1);
+  HypothesesGraph::Node n21 = g.add_node(2);
+  HypothesesGraph::Node n22 = g.add_node(2);
+
+  HypothesesGraph::Arc a11_21 = g.addArc(n11, n21);
+  HypothesesGraph::Arc a11_22 = g.addArc(n11, n22);
+
+
+
+  property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+  traxel_map.set(n11, t11);
+  traxel_map.set(n21, t21);
+  traxel_map.set(n22, t22);
+
+  property_map<arc_active, HypothesesGraph::base_graph>::type& arc_map = g.get(arc_active());
+  arc_map.set(a11_21, true);
+  arc_map.set(a11_22, true);
+
+  property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
+  active_map.set(n11, 3);
+  active_map.set(n21, 2);
+  active_map.set(n22, 1);
+
+  property_map<arc_distance, HypothesesGraph::base_graph>::type& dist_map = g.get(arc_distance());
+
+  MergerResolver m(&g, 2);
+  FeatureExtractorMCOMsFromPCOMs extractor;
+  DistanceFromCOMs distance;
+  FeatureHandlerFromTraxels handler(extractor, distance);
+  m.resolve_mergers(handler);
+  prune_inactive(g);
+  
+
+  // check that arcs and nodes have been deactivated
+
+  BOOST_CHECK(!g.valid(a11_22) || (g.source(a11_22) != n11 || g.target(a11_22) != n22));
+  BOOST_CHECK(!g.valid(a11_21) || (g.source(a11_21) != n11 || g.target(a11_21) != n21));
+
+  BOOST_CHECK(!g.valid(n11));
+  BOOST_CHECK(!g.valid(n21));
+
+
+  // check that traxel ids have been set correctly
+  set<int> trx_ids_1;
+  set<int> trx_ids_2;
+  trx_ids_1.insert(12);
+  trx_ids_1.insert(13);
+  trx_ids_1.insert(14);
+  trx_ids_1.insert(22);
+  trx_ids_1.insert(23);
+  trx_ids_1.insert(24);
+  int trx_count = 0;
+  property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_it(active_map, 1);
+  for (; active_it != lemon::INVALID; ++active_it, ++trx_count) {
+    trx_ids_2.insert(traxel_map[active_it].Id);
+
+    HypothesesGraph::InArcIt IAIT(g, active_it);
+    int count_n = 0;
+    for(; IAIT != lemon::INVALID; ++IAIT, ++count_n) {
+      BOOST_CHECK(arc_map[IAIT]);
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
     }
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
@@ -294,11 +438,126 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
     arc_dist_1.insert(5);
     int arc_count = 0;
 
+<<<<<<< HEAD
     property_map<arc_active, HypothesesGraph::base_graph>::type::ItemIt arc_it(arc_map, true);
     for(; arc_it != lemon::INVALID; ++arc_it, ++arc_count)
     {
         arc_dist_2.insert(dist_map[arc_it]);
         BOOST_CHECK(g.valid(arc_it));
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_2 ) {
+  LOG(logINFO) << "Starting test MergerResolver_resolve_mergers_2";
+  
+  //  t=1      2      3
+  //    o ----    ----o
+  //          | |
+  //           O
+  //          | |
+  //    o ----    ----o
+
+  // ->
+  //    o ---- o ---- o
+  //     |    | |    |
+  //       --     --
+  //     |    | |    |
+  //    o ---- o ---- o
+
+  HypothesesGraph g;
+  g.add(node_traxel()).add(arc_distance()).add(arc_active()).add(node_active2()).add(merger_resolved_to());
+
+  feature_array com(3,0);
+  feature_array pCOM(6*3, 0);
+
+  pCOM[0]  = 3;
+  pCOM[3]  = 1;
+  pCOM[6]  = 6;
+  pCOM[9]  = 1;
+  pCOM[12] = 3;
+  pCOM[16] = 6;
+
+  Traxel t11;
+  t11.Timestep = 1;
+  t11.Id = 11;
+  com[0] = 1; t11.features["com"] = com;
+
+  Traxel t12 = t11;
+  t12.Id = 12;
+  t12.features["com"][0] = 6;
+
+  Traxel t21;
+  t21.Timestep = 2;
+  t21.Id = 21;
+  com[0] = 3; t21.features["com"] = com;
+  t21.features["possibleCOMs"] = pCOM;
+
+  Traxel t31;
+  t31.Timestep = 3;
+  t31.Id = 31;
+  com[0] = 1; t31.features["com"] = com;
+  
+  Traxel t32 = t31;
+  t32.Id = 32;
+  t32.features["com"][0] = 6;
+
+  
+  HypothesesGraph::Node n11 = g.add_node(1);
+  HypothesesGraph::Node n12 = g.add_node(1);
+  HypothesesGraph::Node n21 = g.add_node(2);
+  HypothesesGraph::Node n31 = g.add_node(3);
+  HypothesesGraph::Node n32 = g.add_node(3);
+
+  HypothesesGraph::Arc a11_21 = g.addArc(n11, n21);
+  HypothesesGraph::Arc a12_21 = g.addArc(n12, n21);
+  HypothesesGraph::Arc a21_31 = g.addArc(n21, n31);
+  HypothesesGraph::Arc a21_32 = g.addArc(n21, n32);
+
+  property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+  traxel_map.set(n11, t11);
+  traxel_map.set(n12, t12);
+  traxel_map.set(n21, t21);
+  traxel_map.set(n31, t31);
+  traxel_map.set(n32, t32);
+
+  property_map<arc_active, HypothesesGraph::base_graph>::type& arc_map = g.get(arc_active());
+  arc_map.set(a11_21, true);
+  arc_map.set(a12_21, true);
+  arc_map.set(a21_31, true);
+  arc_map.set(a21_32, true);
+
+  
+
+  property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
+  active_map.set(n11, 1);
+  active_map.set(n12, 1);
+  active_map.set(n21, 2);
+  active_map.set(n31, 1);
+  active_map.set(n32, 1);
+
+  MergerResolver m(&g, 2);
+  FeatureExtractorMCOMsFromPCOMs extractor;
+  DistanceFromCOMs distance;
+  FeatureHandlerFromTraxels handler(extractor, distance);
+  m.resolve_mergers(handler);
+  prune_inactive(g);
+  // property_map<merger_resolved_to, HypothesesGraph::base_graph>::type& resolved_map = g.get(merger_resolved_to());
+  property_map<node_timestep, HypothesesGraph::base_graph>::type& time_map = g.get(node_timestep());
+  property_map<node_timestep, HypothesesGraph::base_graph>::type::ItemIt IT(time_map, 2);
+
+  // deactivated arcs from and to merger node
+  BOOST_CHECK(!g.valid(a11_21) || g.source(a11_21) != n11 || g.target(a11_21) != n21);
+  BOOST_CHECK(!g.valid(a12_21) || g.source(a12_21) != n12 || g.target(a12_21) != n21);
+  BOOST_CHECK(!g.valid(a21_31) || g.source(a21_31) != n21 || g.target(a21_31) != n31);
+  BOOST_CHECK(!g.valid(a21_32) || g.source(a21_32) != n21 || g.target(a21_32) != n32);
+  
+  vector<vector<Event> > ev = *(events(g));
+  unsigned time = 0;
+  unsigned resolve_count = 0;
+  // LOG(logINFO) << "Detected the following events:";
+  for (vector<vector<Event> >::iterator it = ev.begin(); it != ev.end(); ++it, ++time) {
+    for (vector<Event>::iterator It = it->begin(); It != it->end(); ++It) {
+      // LOG(logINFO) << " " << time << ": " << *It;
+      if (It->type == Event::ResolvedTo) ++resolve_count;
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
     }
 
     BOOST_CHECK_EQUAL_COLLECTIONS(arc_dist_1.begin(), arc_dist_1.end(), arc_dist_2.begin(), arc_dist_2.end());
@@ -492,6 +751,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_2 )
 }
 
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers )
 {
     LOG(logINFO) << "Starting test MergerResolver_resolve_mergers";
@@ -615,6 +875,120 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers )
                 set_ids = std::set<int>(to_map[active_itemIt].begin(), to_map[active_itemIt].end());
             }
         }
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers ) {
+  LOG(logINFO) << "Starting test MergerResolver_resolve_mergers";
+  HypothesesGraph g;
+  g.add(node_traxel()).add(arc_distance()).add(arc_active()).add(node_active2()).add(merger_resolved_to());
+  //  t=1      2
+  //    o ----  
+  //          | 
+  //           O
+  //          | 
+  //    o ----   
+
+  // ->
+  //    o ---- o
+  //     |    | 
+  //       --   
+  //     |    | 
+  //    o ---- o
+
+  feature_array com(3,0);
+  feature_array pCOM(6*3, 0);
+
+  pCOM[0]  = 3;
+  pCOM[3]  = 1;
+  pCOM[6]  = 6;
+  pCOM[9]  = 1;
+  pCOM[12] = 3;
+  pCOM[16] = 6;
+
+  Traxel t11;
+  t11.Timestep = 1;
+  t11.Id = 11;
+  com[0] = 1; t11.features["com"] = com;
+
+  Traxel t12 = t11;
+  t12.Id = 12;
+  t12.features["com"][0] = 6;
+
+  Traxel t21;
+  t21.Timestep = 2;
+  t21.Id = 21;
+  com[0] = 3; t21.features["com"] = com;
+  t21.features["possibleCOMs"] = pCOM;
+
+  
+  HypothesesGraph::Node n11 = g.add_node(1);
+  HypothesesGraph::Node n12 = g.add_node(1);
+  HypothesesGraph::Node n21 = g.add_node(2);
+
+  HypothesesGraph::Arc a11_21 = g.addArc(n11, n21);
+  HypothesesGraph::Arc a12_21 = g.addArc(n12, n21);
+
+  property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+  traxel_map.set(n11, t11);
+  traxel_map.set(n12, t12);
+  traxel_map.set(n21, t21);
+
+  property_map<arc_active, HypothesesGraph::base_graph>::type& arc_map = g.get(arc_active());
+  arc_map.set(a11_21, true);
+  arc_map.set(a12_21, true);
+
+  
+
+  property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
+  active_map.set(n11, 1);
+  active_map.set(n12, 1);
+  active_map.set(n21, 2);
+
+  MergerResolver m(&g, 2);
+  FeatureExtractorMCOMsFromPCOMs extractor;
+  DistanceFromCOMs distance;
+  FeatureHandlerFromTraxels handler(extractor, distance);
+  m.resolve_mergers(handler);
+  prune_inactive(g);
+
+  // setup tests
+  property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = active_map.beginValue();
+  property_map<arc_distance, HypothesesGraph::base_graph>::type& distance_map = g.get(arc_distance());
+  std::set<int> active_values;
+  std::set<int> values_found;
+  active_values.insert(1);
+  // active_values.insert(2);
+  std::set<double> distances;
+  distances.insert(0);
+  distances.insert(5);
+  std::set<int> new_ids;
+  new_ids.insert(22);
+  new_ids.insert(23);
+  std::set<int> set_ids;
+  
+  for (; active_valueIt != active_map.endValue(); ++active_valueIt) {
+    property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(active_map, *active_valueIt);
+    property_map<merger_resolved_to, HypothesesGraph::base_graph>::type& to_map = g.get(merger_resolved_to());
+    values_found.insert(*active_valueIt);
+    for (; active_itemIt != lemon::INVALID; ++active_itemIt) {
+      int count = 0;
+      std::set<double> measured_distances;
+      for (HypothesesGraph::InArcIt it(g, active_itemIt); it != lemon::INVALID; ++it) {
+	++count;
+	measured_distances.insert(distance_map[it]);
+      }
+      for (HypothesesGraph::OutArcIt it(g, active_itemIt); it != lemon::INVALID; ++it) {
+	++count;
+	measured_distances.insert(distance_map[it]);
+      }
+      if (*active_valueIt == 1) {
+	BOOST_CHECK_EQUAL(count, 2);
+	BOOST_CHECK_EQUAL_COLLECTIONS(distances.begin(), distances.end(), measured_distances.begin(), measured_distances.end());
+      } else if (*active_valueIt == 0) {
+	BOOST_CHECK_EQUAL(count, 0);
+	BOOST_CHECK_EQUAL(traxel_map[active_itemIt].Id, 21);
+	set_ids = std::set<int>(to_map[active_itemIt].begin(), to_map[active_itemIt].end());
+      }
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
     }
     BOOST_CHECK_EQUAL_COLLECTIONS(values_found.begin(), values_found.end(), active_values.begin(), active_values.end());
     // BOOST_CHECK_EQUAL_COLLECTIONS(set_ids.begin(), set_ids.end(), new_ids.begin(), new_ids.end());
@@ -633,6 +1007,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers )
 }
 
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE( MergerResolver_refine_node )
 {
     LOG(logINFO) << "Starting test MergerResolver_refine_node";
@@ -806,6 +1181,169 @@ BOOST_AUTO_TEST_CASE( MergerResolver_refine_node )
             // activated merger replacement nodes
             BOOST_CHECK_EQUAL(active_map[timeIt], 1);
         }
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_refine_node ) {
+  LOG(logINFO) << "Starting test MergerResolver_refine_node";
+  // MergerResolver::refine_node(HypothesesGraph::Node node, std::size_t nMerger)
+
+  //  t=1      2      3 
+  //    o ----   --- o
+  //          | |
+  //           O
+  //          | |
+  //    o ----   --- o
+
+  // ->
+  //    o ---- o ---- o
+  //     |    | |    |
+  //       --     --
+  //     |    | |    |
+  //    o ---- o ---- o
+
+  
+  HypothesesGraph g;
+  // g.add(arc_distance()).add(tracklet_intern_dist()).add(node_tracklet()).add(tracklet_intern_arc_ids()).add(traxel_arc_id());
+  g.add(node_traxel()).add(arc_distance()).add(arc_active()).add(node_active2()).add(merger_resolved_to());
+  
+  feature_array com(3,0);
+  feature_array pCOM(6*3, 0);
+
+  pCOM[0]  = 3;
+  pCOM[3]  = 1;
+  pCOM[6]  = 6;
+  pCOM[9]  = 1;
+  pCOM[12] = 3;
+  pCOM[16] = 6;
+
+  feature_array mCOM(pCOM.begin()+3, pCOM.begin()+9);
+  feature_array com1(mCOM.begin(), mCOM.begin()+3);
+  feature_array com2(mCOM.begin()+3, mCOM.end());
+  
+  std::set<double> dist;
+  dist.insert(0);
+  dist.insert(5);
+
+  std::vector<unsigned int> new_ids;
+  new_ids.push_back(22);
+  new_ids.push_back(23);
+    
+  Traxel t11;
+  t11.Timestep = 1;
+  t11.Id = 11;
+  com[0] = 1; t11.features["com"] = com;
+
+  Traxel t12 = t11;
+  t12.Id = 12;
+  t12.features["com"][0] = 6;
+
+  Traxel t21;
+  t21.Timestep = 2;
+  t21.Id = 21;
+  com[0] = 3; t21.features["com"] = com;
+  t21.features["mergerCOMs"] = mCOM;
+
+  
+  Traxel t31;
+  t31.Timestep = 3;
+  t31.Id = 31;
+  com[0] = 1; t31.features["com"] = com;
+  
+  Traxel t32 = t31;
+  t32.Id = 32;
+  t32.features["com"][0] = 6;
+  
+  HypothesesGraph::Node n11 = g.add_node(1);
+  HypothesesGraph::Node n12 = g.add_node(1);
+  HypothesesGraph::Node n21 = g.add_node(2);
+  HypothesesGraph::Node n31 = g.add_node(3);
+  HypothesesGraph::Node n32 = g.add_node(3);
+
+  HypothesesGraph::Arc a11_21 = g.addArc(n11, n21);
+  HypothesesGraph::Arc a12_21 = g.addArc(n12, n21);
+  HypothesesGraph::Arc a21_31 = g.addArc(n21, n31);
+  HypothesesGraph::Arc a21_32 = g.addArc(n21, n32);
+
+  property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+  traxel_map.set(n11, t11);
+  traxel_map.set(n12, t12);
+  traxel_map.set(n21, t21);
+  traxel_map.set(n31, t31);
+  traxel_map.set(n32, t32);
+
+  property_map<arc_active, HypothesesGraph::base_graph>::type& arc_map = g.get(arc_active());
+  arc_map.set(a11_21, true);
+  arc_map.set(a12_21, true);
+  arc_map.set(a21_31, true);
+  arc_map.set(a21_32, true);
+
+  property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
+  active_map.set(n11, 1);
+  active_map.set(n12, 1);
+  active_map.set(n21, 2);
+  active_map.set(n31, 1);
+  active_map.set(n32, 1);
+
+  property_map<node_timestep, HypothesesGraph::base_graph>::type& timestep_map = g.get(node_timestep());
+  property_map<arc_distance, HypothesesGraph::base_graph>::type& distance_map = g.get(arc_distance());
+  
+
+  MergerResolver m(&g, 2);
+  FeatureExtractorMCOMsFromMCOMs extractor;
+  DistanceFromCOMs distance;
+  FeatureHandlerFromTraxels handler(extractor, distance);
+  m.refine_node(n21, 2, handler);
+  prune_inactive(g);
+  
+  // deactivated arcs from and to merger node
+  BOOST_CHECK(!g.valid(a11_21) || g.source(a11_21) != n11 || g.target(a11_21) != n21);
+  BOOST_CHECK(!g.valid(a12_21) || g.source(a12_21) != n12 || g.target(a12_21) != n21);
+  BOOST_CHECK(!g.valid(a21_31) || g.source(a21_31) != n21 || g.target(a21_31) != n31);
+  BOOST_CHECK(!g.valid(a21_32) || g.source(a21_32) != n21 || g.target(a21_32) != n32);
+
+  int count = 0;
+  property_map<node_timestep, HypothesesGraph::base_graph>::type::ItemIt timeIt(timestep_map, 2);
+  for (; timeIt != lemon::INVALID; ++timeIt) {
+    HypothesesGraph::base_graph::InArcIt inIt(g, timeIt);
+    HypothesesGraph::base_graph::OutArcIt outIt(g, timeIt);
+    if (timeIt == n21) {
+      
+      // merger node still active, will be deactivated in MergerResolver::resolve_mergers
+      BOOST_CHECK_EQUAL(active_map[timeIt], 2);
+    } else {
+
+      // if correct merger COM exists in traxel, count++
+      Traxel trax = traxel_map[timeIt];
+      com = trax.features["com"];
+      if ( (std::equal(com1.begin(), com1.end(), com.begin()) ||
+	    std::equal(com2.begin(), com2.end(), com.begin()) ) &&
+	   (trax.Id == 22 || trax.Id == 23) ) {
+	++count;
+      }
+      
+      
+      std::set<double> inDist;
+      for (; inIt != lemon::INVALID; ++inIt) {
+	// save distances of arcs
+	inDist.insert(distance_map[inIt]);
+	// check if activated
+        BOOST_CHECK(arc_map[inIt]);
+      }
+      // check distances of new arcs
+      BOOST_CHECK_EQUAL_COLLECTIONS(inDist.begin(), inDist.end(), dist.begin(), dist.end());
+      
+      std::set<double> outDist;
+      for (; outIt != lemon::INVALID; ++outIt) {
+	// save distances of arcs
+	outDist.insert(distance_map[outIt]);
+	// check if activated
+        BOOST_CHECK(arc_map[outIt]);	
+      }
+      // check distances of new arcs
+      BOOST_CHECK_EQUAL_COLLECTIONS(outDist.begin(), outDist.end(), dist.begin(), dist.end());
+      
+      // activated merger replacement nodes
+      BOOST_CHECK_EQUAL(active_map[timeIt], 1);
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
     }
     // check number of newly created nodes
     BOOST_CHECK_EQUAL(count, 2);
@@ -816,6 +1354,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_refine_node )
 }
 
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE( MergerResolver_deactivate_arcs )
 {
     // deactivate_arcs(std::vector<HypothesesGraph::base_graph::Arc>)
@@ -884,6 +1423,70 @@ BOOST_AUTO_TEST_CASE( MergerResolver_deactivate_nodes )
 
     // node is not active (0) objects
     BOOST_CHECK_EQUAL(g.get(node_active2())[n], 0);
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_deactivate_arcs ) {
+  // deactivate_arcs(std::vector<HypothesesGraph::base_graph::Arc>)
+  
+  //  t=1      2      3 
+  //    o ---- o ---- o
+             
+  // ->
+  //    o      o      o
+
+  
+  HypothesesGraph g;
+  g.add(arc_active()).add(node_active2()).add(arc_distance()).add(node_traxel());
+  HypothesesGraph::Node n1 = g.add_node(1);
+  HypothesesGraph::Node n2 = g.add_node(2);
+  HypothesesGraph::Node n3 = g.add_node(3);
+  HypothesesGraph::Arc a12 = g.addArc(n1, n2);
+  HypothesesGraph::Arc a23 = g.addArc(n2, n3);
+
+  g.get(arc_active()).set(a12, true);
+  g.get(arc_active()).set(a23, true);
+  
+  std::vector<HypothesesGraph::base_graph::Arc> arcs;
+  arcs.push_back(a12);
+  arcs.push_back(a23);
+  MergerResolver m(&g, 2);
+  m.deactivate_arcs(arcs);
+  for (std::vector<HypothesesGraph::base_graph::Arc>::iterator it = arcs.begin(); it != arcs.end(); ++it) {
+    // arc is deactivated
+    BOOST_CHECK_EQUAL(g.get(arc_active())[*it], false);
+  }
+}
+
+
+BOOST_AUTO_TEST_CASE( MergerResolver_deactivate_nodes ) {
+  LOG(logINFO) << "Starting test MergerResolver_deactivate_nodes";
+  // deactivate_nodes(std::vector<HypothesesGraph::Node> nodes)
+
+  // (1) -> (0)
+
+  
+  HypothesesGraph g;
+  g.add(node_active2()).add(arc_active()).add(arc_distance());
+  HypothesesGraph::Node n = g.add_node(1);
+  g.get(node_active2()).set(n, 1);
+  set<int> active_values;
+  set<int> active_values_from_properties;
+  active_values.insert(0);
+  
+  // node is active with 1 object
+  BOOST_CHECK_EQUAL(g.get(node_active2())[n], 1);
+
+  std::vector<HypothesesGraph::Node> nodes;
+  nodes.push_back(n);
+  MergerResolver m(&g, 2);
+  m.deactivate_nodes(nodes);
+  property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g.get(node_active2());
+  property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_It=active_map.beginValue();
+  for (; active_It != active_map.endValue(); ++active_It) active_values_from_properties.insert(*active_It);
+  BOOST_CHECK_EQUAL_COLLECTIONS(active_values.begin(), active_values.end(), active_values_from_properties.begin(), active_values_from_properties.end());
+  
+  // node is not active (0) objects
+  BOOST_CHECK_EQUAL(g.get(node_active2())[n], 0);
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 }
 
 
@@ -919,9 +1522,15 @@ BOOST_AUTO_TEST_CASE( MergerResolver_get_max_id )
     traxel_map.set(n12, t12);
     traxel_map.set(n21, t21);
 
+<<<<<<< HEAD
     MergerResolver m(&g);
     BOOST_CHECK_EQUAL(m.get_max_id(1), 2);
     BOOST_CHECK_EQUAL(m.get_max_id(2), 2);
+=======
+  MergerResolver m(&g, 2);
+  BOOST_CHECK_EQUAL(m.get_max_id(1), 2);
+  BOOST_CHECK_EQUAL(m.get_max_id(2), 2);  
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 }
 
 
@@ -1015,6 +1624,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_add_arcs_for_replacement_node )
 }
 
 
+<<<<<<< HEAD
 BOOST_AUTO_TEST_CASE( MergerResolver_collect_arcs )
 {
     // MergerResolver::collect_arcs(ArcIterator arcIt, std::vector<HypothesesGraph::base_graph::Arc>& res)
@@ -1082,6 +1692,72 @@ BOOST_AUTO_TEST_CASE( MergerResolver_collect_arcs )
     BOOST_CHECK_EQUAL(src_to.Id, t2.Id);
     BOOST_CHECK_EQUAL(tar_from.Id, t2.Id);
     BOOST_CHECK_EQUAL(tar_to.Id, t3.Id);
+=======
+BOOST_AUTO_TEST_CASE( MergerResolver_collect_arcs ) {
+  // MergerResolver::collect_arcs(ArcIterator arcIt, std::vector<HypothesesGraph::base_graph::Arc>& res)
+
+  //  t=1      2      3 
+  //    o ---- o ---- o 
+
+  
+  feature_array COM(3, 0.0);
+  TraxelStore ts;
+  Traxel t1, t2, t3;
+  
+  t1.Id = 11;
+  t1.Timestep = 1;
+  t1.features["com"] = COM;
+  
+  t2.Id = 21;
+  t2.Timestep = 2;
+  t2.features["com"] = COM;
+  
+  t3.Id = 31;
+  t3.Timestep = 3;
+  t3.features["com"] = COM;
+  
+  add(ts, t1);
+  add(ts, t2);
+  add(ts, t3);
+  SingleTimestepTraxel_HypothesesBuilder::Options builder_opts(1, // max NN
+							       100, // max Dist
+							       false, // forward_backward
+							       false, // consider_divisions
+							       100 // divison_threshold
+							       );
+  SingleTimestepTraxel_HypothesesBuilder hyp_builder(&ts, builder_opts);
+  HypothesesGraph* g = hyp_builder.build();
+  g->add(node_active2()).add(arc_active()).add(arc_distance());
+  MergerResolver m(g, 2);
+  
+  std::vector<HypothesesGraph::base_graph::Arc> sources;
+  std::vector<HypothesesGraph::base_graph::Arc> targets;
+  
+  property_map<node_timestep, HypothesesGraph::base_graph>::type& time_map = g->get(node_timestep());
+  property_map<node_timestep, HypothesesGraph::base_graph>::type::ItemIt time_it(time_map, 2);
+  property_map<arc_active, HypothesesGraph::base_graph>::type& arc_active_map = g->get(arc_active());
+  for (HypothesesGraph::base_graph::ArcIt arcIt(*g); arcIt != lemon::INVALID; ++arcIt) {
+    arc_active_map.set(arcIt, true);
+  }
+  HypothesesGraph::Node node = time_it;
+  m.collect_arcs(HypothesesGraph::base_graph::InArcIt(*g, node), sources);
+  m.collect_arcs(HypothesesGraph::base_graph::OutArcIt(*g, node), targets);
+
+  // There should be one arc from t1 to t2 and one from t2 to t3
+  BOOST_CHECK_EQUAL(sources.size(), 1);
+  BOOST_CHECK_EQUAL(targets.size(), 1);
+
+  property_map<node_traxel, HypothesesGraph::base_graph>::type& trax_map = g->get(node_traxel());
+  Traxel src_from = trax_map[g->source(sources[0])];
+  Traxel src_to = trax_map[g->target(sources[0])];
+  Traxel tar_from = trax_map[g->source(targets[0])];
+  Traxel tar_to = trax_map[g->target(targets[0])];
+
+  BOOST_CHECK_EQUAL(src_from.Id, t1.Id);
+  BOOST_CHECK_EQUAL(src_to.Id, t2.Id);
+  BOOST_CHECK_EQUAL(tar_from.Id, t2.Id);
+  BOOST_CHECK_EQUAL(tar_to.Id, t3.Id);
+>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 }
 
 

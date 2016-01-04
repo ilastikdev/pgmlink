@@ -957,17 +957,20 @@ boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph&
     return ret;
 }
 
-boost::shared_ptr<std::vector< std::vector<Event> > > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2)
+EventVectorVector merge_event_vectors(const EventVectorVector& ev1, const EventVectorVector& ev2)
 {
 
     assert(ev1.size() == ev2.size());
-    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
-    std::vector<std::vector<Event> >::const_iterator it1 = ev1.begin();
-    std::vector<std::vector<Event> >::const_iterator it2 = ev2.begin();
+    EventVectorVector evv;
+    EventVectorVector& ret(evv);
+    EventVectorVector::const_iterator it1 = ev1.begin();
+    EventVectorVector::const_iterator it2 = ev2.begin();
     for (; it1 != ev1.end(); ++it1, ++it2)
     {
-        ret->push_back(vector<Event>());
-        std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret->rbegin()));
+        //ret->push_back(vector<Event>());
+        ret.push_back(EventVector());
+        //std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret->rbegin()));
+        std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret.rbegin()));
         std::copy(it1->begin(), it1->end(), push_back_inserter);
         std::copy(it2->begin(), it2->end(), push_back_inserter);
     }

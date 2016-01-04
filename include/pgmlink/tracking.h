@@ -294,7 +294,7 @@ public:
     PGMLINK_EXPORT void setParameterWeights(Parameter& param,std::vector<double> ctWeights);
 
     PGMLINK_EXPORT EventVectorVector resolve_mergers(
-            EventVectorVector &events,
+            EventVectorVector& in_events,
             Parameter& param,
             TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
             double ep_gap = 0.01,
@@ -303,8 +303,8 @@ public:
             int n_dim = 3,
             double transition_parameter = 5.,
             bool with_constraints = true,
-            // bool with_multi_frame_moves = true);
-            boost::python::object transitionClassifier = boost::python::object()
+            boost::python::object transitionClassifier = boost::python::object(),
+            bool with_multi_frame_moves = true
             );
 
     PGMLINK_EXPORT void enable_appearance(bool b) { enable_appearance_ = b; }

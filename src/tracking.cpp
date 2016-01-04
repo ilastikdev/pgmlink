@@ -1009,7 +1009,7 @@ void ConsTracking::setParameterWeights(Parameter& param,std::vector<double> ctWe
 }
 
 EventVectorVector ConsTracking::resolve_mergers(
-    EventVectorVector& events,
+    EventVectorVector& in_events,
     Parameter& param,
     TimestepIdCoordinateMapPtr coordinates,
     double ep_gap,
@@ -1018,7 +1018,8 @@ EventVectorVector ConsTracking::resolve_mergers(
     int n_dim,
     double transition_parameter,
     bool with_constraints,
-    boost::python::object transitionClassifier
+    boost::python::object transitionClassifier,
+    bool return_multi_frame_moves
 )
 {
     LOG(logINFO) << "-> resolving mergers";
@@ -1028,7 +1029,7 @@ EventVectorVector ConsTracking::resolve_mergers(
 
     // TODO why doesn't it check for empty vectors in the event vector from the
     // first element on?
-    if ( not all_true(events.begin() + 1, events.end(), has_data<Event>))
+    if ( not all_true(in_events.begin() + 1, in_events.end(), has_data<Event>))
     {
         LOG(logDEBUG) << "Nothing to be done in ConstTracking::resolve_mergers:";
         LOG(logDEBUG) << "Empty vector in event vector";
@@ -1044,7 +1045,7 @@ EventVectorVector ConsTracking::resolve_mergers(
         resolved_graph_ = boost::make_shared<HypothesesGraph>();
         HypothesesGraph::copy(*hypotheses_graph_, *resolved_graph_);
 
-        MergerResolver m(resolved_graph_.get());
+        MergerResolver m(resolved_graph_.get(), n_dim);
         FeatureExtractorBase* extractor;
         DistanceFromCOMs distance;
         if (coordinates)
@@ -1056,7 +1057,7 @@ EventVectorVector ConsTracking::resolve_mergers(
             calculate_gmm_beforehand(*resolved_graph_, 1, n_dim);
             extractor = new FeatureExtractorMCOMsFromMCOMs;
         }
-        FeatureHandlerFromTraxels handler(*extractor, distance, traxel_store_);
+        FeatureHandlerFromTraxels handler(*extractor, distance);//, traxel_store_);
 
         m.resolve_mergers(handler);
 
@@ -1072,9 +1073,22 @@ EventVectorVector ConsTracking::resolve_mergers(
                       transitionClassifier,
                       solver_);
 
+        if (return_multi_frame_moves) {
+            std::cout << "-> constructing multi frame moves" << std::endl;
+            boost::shared_ptr<std::vector<std::vector<Event> > > multi_frame_moves
+            //std::vector<std::vector<Event> > multi_frame_moves
+                = multi_frame_move_events(*resolved_graph_);
+            std::cout << "-> merging unresolved and resolved events" << std::endl;
+            in_events = merge_event_vectors(in_events, *multi_frame_moves);
+        } else {
+            std::cout << "-> get events of the resolved graph" << std::endl;
+            prune_inactive(*resolved_graph_);
+            in_events = *events(*resolved_graph_);
+        }
+
         LOG(logINFO) << "-> constructing resolved events";
         prune_inactive(*resolved_graph_);
-        boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
+        //boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
 
         // TODO The in serialized event vector written in the track() function
         // will be overwritten. Is this the desired behaviour?
@@ -1083,16 +1097,16 @@ EventVectorVector ConsTracking::resolve_mergers(
             // store the traxel store and the resulting event vector
             std::ofstream ofs(event_vector_dump_filename_.c_str());
             boost::archive::text_oarchive out_archive(ofs);
-            out_archive << *events_ptr;
+            out_archive << in_events;
         }
 
         // cleanup extractor
         delete extractor;
 
-        return *events_ptr;
+        return in_events;
     }
     LOG(logINFO) << "-> done resolving mergers";
-    return events;
+    return in_events;
 }
 
 std::vector<std::map<unsigned int, bool> > ConsTracking::detections()
@@ -1240,6 +1254,7 @@ void ConsTracking::writeStructuredLearningFiles(std::string feature_file_name,
     }
 }
 
+//<<<<<<< HEAD
 std::vector<double> ConsTracking::learnTrackingWeights(std::string feature_file_name,
                                       std::string constraints_file_name,
                                       std::string ground_truth_file_name,
@@ -1290,6 +1305,192 @@ double ConsTracking::hammingloss_of_files(std::string f1, std::string f2)
     }
     return loss;
 }
+//=======
+//	double detection_weight = 10;
+//	Traxels empty;
+//	boost::function<double(const Traxel&, const size_t)> detection, division;
+//	boost::function<double(const double)> transition;
+
+
+//	if (use_classifier_prior_) {
+//		LOG(logINFO) << "Using classifier prior";
+//		detection = NegLnDetection(detection_weight);
+//	} else if (use_size_dependent_detection_) {
+//		LOG(logINFO) << "Using size dependent prior";
+//		detection = NegLnDetection(detection_weight); // weight
+//	} else {
+//		LOG(logINFO) << "Using hard prior";
+//		// assume a quasi geometric distribution
+//		vector<double> prob_vector;
+//		double p = 0.7; // e.g. for max_number_objects=3, p=0.7: P(X=(0,1,2,3)) = (0.027, 0.7, 0.21, 0.063)
+//		double sum = 0;
+//		for(double state = 0; state < max_number_objects_; ++state) {
+//			double prob = p*pow(1-p,state);
+//			prob_vector.push_back(prob);
+//			sum += prob;
+//		}
+//		prob_vector.insert(prob_vector.begin(), 1-sum);
+
+//		detection = boost::bind<double>(NegLnConstant(detection_weight,prob_vector), _2);
+//	}
+
+	
+
+//	LOG(logDEBUG1) << "division_weight = " << division_weight;
+//	LOG(logDEBUG1) << "transition_weight = " << transition_weight;
+//	division = NegLnDivision(division_weight);
+//	transition = NegLnTransition(transition_weight);
+
+//	//border_width_ is given in normalized scale, 1 corresponds to a maximal distance of dim_range/2
+//	boost::function<double(const Traxel&)> appearance_cost_fn, disappearance_cost_fn;
+//	LOG(logINFO) << "using border-aware appearance and disappearance costs, with absolute margin: " << border_width;
+//	appearance_cost_fn = SpatialBorderAwareWeight(appearance_cost,
+//												border_width,
+//												false, // true if relative margin to border
+//												fov_);
+//	disappearance_cost_fn = SpatialBorderAwareWeight(disappearance_cost,
+//												border_width,
+//												false, // true if relative margin to border
+//												fov_);
+
+//	cout << "-> init ConservationTracking reasoner" << endl;
+	
+//	ConservationTracking pgm(
+//			max_number_objects_,
+//			detection,
+//			division,
+//			transition,
+//			forbidden_cost,
+//			ep_gap,
+//			with_tracklets,
+//			with_divisions_,
+//			disappearance_cost_fn,
+//			appearance_cost_fn,
+//			true, // with_misdetections_allowed
+//			true, // with_appearance
+//			true, // with_disappearance
+//			transition_parameter,
+//            with_constraints,
+//            cplex_timeout
+//			);
+
+//	cout << "-> formulate ConservationTracking model" << endl;
+//	pgm.formulate(*hypotheses_graph_);
+
+//	cout << "-> infer" << endl;
+//	pgm.infer();
+
+//	cout << "-> conclude" << endl;
+//	pgm.conclude(*hypotheses_graph_);
+
+//	cout << "-> storing state of detection vars" << endl;
+//	last_detections_ = state_of_nodes(*hypotheses_graph_);
+
+//	cout << "-> pruning inactive hypotheses" << endl;
+//	prune_inactive(*hypotheses_graph_);
+
+//	cout << "-> constructing unresolved events" << endl;
+//	boost::shared_ptr<std::vector< std::vector<Event> > > ev = events(*hypotheses_graph_);
+
+//	if(event_vector_dump_filename_ != "none")
+//	  {
+//	    // store the traxel store and the resulting event vector
+//	    std::ofstream ofs(event_vector_dump_filename_.c_str());
+//	    boost::archive::text_oarchive out_archive(ofs);
+//	    out_archive << *ev;
+//	  }
+
+//	return *ev;
+
+//  }
+
+//	std::vector<std::vector<Event> > ConsTracking::resolve_mergers(
+//		boost::shared_ptr<std::vector<std::vector<Event> > > events_ptr,
+//        Parameter& param,
+//        TimestepIdCoordinateMapPtr coordinates,
+//		double ep_gap,
+//		double transition_weight,
+//		bool with_tracklets,
+//		int n_dim,
+//		double transition_parameter,
+//		bool with_constraints,
+//		bool return_multi_frame_moves
+//  ) {
+//		// TODO Redundancy to track(). -> Problem?
+//		boost::function<double(const double)> transition;
+//		transition = NegLnTransition(transition_weight);
+
+//		cout << "-> resolving mergers" << endl;
+//		// TODO why doesn't it check for empty vectors in the event vector from the
+//		// first element on?
+//		if ( ! all_true(events_ptr->begin()+1, events_ptr->end(), has_data<Event>)) {
+//			LOG(logDEBUG) << "Nothing to be done in ConstTracking::resolve_mergers:";
+//			LOG(logDEBUG) << "Empty vector in event vector";
+//		} else if (max_number_objects_ == 1) {
+//			LOG(logDEBUG) << "Nothing to resolve in ConstTracking::resolve_mergers:";
+//			LOG(logDEBUG) << "max_number_objects = 1";
+//		} else {
+//            // create a copy of the hypotheses graph to perform merger resolution without destroying the old graph
+//            HypothesesGraph resolved_graph;
+//            HypothesesGraph::copy(*hypotheses_graph_, resolved_graph);
+
+//            MergerResolver m(&resolved_graph, n_dim);
+//			FeatureExtractorBase* extractor;
+//			DistanceFromCOMs distance;
+//			if (coordinates) {
+//				extractor = new FeatureExtractorArmadillo(coordinates);
+//			} else {
+//                calculate_gmm_beforehand(resolved_graph, 1, n_dim);
+//				extractor = new FeatureExtractorMCOMsFromMCOMs;
+//			}
+//			FeatureHandlerFromTraxels handler(*extractor, distance);
+
+//			m.resolve_mergers(handler);
+
+//			HypothesesGraph g_res;
+//            resolve_graph(resolved_graph,
+//                          g_res, transition,
+//                          ep_gap,
+//                          with_tracklets,
+//                          transition_parameter,
+//                          with_constraints);
+//			if (return_multi_frame_moves) {
+//				cout << "-> constructing multi frame moves" << endl;
+//				boost::shared_ptr<std::vector<std::vector<Event> > > multi_frame_moves
+//					= multi_frame_move_events(resolved_graph);
+//				cout << "-> merging unresolved and resolved events" << endl;
+//				events_ptr = merge_event_vectors(*events_ptr, *multi_frame_moves);
+//			} else {
+//				cout << "-> get events of the resolved graph" << endl;
+//				prune_inactive(resolved_graph);
+//				events_ptr = events(resolved_graph);
+//			}
+
+//			// TODO The in serialized event vector written in the track() function
+//			// will be overwritten. Is this the desired behaviour?
+//			if(event_vector_dump_filename_ != "none") {
+//				// store the traxel store and the resulting event vector
+//				std::ofstream ofs(event_vector_dump_filename_.c_str());
+//				boost::archive::text_oarchive out_archive(ofs);
+//				out_archive << *events_ptr;
+//			}
+//		}
+//		cout << "-> done resolving mergers" << endl;
+//		return *events_ptr;
+//  }
+
+
+
+//std::vector<std::map<unsigned int, bool> > ConsTracking::detections() {
+//    std::vector<std::map<unsigned int, bool> > res;
+//	if (last_detections_) {
+//		return *last_detections_;
+//	} else {
+//		throw std::runtime_error(
+//				"MrfTracking::detections(): previous tracking result required");
+//	}
+////>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
+//}
 
 
 } // namespace tracking
