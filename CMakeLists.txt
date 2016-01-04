@@ -55,7 +55,11 @@ find_package( Armadillo REQUIRED )
 find_package( Mlpack REQUIRED )
 find_package( Opengm REQUIRED )
 find_package( Xml2 REQUIRED )
+#<<<<<<< HEAD
 find_package( PythonInterp REQUIRED )
+#=======
+find_package( Dlib REQUIRED )
+#>>>>>>> be4462ae899d726e6479be3f8bdcf624c8ffb901
 
 SET(WITH_DPCT false CACHE BOOL "Build with dynamic programming conservation tracking")
 if(WITH_DPCT)
@@ -170,6 +174,7 @@ else()
 endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#<<<<<<< HEAD
   set(WITH_CHECKED_STL "False" CACHE BOOL "Build with checked stl for debuggable code (may degrade performance; gcc only).")
   if(WITH_CHECKED_STL)
     add_definitions(-D_GLIBCXX_DEBUG)
@@ -177,6 +182,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS "-pthread -fopenmp ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
+#=======
+#  set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wfatal-errors -std=c++98  -pthread -fopenmp ${CMAKE_CXX_FLAGS}")
+#  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 ${CMAKE_CXX_FLAGS_DEBUG}")
+#  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Werror ${CMAKE_CXX_FLAGS_RELEASE}")
+#>>>>>>> be4462ae899d726e6479be3f8bdcf624c8ffb901
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -201,11 +211,18 @@ if(WIN32)
   add_compiler_export_flags() # enable dynamic symbol export/import for shared libs (on Windows)
 endif()
 
+#<<<<<<< HEAD
 file(GLOB_RECURSE LIB_SOURCES src/*.cpp)
 file(GLOB_RECURSE HEADERS include/*.h*)
 
 add_library(pgmlink SHARED ${LIB_SOURCES} ${HEADERS})
 
+#=======
+#file(GLOB LIB_SOURCES src/*.cpp)
+#file(GLOB_RECURSE HEADERS include/*.h*)
+
+#add_library(pgmlink SHARED ${LIB_SOURCES} ${HEADERS})
+#>>>>>>> be4462ae899d726e6479be3f8bdcf624c8ffb901
 
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/pgmlink )
 if(WIN32)
