@@ -231,6 +231,28 @@ double NegLnTransition::operator ()(const double dist_prob) const
         return result;
 }
 
+////
+//// class NegLnTransitionNoWeight
+////
+double NegLnTransitionNoWeight::operator ()(const double dist_prob) const
+{
+    double arg = dist_prob;
+    if(arg < 0.0000000001)
+    {
+        arg = 0.0000000001;
+    }
+    double result = -1.0 * log(arg);
+    if (result == -0)
+        return 0.0;
+    else
+        return result;
+}
+
+double NegLnTransitionNoWeight::getw()
+{
+    return w_;
+}
+
 
 ////
 //// class MoveEnergy

@@ -425,7 +425,10 @@ void StructuredLearningTracking::structuredLearningFromParam(Parameter& param)
         param.cplex_timeout,
         param.transition_classifier,
         param.num_threads,
-        param.withNormalization);
+        param.withNormalization,
+        param.withClassifierPrior,
+        param.verbose
+    );
 }
 
 void StructuredLearningTracking::setParameterWeights(Parameter& param,std::vector<double> sltWeights)
@@ -475,6 +478,7 @@ void StructuredLearningTracking::setParameterWeights(Parameter& param,std::vecto
     param.divisionNoWeight = NegLnDivisionNoWeight(sltWeights[1]);
 
     param.transition = NegLnTransition(sltWeights[2]); // not needed if defined in python via register...
+    param.transitionNoWeight = NegLnTransitionNoWeight(sltWeights[2]); // not needed if defined in python via register...
 
     param.appearance_cost_fn = SpatialBorderAwareWeight(sltWeights[3],
                              param.border_width,

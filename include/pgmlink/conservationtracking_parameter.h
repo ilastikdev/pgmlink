@@ -101,6 +101,7 @@ public:
     boost::function<double (const Traxel&, const size_t)> division;
     boost::function<double (const Traxel&, const size_t)> divisionNoWeight;
     boost::function<double (const double)> transition;
+    boost::function<double (const double)> transitionNoWeight;
     //boost::function<double (const Traxel&, const Traxel&, const size_t)> transition;
     boost::function<double (const Traxel&, const Traxel&, const Traxel&)> motion_model3;
     boost::function<double (const Traxel&, const Traxel&, const Traxel&, const Traxel&)> motion_model4;

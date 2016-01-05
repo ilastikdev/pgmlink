@@ -174,6 +174,19 @@ private:
     double w_;
 };
 
+class NegLnTransitionNoWeight
+{
+public:
+    PGMLINK_EXPORT NegLnTransitionNoWeight(double weight)
+        : w_(weight)
+    {}
+
+    PGMLINK_EXPORT double operator()( const double ) const;
+    PGMLINK_EXPORT double getw();
+private:
+    double w_;
+};
+
 class MoveEnergy
 {
 public:

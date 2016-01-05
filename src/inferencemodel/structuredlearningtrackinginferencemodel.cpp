@@ -327,7 +327,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
-            double energy = param_.transition(get_transition_probability(tr1, tr2, state));
+            double energy = param_.transitionNoWeight(get_transition_probability(tr1, tr2, state));
             //double energy = param_.transition(tr1, tr2, state);
 
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state
@@ -354,7 +354,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
 
         for (size_t state = 0; state <= param_.max_number_objects; ++state)
         {
-            double energy = param_.transition(get_transition_probability(tr1, tr2, state));
+            double energy = param_.transitionNoWeight(get_transition_probability(tr1, tr2, state));
             //double energy = param_.transition(tr1, tr2, state); // calls python side defined transition funtion WITHOUT weight multiplier
 
             LOG(logDEBUG2) << "StructuredLearningTrackingInferenceModel::add_finite_factors: transition[" << state
