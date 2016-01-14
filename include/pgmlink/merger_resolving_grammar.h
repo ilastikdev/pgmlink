@@ -58,21 +58,7 @@ class FeatureHandlerFromTraxels;
 
 class DistanceBase;
 
-//<<<<<<< HEAD
-//class DistanceFromCOMs;
-
-//class ResolveAmbiguousArcsBase;
-
-//class ResolveAmbiguousArcsGreedy;
-
-//class ResolveAmbiguousArcsPgm;
-
-//class ReasonerMaxOneArc;
-
-//class MergerResolver;
-//=======
-  class MergerResolver;
-//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
+class MergerResolver;
 
 }
 
