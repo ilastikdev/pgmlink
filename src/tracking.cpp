@@ -1058,7 +1058,7 @@ EventVectorVector ConsTracking::resolve_mergers(
             calculate_gmm_beforehand(*resolved_graph_, 1, n_dim);
             extractor = new FeatureExtractorMCOMsFromMCOMs;
         }
-        FeatureHandlerFromTraxels handler(*extractor, distance);//, traxel_store_);
+        FeatureHandlerFromTraxels handler(*extractor, distance, traxel_store_);
 
         m.resolve_mergers(handler);
 
@@ -1066,26 +1066,12 @@ EventVectorVector ConsTracking::resolve_mergers(
         resolve_graph(*resolved_graph_,
                       g_res,
                       param,
-                      //param.transition,
                       ep_gap,
                       with_tracklets,
                       transition_parameter,
                       with_constraints,
                       transitionClassifier,
                       solver_);
-
-//        if (return_multi_frame_moves) {
-//            std::cout << "-> constructing multi frame moves" << std::endl;
-//            boost::shared_ptr<std::vector<std::vector<Event> > > multi_frame_moves
-//            //std::vector<std::vector<Event> > multi_frame_moves
-//                = multi_frame_move_events(*resolved_graph_);
-//            LOG(logINFO) << "-> merging unresolved and resolved events";
-//            in_events = merge_event_vectors(in_events, *multi_frame_moves);
-//        } else {
-//            LOG(logINFO) << "-> get events of the resolved graph";
-//            prune_inactive(*resolved_graph_);
-//            in_events = *events(*resolved_graph_);
-//        }
 
         LOG(logINFO) << "-> constructing resolved events";
         prune_inactive(*resolved_graph_);
@@ -1099,8 +1085,7 @@ EventVectorVector ConsTracking::resolve_mergers(
             // store the traxel store and the resulting event vector
             std::ofstream ofs(event_vector_dump_filename_.c_str());
             boost::archive::text_oarchive out_archive(ofs);
-            //out_archive << in_events;
-            out_archive << events_ptr;
+            out_archive << *events_ptr;
         }
 
         // cleanup extractor

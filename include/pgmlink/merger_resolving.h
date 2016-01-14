@@ -436,12 +436,14 @@ class FeatureHandlerFromTraxels
  private:
   FeatureExtractorBase& extractor_;
   DistanceBase& base_;
+  TraxelStore* traxel_store_;
   // FeatureHandlerFromTraxelsMCOMsFromPCOMs() {};
  public:
   PGMLINK_EXPORT 
   FeatureHandlerFromTraxels(FeatureExtractorBase& extractor,
-                            DistanceBase& base)
-  : extractor_(extractor), base_(base)
+                            DistanceBase& base,
+                            TraxelStore* ts)
+  : extractor_(extractor), base_(base), traxel_store_(ts)
   {}
 
   PGMLINK_EXPORT 
