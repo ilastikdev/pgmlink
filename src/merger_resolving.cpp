@@ -737,6 +737,7 @@ void FeatureHandlerFromTraxels::operator()(
     new_ids.push_back(it->Id);
     // store parent (merger) node. this is used for creating the resolved_to event later
     origin_map.set(new_node, std::vector<unsigned int>(1, trax.Id));
+    LOG(logINFO) << "FeatureHandlerFromTraxels::operator(): added " << trax.Id << " to origin_map[" << g.id(new_node) << "]";
     LOG(logDEBUG3) << "FeatureHandlerFromTraxels::operator(): added " << trax.Id << " to origin_map[" << g.id(new_node) << "]";
     node_resolution_map.set(new_node, true);
  
@@ -1050,55 +1051,56 @@ void calculate_gmm_beforehand(HypothesesGraph& g, int n_trials, int n_dimensions
 HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler) {
   // extract property maps and iterators from graph
   LOG(logDEBUG) << "resolve_mergers() entered";
+  LOG(logINFO) << "resolve_mergers() entered";
   property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g_->get(node_active2());
   property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = active_map.beginValue();
   
   HypothesesGraph::node_timestep_map& timestep_map = g_->get(node_timestep());
   HypothesesGraph::node_timestep_map::ValueIt timestep_it = timestep_map.beginValue();
 
-  std::vector<HypothesesGraph::Node> nodes_to_deactivate;
-  for (; timestep_it != timestep_map.endValue(); ++timestep_it) {
-    HypothesesGraph::node_timestep_map::ItemIt node_it(timestep_map, *timestep_it);
-    for (; node_it != lemon::INVALID; ++node_it) {
-      int count = active_map[node_it];
-      if (count > 1) {
-        // calculate_centers<ClusteringAlg>(active_itemIt, *active_valueIt);
-        // for each object create new node and set arcs to old merger node inactive (neccessary for pruning)
-        refine_node(node_it, count, handler);
-        nodes_to_deactivate.push_back(node_it);
-      }
-    }
-  }
+//  std::vector<HypothesesGraph::Node> nodes_to_deactivate;
+//  for (; timestep_it != timestep_map.endValue(); ++timestep_it) {
+//    HypothesesGraph::node_timestep_map::ItemIt node_it(timestep_map, *timestep_it);
+//    for (; node_it != lemon::INVALID; ++node_it) {
+//      int count = active_map[node_it];
+//      if (count > 1) {
+//        // calculate_centers<ClusteringAlg>(active_itemIt, *active_valueIt);
+//        // for each object create new node and set arcs to old merger node inactive (neccessary for pruning)
+//        refine_node(node_it, count, handler);
+//        nodes_to_deactivate.push_back(node_it);
+//      }
+//    }
+//  }
 
-  // std::vector<HypothesesGraph::Node> nodes_to_deactivate;
-  // for (; active_valueIt != active_map.endValue(); ++active_valueIt) {
-  //   if (*active_valueIt > 1) {
-  //     property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(active_map, *active_valueIt);
+//   std::vector<HypothesesGraph::Node> nodes_to_deactivate;
+//   for (; active_valueIt != active_map.endValue(); ++active_valueIt) {
+//     if (*active_valueIt > 1) {
+//       property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(active_map, *active_valueIt);
 	
-  //     for (; active_itemIt != lemon::INVALID; ++active_itemIt) {
-  //       // calculate_centers<ClusteringAlg>(active_itemIt, *active_valueIt);
-  //       // for each object create new node and set arcs to old merger node inactive (neccessary for pruning)
-  //       refine_node(active_itemIt, *active_valueIt, handler);
-  //       nodes_to_deactivate.push_back(active_itemIt);
-  //     }
-  //   }
-  // }
+//       for (; active_itemIt != lemon::INVALID; ++active_itemIt) {
+//         // calculate_centers<ClusteringAlg>(active_itemIt, *active_valueIt);
+//         // for each object create new node and set arcs to old merger node inactive (neccessary for pruning)
+//         refine_node(active_itemIt, *active_valueIt, handler);
+//         nodes_to_deactivate.push_back(active_itemIt);
+//       }
+//     }
+//   }
     
-  // // iterate over mergers and replace merger nodes
-  // // keep track of merger nodes to deactivate them later
-  // std::vector<HypothesesGraph::Node> nodes_to_deactivate;
-  // for (; active_valueIt != active_map.endValue(); ++active_valueIt) {
-  //   if (*active_valueIt > 1) {
-  //     property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(active_map, *active_valueIt);
+   // iterate over mergers and replace merger nodes
+   // keep track of merger nodes to deactivate them later
+   std::vector<HypothesesGraph::Node> nodes_to_deactivate;
+   for (; active_valueIt != active_map.endValue(); ++active_valueIt) {
+     if (*active_valueIt > 1) {
+       property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt active_itemIt(active_map, *active_valueIt);
 	
-  //     for (; active_itemIt != lemon::INVALID; ++active_itemIt) {
-  //       // calculate_centers<ClusteringAlg>(active_itemIt, *active_valueIt);
-  //       // for each object create new node and set arcs to old merger node inactive (neccessary for pruning)
-  //       refine_node(active_itemIt, *active_valueIt, handler);
-  //       nodes_to_deactivate.push_back(active_itemIt);
-  //     }
-  //   }
-  // }
+       for (; active_itemIt != lemon::INVALID; ++active_itemIt) {
+         // calculate_centers<ClusteringAlg>(active_itemIt, *active_valueIt);
+         // for each object create new node and set arcs to old merger node inactive (neccessary for pruning)
+         refine_node(active_itemIt, *active_valueIt, handler);
+         nodes_to_deactivate.push_back(active_itemIt);
+       }
+     }
+   }
 
 
   // maybe keep merger nodes active for event extraction
@@ -1106,6 +1108,7 @@ HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler) {
 //>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 
     LOG(logDEBUG) << "resolve_mergers() done";
+    LOG(logINFO) << "resolve_mergers() done";
     return g_;
 }
 

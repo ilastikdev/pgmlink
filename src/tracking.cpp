@@ -1031,16 +1031,17 @@ EventVectorVector ConsTracking::resolve_mergers(
     // first element on?
     if ( not all_true(in_events.begin() + 1, in_events.end(), has_data<Event>))
     {
-        LOG(logDEBUG) << "Nothing to be done in ConstTracking::resolve_mergers:";
-        LOG(logDEBUG) << "Empty vector in event vector";
+        LOG(logINFO) << "Nothing to be done in ConstTracking::resolve_mergers:";
+        LOG(logINFO) << "Empty vector in event vector";
     }
     else if (max_number_objects_ == 1)
     {
-        LOG(logDEBUG) << "Nothing to resolve in ConstTracking::resolve_mergers:";
-        LOG(logDEBUG) << "max_number_objects = 1";
+        LOG(logINFO) << "Nothing to resolve in ConstTracking::resolve_mergers:";
+        LOG(logINFO) << "max_number_objects = 1";
     }
     else
     {
+        LOG(logINFO) << "-> creating a copy of hypotheses graph";
         // create a copy of the hypotheses graph to perform merger resolution without destroying the old graph
         resolved_graph_ = boost::make_shared<HypothesesGraph>();
         HypothesesGraph::copy(*hypotheses_graph_, *resolved_graph_);
@@ -1073,22 +1074,23 @@ EventVectorVector ConsTracking::resolve_mergers(
                       transitionClassifier,
                       solver_);
 
-        if (return_multi_frame_moves) {
-            std::cout << "-> constructing multi frame moves" << std::endl;
-            boost::shared_ptr<std::vector<std::vector<Event> > > multi_frame_moves
-            //std::vector<std::vector<Event> > multi_frame_moves
-                = multi_frame_move_events(*resolved_graph_);
-            std::cout << "-> merging unresolved and resolved events" << std::endl;
-            in_events = merge_event_vectors(in_events, *multi_frame_moves);
-        } else {
-            std::cout << "-> get events of the resolved graph" << std::endl;
-            prune_inactive(*resolved_graph_);
-            in_events = *events(*resolved_graph_);
-        }
+//        if (return_multi_frame_moves) {
+//            std::cout << "-> constructing multi frame moves" << std::endl;
+//            boost::shared_ptr<std::vector<std::vector<Event> > > multi_frame_moves
+//            //std::vector<std::vector<Event> > multi_frame_moves
+//                = multi_frame_move_events(*resolved_graph_);
+//            LOG(logINFO) << "-> merging unresolved and resolved events";
+//            in_events = merge_event_vectors(in_events, *multi_frame_moves);
+//        } else {
+//            LOG(logINFO) << "-> get events of the resolved graph";
+//            prune_inactive(*resolved_graph_);
+//            in_events = *events(*resolved_graph_);
+//        }
 
         LOG(logINFO) << "-> constructing resolved events";
         prune_inactive(*resolved_graph_);
-        //boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
+        LOG(logINFO) << "-> done pruning inactive";
+        boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
 
         // TODO The in serialized event vector written in the track() function
         // will be overwritten. Is this the desired behaviour?
@@ -1097,15 +1099,29 @@ EventVectorVector ConsTracking::resolve_mergers(
             // store the traxel store and the resulting event vector
             std::ofstream ofs(event_vector_dump_filename_.c_str());
             boost::archive::text_oarchive out_archive(ofs);
-            out_archive << in_events;
+            //out_archive << in_events;
+            out_archive << events_ptr;
         }
 
         // cleanup extractor
         delete extractor;
 
-        return in_events;
+        LOG(logINFO) << "-> done resolving mergers";
+        for(int i=0; i < (*events_ptr).size(); i++){
+            LOG(logDEBUG3) << i << "--->" << (*events_ptr)[i].size();
+            for(int j=0; j < (*events_ptr)[i].size(); j++){
+                LOG(logDEBUG3) << i << " ---> " << j << " ===> " << (*events_ptr)[i][j];
+            }
+        }
+        return *events_ptr;
     }
-    LOG(logINFO) << "-> done resolving mergers";
+    LOG(logINFO) << "-> done resolving mergers" << in_events.size();
+    for(int i=0; i < in_events.size(); i++){
+        LOG(logDEBUG3) << i << "--->" << in_events[i].size();
+        for(int j=0; j < in_events[i].size(); j++){
+            LOG(logDEBUG3) << i << " ---> " << j << " ===> " << in_events[i][j];
+        }
+    }
     return in_events;
 }
 
