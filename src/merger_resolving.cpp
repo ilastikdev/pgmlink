@@ -598,6 +598,8 @@ void FeatureHandlerFromTraxels::operator()(
     LOG(logDEBUG3) << "FeatureHandlerFromTraxel::operator() -- got " << ft.size() << " new traxels";
   }
   
+  // get feature store
+  boost::shared_ptr<FeatureStore> fs = traxel_store_->begin()->get_feature_store();
 
   for (std::vector<Traxel>::iterator it = ft.begin(); it != ft.end(); ++it) {
     // set traxel features, most of which can be copied from the merger node
@@ -607,6 +609,8 @@ void FeatureHandlerFromTraxels::operator()(
     traxel_map.set(new_node, *it);
     active_map.set(new_node, 1);
     time_map.set(new_node, timestep);
+    // add new traxel to traxelstore
+    add(*traxel_store_, fs, *it);
 
     // add arc candidates for new nodes (todo: need to somehow choose which ones are active)
     this->add_arcs_for_replacement_node(g, new_node, sources, targets, base_);
@@ -747,8 +751,17 @@ void calculate_gmm_beforehand(HypothesesGraph& g, int n_trials, int n_dimensions
               initial_weights[curr_idx] = 1.0/count;
               ++curr_idx;
             }
+          }
         }
-    }
+
+        assert(curr_idx == count && "COUNT MUST BE CORRECT!");
+        const feature_array& coordinates = trax.features["coordinates"];
+        GMMWithInitialized gmm(count, n_dimensions, coordinates, n_trials, initial_centers, initial_covs, initial_weights);
+        feature_array possible_coms = gmm();
+        trax.features["mergerCOMs"].resize(possible_coms.size());
+        std::copy(possible_coms.begin(), possible_coms.end(), trax.features["mergerCOMs"].begin());
+        traxel_map.set(node_it, trax);
+
       }
     }
   }

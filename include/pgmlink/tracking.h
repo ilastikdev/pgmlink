@@ -303,8 +303,7 @@ public:
             int n_dim = 3,
             double transition_parameter = 5.,
             bool with_constraints = true,
-            boost::python::object transitionClassifier = boost::python::object(),
-            bool with_multi_frame_moves = true
+            boost::python::object transitionClassifier = boost::python::object()
             );
 
     PGMLINK_EXPORT void enable_appearance(bool b) { enable_appearance_ = b; }

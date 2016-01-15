@@ -1018,8 +1018,7 @@ EventVectorVector ConsTracking::resolve_mergers(
     int n_dim,
     double transition_parameter,
     bool with_constraints,
-    boost::python::object transitionClassifier,
-    bool return_multi_frame_moves
+    boost::python::object transitionClassifier
 )
 {
     LOG(logINFO) << "-> resolving mergers";

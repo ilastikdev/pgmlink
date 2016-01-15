@@ -612,13 +612,13 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             {
                 continue;
             }
-//            LOG(logINFO) << " pass get_active_node";
+            LOG(logINFO) << " pass get_active_node";
 
             if (with_origin && (*origin_map)[node_at].size() > 0) { // && t > g.earliest_timestep()) {
                 const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
                 const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
                 LOG(logDEBUG3) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
-//                LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
+                LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
                 resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
             }
 
@@ -751,7 +751,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             {
                 e.traxel_ids.push_back(*it);
             }
-            LOG(logINFO) << "--------ADDING RESOLVED_TO-------->";
+            LOG(logINFO) << "---------------------------------------------------------------------------ADDING RESOLVED_TO-------->";
             (*ret)[t - g.earliest_timestep()].push_back(e);
             LOG(logDEBUG1) << e;
         }
@@ -831,7 +831,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
         e.type = Event::ResolvedTo;
         e.traxel_ids.push_back(map_it->first);
         for (std::vector<unsigned int>::iterator it = map_it->second.begin(); it != map_it->second.end(); ++it) {
-            std::cout << t << " ---> " << *it << std::endl;
+            LOG(logINFO) << t << " ---> " << *it;
             e.traxel_ids.push_back(*it);
         }
         (*ret)[t-g.earliest_timestep()].push_back(e);

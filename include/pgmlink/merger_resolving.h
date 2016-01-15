@@ -539,7 +539,6 @@ class MergerResolver
   }
 
   PGMLINK_EXPORT HypothesesGraph* resolve_mergers(FeatureHandlerBase& handler);
-//>>>>>>> ad0c7318a002897f64bb60284f2968a3a722051e
 };
 
 
