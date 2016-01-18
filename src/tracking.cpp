@@ -1046,6 +1046,7 @@ EventVectorVector ConsTracking::resolve_mergers(
         HypothesesGraph::copy(*hypotheses_graph_, *resolved_graph_);
 
         MergerResolver m(resolved_graph_.get(), n_dim);
+
         FeatureExtractorBase* extractor;
         DistanceFromCOMs distance;
         if (coordinates)
@@ -1057,6 +1058,7 @@ EventVectorVector ConsTracking::resolve_mergers(
             calculate_gmm_beforehand(*resolved_graph_, 1, n_dim);
             extractor = new FeatureExtractorMCOMsFromMCOMs;
         }
+
         FeatureHandlerFromTraxels handler(*extractor, distance, traxel_store_);
 
         m.resolve_mergers(handler);

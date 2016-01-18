@@ -770,8 +770,7 @@ void calculate_gmm_beforehand(HypothesesGraph& g, int n_trials, int n_dimensions
 
 HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler) {
   // extract property maps and iterators from graph
-  LOG(logDEBUG) << "resolve_mergers() entered";
-  LOG(logINFO) << "resolve_mergers() entered";
+  LOG(logDEBUG) << "resolve_mergers(handler) entered";
   property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g_->get(node_active2());
   property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = active_map.beginValue();
   
@@ -798,8 +797,7 @@ HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler) {
   // maybe keep merger nodes active for event extraction
   deactivate_nodes(nodes_to_deactivate);
 
-    LOG(logDEBUG) << "resolve_mergers() done";
-    LOG(logINFO) << "resolve_mergers() done";
+    LOG(logDEBUG) << "resolve_mergers(handler) done";
     return g_;
 }
 
@@ -851,6 +849,7 @@ void resolve_graph(const HypothesesGraph& src,
     }
     if (!dest.has_property(node_originated_from()))
     {
+        LOG(logINFO) << "adding node_originated_from to destination hypotheses graph";
         dest.add(node_originated_from());
     }
 
