@@ -1076,7 +1076,7 @@ EventVectorVector ConsTracking::resolve_mergers(
 
         LOG(logINFO) << "-> constructing resolved events";
         prune_inactive(*resolved_graph_);
-        LOG(logINFO) << "-> done pruning inactive";
+        LOG(logDEBUG) << "-> done pruning inactive";
         boost::shared_ptr<EventVectorVector> events_ptr = pgmlink::events(*resolved_graph_);
 
         // TODO The in serialized event vector written in the track() function

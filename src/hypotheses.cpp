@@ -513,7 +513,6 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 {
 
     LOG(logDEBUG) << "events(): entered";
-    LOG(logINFO) << "events(): entered";
     boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     node_timestep_map_t& node_timestep_map = g.get(node_timestep());
@@ -581,7 +580,6 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
         origin_map = &g.get(node_originated_from());
         with_origin = true;
         LOG(logDEBUG1) << "events(): with_origin enabled";
-        LOG(logINFO) << "events(): with_origin enabled";
     }
 
     // for every timestep
@@ -594,7 +592,6 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
     for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
     {
         LOG(logDEBUG2) << "events(): processing timestep: " << t;
-        LOG(logINFO) << "events(): processing timestep: " << t;
         ret->push_back(vector<Event>());
 
         map<unsigned int, vector<unsigned int> > resolver_map;
@@ -807,7 +804,6 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             const unsigned int& origin_traxel_id = (*origin_map)[node_at][0];
             const unsigned int& resolved_traxel_id = node_traxel_map[node_at].Id;
             LOG(logDEBUG3) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
-            LOG(logINFO) << "events(): collecting resolver node ids for all merger nodes " << t << ", " << origin_traxel_id;
             resolver_map[origin_traxel_id].push_back(resolved_traxel_id);
         }
     }
