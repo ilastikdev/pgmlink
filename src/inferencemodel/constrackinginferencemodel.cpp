@@ -196,7 +196,7 @@ void ConsTrackingInferenceModel::add_appearance_nodes(const HypothesesGraph& g)
 
         assert(model_.numberOfLabels(app_node_map_[n]) == param_.max_number_objects + 1);
 
-        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+//        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
         ++count;
     }
     number_of_appearance_nodes_ = count;
@@ -215,7 +215,7 @@ void ConsTrackingInferenceModel::add_disappearance_nodes(const HypothesesGraph& 
 
         assert(model_.numberOfLabels(dis_node_map_[n]) == param_.max_number_objects + 1);
 
-        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+//        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
         ++count;
     }
     number_of_disappearance_nodes_ = count;
@@ -239,7 +239,7 @@ void ConsTrackingInferenceModel::add_transition_nodes(const HypothesesGraph& g)
 
         assert(model_.numberOfLabels(arc_map_[a]) == param_.max_number_objects + 1);
 
-        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+//        property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
         ++count;
     }
     number_of_transition_nodes_ = count;
@@ -264,7 +264,7 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
 
             assert(model_.numberOfLabels(div_node_map_[n]) == 2);
 
-            property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
+//            property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
             ++count;
         }
     }
@@ -394,7 +394,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         }
 
 
-        double energy, e, f, w;
+        double energy, e;//, f, w;
         if (app_node_map_.count(n) > 0)
         {
             vi.push_back(app_node_map_[n]);

@@ -104,6 +104,4 @@ int main(int argc, char** argv)
     std::cout << "\n--------------------------------\n" << std::endl;
     std::cout << "Model did violate: " << (value_with_big_m - pure_value) / big_m << " constraints" << std::endl;
 
-    
-    // std::cout << "Done after " << TOCS << std::endl;
 }

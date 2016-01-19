@@ -275,5 +275,4 @@ int main(int argc, char** argv)
     opengm::ICM<GraphicalModel, pgmlink::pgm::OpengmModelDeprecated::ogmAccumulator> inf(model);
     cp.add_constraints_to_problem(model, inf);
     std::cout << "Solution after optimizing " << nodes_per_timestep.size() << " timesteps has energy: " << model.evaluate(solution) << std::endl;
-    // std::cout << "Done after " << TOCS << std::endl;
 }

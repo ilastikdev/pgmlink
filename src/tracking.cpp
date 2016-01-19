@@ -666,8 +666,8 @@ EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
                                                        bool fixLabeledNodes)
 {
 
-    original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
-    HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
+//    original_hypotheses_graph_ = boost::make_shared<HypothesesGraph>();
+//    HypothesesGraph::copy(*hypotheses_graph_, *original_hypotheses_graph_);
 
     ConservationTracking pgm(param);
 

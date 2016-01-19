@@ -773,8 +773,8 @@ HypothesesGraph* MergerResolver::resolve_mergers(FeatureHandlerBase& handler) {
   property_map<node_active2, HypothesesGraph::base_graph>::type& active_map = g_->get(node_active2());
   property_map<node_active2, HypothesesGraph::base_graph>::type::ValueIt active_valueIt = active_map.beginValue();
   
-  HypothesesGraph::node_timestep_map& timestep_map = g_->get(node_timestep());
-  HypothesesGraph::node_timestep_map::ValueIt timestep_it = timestep_map.beginValue();
+//  HypothesesGraph::node_timestep_map& timestep_map = g_->get(node_timestep());
+//  HypothesesGraph::node_timestep_map::ValueIt timestep_it = timestep_map.beginValue();
 
    // iterate over mergers and replace merger nodes
    // keep track of merger nodes to deactivate them later

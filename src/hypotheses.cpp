@@ -955,27 +955,6 @@ boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph&
     return ret;
 }
 
-//EventVectorVector merge_event_vectors(const EventVectorVector& ev1, const EventVectorVector& ev2)
-//{
-
-//    assert(ev1.size() == ev2.size());
-//    EventVectorVector evv;
-//    EventVectorVector& ret(evv);
-//    EventVectorVector::const_iterator it1 = ev1.begin();
-//    EventVectorVector::const_iterator it2 = ev2.begin();
-//    for (; it1 != ev1.end(); ++it1, ++it2)
-//    {
-//        //ret->push_back(vector<Event>());
-//        ret.push_back(EventVector());
-//        //std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret->rbegin()));
-//        std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret.rbegin()));
-//        std::copy(it1->begin(), it1->end(), push_back_inserter);
-//        std::copy(it2->begin(), it2->end(), push_back_inserter);
-//    }
-//    std::cout << " ===> " << ret << std::endl;
-//    return ret;
-//}
-
 //
 // generateTrackletGraph
 //

@@ -44,7 +44,7 @@ vigra::MultiArray<2, float> createFeatureVector(const Traxel &tr, const std::vec
         else
         {
             // throw exception or print error message
-            //std::cerr << "Tracking: Feature '" << (*it) << "' not found for tracklet " << tr.Id << ".\n";
+            std::cout << "Tracking: Feature '" << (*it) << "' not found for tracklet " << tr.Id << ".\n";
         }
     }
 
