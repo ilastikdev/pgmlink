@@ -34,7 +34,7 @@ public:
     virtual void infer();
     virtual void conclude(HypothesesGraph&);
     virtual void formulate( const HypothesesGraph& );
-    virtual void perturbedInference(HypothesesGraph&, Parameter&);
+    virtual void perturbedInference(HypothesesGraph&);//, Parameter&);
 
     /**
     Run the dynamic programming solver first and then use it as initialization

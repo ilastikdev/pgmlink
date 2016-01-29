@@ -688,7 +688,7 @@ EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
         {
             pgm.enableFixingLabeledAppearanceNodes();
         }
-        pgm.perturbedInference(*hypotheses_graph_,param);
+        pgm.perturbedInference(*hypotheses_graph_);//,param);
 
         size_t num_solutions = uncertainty_param_.numberOfIterations;
         if (num_solutions == 1)
@@ -775,6 +775,10 @@ void ConsTracking::addDivisionLabel(int time, int label, double cellCount)
 
 bool ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, double cellCount)
 {
+//    LOG(logINFO) << " startTime " << startTime;
+//    LOG(logINFO) << " startLabel " << startLabel;
+//    LOG(logINFO) << " endLabel " << endLabel;
+//    LOG(logINFO) << " cellCount " << cellCount;
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map;
     node_traxel_map& traxel_map = hypotheses_graph_->get(node_traxel());
@@ -783,16 +787,21 @@ bool ConsTracking::addArcLabel(int startTime, int startLabel, int endLabel, doub
 
     bool found = false;
     HypothesesGraph::Node to;
-    for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node)
+    for(node_timestep_map_t::ItemIt node(timestep_map, startTime); node != lemon::INVALID; ++node){
+//        LOG(logINFO) << "----> node " << traxel_map[node].Id;
         if (traxel_map[node].Id == startLabel){
+//            LOG(logINFO) << "----> from " << traxel_map[node].Id;
             for(HypothesesGraph::base_graph::OutArcIt arc(*hypotheses_graph_, node); arc != lemon::INVALID; ++arc){
                 to = hypotheses_graph_->target(arc);
+//                LOG(logINFO) << "----> to " << traxel_map[to].Id;
                 if (traxel_map[to].Id == endLabel){
                     hypotheses_graph_->add_arc_label(arc, cellCount+1); // shifted for +1
+//                    LOG(logINFO) << "---->  " << "set to true";
                     found = true;
                 }
             }
         }
+    }
     return found;
 }
 

@@ -1296,6 +1296,7 @@ void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
     LOG(logINFO) << "[ConstraintPool]: Adding " << constraints.size() << " hard constraints for FixNode LINEAR Value";
     for(auto it = constraints.begin(); it != constraints.end(); ++it)
     {
+        LOG(logINFO) << "[ConstraintPool]: in loop";
         const ConstraintPool::FixNodeValueLinearConstraint& constraint = *it;
 
         std::vector<size_t> cplex_idxs;
@@ -1334,6 +1335,7 @@ void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
         FunctionIdentifierType linearConstraintFunctionID = model.addFunction(linearConstraintFunction);
         model.addFactor(linearConstraintFunctionID, factorVariables.begin(), factorVariables.end());
     }
+    LOG(logINFO) << "[ConstraintPool]: Done";
 }
 
 //------------------------------------------------------------------------

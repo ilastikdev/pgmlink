@@ -758,8 +758,9 @@ void ConsTrackingInferenceModel::set_inference_params(size_t numberOfSolutions,
 
     if(param_.with_constraints)
     {
-        LOG(logINFO) << "add_constraints";
+        LOG(logINFO) << "[ConsTrackingInferenceModel] add_constraints ";
         add_constraints(*optimizer_);
+        LOG(logINFO) << "[ConsTrackingInferenceModel] add_constraints";
     }
     else
     {

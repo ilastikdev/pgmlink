@@ -286,7 +286,7 @@ void ConservationTracking::twoStageInference(HypothesesGraph & hypotheses)
 #endif
 }
 
-void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, Parameter& param)
+void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses)//, Parameter& param)
 {
     HypothesesGraph *graph = get_prepared_graph(hypotheses);
 
@@ -310,7 +310,7 @@ void ConservationTracking::perturbedInference(HypothesesGraph & hypotheses, Para
     LOG(logDEBUG) << "------------> Beginning Iteration 0 <-----------\n";
 
     // instanciate inference model
-    boost::shared_ptr<InferenceModel> inference_model = create_inference_model(param);
+    boost::shared_ptr<InferenceModel> inference_model = create_inference_model(param_);
 
     inference_model->param_.detection_weight = detection_weight_;
     inference_model->param_.division_weight = division_weight_;

@@ -561,6 +561,8 @@ void StructuredLearningTracking::structuredLearning(
         for (HypothesesGraph::NodeIt n(*hypotheses_graph_); n != lemon::INVALID; ++n)
             selected_nodes[n] = false;
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: select crop nodes";
+        int count = 0;
         for(int t = crops_[m].lower_bound()[0]; t <= crops_[m].upper_bound()[0]; ++t)
         {
             for(node_timestep_map_t::ItemIt node(timestep_map, t); node != lemon::INVALID; ++node){
@@ -574,10 +576,14 @@ void StructuredLearningTracking::structuredLearning(
                    crops_[m].lower_bound()[3] <= traxel_map[node].Z() and traxel_map[node].Z() <= crops_[m].upper_bound()[3] ){
 
                     selected_nodes[node] = true;
+                    //LOG(logINFO) << "app. node: " << traxel_map[node].Id << "    t " << timestep_map[node] << "    node num " << count;
+
+                    count++;
                 }
             }
         }
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: select arcs";
         HypothesesGraph::base_graph::ArcMap<bool> selected_arcs(*hypotheses_graph_);
         for(HypothesesGraph::ArcIt a(*hypotheses_graph_); a != lemon::INVALID; ++a)
         {
@@ -592,9 +598,11 @@ void StructuredLearningTracking::structuredLearning(
             }
         }
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: copy subgraph";
         hypothesesSubGraph.push_back(boost::make_shared<HypothesesGraph>());
         HypothesesGraph::copy_subgraph(*hypotheses_graph_, *(hypothesesSubGraph[m]),selected_nodes,selected_arcs);
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: parameters";
         Parameter param = get_structured_learning_tracking_parameters(
             forbidden_cost,
             ep_gap,
@@ -623,6 +631,7 @@ void StructuredLearningTracking::structuredLearning(
         //param.transition = transition_;
         ConservationTracking pgm(param);
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: prepared graph";
 
         graph.push_back( pgm.get_prepared_graph(*(hypothesesSubGraph[m])) );
 
@@ -638,20 +647,26 @@ void StructuredLearningTracking::structuredLearning(
             ++numArcs;
         }
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: prepare tracking";
+
         prepareTracking(pgm, param, sltDataset.getWeights(),withNormalization,withClassifierPrior);
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: get inference model";
         inference_model.push_back(pgm.getInferenceModel());
 
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->setModelStartTime(crops_[m].lower_bound()[0]);
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->setModelEndTime(crops_[m].upper_bound()[0]);
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: build from graph";
         inference_model[m]->build_from_graph(*(graph[m]));
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: set inference parameters";
         boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->set_inference_params(
             1,//numberOfSolutions,
             "",//get_export_filename(0, features_file_),
             "",//constraints_file_,
             "");//get_export_filename(0, labels_export_file_name_));
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: set graphical model";
         sltDataset.setGraphicalModel(m, boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->model());
         sltDataset.resizeGTS(m);
 
@@ -660,6 +675,10 @@ void StructuredLearningTracking::structuredLearning(
         property_map< division_label, HypothesesGraph::base_graph>::type& division_labels = graph[m]->get(division_label());
         property_map< arc_label, HypothesesGraph::base_graph>::type& arc_labels = graph[m]->get(arc_label());
 
+        node_traxel_map& traxel_map_gm = graph[m]->get(node_traxel());
+        HypothesesGraph::node_timestep_map& timestep_map_gm = graph[m]->get(node_timestep());
+
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: arcs";
         size_t number_of_transition_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_transition_nodes();
         size_t indexArcs=0;
         for(HypothesesGraph::ArcIt a(*(graph[m])); a != lemon::INVALID; ++a)
@@ -670,10 +689,12 @@ void StructuredLearningTracking::structuredLearning(
                 m,
                 (size_t) indexArcs,
                 (size_t) arc_label);
+            //LOG(logINFO) << " arc node: " << traxel_map_gm[graph[m]->source(a)].Id << "---> " << traxel_map_gm[graph[m]->target(a)].Id << "     arc num" << indexArcs;
             ++indexArcs;
         }
         assert ( indexArcs == number_of_transition_nodes);
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: appearances";
         size_t number_of_appearance_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_appearance_nodes();
         size_t indexAppNodes=0;
         for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
@@ -682,10 +703,12 @@ void StructuredLearningTracking::structuredLearning(
                 m,
                 (size_t) indexArcs + indexAppNodes,
                 (size_t)appearance_labels[n]);
+            //LOG(logINFO) << "app. node: " << traxel_map_gm[n].Id << "    t " << timestep_map_gm[n] << "    node num " << indexArcs + indexAppNodes;
             ++indexAppNodes;
         }
         assert ( indexAppNodes == number_of_appearance_nodes );
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: disappearances";
         size_t number_of_disappearance_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_disappearance_nodes();
         size_t indexDisAppNodes=0;
         for (HypothesesGraph::NodeIt n(*(graph[m])); n != lemon::INVALID; ++n){
@@ -694,10 +717,12 @@ void StructuredLearningTracking::structuredLearning(
                 m,
                 (size_t) indexArcs + indexAppNodes + indexDisAppNodes,
                 (size_t)disappearance_labels[n]);
+            //LOG(logINFO) << "disapp. node: " << traxel_map_gm[n].Id << "    t " << timestep_map_gm[n] <<"    node num " << indexArcs + indexAppNodes + indexDisAppNodes;
             ++indexDisAppNodes;
         }
         assert ( indexDisAppNodes == number_of_disappearance_nodes);
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: divisions";
         if(boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->param_.with_divisions){
             size_t number_of_division_nodes = boost::static_pointer_cast<StructuredLearningTrackingInferenceModel>(inference_model[m])->get_number_of_division_nodes();
             std::vector<size_t> division_var_to_node_fun (number_of_division_nodes);
@@ -713,14 +738,17 @@ void StructuredLearningTracking::structuredLearning(
                         m,
                         (size_t) indexArcs + indexAppNodes + indexDisAppNodes + indexDivNodes,
                         (size_t)division_labels[n]);
+                    //LOG(logINFO) << "div. node: " << traxel_map_gm[n].Id << "    t " << timestep_map_gm[n] <<"    node num " << indexArcs + indexAppNodes + indexDisAppNodes + indexDivNodes;
                     ++indexDivNodes;
                 }
             }
             assert ( indexDivNodes == number_of_division_nodes);
         }
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: build model with loss";
         sltDataset.build_model_with_loss(m);
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: unlock model";
         // unlock the model
         #ifdef WITH_OPENMP
         omp_set_lock(&modelLock);
@@ -730,6 +758,7 @@ void StructuredLearningTracking::structuredLearning(
         sltDataset.unlockModel(m);
         #endif
 
+        LOG(logINFO) << "[StructuredLearningTracking] Control print: end model";
     } // for model m
 
     opengm::learning::StructMaxMargin<DSS>::Parameter para;

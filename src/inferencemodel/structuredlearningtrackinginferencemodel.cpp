@@ -555,8 +555,9 @@ void StructuredLearningTrackingInferenceModel::set_inference_params(size_t numbe
 
     if(param_.with_constraints)
     {
-        LOG(logINFO) << "add_constraints";
+        LOG(logINFO) << "[StructuredLearningTrackingInferenceModel] add_constraints";
         add_constraints(*optimizer2_);
+        LOG(logINFO) << "[StructuredLearningTrackingInferenceModel] add_constraints";
     }
     else
     {
