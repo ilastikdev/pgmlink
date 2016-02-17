@@ -787,7 +787,7 @@ BOOST_AUTO_TEST_CASE( SingleTimestepTraxel_HypothesesGraph_eventVector )
     traxel_graph.add(node_originated_from());
     std::vector< std::vector<Event> > mfmEvents = *multi_frame_move_events(traxel_graph);
 
-    std::vector< std::vector<Event> > mergedEvents = *merge_event_vectors(eventVector, mfmEvents);
+    std::vector< std::vector<Event> > mergedEvents = merge_event_vectors(eventVector, mfmEvents);
 
     std::cout << "Checking result after merging" << std::endl;
     BOOST_CHECK_EQUAL(mergedEvents.size(), 4);

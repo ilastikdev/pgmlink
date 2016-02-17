@@ -133,7 +133,10 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP )
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     tracking(ts,
+             consTrackingParams,
              0, // forbidden_cost
              0.0, // ep_gap
              false, // with_tracklets
@@ -146,7 +149,10 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP )
              5, //transition_parameter
              0, //border_width for app/disapp costs
              true, //with_constraints
-             uparam // uncertainty parameters
+             uparam, // uncertainty parameters
+             1e+75, // cplex_timeout
+             TimestepIdCoordinateMapPtr(),
+             boost::python::object()
             );
 
     // TODO: test something here??!
@@ -288,7 +294,10 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision )
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     tracking(ts,
+             consTrackingParams,
              0, // forbidden_cost
              0.0, // ep_gap
              false, // with_tracklets
@@ -301,7 +310,10 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision )
              5, //transition_parameter
              0, //border_width for app/disapp costs
              true, //with_constraints
-             uparam // uncertainty parameters
+             uparam, // uncertainty parameters
+             1e+75, // cplex_timeout
+             TimestepIdCoordinateMapPtr(),
+             boost::python::object()
             );
 
     // TODO: test something here??!
@@ -424,7 +436,10 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty )
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -437,8 +452,11 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty )
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                     1e+75, // cplex_timeout
+                                     TimestepIdCoordinateMapPtr(),
+                                     boost::python::object()
+                                     );
 
     //two iterations: two event vectors
     BOOST_CHECK_EQUAL(events.size(), 3);
@@ -572,7 +590,10 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty )
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -585,8 +606,11 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty )
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                     1e+75, // cplex_timeout
+                                     TimestepIdCoordinateMapPtr(),
+                                     boost::python::object()
+                                     );
 
     int counter = 0;
     BOOST_CHECK_EQUAL(events.size(), mbest);

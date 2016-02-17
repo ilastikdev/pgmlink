@@ -202,8 +202,11 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_Division ) {
    std::cout << "Run Conservation tracking" << std::endl;
    std::cout << std::endl;
 
-   std::vector< std::vector<Event> > events = tracking(ts,
+   Parameter consTrackingParams = Parameter();
+   UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
 
+   std::vector< std::vector<Event> > events = tracking(ts,
+                               consTrackingParams,
                                0, // forbidden_cost
                                0.0, // ep_gap
                                false, // with_tracklets
@@ -214,7 +217,12 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_Division ) {
                                false, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
-                               0 //border_width for app/disapp costs
+                               0, //border_width for app/disapp costs
+                               true, //with_constraints
+                               uparam, // uncertainty parameters
+                               1e+75, // cplex_timeout
+                               TimestepIdCoordinateMapPtr(),
+                               boost::python::object()
                                )[0];
 
    size_t count_moves = 0;
@@ -300,8 +308,11 @@ BOOST_AUTO_TEST_CASE( Tracking_Flow_ConservationTracking_Division ) {
    std::cout << "Run Conservation tracking" << std::endl;
    std::cout << std::endl;
 
-   std::vector< std::vector<Event> > events = tracking(ts,
+   Parameter consTrackingParams = Parameter();
+   UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
 
+   std::vector< std::vector<Event> > events = tracking(ts,
+                               consTrackingParams,
                                0, // forbidden_cost
                                0.0, // ep_gap
                                false, // with_tracklets
@@ -312,7 +323,12 @@ BOOST_AUTO_TEST_CASE( Tracking_Flow_ConservationTracking_Division ) {
                                false, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
-                               0 //border_width for app/disapp costs
+                               0, //border_width for app/disapp costs
+                               true, //with_constraints
+                               uparam, // uncertainty parameters
+                               1e+75, // cplex_timeout
+                               TimestepIdCoordinateMapPtr(),
+                               boost::python::object()
                                )[0];
 
    size_t count_moves = 0;
@@ -900,7 +916,11 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_AppearanceSimple ) 
    std::cout << "Run Conservation tracking" << std::endl;
    std::cout << std::endl;
 
+   Parameter consTrackingParams = Parameter();
+   UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+
    std::vector< std::vector<Event> > events = tracking(ts,
+                               consTrackingParams,
                                0, // forbidden_cost
                                0.0, // ep_gap
                                true, // with_tracklets
@@ -911,7 +931,12 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_AppearanceSimple ) 
                                true, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
-                               0 //border_width for app/disapp costs
+                               0, //border_width for app/disapp costs
+                               true, //with_constraints
+                               uparam, // uncertainty parameters
+                               1e+75, // cplex_timeout
+                               TimestepIdCoordinateMapPtr(),
+                               boost::python::object()
                                )[0];
 
    size_t t = 1;
@@ -1000,7 +1025,11 @@ BOOST_AUTO_TEST_CASE( Tracking_DynProg_ConservationTracking_AppearanceSimple ) {
    std::cout << "Run Conservation tracking" << std::endl;
    std::cout << std::endl;
 
+   Parameter consTrackingParams = Parameter();
+   UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+
    std::vector< std::vector<Event> > events = tracking(ts,
+                               consTrackingParams,
                                0, // forbidden_cost
                                0.0, // ep_gap
                                false, // with_tracklets
@@ -1011,7 +1040,12 @@ BOOST_AUTO_TEST_CASE( Tracking_DynProg_ConservationTracking_AppearanceSimple ) {
                                false, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
-                               0 //border_width for app/disapp costs
+                               0, //border_width for app/disapp costs
+                               true, //with_constraints
+                               uparam, // uncertainty parameters
+                               1e+75, // cplex_timeout
+                               TimestepIdCoordinateMapPtr(),
+                               boost::python::object()
                                )[0];
 
    size_t t = 1;
@@ -1868,7 +1902,11 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
    std::cout << "Run Conservation tracking" << std::endl;
    std::cout << std::endl;
 
+   Parameter consTrackingParams = Parameter();
+   UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+
    std::vector< std::vector<Event> > events = tracking(ts,
+                               consTrackingParams,
                                0, // forbidden_cost
                                0.0, // ep_gap
                                false, // with_tracklets
@@ -1879,7 +1917,12 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
                                true, //with_merger_resolution
                                2, //n_dim
                                5, //transition_parameter
-                               0 //border_width for app/disapp costs
+                               0, //border_width for app/disapp costs
+                               true, //with_constraints
+                               uparam, // uncertainty parameters
+                               1e+75, // cplex_timeout
+                               TimestepIdCoordinateMapPtr(),
+                               boost::python::object()
                                )[0];
 
    size_t t = 1;

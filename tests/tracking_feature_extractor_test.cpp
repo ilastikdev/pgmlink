@@ -110,8 +110,12 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove )
     std::cout << "Run Conservation tracking" << std::endl;
     std::cout << std::endl;
 
+    Parameter consTrackingParams = Parameter();
+    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+
     std::vector< std::vector<Event> > events = tracking(
                 ts,
+                consTrackingParams,
                 0, // forbidden_cost
                 0.0, // ep_gap
                 false, // with_tracklets
@@ -122,7 +126,12 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove )
                 false, //with_merger_resolution
                 3, //n_dim
                 5, //transition_parameter
-                0 //border_width for app/disapp costs
+                0, //border_width for app/disapp costs
+                true, //with_constraints
+                uparam, // uncertainty parameters
+                1e+75, // cplex_timeout
+                TimestepIdCoordinateMapPtr(),
+                boost::python::object()
             )[0];
 
     boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
@@ -320,7 +329,10 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -333,8 +345,11 @@ BOOST_AUTO_TEST_CASE(TrackFeatureExtractor_CplexMBest)
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                      1e+75, // cplex_timeout
+                                      TimestepIdCoordinateMapPtr(),
+                                      boost::python::object()
+                                     );
 
     boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
 
@@ -506,7 +521,10 @@ BOOST_AUTO_TEST_CASE(DivisionFeatureExtractor_CplexMBest)
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -519,8 +537,11 @@ BOOST_AUTO_TEST_CASE(DivisionFeatureExtractor_CplexMBest)
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                      1e+75, // cplex_timeout
+                                      TimestepIdCoordinateMapPtr(),
+                                      boost::python::object()
+                                     );
 
     boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
 
@@ -688,7 +709,10 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -701,8 +725,11 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_CplexMBest)
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                      1e+75, // cplex_timeout
+                                      TimestepIdCoordinateMapPtr(),
+                                      boost::python::object()
+                                     );
 
     boost::shared_ptr<HypothesesGraph> hypotheses_graph = tracking.get_hypo_graph();
 
@@ -892,7 +919,10 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -905,8 +935,11 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_FeatureFile)
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                      1e+75, // cplex_timeout
+                                      TimestepIdCoordinateMapPtr(),
+                                      boost::python::object()
+                                     );
 
     // remove file before populating
     std::string proposal_feature_filename = "proposal_features.txt";
@@ -1114,7 +1147,10 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
                                 fov //field of view
                             );
 
+    Parameter consTrackingParams = Parameter();
+
     EventVectorVectorVector events = tracking(ts,
+                                     consTrackingParams,
                                      0, // forbidden_cost
                                      0.0, // ep_gap
                                      false, // with_tracklets
@@ -1127,8 +1163,11 @@ BOOST_AUTO_TEST_CASE(TrackingFeatureExtractor_LabelExport)
                                      5, //transition_parameter
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
-                                     uparam // uncertainty parameters
-                                             );
+                                     uparam, // uncertainty parameters
+                                      1e+75, // cplex_timeout
+                                      TimestepIdCoordinateMapPtr(),
+                                      boost::python::object()
+                                     );
 
 
     std::string proposal_labels_filename = "proposal_labels.txt";

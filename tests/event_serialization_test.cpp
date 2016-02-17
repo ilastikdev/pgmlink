@@ -17,6 +17,7 @@
 #include "pgmlink/tracking.h"
 #include "pgmlink/field_of_view.h"
 #include "pgmlink/reasoner_constracking.h"
+#include "pgmlink/conservationtracking_parameter.h"
 
 using namespace pgmlink;
 
@@ -109,19 +110,27 @@ BOOST_AUTO_TEST_CASE( Event_Serialization )
 
     std::cout << "run conservation tracking" << std::endl;
 
-    EventVectorVectorVector events = tracking(ts,
-                                     0, // forbidden_cost
-                                     0.0, // ep_gap
-                                     false, // with_tracklets
-                                     10.0, //division_weight
-                                     10.0, //transition_weight
-                                     1500., // disappearance_cost,
-                                     1500., // appearance_cost
-                                     false, //with_merger_resolution
-                                     3, //n_dim
-                                     5, //transition_parameter
-                                     0, //border_width for app/disapp costs
-                                     true); // with_constraints
+    Parameter consTrackingParams = Parameter();
+
+    EventVectorVectorVector events = tracking(
+                ts,
+                consTrackingParams,
+                0, // forbidden_cost
+                0.0, // ep_gap
+                false, // with_tracklets
+                10.0, //division_weight
+                10.0, //transition_weight
+                1500., // disappearance_cost,
+                1500., // appearance_cost
+                false, //with_merger_resolution
+                3, //n_dim
+                5, //transition_parameter
+                0, //border_width for app/disapp costs
+                true, // with_constraints
+                UncertaintyParameter(),
+                1e+75, // cplex_timeout
+                TimestepIdCoordinateMapPtr(),
+                boost::python::object());
 
     std::cout << "serialize events" << std::endl;
 
