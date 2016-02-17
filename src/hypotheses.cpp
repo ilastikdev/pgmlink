@@ -913,6 +913,20 @@ boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(co
     return ret;
 } /* multi_frame_move_events */
 
+std::vector< std::vector<Event> > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2) {
+    assert(ev1.size() == ev2.size());
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+    std::vector<std::vector<Event> >::const_iterator it1 = ev1.begin();
+    std::vector<std::vector<Event> >::const_iterator it2 = ev2.begin();
+    for (; it1 != ev1.end(); ++it1, ++it2) {
+        ret->push_back(vector<Event>());
+        std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret->rbegin()));
+        std::copy(it1->begin(), it1->end(), push_back_inserter);
+        std::copy(it2->begin(), it2->end(), push_back_inserter);
+    }
+    return *ret;
+}
+
 boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph& g)
 {
     boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);

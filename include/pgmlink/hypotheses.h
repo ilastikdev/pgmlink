@@ -499,7 +499,7 @@ PGMLINK_EXPORT HypothesesGraph& prune_inactive(HypothesesGraph&);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGraph& g, int iterationStep = 0);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(const HypothesesGraph& g);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::vector<Event> > > resolved_to_events(const HypothesesGraph& g);
-//PGMLINK_EXPORT EventVectorVector merge_event_vectors(const EventVectorVector& ev1, const EventVectorVector& ev2);
+PGMLINK_EXPORT EventVectorVector merge_event_vectors(const EventVectorVector& ev1, const EventVectorVector& ev2);
 PGMLINK_EXPORT boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph&);
 // prune to specific start nodes
 PGMLINK_EXPORT HypothesesGraph& prune_to_node_descendants(HypothesesGraph& graph, const std::vector<HypothesesGraph::Node>& start_nodes);
