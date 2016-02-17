@@ -18,7 +18,6 @@ file(GLOB TEST_SRCS *.cpp)
 foreach(test_src ${TEST_SRCS})
   # these tests have to be configured first
   if (${test_src} MATCHES "randomforest_test.cpp") 
-  elseif(${test_src} MATCHES "learning_systemtest.cpp")
   else()
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable( ${test_name} ${test_src} )
@@ -36,28 +35,12 @@ add_executable(randomforest_test ${PROJECT_BINARY_DIR}/tests/randomforest_test.c
 target_link_libraries(randomforest_test pgmlink ${Boost_LIBRARIES})
 add_test(randomforest randomforest_test)
 
-# include dlib
-include(${Dlib_INCLUDE_DIR})
-include(${Dlib_INCLUDE_DIR}/dlib/cmake )
-include(${Dlib_INCLUDE_DIR}/dlib/cmake_find_blas.txt )
-
-# system tests
-configure_file( system/learning_systemtest.cpp.cmake learning_systemtest.cpp)
-add_executable( learning_systemtest ${PROJECT_BINARY_DIR}/tests/learning_systemtest.cpp )
-target_link_libraries( learning_systemtest pgmlink ${Boost_LIBRARIES} ${blas_libraries} ${lapack_libraries})
-add_test( learning_systemtest learning_systemtest )
-
-
 # opengm extensions tests
 file(GLOB OGM_TEST_SRCS ext_opengm/*.cxx)
 foreach(test_src ${OGM_TEST_SRCS})
   get_filename_component(test_name ${test_src} NAME_WE)
   set(test_name ext_opengm_${test_name})
   add_executable( ${test_name} ${test_src} )
-<<<<<<< HEAD
   target_link_libraries( ${test_name} ${OPTIMIZER_LIBRARIES} )
-=======
-  target_link_libraries( ${test_name} ${CPLEX_LIBRARIES} ${blas_libraries} ${lapack_libraries})
->>>>>>> be4462ae899d726e6479be3f8bdcf624c8ffb901
   add_test( ${test_name} ${test_name} )
 endforeach(test_src)
