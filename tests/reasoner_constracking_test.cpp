@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Division )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -524,7 +524,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger_Volume )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -654,7 +654,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Disappearance )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -804,7 +804,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceAndDisappearance )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -1048,7 +1048,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Appearance )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -1227,7 +1227,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -1441,7 +1441,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -1716,7 +1716,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -1936,7 +1936,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -2126,7 +2126,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -2330,7 +2330,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -2552,7 +2552,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
@@ -2575,44 +2575,30 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision )
            )[0];
 
     size_t t = 1;
-    BOOST_CHECK_EQUAL(events[t].size(), 7);
+    BOOST_CHECK_EQUAL(events[t].size(), 5);
     size_t num_mergers = 0;
-    for (std::vector<Event>::const_iterator it = events[t].begin(); it != events[t].end(); ++it)
-    {
-        Event e = *it;
-        if (e.type == Event::Move && e.traxel_ids[0] == 11)
-        {
-            BOOST_CHECK_EQUAL(e.traxel_ids[1], 21);
-        }
-        else if (e.type == Event::Move && e.traxel_ids[0] == 13)
-        {
-            BOOST_CHECK_EQUAL(e.traxel_ids[1], 22);
-        }
-        else if (e.type == Event::Division && e.traxel_ids[0] == 12)
-        {
-            set<unsigned> division_set(e.traxel_ids.begin() + 1, e.traxel_ids.end());
-            set<unsigned> comparison_set;
-            comparison_set.insert(21);
-            comparison_set.insert(22);
-            BOOST_CHECK_EQUAL_COLLECTIONS(division_set.begin(),
-                                          division_set.end(),
-                                          comparison_set.begin(),
-                                          comparison_set.end());
-        }
-        else if (e.type == Event::Merger)
-        {
-            ++num_mergers;
-            BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
-        }
-        else if (e.type == Event::ResolvedTo)
-        {
-            BOOST_CHECK(e.traxel_ids[0] == 21 || e.traxel_ids[0] == 22);
-        }
-        else
-        {
-            cout << "unexpected event: " << e;
-            BOOST_CHECK(false);
-        }
+    for (std::vector<Event>::const_iterator it = events[t].begin(); it!=events[t].end(); ++it) {
+       Event e = *it;
+       if (e.type == Event::Move && e.traxel_ids[0] == 11) {
+           BOOST_CHECK_EQUAL(e.traxel_ids[1], 23);
+       } else if (e.type == Event::Move && e.traxel_ids[0] == 13) {
+           BOOST_CHECK_EQUAL(e.traxel_ids[1], 25);
+       } else if (e.type == Event::Division && e.traxel_ids[0] == 12) {
+           set<unsigned> division_set(e.traxel_ids.begin()+1, e.traxel_ids.end());
+           set<unsigned> comparison_set;
+           comparison_set.insert(24);
+           comparison_set.insert(26);
+           BOOST_CHECK_EQUAL_COLLECTIONS(division_set.begin(),
+                                        division_set.end(),
+                                        comparison_set.begin(),
+                                        comparison_set.end());
+       } else if (e.type == Event::ResolvedTo) {
+           ++num_mergers;
+           BOOST_CHECK((e.traxel_ids[0] == 21 && e.traxel_ids.size() == 3) || (e.traxel_ids[0] == 22 && e.traxel_ids.size() == 3));
+       } else  {
+           cout << "unexpected event: " << e;
+           BOOST_CHECK(false);
+       }
     }
     BOOST_CHECK_EQUAL(num_mergers, 2);
 
@@ -2735,7 +2721,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(ts,
             consTrackingParams,
