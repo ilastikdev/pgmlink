@@ -52,7 +52,7 @@ typedef ConservationTrackingUserData<HypothesesGraph::Arc> ConservationTrackingA
 class DynProgConsTrackInferenceModel : public InferenceModel
 {
 public:
-    DynProgConsTrackInferenceModel(const Parameter& param);
+    DynProgConsTrackInferenceModel(Parameter& param);
     ~DynProgConsTrackInferenceModel();
 
     virtual std::vector<size_t> infer();

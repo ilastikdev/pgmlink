@@ -140,7 +140,7 @@ void EnergyComputer::computeDivisionEnergy(HypothesesGraph& graph, boost::shared
     feature_array division_energy;
     for (size_t state = 0; state <= 1; ++state)
     {
-        division_energy[state] = param_.division(tr, state);
+        division_energy.push_back(param_.division(tr, state));
     }
 
 	// no need to convexify as this is binary

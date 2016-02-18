@@ -8,7 +8,7 @@
 namespace pgmlink
 {
 
-FlowConsTrackInferenceModel::FlowConsTrackInferenceModel(const Parameter &param):
+FlowConsTrackInferenceModel::FlowConsTrackInferenceModel(Parameter &param):
     InferenceModel(param)
 {
 }
@@ -91,11 +91,11 @@ void FlowConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
             appearanceCostDeltas.push_back(app_costs[i] - app_costs[i-1]);
             disappearanceCostDeltas.push_back(dis_costs[i] - dis_costs[i-1]);
         }
-        assert(costDeltas.size() == param_.max_number_objects);
+        // assert(costDeltas.size() == param_.max_number_objects);
 
-        dpct::FlowGraph::Node inf_node = inference_graph_.addNode(costDeltas);
-        dpct::FlowGraph::Arc inf_app = inference_graph_.addArc(inference_graph_.getSource(), inf_node, appearanceCostDeltas);
-        dpct::FlowGraph::Arc inf_dis = inference_graph_.addArc(inf_node, inference_graph_.getTarget(), disappearanceCostDeltas);
+        dpct::FlowGraph::FullNode inf_node = inference_graph_.addNode(costDeltas, timestep_map[n] - first_timestep);
+        dpct::FlowGraph::Arc inf_app = inference_graph_.addArc(inference_graph_.getSource(), inf_node.u, appearanceCostDeltas);
+        dpct::FlowGraph::Arc inf_dis = inference_graph_.addArc(inf_node.v, inference_graph_.getTarget(), disappearanceCostDeltas);
 
         node_reference_map_[n] = inf_node;
         app_reference_map_[n] = inf_app;
@@ -107,8 +107,8 @@ void FlowConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
     // add all transition arcs
     for (HypothesesGraph::ArcIt a(*graph); a != lemon::INVALID; ++a)
     {
-        dpct::FlowGraph::Node source = node_reference_map_[graph->source(a)];
-        dpct::FlowGraph::Node target = node_reference_map_[graph->target(a)];
+        dpct::FlowGraph::FullNode source = node_reference_map_[graph->source(a)];
+        dpct::FlowGraph::FullNode target = node_reference_map_[graph->target(a)];
 
         Traxel tr1, tr2;
         if (param_.with_tracklets)
@@ -292,8 +292,8 @@ void FlowConsTrackInferenceModel::conclude(HypothesesGraph& g,
         else
         {
             // standard detection usage
-            flow = inference_graph_.sumInFlow(node_reference_map_[n]);
-            int outFlow = inference_graph_.sumOutFlow(node_reference_map_[n]);
+            flow = inference_graph_.sumInFlow(node_reference_map_[n].u);
+            int outFlow = inference_graph_.sumOutFlow(node_reference_map_[n].v);
             assert(outFlow == flow || outFlow == flow + 1);
         }
 

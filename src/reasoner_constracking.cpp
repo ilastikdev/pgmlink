@@ -148,6 +148,10 @@ boost::shared_ptr<InferenceModel> ConservationTracking::create_inference_model(P
     {
         return boost::make_shared<DynProgConsTrackInferenceModel>(param);
     }
+    else if(solver_ == SolverType::FlowSolver)
+    {
+        return boost::make_shared<FlowConsTrackInferenceModel>(param);
+    }
 #else
     else if(solver_ == SolverType::DynProgSolver)
     {

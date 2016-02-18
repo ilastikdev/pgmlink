@@ -9,7 +9,7 @@
 namespace pgmlink
 {
 
-DynProgPerturbedInferenceModel::DynProgPerturbedInferenceModel(const Parameter& param,
+DynProgPerturbedInferenceModel::DynProgPerturbedInferenceModel(Parameter& param,
                                                                boost::shared_ptr<Perturbation> perturbation):
     DynProgConsTrackInferenceModel(param),
     perturbation_(perturbation)

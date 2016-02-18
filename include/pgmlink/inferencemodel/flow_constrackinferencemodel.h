@@ -11,7 +11,7 @@ namespace pgmlink
 class FlowConsTrackInferenceModel : public InferenceModel
 {
 public:
-    FlowConsTrackInferenceModel(const Parameter& param);
+    FlowConsTrackInferenceModel(Parameter& param);
     ~FlowConsTrackInferenceModel();
 
     virtual std::vector<size_t> infer();
@@ -44,7 +44,7 @@ public:
 protected:
     // dpct inference members
     dpct::FlowGraph inference_graph_;
-    std::map<HypothesesGraph::Node, dpct::FlowGraph::Node> node_reference_map_;
+    std::map<HypothesesGraph::Node, dpct::FlowGraph::FullNode> node_reference_map_;
     std::map<HypothesesGraph::Node, dpct::FlowGraph::Arc> app_reference_map_;
     std::map<HypothesesGraph::Node, dpct::FlowGraph::Arc> dis_reference_map_;
     std::map<HypothesesGraph::Node, dpct::FlowGraph::Arc> div_reference_map_;

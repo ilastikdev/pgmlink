@@ -4,12 +4,11 @@
 #include <stdexcept>
 #include <memory>
 #include <dpct/magnusson.h>
-//#include <dpct/fusionmove.h>
 
 namespace pgmlink
 {
 
-DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(const Parameter &param):
+DynProgConsTrackInferenceModel::DynProgConsTrackInferenceModel(Parameter &param):
     InferenceModel(param),
     inference_graph_(dpct::Graph::Configuration(param.with_appearance, param.with_disappearance, param.with_divisions))
 {
@@ -91,46 +90,6 @@ std::vector<size_t> DynProgConsTrackInferenceModel::infer()
 
     return std::vector<size_t>();
 }
-
-/* Fusion Move prototype code: 
-
-//    using namespace dpct;
-
-//    // create solution A
-//    Graph gA(inference_graph_);
-//    Magnusson trackerA(&gA, true, true);
-//    TrackingAlgorithm::Solution pathsA;
-//    double scoreA = trackerA.track(pathsA);
-//    pathsA = trackerA.translateToOriginGraph(pathsA);
-//    std::cout << "Solution A with score " << scoreA << " has " << pathsA.size() << " paths in " << trackerA.getElapsedSeconds() << " secs" << std::endl;
-
-//    // create solution B (pick second best)
-//    Graph gB(inference_graph_);
-//    Magnusson trackerB(&gB, true, true);
-//    trackerB.setPathStartSelectorFunction(selectSecondBestInArc);
-//    TrackingAlgorithm::Solution pathsB;
-//    double scoreB = trackerB.track(pathsB);
-//    pathsB = trackerB.translateToOriginGraph(pathsB);
-//    std::cout << "Solution B with score " << scoreB << " has " << pathsB.size() << " paths in " << trackerB.getElapsedSeconds() << " secs" << std::endl;
-
-//    // create graph union
-//    FusionMove fm(&inference_graph_);
-//    std::shared_ptr<Graph> unionGraph = fm.graphUnion(pathsA, pathsB);
-//    unionGraph->contractLoneArcs(false);
-
-//    // track on graph union
-//    Magnusson trackerFM(unionGraph.get(), false);
-//    TrackingAlgorithm::Solution pathsFM;
-//    double scoreFM = trackerFM.track(pathsFM);
-//    std::cout << "Solution FM with score " << scoreFM << " has " << pathsFM.size() << " paths in " << trackerFM.getElapsedSeconds() << " secs" << std::endl;
-
-//    solution_paths_ = trackerFM.translateToOriginGraph(pathsFM);
-
-//    std::cout << "Original graph has " << inference_graph_.getNumArcs() << " arcs and " << inference_graph_.getNumNodes() << " nodes.\n";
-//    std::cout << "Union graph has " << unionGraph->getNumArcs()
-//              << " arcs and " << unionGraph->getNumNodes() << " nodes.\n" << std::endl;
-
-*/
 
 void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 {
@@ -258,8 +217,8 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 
         dpct::Graph::NodePtr inf_node = inference_graph_.addNode(timestep_map[n] - first_timestep,
                                                                  scoreDeltas,
-                                                                 app_score,
-                                                                 dis_score,
+                                                                 std::vector<double>(param_.max_number_objects, app_score),
+                                                                 std::vector<double>(param_.max_number_objects, dis_score),
                                                                  in_first_frame,
                                                                  in_last_frame,
                                                                  std::make_shared<ConservationTrackingNodeData>(n, tr));
@@ -276,9 +235,11 @@ void DynProgConsTrackInferenceModel::build_from_graph(const HypothesesGraph& g)
 
         double perturbed_score = getTransitionArcScore(*graph, a) - getDivMBestOffset(Transition, g, HypothesesGraph::Node(), a, size_t(true));
 
+        std::vector<double> scoreDeltas(param_.max_number_objects, 0.0);
+        scoreDeltas[0] = param_.max_number_objects, perturbed_score;
         dpct::Graph::ArcPtr inf_arc = inference_graph_.addMoveArc(source,
                                                                   target,
-                                                                  perturbed_score,
+                                                                  scoreDeltas,
                                                                   std::make_shared<ConservationTrackingArcData>(a));
     }
 
