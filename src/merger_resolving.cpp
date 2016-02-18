@@ -852,7 +852,7 @@ void resolve_graph(const HypothesesGraph& src,
         dest.add(node_originated_from());
     }
 
-    dest.add(division_active()).add(arc_active()).add(node_active2()).add(division_active_count()).add(node_active_count()).add(arc_active_count());
+    dest.add(division_active()).add(arc_active()).add(node_active2());
 
     // Storing references in nr and ar, cross references in
     // ncr and acr.
@@ -973,7 +973,17 @@ void resolve_graph(const HypothesesGraph& src,
 
     // Remap active maps from subgraph to original hypotheses graph.
     translate_property_bool_map<arc_active, HypothesesGraph::Arc>(dest, src, acr);
-    translate_property_value_map<arc_active_count, HypothesesGraph::Arc>(dest, src, acr);
+
+    // copy arc active map to arc active count map
+    property_map<arc_active_count, HypothesesGraph::base_graph>::type& active_arcs_count = src.get(arc_active_count());
+    property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = src.get(arc_active());
+    property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = src.get(node_traxel());
+
+    for (HypothesesGraph::ArcIt a(src); a != lemon::INVALID; ++a)
+    {
+        active_arcs_count.set(a, std::vector<bool>());
+        active_arcs_count.get_value(a).push_back(active_arcs[a]);
+    }
 }
 
 double calculate_BIC(int k, int n_samples, double regularization_weight, const ClusteringMlpackBase& gmm)
@@ -1112,19 +1122,11 @@ void duplicate_division_nodes(HypothesesGraph& graph,
 ////
 //// merge previously split divisions after inference
 ////
-void merge_split_divisions(const HypothesesGraph& graph,
+void merge_split_divisions(HypothesesGraph& graph,
                            std::map<HypothesesGraph::Node, HypothesesGraph::Node>& division_splits,
                            std::map<HypothesesGraph::Arc, HypothesesGraph::Arc>& arc_cross_reference)
 {
-    LOG(logDEBUG1) << "merge_splut_divisions(): enter";
-
-    typedef property_map<arc_active, HypothesesGraph::base_graph>::type ArcMap;
-    typedef property_map<node_active2, HypothesesGraph::base_graph>::type NodeMap;
-    typedef property_map<division_active, HypothesesGraph::base_graph>::type DivisionMap;
-
-    DivisionMap& division_map = graph.get(division_active());
-    ArcMap& arc_map = graph.get(arc_active());
-    NodeMap& node_map = graph.get(node_active2());
+    LOG(logDEBUG1) << "merge_split_divisions(): enter";
 
     for (std::map<HypothesesGraph::Node, HypothesesGraph::Node>::const_iterator node_it = division_splits.begin();
             node_it != division_splits.end();
@@ -1142,17 +1144,17 @@ void merge_split_divisions(const HypothesesGraph& graph,
         // of the need t clone)
         for (HypothesesGraph::OutArcIt arc_it(graph, node_it->second); arc_it != lemon::INVALID; ++arc_it)
         {
-            if (arc_map[arc_it])
+            if (graph.get_arc_active(arc_it))
             {
-                arc_map.set(arc_cross_reference[arc_it], true);
-                arc_map.set(arc_it, false);
+                graph.set_arc_active(arc_cross_reference[arc_it], true);
+                graph.set_arc_active(arc_it, false);
             }
         }
 
         // Reset original node to division state
-        division_map.set(node_it->first, true);
+        graph.set_division_active(node_it->first, true);
         // Set clone inactive
-        node_map.set(node_it->second, 0);
+        graph.set_node_active(node_it->second, 0);
     }
 }
 

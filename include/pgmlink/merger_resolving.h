@@ -615,7 +615,7 @@ PGMLINK_EXPORT void duplicate_division_nodes(HypothesesGraph& graph,
 ////
 //// merge previously split divisions after inference
 ////
-PGMLINK_EXPORT void merge_split_divisions(const HypothesesGraph& graph,
+PGMLINK_EXPORT void merge_split_divisions(HypothesesGraph& graph,
         std::map<HypothesesGraph::Node, HypothesesGraph::Node>& division_splits,
         std::map<HypothesesGraph::Arc, HypothesesGraph::Arc>& arc_cross_reference);
 
