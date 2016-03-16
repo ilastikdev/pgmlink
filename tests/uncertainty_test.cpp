@@ -469,6 +469,8 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty )
 
 }
 
+#ifdef WITH_MODIFIED_OPENGM
+// this test needs a modified version of opengm to be able to extract the m best solutions found by cplex
 BOOST_AUTO_TEST_CASE( mbestUncertainty )
 {
 
@@ -629,6 +631,7 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty )
 
     BOOST_CHECK_EQUAL(counter, 4);
 }
+#endif
 
 // EOF
 
