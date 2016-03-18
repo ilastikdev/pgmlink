@@ -328,6 +328,7 @@ EventVectorVectorVector ConsTracking::operator()(
         bool with_merger_resolution,
         int n_dim,
         double transition_parameter,
+        const std::vector<int>& max_traxel_id_at,
         double border_width,
         bool with_constraints,
         UncertaintyParameter uncertaintyParam,
@@ -377,6 +378,7 @@ EventVectorVectorVector ConsTracking::operator()(
                                                  with_tracklets,
                                                  n_dim,
                                                  transition_parameter,
+                                                 max_traxel_id_at,
                                                  with_constraints,
                                                  transition_classifier
                                              ));
@@ -1026,6 +1028,7 @@ EventVectorVector ConsTracking::resolve_mergers(
     bool with_tracklets,
     int n_dim,
     double transition_parameter,
+    const std::vector<int>& max_traxel_id_at,
     bool with_constraints,
     boost::python::object transitionClassifier
 )
@@ -1054,7 +1057,7 @@ EventVectorVector ConsTracking::resolve_mergers(
         resolved_graph_ = boost::make_shared<HypothesesGraph>();
         HypothesesGraph::copy(*hypotheses_graph_, *resolved_graph_);
 
-        MergerResolver m(resolved_graph_.get(), n_dim);
+        MergerResolver m(resolved_graph_.get(), n_dim, max_traxel_id_at);
 
         FeatureExtractorBase* extractor;
         DistanceFromCOMs distance;

@@ -59,6 +59,7 @@ vector<vector<vector<Event> > > pythonConsTracking(
         bool   with_merger_resolution,
         int    n_dim,
         double transition_parameter,
+        std::vector<int> max_traxel_id_at,
         double border_width,
         UncertaintyParameter& uncertaintyParam,
         bool   with_constraints,
@@ -82,6 +83,7 @@ vector<vector<vector<Event> > > pythonConsTracking(
                     with_merger_resolution,
                     n_dim,
                     transition_parameter,
+                    max_traxel_id_at,
                     border_width,
                     with_constraints,
                     uncertaintyParam,
@@ -131,6 +133,7 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
         bool with_tracklets,
         int n_dim,
         double transition_parameter,
+        const std::vector<int>& max_traxel_id_at,
         bool with_constraints,
         object transitionClassifier)
 {
@@ -140,7 +143,7 @@ EventVectorVector python_resolve_mergers(ConsTracking& tracker,
     try
     {
         result = tracker.resolve_mergers(events, param, coordinates, ep_gap, transition_weight,
-                                         with_tracklets, n_dim, transition_parameter, with_constraints, transitionClassifier);
+                                         with_tracklets, n_dim, transition_parameter, max_traxel_id_at, with_constraints, transitionClassifier);
     }
     catch (std::exception& e)
     {

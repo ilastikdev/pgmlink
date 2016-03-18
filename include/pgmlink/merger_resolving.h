@@ -480,6 +480,7 @@ class MergerResolver
  private:
   HypothesesGraph* g_;
   size_t n_dimensions_;
+  std::vector<int> max_traxel_id_at_;
 
   // default constructor should be private (no object without specified graph allowed)
   MergerResolver();
@@ -511,14 +512,17 @@ class MergerResolver
   // Get maximum id for given timestep
   unsigned int get_max_id(int ts);
 
+  // update the max id in that timestep
+  void update_max_id(int ts, size_t new_max_num_labels);
+
   // Split merger node into appropiately many new nodes.
   void refine_node(HypothesesGraph::Node,
                    std::size_t,
                    FeatureHandlerBase& handler);
 
  public:
-  PGMLINK_EXPORT MergerResolver(HypothesesGraph* g, size_t num_dimensions) 
-  : g_(g), n_dimensions_(num_dimensions)
+  PGMLINK_EXPORT MergerResolver(HypothesesGraph* g, size_t num_dimensions, const std::vector<int>& max_traxel_id_at={}) 
+  : g_(g), n_dimensions_(num_dimensions), max_traxel_id_at_(max_traxel_id_at)
   {
     if (!g_)
       throw std::runtime_error("HypotesesGraph* g_ is a null pointer!");

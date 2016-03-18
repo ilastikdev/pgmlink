@@ -141,6 +141,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -279,6 +280,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Division )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -389,6 +391,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_SimpleMove )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -538,6 +541,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger_Volume )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -668,6 +672,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Disappearance )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -818,6 +823,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceAndDisappearance )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -1062,6 +1068,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Appearance )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -1241,6 +1248,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_AppearanceSimple )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -1455,6 +1463,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Tracklets )
             false, //with_merger_resolution
             3, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -1730,6 +1739,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger3 )
             true, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -1950,6 +1960,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Traxels )
             false, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -2140,6 +2151,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector_Tracklets 
             false, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -2344,6 +2356,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 )
             true, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -2566,6 +2579,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision )
             true, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters
@@ -2735,6 +2749,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_TranslationVector2 )
             false, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
+            {},
             0, //border_width for app/disapp costs
             true, //with_constraints
             uparam, // uncertainty parameters

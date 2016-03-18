@@ -673,6 +673,11 @@ void MergerResolver::deactivate_nodes(std::vector<HypothesesGraph::Node> nodes)
 
 unsigned int MergerResolver::get_max_id(int ts)
 {
+    // use the provided max traxel id if supplied
+    if(max_traxel_id_at_.size() > ts - g_->earliest_timestep())
+        return max_traxel_id_at_[ts - g_->earliest_timestep()];
+
+    // otherwise extract it from the traxelstore
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g_->get(node_traxel());
     property_map<node_timestep, HypothesesGraph::base_graph>::type& time_map = g_->get(node_timestep());
     property_map<node_timestep, HypothesesGraph::base_graph>::type::ItemIt timeIt(time_map, ts);
@@ -685,6 +690,14 @@ unsigned int MergerResolver::get_max_id(int ts)
         }
     }
     return max_id;
+}
+
+void MergerResolver::update_max_id(int ts, size_t new_max_num_labels)
+{
+    if(max_traxel_id_at_.size() > ts - g_->earliest_timestep())
+    {
+        max_traxel_id_at_[ts - g_->earliest_timestep()] = std::max((int)new_max_num_labels, max_traxel_id_at_[ts - g_->earliest_timestep()]);
+    }
 }
 
 void MergerResolver::refine_node(HypothesesGraph::Node node,
@@ -706,6 +719,11 @@ void MergerResolver::refine_node(HypothesesGraph::Node node,
   // create new node for each of the objects merged into node
   std::vector<unsigned int> new_ids;
   handler(*g_, node, nMerger, max_id, timestep, sources, targets, new_ids, n_dimensions_);
+
+  // update maxId for the next traxels to come
+  auto newMaxIdIt = std::max_element(new_ids.begin(), new_ids.end());
+  if(newMaxIdIt != new_ids.end())
+    update_max_id(timestep, *newMaxIdIt);
 
   // deactivate incoming and outgoing arcs of merger node
   // merger node will be deactivated after pruning

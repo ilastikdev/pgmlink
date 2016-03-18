@@ -147,6 +147,7 @@ BOOST_AUTO_TEST_CASE( GumbelPerturbAndMAP )
              false, //with_merger_resolution
              3, //n_dim
              5, //transition_parameter
+             {},
              0, //border_width for app/disapp costs
              true, //with_constraints
              uparam, // uncertainty parameters
@@ -308,6 +309,7 @@ BOOST_AUTO_TEST_CASE( ClassifierUncertaintyForDivision )
              false, //with_merger_resolution
              3, //n_dim
              5, //transition_parameter
+             {},
              0, //border_width for app/disapp costs
              true, //with_constraints
              uparam, // uncertainty parameters
@@ -450,6 +452,7 @@ BOOST_AUTO_TEST_CASE( diverseUncertainty )
                                      false, //with_merger_resolution
                                      3, //n_dim
                                      5, //transition_parameter
+                                     {},
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
                                      uparam, // uncertainty parameters
@@ -606,6 +609,7 @@ BOOST_AUTO_TEST_CASE( mbestUncertainty )
                                      false, //with_merger_resolution
                                      3, //n_dim
                                      5, //transition_parameter
+                                     {},
                                      0, //border_width for app/disapp costs
                                      true, //with_constraints
                                      uparam, // uncertainty parameters
