@@ -600,7 +600,7 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
         property_map<node_active2, HypothesesGraph::base_graph>::type::ItemIt n_it(node_active_map, *active_valueIt);
         for (; n_it != lemon::INVALID; ++n_it)
         {
-            assert(graph.get(node_traxel())[n_it].Id > 0);
+            assert(with_tracklets || graph.get(node_traxel())[n_it].Id > 0);
             parent[n_it] = n_it;
             child[n_it] = n_it;
             has_natural_parent[n_it] = false;
@@ -611,8 +611,8 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
     // Set connections
     for (ArcActiveIt a_it(arc_active_map); a_it != lemon::INVALID; ++a_it)
     {
-        assert(graph.get(node_traxel())[graph.target(a_it)].Id > 0);
-        assert(graph.get(node_traxel())[graph.source(a_it)].Id > 0);
+        assert(with_tracklets || graph.get(node_traxel())[graph.target(a_it)].Id > 0);
+        assert(with_tracklets || graph.get(node_traxel())[graph.source(a_it)].Id > 0);
         assert(node_active_map[graph.source(a_it)] > 0);
         assert(node_active_map[graph.target(a_it)] > 0);
         has_natural_parent[graph.target(a_it)] = true;
@@ -645,7 +645,7 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
         HypothesesGraph::Node current_node = nmap_it->first;
         LOG(logDEBUG4) << "Is parent node invalid?";
         LOG(logDEBUG4) << (parent[current_node] == lemon::INVALID);
-        assert(graph.get(node_traxel())[current_node].Id > 0);
+        assert(with_tracklets || graph.get(node_traxel())[current_node].Id > 0);
         // check for node if we have to start a new track
         bool start_track = (parent[current_node] == current_node);
         if (start_track and require_div_start_)
@@ -660,7 +660,7 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
             // loop as long as the track isn't finished
             while (loop)
             {
-                assert(graph.get(node_traxel())[current_node].Id > 0);
+                assert(with_tracklets || graph.get(node_traxel())[current_node].Id > 0);
                 if (with_tracklets)
                 {
                     // get the traxel vector of this node
@@ -676,7 +676,7 @@ const std::vector<ConstTraxelRefVector>& TrackTraxels::operator()(
                 }
                 else
                 {
-                    assert(graph.get(node_traxel())[current_node].Id > 0);
+                    assert(with_tracklets || graph.get(node_traxel())[current_node].Id > 0);
                     ret_.back().push_back( &(graph.get(node_traxel())[current_node]) );
                 }
                 if(child.find(current_node) == child.end())
