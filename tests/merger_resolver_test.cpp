@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
             }
         }
     }
-    BOOST_CHECK_EQUAL(resolve_count, 2);
+    BOOST_CHECK_EQUAL(resolve_count, 1);
 
 }
 
