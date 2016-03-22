@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE( TrackingFeatureExtractor_SimpleMove )
     std::cout << std::endl;
 
     Parameter consTrackingParams = Parameter();
-    UncertaintyParameter uparam(2, ClassifierUncertainty, 1.0);
+    UncertaintyParameter uparam;
 
     std::vector< std::vector<Event> > events = tracking(
                 ts,

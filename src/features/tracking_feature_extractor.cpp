@@ -561,6 +561,8 @@ void TrackingFeatureExtractor::compute_all_track_features()
     LOG(logDEBUG) << "Extract all tracks";
     TrackTraxels track_extractor;
     ConstTraxelRefVectors track_traxels = track_extractor(*graph_);
+    if(track_traxels.empty())
+        return;
     compute_sq_diff_features(track_traxels, "RegionCenter");
     compute_sq_diff_features(track_traxels, "Count");
     compute_sq_diff_features(track_traxels, "Mean");
@@ -646,12 +648,14 @@ void TrackingFeatureExtractor::compute_all_app_dis_features()
         AppearanceType::Disappearance,
         margin_filter_function_);
     ConstTraxelRefVectors filtered_disapp_traxels = disappearance_extractor_f(*graph_);
-    push_back_feature(
-        "Share of appearances within margin",
-        static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
-    push_back_feature(
-        "Share of disappearances within margin",
-        static_cast<double>(filtered_disapp_traxels.size() / all_disapp_traxels.size()));
+    if(!all_app_traxels.empty())
+        push_back_feature(
+            "Share of appearances within margin",
+            static_cast<double>(filtered_app_traxels.size() / all_app_traxels.size()));
+    if(!all_disapp_traxels.empty())
+        push_back_feature(
+            "Share of disappearances within margin",
+            static_cast<double>(filtered_disapp_traxels.size() / all_disapp_traxels.size()));
     compute_border_distances(all_app_traxels, "appearance");
     compute_border_distances(all_disapp_traxels, "disappearance");
 }
