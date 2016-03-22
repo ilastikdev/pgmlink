@@ -2353,7 +2353,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_Merger4 )
             10.0, //transition_weight
             1500., // disappearance_cost,
             1500., // appearance_cost
-            true, //with_merger_resolution
+            false, //with_merger_resolution
             2, //n_dim
             5, //transition_parameter
             {},
