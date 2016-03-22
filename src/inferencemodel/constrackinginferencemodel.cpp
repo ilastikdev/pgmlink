@@ -399,7 +399,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         {
             vi.push_back(app_node_map_[n]);
             // "<" holds if there are only tracklets in the first frame
-            if (node_begin_time <= g.earliest_timestep())
+            if (node_begin_time < g.earliest_timestep())
             {
                 // pay no appearance costs in the first timestep
                 cost.push_back(0.);
