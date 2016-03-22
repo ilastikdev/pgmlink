@@ -699,6 +699,7 @@ EventVectorVectorVector ConsTracking::track_from_param(Parameter& param,
             last_detections_ = state_of_nodes(*hypotheses_graph_);
         }
 
+        ilp_solutions_ = pgm.get_ilp_solutions();
         std::cout << "-> constructing unresolved events" << std::endl;
 
         EventVectorVectorVector all_ev(num_solutions);
