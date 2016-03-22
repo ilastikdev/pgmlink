@@ -3150,6 +3150,8 @@ BOOST_AUTO_TEST_CASE(Tracking_ConservationTracking_extractSolution)
 
     Parameter param = tracking.get_conservation_tracking_parameters();
     param.with_tracklets = false;
+    param.disappearance_cost_fn = ConstantFeature(100.0);
+    param.appearance_cost_fn = ConstantFeature(100.0);
 
     boost::shared_ptr<ConsTrackingInferenceModel> constrack_inf_model = boost::make_shared<ConsTrackingInferenceModel>(param);
 
@@ -3160,6 +3162,7 @@ BOOST_AUTO_TEST_CASE(Tracking_ConservationTracking_extractSolution)
     HypothesesGraph trackletGraphDummy;
     std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > tracklet2traxel_map;
     constrack_inf_model->conclude(*hg, trackletGraphDummy, tracklet2traxel_map, solution1);
+
     if(!hg->has_property(arc_value_count()))
         throw std::logic_error("Something went wrong with concluding, arc_value_count() property is missing!");
 
@@ -3179,7 +3182,6 @@ BOOST_AUTO_TEST_CASE(Tracking_ConservationTracking_extractSolution)
     BOOST_CHECK_EQUAL(solution1.size(), solution2.size());
     for(size_t i = 0; i < solution1.size(); ++i)
     {
-        // std::cout << "checking: " << solution1[i] << " == " << solution2[i] << "?" << std::endl;
         BOOST_CHECK_EQUAL(solution1[i], solution2[i]);
     }
 }
