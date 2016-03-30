@@ -217,6 +217,7 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_Division ) {
                                false, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
+                               {},
                                0, //border_width for app/disapp costs
                                true, //with_constraints
                                uparam, // uncertainty parameters
@@ -323,6 +324,7 @@ BOOST_AUTO_TEST_CASE( Tracking_Flow_ConservationTracking_Division ) {
                                false, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
+                               {},
                                0, //border_width for app/disapp costs
                                true, //with_constraints
                                uparam, // uncertainty parameters
@@ -931,6 +933,7 @@ BOOST_AUTO_TEST_CASE( Tracking_TwoStage_ConservationTracking_AppearanceSimple ) 
                                true, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
+                               {},
                                0, //border_width for app/disapp costs
                                true, //with_constraints
                                uparam, // uncertainty parameters
@@ -1040,6 +1043,7 @@ BOOST_AUTO_TEST_CASE( Tracking_DynProg_ConservationTracking_AppearanceSimple ) {
                                false, //with_merger_resolution
                                3, //n_dim
                                5, //transition_parameter
+                               {},
                                0, //border_width for app/disapp costs
                                true, //with_constraints
                                uparam, // uncertainty parameters
@@ -1917,6 +1921,7 @@ BOOST_AUTO_TEST_CASE( Tracking_ConservationTracking_MergerResolvingDivision ) {
                                true, //with_merger_resolution
                                2, //n_dim
                                5, //transition_parameter
+                               {},
                                0, //border_width for app/disapp costs
                                true, //with_constraints
                                uparam, // uncertainty parameters
