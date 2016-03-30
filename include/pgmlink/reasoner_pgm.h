@@ -24,53 +24,59 @@
 #endif
 
 #include "pgmlink/event.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/pgm.h"
 #include "pgmlink/hypotheses.h"
 #include "pgmlink/reasoner.h"
 #include "pgmlink/pgm_chaingraph.h"
 
-namespace pgmlink {
-  class Traxel;
-  namespace pgm {
+namespace pgmlink 
+{
+class Traxel;
+
+namespace pgm 
+{
 #ifdef WITH_GUROBI
   typedef opengm::LPGurobi<OpengmModel, opengm::Minimizer> OpengmLPCplex;
 #else
   typedef opengm::LPCplex<OpengmModel, opengm::Minimizer> OpengmLPCplex;
 #endif
-  } /* namespace pgm */
+} /* namespace pgm */
 
-  class Chaingraph : public Reasoner {
-    public:
+class Chaingraph : public Reasoner {
+public:
     typedef pgm::chaingraph::Model::node_var_map node_var_map;
     typedef pgm::chaingraph::Model::arc_var_map arc_var_map;
 
     Chaingraph(bool with_constraints = true,
-	       double ep_gap = 0.01,
-	       bool fixed_detections = false,
-	       double cplex_timeout = 1e+75
-	       )
-      : optimizer_(NULL),
-      with_constraints_(with_constraints),
-      fixed_detections_(fixed_detections),
-      ep_gap_(ep_gap),
-      cplex_timeout_(cplex_timeout),
-      builder_(NULL)
-	{ builder_ = new pgm::chaingraph::ECCV12ModelBuilder(); (*builder_).with_detection_vars().with_divisions(); }
-    
+               double ep_gap = 0.01,
+               bool fixed_detections = false,
+               double cplex_timeout = 1e+75
+              )
+        : optimizer_(NULL),
+          with_constraints_(with_constraints),
+          fixed_detections_(fixed_detections),
+          ep_gap_(ep_gap),
+          cplex_timeout_(cplex_timeout),
+          builder_(NULL)
+    {
+        builder_ = new pgm::chaingraph::ECCV12ModelBuilder();
+        (*builder_).with_detection_vars().with_divisions();
+    }
 
-  Chaingraph(const pgm::chaingraph::ModelBuilder& builder,
-	     bool with_constraints = true,
-	     double ep_gap = 0.01,
-	     bool fixed_detections = false,
-	     double cplex_timeout = 1e+75
-    ) 
-    : optimizer_(NULL),
-    with_constraints_(with_constraints),
-    fixed_detections_(fixed_detections),
-    ep_gap_(ep_gap),
-    cplex_timeout_(cplex_timeout),
-    builder_(builder.clone())
+
+    Chaingraph(const pgm::chaingraph::ModelBuilder& builder,
+               bool with_constraints = true,
+               double ep_gap = 0.01,
+               bool fixed_detections = false,
+               double cplex_timeout = 1e+75
+              )
+        : optimizer_(NULL),
+          with_constraints_(with_constraints),
+          fixed_detections_(fixed_detections),
+          ep_gap_(ep_gap),
+          cplex_timeout_(cplex_timeout),
+          builder_(builder.clone())
     {};
     ~Chaingraph();
 
@@ -80,9 +86,18 @@ namespace pgmlink {
 
     double forbidden_cost() const;
     bool with_constraints() const;
-    const pgm::chaingraph::ModelBuilder& builder() { return *builder_; }
-    void builder(const pgm::chaingraph::ModelBuilder& builder) {
-      if(builder_) delete builder_; builder_ = builder.clone(); }
+    const pgm::chaingraph::ModelBuilder& builder()
+    {
+        return *builder_;
+    }
+    void builder(const pgm::chaingraph::ModelBuilder& builder)
+    {
+        if(builder_)
+        {
+            delete builder_;
+        }
+        builder_ = builder.clone();
+    }
 
     /** Return current state of graphical model
      *
@@ -102,16 +117,19 @@ namespace pgmlink {
      * The map is populated after the first call to formulate().
      */
     const arc_var_map& get_arc_map() const;
-    
 
-    private:
+
+private:
     // copy and assingment have to be implemented, yet
     Chaingraph(const Chaingraph&) {};
-    Chaingraph& operator=(const Chaingraph&) { return *this;};
+    Chaingraph& operator=(const Chaingraph&)
+    {
+        return *this;
+    };
     void reset();
-    
+
     pgm::OpengmLPCplex* optimizer_;
-    shared_ptr<pgm::chaingraph::Model> linking_model_;
+    boost::shared_ptr<pgm::chaingraph::Model> linking_model_;
 
     bool with_constraints_;
     bool fixed_detections_;
@@ -119,7 +137,7 @@ namespace pgmlink {
     double ep_gap_;
     double cplex_timeout_;
     pgm::chaingraph::ModelBuilder* builder_;
-};
+  };
 
 } /* namespace pgmlink */
 #endif /* REASONER_PGM_H */

@@ -8,24 +8,28 @@
 // boost
 #include <boost/shared_ptr.hpp>
 
-namespace pgmlink {
+namespace pgmlink
+{
 
 
-namespace feature_extraction {
+namespace feature_extraction
+{
 
 class FeatureCalculator;
 
 
-namespace helpers {
+namespace helpers
+{
 ////
 //// class CalculatorLookup
 ////
-class CalculatorLookup {
- public:
-  static boost::shared_ptr<FeatureCalculator> extract_calculator(const std::string& name);
-  
- private:
-  static const std::map<std::string, boost::shared_ptr<FeatureCalculator> > calculator_map_;
+class CalculatorLookup
+{
+public:
+    static boost::shared_ptr<FeatureCalculator> extract_calculator(const std::string& name);
+
+private:
+    static const std::map<std::string, boost::shared_ptr<FeatureCalculator> > calculator_map_;
 };
 
 } // namespace helpers

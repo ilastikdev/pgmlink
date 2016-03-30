@@ -20,7 +20,7 @@
 
 #include "pgmlink/graph.h"
 #include "pgmlink/hypotheses.h"
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/reasoner_pgm.h"
 #include "pgmlink/traxels.h"
 
@@ -28,162 +28,169 @@ using namespace pgmlink;
 using namespace std;
 using namespace boost;
 
-BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp ) {
+BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp )
+{
     HypothesesGraph graph;
     graph.add_node(13);
 }
 
-BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp2 ) {
+BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp2 )
+{
 
-  std::cout << "Constructing HypothesesGraph" << std::endl;
-  std::cout <<  std::endl;
+    std::cout << "Constructing HypothesesGraph" << std::endl;
+    std::cout <<  std::endl;
 
-  typedef HypothesesGraph::ArcIt ArcIt2;
-  //typedef HypothesesGraph::Arc Arc;
-  typedef HypothesesGraph::NodeIt NodeIt;
-  typedef HypothesesGraph::Node Node;
-  using lemon::INVALID;
+    typedef HypothesesGraph::ArcIt ArcIt2;
+    //typedef HypothesesGraph::Arc Arc;
+    typedef HypothesesGraph::NodeIt NodeIt;
+    typedef HypothesesGraph::Node Node;
+    using lemon::INVALID;
 
-  HypothesesGraph g;
-  HypothesesGraph* graph=&g;
-  graph->add(node_traxel());
+    HypothesesGraph g;
+    HypothesesGraph* graph = &g;
+    graph->add(node_traxel());
 
-  std::cout << "Adding nodes and arcs" << std::endl;
-  std::cout <<  std::endl;
+    std::cout << "Adding nodes and arcs" << std::endl;
+    std::cout <<  std::endl;
 
-  Node n1=g.add_node(0);
-  Node n2=g.add_node(0);
-  Node n3=g.add_node(0);
-  Node n4=g.add_node(0);
-  Node m1=g.add_node(1);
-  Node m2=g.add_node(1);
-  Node m3=g.add_node(1);
-  Node m4=g.add_node(1);
-  Node o1=g.add_node(2);
-  Node o2=g.add_node(2);
-  Node o3=g.add_node(2);
-  Node o4=g.add_node(2);
+    Node n1 = g.add_node(0);
+    Node n2 = g.add_node(0);
+    Node n3 = g.add_node(0);
+    Node n4 = g.add_node(0);
+    Node m1 = g.add_node(1);
+    Node m2 = g.add_node(1);
+    Node m3 = g.add_node(1);
+    Node m4 = g.add_node(1);
+    Node o1 = g.add_node(2);
+    Node o2 = g.add_node(2);
+    Node o3 = g.add_node(2);
+    Node o4 = g.add_node(2);
 
-  // we have to shuffle the order of adding arcs
-  // that way we can test if the index sorting in formulate()
-  // is working
+    // we have to shuffle the order of adding arcs
+    // that way we can test if the index sorting in formulate()
+    // is working
 
-  g.addArc(m1,o1);
-  g.addArc(n2,m1);
-  g.addArc(m4,o4);
-  g.addArc(m4,o3);
-  g.addArc(n3,m4);
-  g.addArc(n1,m2);
-  g.addArc(n3,m3);
-  g.addArc(m2,o2);
-  g.addArc(n2,m2);
+    g.addArc(m1, o1);
+    g.addArc(n2, m1);
+    g.addArc(m4, o4);
+    g.addArc(m4, o3);
+    g.addArc(n3, m4);
+    g.addArc(n1, m2);
+    g.addArc(n3, m3);
+    g.addArc(m2, o2);
+    g.addArc(n2, m2);
 
-  std::cout << "Nodes:";
-  for (NodeIt i(g); i!=INVALID; ++i)
-    std::cout << " " << g.id(i);
-  std::cout << std::endl;
+    std::cout << "Nodes:";
+    for (NodeIt i(g); i != INVALID; ++i)
+    {
+        std::cout << " " << g.id(i);
+    }
+    std::cout << std::endl;
 
-  std::cout << "Arcs:";
-  for (ArcIt2 i(g); i!=INVALID; ++i)
-  std::cout << " (" << g.id(g.source(i)) << "," << g.id(g.target(i)) << ")";
-  std::cout << std::endl;
-  std::cout <<  std::endl;
+    std::cout << "Arcs:";
+    for (ArcIt2 i(g); i != INVALID; ++i)
+    {
+        std::cout << " (" << g.id(g.source(i)) << "," << g.id(g.target(i)) << ")";
+    }
+    std::cout << std::endl;
+    std::cout <<  std::endl;
 
-  std::cout << "Constructing Reasoner" << std::endl;
-  std::cout <<  std::endl;
-
-
-   Traxels empty;
-   ConstantFeature e1(1);
-   ConstantFeature e2(2);
-   ConstantFeature e3(3);
-   ConstantFeature e4(4);
-   ConstantFeature e5(5);
-   ConstantFeature e6(6);
-
-   pgm::chaingraph::ECCV12ModelBuilder b;
-   b.with_detection_vars(e1, e2)
-     .appearance(e3)
-     .disappearance(e4)
-     .move(e5)
-     .with_divisions(e6)
-     .opportunity_cost(7)
-     .forbidden_cost(8)
-     ;
-   
-   Chaingraph mrf(b, true, 0.01, false);
-
-  std::cout << "Formulating Factors" << std::endl;
-  std::cout <<  std::endl;
-
-  cout << "-> workflow: formulating model" << endl; 
-  mrf.formulate( *graph );
-
-  ////
-  //// check topology of graphical model
-  ////
-  const pgm::OpengmModel* model = mrf.get_graphical_model();
-  BOOST_CHECK( model != NULL );
-  BOOST_CHECK_EQUAL( model->numberOfVariables(), 21);
-  BOOST_CHECK_EQUAL( model->numberOfFactors(), 36);
-
-  // incoming factor
-  size_t det_var; // detection variable
-  det_var = mrf.get_node_map().find(m2)->second;
-  BOOST_CHECK_EQUAL(model->numberOfFactors(det_var), 3);
-  const pgm::OpengmModel::FactorType f = (*model)[model->factorOfVariable(det_var, 2)];
-  BOOST_CHECK_EQUAL(f.numberOfVariables(), 3);
-  BOOST_CHECK_EQUAL(f.size(), 8);
-  BOOST_CHECK_EQUAL(f.shape(0), 2);
-  BOOST_CHECK_EQUAL(f.shape(1), 2);
-  BOOST_CHECK_EQUAL(f.shape(2), 2);
-  BOOST_CHECK_EQUAL(f.function<0>()(0,0,0), 0);
-  BOOST_CHECK_EQUAL(f.function<0>()(0,0,1), 8);
-  BOOST_CHECK_EQUAL(f.function<0>()(0,1,0), 8);
-  BOOST_CHECK_EQUAL(f.function<0>()(0,1,1), 8);
-  BOOST_CHECK_EQUAL(f.function<0>()(1,0,0), 3);
-  BOOST_CHECK_EQUAL(f.function<0>()(1,0,1), 0);
-  BOOST_CHECK_EQUAL(f.function<0>()(1,1,0), 0);
-  BOOST_CHECK_EQUAL(f.function<0>()(1,1,1), 8);
-
-  // outgoing factor
-  det_var = mrf.get_node_map().find(m4)->second;
-  BOOST_CHECK_EQUAL(model->numberOfFactors(det_var), 3);
-  const pgm::OpengmModel::FactorType f2 = (*model)[model->factorOfVariable(det_var, 1)];
-  BOOST_CHECK_EQUAL(f2.numberOfVariables(), 3);
-  BOOST_CHECK_EQUAL(f2.size(), 8);
-  BOOST_CHECK_EQUAL(f2.shape(0), 2);
-  BOOST_CHECK_EQUAL(f2.shape(1), 2);
-  BOOST_CHECK_EQUAL(f2.shape(2), 2);
-  BOOST_CHECK_EQUAL(f2.function<0>()(0,0,0), 7);
-  BOOST_CHECK_EQUAL(f2.function<0>()(0,0,1), 8);
-  BOOST_CHECK_EQUAL(f2.function<0>()(0,1,0), 8);
-  BOOST_CHECK_EQUAL(f2.function<0>()(0,1,1), 8);
-  BOOST_CHECK_EQUAL(f2.function<0>()(1,0,0), 4);
-  BOOST_CHECK_EQUAL(f2.function<0>()(1,0,1), 5);
-  BOOST_CHECK_EQUAL(f2.function<0>()(1,1,0), 5);
-  BOOST_CHECK_EQUAL(f2.function<0>()(1,1,1), 6);
-
-  // detection factor
-  det_var = mrf.get_node_map().find(n4)->second;
-  BOOST_CHECK_EQUAL(model->numberOfFactors(det_var), 3);
-  const pgm::OpengmModel::FactorType f3 = (*model)[model->factorOfVariable(det_var, 0)];
-  BOOST_CHECK_EQUAL(f3.numberOfVariables(), 1);
-  BOOST_CHECK_EQUAL(f3.size(), 2);
-  BOOST_CHECK_EQUAL(f3.shape(0), 2);
-  BOOST_CHECK_EQUAL(f3.function<0>()(0), 2);
-  BOOST_CHECK_EQUAL(f3.function<0>()(1), 1);
+    std::cout << "Constructing Reasoner" << std::endl;
+    std::cout <<  std::endl;
 
 
-  cout << "-> workflow: infer" << endl; 
-  mrf.infer();
-  cout << "-> workflow: conclude" << endl; 
-  mrf.conclude(*graph);
-  prune_inactive(*graph);
+    Traxels empty;
+    ConstantFeature e1(1);
+    ConstantFeature e2(2);
+    ConstantFeature e3(3);
+    ConstantFeature e4(4);
+    ConstantFeature e5(5);
+    ConstantFeature e6(6);
+
+    pgm::chaingraph::ECCV12ModelBuilder b;
+    b.with_detection_vars(e1, e2)
+    .appearance(e3)
+    .disappearance(e4)
+    .move(e5)
+    .with_divisions(e6)
+    .opportunity_cost(7)
+    .forbidden_cost(8)
+    ;
+
+    Chaingraph mrf(b, true, 0.01, false);
+
+    std::cout << "Formulating Factors" << std::endl;
+    std::cout <<  std::endl;
+
+    cout << "-> workflow: formulating model" << endl;
+    mrf.formulate( *graph );
+
+    ////
+    //// check topology of graphical model
+    ////
+    const pgm::OpengmModel* model = mrf.get_graphical_model();
+    BOOST_CHECK( model != NULL );
+    BOOST_CHECK_EQUAL( model->numberOfVariables(), 21);
+    BOOST_CHECK_EQUAL( model->numberOfFactors(), 36);
+
+    // incoming factor
+    size_t det_var; // detection variable
+    det_var = mrf.get_node_map().find(m2)->second;
+    BOOST_CHECK_EQUAL(model->numberOfFactors(det_var), 3);
+    const pgm::OpengmModel::FactorType f = (*model)[model->factorOfVariable(det_var, 2)];
+    BOOST_CHECK_EQUAL(f.numberOfVariables(), 3);
+    BOOST_CHECK_EQUAL(f.size(), 8);
+    BOOST_CHECK_EQUAL(f.shape(0), 2);
+    BOOST_CHECK_EQUAL(f.shape(1), 2);
+    BOOST_CHECK_EQUAL(f.shape(2), 2);
+    BOOST_CHECK_EQUAL(f.function<0>()(0, 0, 0), 0);
+    BOOST_CHECK_EQUAL(f.function<0>()(0, 0, 1), 8);
+    BOOST_CHECK_EQUAL(f.function<0>()(0, 1, 0), 8);
+    BOOST_CHECK_EQUAL(f.function<0>()(0, 1, 1), 8);
+    BOOST_CHECK_EQUAL(f.function<0>()(1, 0, 0), 3);
+    BOOST_CHECK_EQUAL(f.function<0>()(1, 0, 1), 0);
+    BOOST_CHECK_EQUAL(f.function<0>()(1, 1, 0), 0);
+    BOOST_CHECK_EQUAL(f.function<0>()(1, 1, 1), 8);
+
+    // outgoing factor
+    det_var = mrf.get_node_map().find(m4)->second;
+    BOOST_CHECK_EQUAL(model->numberOfFactors(det_var), 3);
+    const pgm::OpengmModel::FactorType f2 = (*model)[model->factorOfVariable(det_var, 1)];
+    BOOST_CHECK_EQUAL(f2.numberOfVariables(), 3);
+    BOOST_CHECK_EQUAL(f2.size(), 8);
+    BOOST_CHECK_EQUAL(f2.shape(0), 2);
+    BOOST_CHECK_EQUAL(f2.shape(1), 2);
+    BOOST_CHECK_EQUAL(f2.shape(2), 2);
+    BOOST_CHECK_EQUAL(f2.function<0>()(0, 0, 0), 7);
+    BOOST_CHECK_EQUAL(f2.function<0>()(0, 0, 1), 8);
+    BOOST_CHECK_EQUAL(f2.function<0>()(0, 1, 0), 8);
+    BOOST_CHECK_EQUAL(f2.function<0>()(0, 1, 1), 8);
+    BOOST_CHECK_EQUAL(f2.function<0>()(1, 0, 0), 4);
+    BOOST_CHECK_EQUAL(f2.function<0>()(1, 0, 1), 5);
+    BOOST_CHECK_EQUAL(f2.function<0>()(1, 1, 0), 5);
+    BOOST_CHECK_EQUAL(f2.function<0>()(1, 1, 1), 6);
+
+    // detection factor
+    det_var = mrf.get_node_map().find(n4)->second;
+    BOOST_CHECK_EQUAL(model->numberOfFactors(det_var), 3);
+    const pgm::OpengmModel::FactorType f3 = (*model)[model->factorOfVariable(det_var, 0)];
+    BOOST_CHECK_EQUAL(f3.numberOfVariables(), 1);
+    BOOST_CHECK_EQUAL(f3.size(), 2);
+    BOOST_CHECK_EQUAL(f3.shape(0), 2);
+    BOOST_CHECK_EQUAL(f3.function<0>()(0), 2);
+    BOOST_CHECK_EQUAL(f3.function<0>()(1), 1);
+
+
+    cout << "-> workflow: infer" << endl;
+    mrf.infer();
+    cout << "-> workflow: conclude" << endl;
+    mrf.conclude(*graph);
+    prune_inactive(*graph);
 }
 
 
-BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp_mrf ) {
+BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp_mrf )
+{
 
 
     Traxel n1, n2, n3, n4, m1, m2, m3, m4, o1, o2, o3, o4, o5;
@@ -191,11 +198,11 @@ BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp_mrf ) {
     feature_array comn2(feature_array::difference_type(3));
     feature_array comn3(feature_array::difference_type(3));
     feature_array comn4(feature_array::difference_type(3));
-    feature_array comm1(feature_array::difference_type(3)); 
+    feature_array comm1(feature_array::difference_type(3));
     feature_array comm2(feature_array::difference_type(3));
     feature_array comm3(feature_array::difference_type(3));
-    feature_array comm4(feature_array::difference_type(3));    
-    feature_array como1(feature_array::difference_type(3)); 
+    feature_array comm4(feature_array::difference_type(3));
+    feature_array como1(feature_array::difference_type(3));
     feature_array como2(feature_array::difference_type(3));
     feature_array como3(feature_array::difference_type(3));
     feature_array como4(feature_array::difference_type(3));
@@ -289,67 +296,68 @@ BOOST_AUTO_TEST_CASE( HypothesesGraph_build_hyp_mrf ) {
     como5[1] = 4;
     como5[2] = 0;
     o5.features["com"] = como5;
-    o5.Id = 34;
+    o5.Id = 35;
     o5.Timestep = 2;
 
     TraxelStore ts;
-    add(ts,n1);
-    add(ts,n2);
-    add(ts,n3);
-    add(ts,n4);
-    add(ts,m1);
-    add(ts,m2);
-    add(ts,m3);
-    add(ts,m4);
-    add(ts,o1);
-    add(ts,o2);
-    add(ts,o3);
-    add(ts,o4);
-    add(ts,o5);
+    boost::shared_ptr<FeatureStore> fs = boost::make_shared<FeatureStore>();
+    add(ts, fs, n1);
+    add(ts, fs, n2);
+    add(ts, fs, n3);
+    add(ts, fs, n4);
+    add(ts, fs, m1);
+    add(ts, fs, m2);
+    add(ts, fs, m3);
+    add(ts, fs, m4);
+    add(ts, fs, o1);
+    add(ts, fs, o2);
+    add(ts, fs, o3);
+    add(ts, fs, o4);
+    add(ts, fs, o5);
 
     SingleTimestepTraxel_HypothesesBuilder builder(&ts);
     boost::shared_ptr<HypothesesGraph> graph = boost::shared_ptr<HypothesesGraph>(builder.build());
 
     Traxels empty;
-    ConstantFeature e1(10);	
-    ConstantFeature e2(90);	
-    ConstantFeature e3(70);	
-    ConstantFeature e4(50);	
-    ConstantFeature e5(20);		
-    ConstantFeature e6(5);	
+    ConstantFeature e1(10);
+    ConstantFeature e2(90);
+    ConstantFeature e3(70);
+    ConstantFeature e4(50);
+    ConstantFeature e5(20);
+    ConstantFeature e6(5);
 
     pgm::chaingraph::ECCV12ModelBuilder b1;
     b1.with_detection_vars(e1, e2)
-      .appearance(e3)
-      .disappearance(e4)
-      .move(e5)
-      .with_divisions(e6)
-      ;
-    
+    .appearance(e3)
+    .disappearance(e4)
+    .move(e5)
+    .with_divisions(e6)
+    ;
+
     Chaingraph mrf(b1, true, 0.01, false);
 
     pgm::chaingraph::TrainableModelBuilder b(e3,
-					   e4,
-					   e5,
-					   0,
-					   0);
+            e4,
+            e5,
+            0,
+            0);
 
     b.with_divisions(e6)
-      .with_detection_vars(e1, e2);
+    .with_detection_vars(e1, e2);
 
     Chaingraph new_builder(b, true, 0.01, false);
 
 
-    cout << "-> workflow: formulating model" << endl; 
+    cout << "-> workflow: formulating model" << endl;
     mrf.formulate( *graph );
-    cout << "-> workflow: infer" << endl; 
+    cout << "-> workflow: infer" << endl;
     mrf.infer();
 
-    cout << "-> new builder" << endl; 
+    cout << "-> new builder" << endl;
     new_builder.formulate( *graph );
     new_builder.infer();
 
-    cout << "-> workflow: conclude" << endl; 
+    cout << "-> workflow: conclude" << endl;
     mrf.conclude(*graph);
     prune_inactive(*graph);
 

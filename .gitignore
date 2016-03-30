@@ -60,3 +60,10 @@ Thumbs.db
 html
 doc/html
 
+.idea
+
+# added by GitSavvy
+/.tags
+
+# added by GitSavvy
+/.tags_sorted_by_file

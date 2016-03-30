@@ -27,30 +27,36 @@
 
 using namespace std;
 
-namespace pgmlink {
-  ////
-  //// class Chaingraph
-  ////
+namespace pgmlink
+{
+////
+//// class Chaingraph
+////
 
-  Chaingraph::~Chaingraph() {
-    if(optimizer_ != NULL) {
-	delete optimizer_;
-	optimizer_ = NULL;
+Chaingraph::~Chaingraph()
+{
+    if(optimizer_ != NULL)
+    {
+        delete optimizer_;
+        optimizer_ = NULL;
     }
 
     delete builder_;
     builder_ = NULL;
-  }
-
-double Chaingraph::forbidden_cost() const {
-  return builder_->forbidden_cost();
 }
 
-bool Chaingraph::with_constraints() const {
-  return with_constraints_;
+double Chaingraph::forbidden_cost() const
+{
+    return builder_->forbidden_cost();
 }
 
-void Chaingraph::formulate( const HypothesesGraph& hypotheses ) {
+bool Chaingraph::with_constraints() const
+{
+    return with_constraints_;
+}
+
+void Chaingraph::formulate( const HypothesesGraph& hypotheses )
+{
     LOG(logDEBUG) << "Chaingraph::formulate: entered";
     reset();
 
@@ -67,33 +73,39 @@ void Chaingraph::formulate( const HypothesesGraph& hypotheses ) {
     pgm::OpengmLPCplex* cplex = new pgm::OpengmLPCplex(*(linking_model_->opengm_model), param);
     optimizer_ = cplex; // opengm::Inference optimizer_
 
-    if (with_constraints_) {
-      LOG(logDEBUG) << "Chaingraph::formulate: add_constraints";
-      builder_->add_hard_constraints( *linking_model_ , hypotheses, *cplex );
+    if (with_constraints_)
+    {
+        LOG(logDEBUG) << "Chaingraph::formulate: add_constraints";
+        builder_->add_hard_constraints( *linking_model_ , hypotheses, *cplex );
     }
-    
-    if (fixed_detections_) {
-      LOG(logDEBUG) << "Chaingraph::formulate: fix_detections";
-      builder_->fix_detections( *linking_model_, hypotheses, *cplex );
+
+    if (fixed_detections_)
+    {
+        LOG(logDEBUG) << "Chaingraph::formulate: fix_detections";
+        builder_->fix_detections( *linking_model_, hypotheses, *cplex );
     }
 }
 
 
 
-void Chaingraph::infer() {
+void Chaingraph::infer()
+{
     opengm::InferenceTermination status = optimizer_->infer();
-    if(status != opengm::NORMAL) {
+    if(status != opengm::NORMAL)
+    {
         throw std::runtime_error("GraphicalModel::infer(): optimizer terminated unnormally");
     }
 }
 
 
-void Chaingraph::conclude( HypothesesGraph& g ) {
+void Chaingraph::conclude( HypothesesGraph& g )
+{
     // extract solution from optimizer
-  vector<pgm::OpengmLPCplex::LabelType> solution;
+    vector<pgm::OpengmLPCplex::LabelType> solution;
     opengm::InferenceTermination status = optimizer_->arg(solution);
-    if(status != opengm::NORMAL) {
-	throw runtime_error("GraphicalModel::infer(): solution extraction terminated unnormally");
+    if(status != opengm::NORMAL)
+    {
+        throw runtime_error("GraphicalModel::infer(): solution extraction terminated unnormally");
     }
 
     // add 'active' properties to graph
@@ -102,40 +114,56 @@ void Chaingraph::conclude( HypothesesGraph& g ) {
     property_map<arc_active, HypothesesGraph::base_graph>::type& active_arcs = g.get(arc_active());
 
     // write state after inference into 'active'-property maps
-    if(builder_->has_detection_vars()) {
-      for(pgm::chaingraph::Model::node_var_map::const_iterator it = linking_model_->var_of_node().begin(); it != linking_model_->var_of_node().end(); ++it) {
-	bool state = false;
-	if(solution[it->second] == 1) state = true;
-	active_nodes.set(it->first, state);
-      }
-    } else {
-      // if we have no detection vars we set all nodes to active by default
-      active_nodes.setAll(true); 
+    if(builder_->has_detection_vars())
+    {
+        for(pgm::chaingraph::Model::node_var_map::const_iterator it = linking_model_->var_of_node().begin(); it != linking_model_->var_of_node().end(); ++it)
+        {
+            bool state = false;
+            if(solution[it->second] == 1)
+            {
+                state = true;
+            }
+            active_nodes.set(it->first, state);
+        }
     }
-    for(pgm::chaingraph::Model::arc_var_map::const_iterator it = linking_model_->var_of_arc().begin(); it != linking_model_->var_of_arc().end(); ++it) {
-	bool state = false;
-	if(solution[it->second] == 1) state = true;
-	active_arcs.set(it->first, state);
+    else
+    {
+        // if we have no detection vars we set all nodes to active by default
+        active_nodes.setAll(true);
+    }
+    for(pgm::chaingraph::Model::arc_var_map::const_iterator it = linking_model_->var_of_arc().begin(); it != linking_model_->var_of_arc().end(); ++it)
+    {
+        bool state = false;
+        if(solution[it->second] == 1)
+        {
+            state = true;
+        }
+        active_arcs.set(it->first, state);
     }
 }
 
-  const pgm::OpengmModel* Chaingraph::get_graphical_model() const {
+const pgm::OpengmModel* Chaingraph::get_graphical_model() const
+{
     return linking_model_->opengm_model.get();
-  }
+}
 
-  const Chaingraph::node_var_map& Chaingraph::get_node_map() const {
+const Chaingraph::node_var_map& Chaingraph::get_node_map() const
+{
     return linking_model_->var_of_node();
-  }
+}
 
-  const Chaingraph::arc_var_map& Chaingraph::get_arc_map() const {
+const Chaingraph::arc_var_map& Chaingraph::get_arc_map() const
+{
     return linking_model_->var_of_arc();
-  }
+}
 
-void Chaingraph::reset() {
-    if(optimizer_ != NULL) {
-	delete optimizer_;
-	optimizer_ = NULL;
+void Chaingraph::reset()
+{
+    if(optimizer_ != NULL)
+    {
+        delete optimizer_;
+        optimizer_ = NULL;
     }
 }
 
-} /* namespace pgmlink */ 
+} /* namespace pgmlink */

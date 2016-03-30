@@ -3,9 +3,9 @@
 
 #include <boost/function.hpp>
 
-#include "pgmlink/feature.h"
+#include "pgmlink/features/feature.h"
 #include "pgmlink/feature_calculator/base.h"
-#include "pgmlink/feature_extraction.h"
+#include "pgmlink/features/feature_extraction.h"
 
 namespace pgmlink {
 

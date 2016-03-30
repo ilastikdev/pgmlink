@@ -49,12 +49,25 @@ find_package( Cplex )
 find_package( GUROBI )
 find_package( VIGRA REQUIRED )
 find_package( Lemon REQUIRED )
-find_package( Boost REQUIRED COMPONENTS serialization program_options )
+find_package( Boost REQUIRED COMPONENTS serialization program_options python)
 message(STATUS "  found: ${Boost_LIBRARIES}")
 find_package( Armadillo REQUIRED )
 find_package( Mlpack REQUIRED )
 find_package( Opengm REQUIRED )
 find_package( Xml2 REQUIRED )
+find_package( PythonInterp REQUIRED )
+find_package( Dlib REQUIRED )
+
+SET(WITH_DPCT false CACHE BOOL "Build with dynamic programming conservation tracking")
+if(WITH_DPCT)
+    find_package(DPCT REQUIRED)
+    add_definitions(-DWITH_DPCT)
+endif(WITH_DPCT)
+
+SET(WITH_MODIFIED_OPENGM false CACHE BOOL "Use the modified version op OpenGM to support constraint file output, etc")
+if(WITH_MODIFIED_OPENGM)
+    add_definitions(-DWITH_MODIFIED_OPENGM)
+endif(WITH_MODIFIED_OPENGM)
 
 # check which optimization package is found:
 set(FORCE_GUROBI false CACHE BOOL "If GUROBI and CPLEX are found, by default we build against CPLEX. Setting this to true forces to build against GUROBI")
@@ -95,7 +108,8 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include/)
 # include external headers as system includes so we do not have to cope with their warnings
-include_directories(SYSTEM ${ANN_INCLUDE_DIR} ${OPTIMIZER_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Opengm_INCLUDE_DIR} ${Xml2_INCLUDE_DIR})
+
+include_directories(SYSTEM ${PYTHON_INCLUDE_DIR} ${ANN_INCLUDE_DIR} ${OPTIMIZER_INCLUDE_DIRS} ${VIGRA_INCLUDE_DIR} ${LEMON_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Opengm_INCLUDE_DIR} ${Xml2_INCLUDE_DIR} ${DPCT_INCLUDE_DIR})
 
 # CPLEX switch to be compatible with STL
 ADD_DEFINITIONS(-DIL_STD)
@@ -113,6 +127,7 @@ ADD_DEFINITIONS(-DHasHDF5)
 
 # opengm defines: do not include LPDef symbols everywhere
 ADD_DEFINITIONS(-DOPENGM_LPDEF_NO_SYMBOLS)
+ADD_DEFINITIONS(-DWITH_CPLEX)
 
 # print out the dependencies
 message(STATUS "Dependencies include dirs (you should check if they match the found libs):")
@@ -124,7 +139,9 @@ message(STATUS "  Boost: ${Boost_INCLUDE_DIRS}")
 message(STATUS "  HDF5:  ${HDF5_INCLUDE_DIRS}")
 message(STATUS "  Opengm: ${Opengm_INCLUDE_DIR}")
 message(STATUS "  libxml2:  ${Xml2_INCLUDE_DIR}")
-
+if(WITH_DPCT)
+    message(STATUS "  dpct: ${DPCT_INCLUDE_DIR}")
+endif(WITH_DPCT)
 # hide these variables to have a cleaner interface
 mark_as_advanced( Boost_DIR )
 
@@ -141,25 +158,34 @@ if(NOT CMAKE_BUILD_TYPE)
     FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+# check for C++ 11 support:
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+else()
+        message(SEND_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+endif()
+
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  set(CMAKE_CXX_FLAGS "-Wall -Wextra -std=c++98 -pedantic -pthread -fopenmp ${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 ${CMAKE_CXX_FLAGS_DEBUG}")
+  set(WITH_CHECKED_STL "False" CACHE BOOL "Build with checked stl for debuggable code (may degrade performance; gcc only).")
+  if(WITH_CHECKED_STL)
+    add_definitions(-D_GLIBCXX_DEBUG)
+  endif()
+  set(CMAKE_CXX_FLAGS "-pthread -fopenmp ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   add_definitions("-stdlib=libstdc++")
-  set(CMAKE_CXX_FLAGS "-std=c++98 -ftemplate-depth=512 ${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 ${CMAKE_CXX_FLAGS_DEBUG}")
+  set(CMAKE_CXX_FLAGS "-ftemplate-depth=512 ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
-
-IF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(WITH_CHECKED_STL "True" CACHE BOOL "Build with checked stl for more robust code (may degrade performance; gcc only).")
-  if(WITH_CHECKED_STL)
-    add_definitions(-D_GLIBCXX_DEBUG)
-  endif()
-ENDIF(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") 
 
 # global logging level
 logging_level_to_define(LOGGING_LEVEL LOG_DEFINE)
@@ -176,12 +202,10 @@ if(WIN32)
   add_compiler_export_flags() # enable dynamic symbol export/import for shared libs (on Windows)
 endif()
 
-file(GLOB LIB_SOURCES src/*.cpp src/feature_calculator/*.cpp)
+file(GLOB_RECURSE LIB_SOURCES src/*.cpp)
 file(GLOB_RECURSE HEADERS include/*.h*)
 
 add_library(pgmlink SHARED ${LIB_SOURCES} ${HEADERS})
-
-
 
 file( MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/pgmlink )
 if(WIN32)
@@ -196,7 +220,7 @@ endif(WIN32)
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR}/include )
 
-target_link_libraries(pgmlink ${ANN_LIBRARIES} ${Boost_LIBRARIES}  ${OPTIMIZER_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES})
+target_link_libraries(pgmlink ${PYTHON_LIBRARY} ${ANN_LIBRARIES} ${Boost_LIBRARIES} ${OPTIMIZER_LIBRARIES} ${VIGRA_IMPEX_LIBRARY} ${LEMON_LIBRARIES} ${HDF5_LIBRARIES} ${Mlpack_LIBRARIES} ${Armadillo_LIBRARIES} ${DPCT_LIBRARIES})
 
 # Install target pgmlink
 install(TARGETS pgmlink
@@ -209,10 +233,6 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION include
         PATTERN ".h"
         PATTERN ".hxx"
-        PATTERN ".git" EXCLUDE)
-install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/"
-        DESTINATION include
-        PATTERN ".h"
         PATTERN ".git" EXCLUDE)
 
 # API documentation with Doxygen
@@ -228,10 +248,20 @@ else(DOXYGEN_FOUND)
   MESSAGE(WARNING "Doxygen not found. Won't add 'doc' build target.")
 endif(DOXYGEN_FOUND)
 
+# tools
+add_subdirectory(tools/)
+
 # Tests
 if(WITH_TESTS)
   enable_testing()
   add_subdirectory(tests/)
+endif()
+
+# StructSVM
+SET(WITH_FUNKEY true CACHE BOOL "Build with Funkey StructSVM support")
+if(WITH_FUNKEY)
+  #SET(Funkey_Binary_File CACHE FILEPATH "path to funkey binary file")
+  add_definitions(-DFUNKEY_BINARY_FILE=\"${Funkey_Binary_File}\")
 endif()
 
 # Python
