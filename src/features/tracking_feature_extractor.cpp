@@ -402,8 +402,10 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
+#ifdef WITH_DLIB    
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
     svm_div_outlier_calc_ptr_(new SVMOutlierCalculator),
+#endif
     sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
@@ -422,8 +424,10 @@ TrackingFeatureExtractor::TrackingFeatureExtractor(boost::shared_ptr<HypothesesG
     sq_curve_calc_ptr_(new SquaredCurveCalculator),
     row_min_calc_ptr_(new MinCalculator<0>),
     row_max_calc_ptr_(new MaxCalculator<0>),
+#ifdef WITH_DLIB
     svm_track_outlier_calc_ptr_(new SVMOutlierCalculator),
     svm_div_outlier_calc_ptr_(new SVMOutlierCalculator),
+#endif
     sq_mahal_calc_ptr_(new SquaredMahalanobisCalculator),
     angle_cos_calc_ptr_(new AngleCosineCalculator),
     child_parent_diff_calc_ptr_(new ChildParentDiffCalculator),
@@ -438,6 +442,7 @@ void TrackingFeatureExtractor::get_feature_vector(TrackingFeatureExtractor::Join
     feature_vector.insert(feature_vector.begin(), joint_feature_vector_.begin(), joint_feature_vector_.end());
 }
 
+#ifdef WITH_DLIB
 void TrackingFeatureExtractor::train_track_svm()
 {
     // get the track traxels
@@ -490,6 +495,7 @@ void TrackingFeatureExtractor::set_division_svm(
 {
     svm_div_outlier_calc_ptr_ = division_svm;
 }
+#endif
 
 const std::string TrackingFeatureExtractor::get_feature_description(size_t feature_index) const
 {
@@ -587,10 +593,12 @@ void TrackingFeatureExtractor::compute_all_track_features()
 
     //TODO filter the tracks for the following? (division start / division end)
 
+#ifdef WITH_DLIB
     // FIXME: train_track_svm_outlier now also works on these traxels,
     // but for training we use different
     // (true, true) parameters when extracting the tracks
     compute_svm_track_feature_outlier(track_traxels);
+#endif
 
     save_traxel_ids_to_h5(track_traxels);
 }
@@ -621,7 +629,10 @@ void TrackingFeatureExtractor::compute_all_division_features()
     compute_child_deceleration_outlier(div_2_traxels, "Count");
     compute_child_deceleration_outlier(div_2_traxels, "Mean");
     compute_child_deceleration_outlier(div_2_traxels, "Variance");
+
+#ifdef WITH_DLIB
     compute_svm_division_feature_outlier(div_1_traxels);
+#endif
     compute_id_features(div_1_traxels, "divProb", false);
     compute_id_features(div_1_traxels, "detProb", false);
 
@@ -1016,6 +1027,7 @@ void TrackingFeatureExtractor::compute_track_diff_outlier(
         diff_out_mmmv);
 }
 
+#ifdef WITH_DLIB
 void TrackingFeatureExtractor::compute_svm_track_feature_outlier(
     ConstTraxelRefVectors& tracks)
 {
@@ -1044,6 +1056,7 @@ void TrackingFeatureExtractor::compute_svm_track_feature_outlier(
         vigra::writeHDF5(track_feature_output_file_.c_str(), "track_outliers_svm", score_matrix);
     }
 }
+#endif
 
 void TrackingFeatureExtractor::compute_division_sq_diff_features(
     ConstTraxelRefVectors& div_traxels,
@@ -1245,6 +1258,7 @@ void TrackingFeatureExtractor::compute_division_angle_outlier(
     push_back_feature("Outlier in div " + feature_name + " angle", outlier);
 }
 
+#ifdef WITH_DLIB
 void TrackingFeatureExtractor::compute_svm_division_feature_outlier(
     ConstTraxelRefVectors& divisions)
 {
@@ -1273,6 +1287,7 @@ void TrackingFeatureExtractor::compute_svm_division_feature_outlier(
         vigra::writeHDF5(track_feature_output_file_.c_str(), "division_outliers_svm", score_matrix);
     }
 }
+#endif
 
 void TrackingFeatureExtractor::compute_border_distances(
     ConstTraxelRefVectors& appearance_traxels,

@@ -314,7 +314,6 @@ private:
 /* implementation */
 /**/
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <pgmlink/ext_opengm/structsvm.hxx>
 #include <iostream>
 
 #endif /* PGMLINK_PGM_CHAINGRAPH_H */

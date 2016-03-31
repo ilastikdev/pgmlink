@@ -2323,6 +2323,7 @@ void MVNOutlierCalculator::calculate(
     calculate(feature_matrix, return_matrix, 3.0);
 }
 
+#ifdef WITH_DLIB
 ////
 //// class SVMOutlierCalculator
 ////
@@ -2473,6 +2474,7 @@ void SVMOutlierCalculator::calculate(
         throw std::runtime_error("SVMOutlierCalculator not trained");
     }
 }
+#endif
 
 } // end namespace features
 } // end namespace pgmlink

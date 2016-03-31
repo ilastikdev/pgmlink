@@ -56,7 +56,11 @@ find_package( Mlpack REQUIRED )
 find_package( Opengm REQUIRED )
 find_package( Xml2 REQUIRED )
 find_package( PythonInterp REQUIRED )
-find_package( Dlib REQUIRED )
+find_package( Dlib )
+
+if(DLIB_FOUND)
+  add_definitions(-DWITH_DLIB)
+endif()
 
 SET(WITH_DPCT false CACHE BOOL "Build with dynamic programming conservation tracking")
 if(WITH_DPCT)

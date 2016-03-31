@@ -335,18 +335,23 @@ void export_track()
             init<boost::shared_ptr<HypothesesGraph>, FieldOfView>(args("HypothesesGraph, FieldOfView")))
     .def("compute_features", &pgmlink::features::TrackingFeatureExtractor::compute_features)
     .def("append_feature_vector_to_file", &pgmlink::features::TrackingFeatureExtractor::append_feature_vector_to_file)
+#ifdef WITH_DLIB
     .def("train_track_svm", &pgmlink::features::TrackingFeatureExtractor::train_track_svm)
     .def("get_track_svm", &pgmlink::features::TrackingFeatureExtractor::get_track_svm)
     .def("set_track_svm", &pgmlink::features::TrackingFeatureExtractor::set_track_svm)
     .def("train_division_svm", &pgmlink::features::TrackingFeatureExtractor::train_division_svm)
     .def("get_division_svm", &pgmlink::features::TrackingFeatureExtractor::get_division_svm)
     .def("set_division_svm", &pgmlink::features::TrackingFeatureExtractor::set_division_svm)
+#endif
     .def("get_feature_vector", &pyextractor_get_feature_vector)
     .def("get_feature_description", &pgmlink::features::TrackingFeatureExtractor::get_feature_description)
-    .def("set_track_feature_output_file", &pgmlink::features::TrackingFeatureExtractor::set_track_feature_output_file);
+    .def("set_track_feature_output_file", &pgmlink::features::TrackingFeatureExtractor::set_track_feature_output_file)
+    ;
 
+#ifdef WITH_DLIB
     class_<pgmlink::features::SVMOutlierCalculator, boost::shared_ptr<pgmlink::features::SVMOutlierCalculator> >("SVMOutlierCalculator")
     .def_pickle(TemplatedPickleSuite<pgmlink::features::SVMOutlierCalculator>());
+#endif
 
 
     class_<vector<vigra::UInt64> >("IdVector")

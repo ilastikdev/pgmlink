@@ -65,8 +65,10 @@ diffusion_calculator.calculate(positions, return_value);
 // vigra
 #include <vigra/multi_array.hxx> /* for the feature extractors */
 
+#ifdef WITH_DLIB
 // dlib
 #include <dlib/svm.h> /* for svm in SVMOutlierCalculator*/
+#endif
 
 namespace pgmlink
 {
@@ -1074,6 +1076,7 @@ protected:
     static const std::string name_;
 };
 
+#ifdef WITH_DLIB
 ////
 //// class SVMOutlierCalculator
 ////
@@ -1146,6 +1149,7 @@ void SVMOutlierCalculator::load(
     std::stringstream sstream(str);
     dlib::deserialize(decision_function_, sstream);
 }
+#endif
 
 } // end namespace features
 } // end namespace pgmlink

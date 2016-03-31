@@ -1334,6 +1334,7 @@ BOOST_AUTO_TEST_CASE( MVNOutlierCalculator_calculate )
     BOOST_CHECK_EQUAL(s4(0, 0), static_cast<FeatureScalar>(1. / 7.));
 }
 
+#ifdef WITH_DLIB
 BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_calculate )
 {
     LOG(logINFO) << "test case: SVMOutlierCalculator_calculate";
@@ -1434,6 +1435,7 @@ BOOST_AUTO_TEST_CASE( SVMOutlierCalculator_serialization )
         BOOST_CHECK_EQUAL(*s_it, *s_load_it);
     }
 }
+#endif
 
 BOOST_AUTO_TEST_CASE( GraphFeatureCalculator_calculate_vector )
 {
