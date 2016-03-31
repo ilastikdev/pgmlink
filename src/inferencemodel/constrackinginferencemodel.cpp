@@ -1,5 +1,6 @@
 #include "pgmlink/inferencemodel/constrackinginferencemodel.h"
 #include <boost/python.hpp>
+#include <iso646.h> // for not, and, or on MSVC
 
 namespace pgmlink
 {
@@ -528,7 +529,7 @@ size_t ConsTrackingInferenceModel::add_detection_factors(const HypothesesGraph& 
         //functor add detection table
         factorIndex = add_div_m_best_perturbation(energies, Detection, factorIndex);
         
-        typename GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
+        GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
 
         // sorting only works because appearance nodes have lower variable indices than disappearances
         // and the matrix is constructed such that appearances are along coords[0], ...
@@ -585,7 +586,7 @@ size_t ConsTrackingInferenceModel::add_transition_factors(const HypothesesGraph&
         }
         factorIndex = add_div_m_best_perturbation(energies, Transition, factorIndex);
 
-        typename GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
+        GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 
@@ -641,7 +642,7 @@ size_t ConsTrackingInferenceModel::add_division_factors(const HypothesesGraph& g
         }
         factorIndex = add_div_m_best_perturbation(energies, Division, factorIndex);
 
-        typename GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
+        GraphicalModelType::FunctionIdentifier funcId = add_marray_as_explicit_function(shape, energies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 

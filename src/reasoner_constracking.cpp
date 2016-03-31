@@ -33,6 +33,8 @@
 #include "pgmlink/inferencemodel/perturbation/classifier_uncertainty_perturbation.h"
 #include "pgmlink/inferencemodel/perturbation/perturbandmap_perturbation.h"
 
+#include <iso646.h> // for not, and, or on MSVC
+
 namespace pgmlink
 {
 
@@ -456,8 +458,8 @@ void ConservationTracking::compute_relative_uncertainty(HypothesesGraph* graph)
     for (HypothesesGraph::NodeIt n(*graph); n != lemon::INVALID; ++n)
     {
         double count = 0;
-        std::vector<size_t> *active_list = &active_nodes.get_value(n);
-        for (std::vector<size_t>::iterator is_active = active_list->begin(); is_active != active_list->end(); is_active++)
+        auto *active_list = &active_nodes.get_value(n);
+        for (auto is_active = active_list->begin(); is_active != active_list->end(); is_active++)
         {
             if (*is_active != 0)
             {

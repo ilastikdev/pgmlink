@@ -214,8 +214,6 @@ public:
         enable_disappearance_(true)
     {}
 
-    ConsTracking() {}
-
     PGMLINK_EXPORT EventVectorVectorVector operator()(
             TraxelStore& ts,
             Parameter& param,
@@ -229,7 +227,7 @@ public:
             bool with_merger_resolution = true,
             int n_dim = 3,
             double transition_parameter = 5.,
-            const std::vector<int>& max_traxel_id_at = {},
+            const std::vector<int>& max_traxel_id_at = std::vector<int>(),
             double border_width = 0,
             bool with_constraints = true,
             UncertaintyParameter uncertaintyParam = UncertaintyParameter(),
@@ -303,7 +301,7 @@ public:
             bool with_tracklets = true,
             int n_dim = 3,
             double transition_parameter = 5.,
-            const std::vector<int>& max_traxel_id_at = {},
+            const std::vector<int>& max_traxel_id_at = std::vector<int>(),
             bool with_constraints = true,
             boost::python::object transitionClassifier = boost::python::object()
             );

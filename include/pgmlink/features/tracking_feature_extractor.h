@@ -96,10 +96,11 @@ public:
     typedef std::vector<double> JointFeatureVector;
     typedef std::vector<std::string> FeatureDescription;
 
-public:
+private:
     /// Forbid usage of default constructor
-    TrackingFeatureExtractor() = delete;
+    TrackingFeatureExtractor();
 
+public:
     /// Create the extractor given a hypotheses graph
     TrackingFeatureExtractor(boost::shared_ptr<HypothesesGraph> graph,
                              const FieldOfView &fov);

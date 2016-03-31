@@ -11,6 +11,8 @@
 
 #include <algorithm> /* for std::copy, std::min */
 
+#include <iso646.h> // for not, and, or on MSVC
+
 namespace pgmlink
 {
 namespace features
@@ -18,43 +20,43 @@ namespace features
 ////
 //// Some useful typedefinitions
 ////
-typedef typename
+typedef
 property_map<node_active, HypothesesGraph::base_graph>::type
 node_active_map_type;
-typedef typename
+typedef
 property_map<node_active2, HypothesesGraph::base_graph>::type
 node_active2_map_type;
-typedef typename
+typedef
 property_map<arc_active, HypothesesGraph::base_graph>::type
 arc_active_map_type;
-typedef typename
+typedef
 property_map<node_timestep, HypothesesGraph::base_graph>::type
 node_timestep_map_type;
-typedef typename
+typedef
 property_map<node_active_count, HypothesesGraph::base_graph>::type
 nodes_active_map_type;
-typedef typename
+typedef
 property_map<arc_active_count, HypothesesGraph::base_graph>::type
 arcs_active_map_type;
-typedef typename
+typedef
 property_map<division_active_count, HypothesesGraph::base_graph>::type
 divs_active_count_map_type;
-typedef typename
+typedef
 property_map<division_active, HypothesesGraph::base_graph>::type
 division_active_map_type;
-typedef typename
+typedef
 property_map<node_traxel, HypothesesGraph::base_graph>::type
 node_traxel_map_type;
-typedef typename
+typedef
 property_map<node_tracklet, HypothesesGraph::base_graph>::type
 node_tracklet_map_type;
-typedef typename HypothesesGraph::NodeIt NodeIt;
-typedef typename HypothesesGraph::ArcIt ArcIt;
-typedef typename HypothesesGraph::InArcIt InArcIt;
-typedef typename HypothesesGraph::OutArcIt OutArcIt;
+typedef HypothesesGraph::NodeIt NodeIt;
+typedef HypothesesGraph::ArcIt ArcIt;
+typedef HypothesesGraph::InArcIt InArcIt;
+typedef HypothesesGraph::OutArcIt OutArcIt;
 
-typedef typename node_active_map_type::TrueIt NodeActiveIt;
-typedef typename arc_active_map_type::TrueIt ArcActiveIt;
+typedef node_active_map_type::TrueIt NodeActiveIt;
+typedef arc_active_map_type::TrueIt ArcActiveIt;
 
 
 /*=============================================================================

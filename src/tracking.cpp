@@ -36,6 +36,8 @@
 #include "pgmlink/tracking.h"
 #include <boost/python.hpp>
 
+#include <iso646.h> // for not, and, or on MSVC
+
 using boost::shared_ptr;
 using boost::shared_array;
 
@@ -44,7 +46,11 @@ using boost::shared_array;
 // from http://stackoverflow.com/questions/478898/how-to-execute-a-command-and-get-output-of-command-within-c
 std::string exec(const char* cmd)
 {
+#ifdef _WIN32
+    FILE* pipe = _popen(cmd, "r");
+#else
     FILE* pipe = popen(cmd, "r");
+#endif
     if (!pipe)
     {
         return "ERROR";
@@ -58,7 +64,11 @@ std::string exec(const char* cmd)
             result += buffer;
         }
     }
+#ifdef _WIN32
+    _pclose(pipe);
+#else
     pclose(pipe);
+#endif
     return result;
 }
 

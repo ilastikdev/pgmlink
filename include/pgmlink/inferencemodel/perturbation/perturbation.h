@@ -27,8 +27,8 @@ class Perturbation
 {
 public: // Typedefs
     typedef std::vector< std::vector< std::vector<size_t> > > DeterministicOffset;
-    typedef typename boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType;
-    typedef typename boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;
+    typedef boost::variate_generator<boost::mt19937, boost::normal_distribution<> > normalRNGType;
+    typedef boost::variate_generator<boost::mt19937, boost::uniform_real<> > uniformRNGType;
 
 public: // Parameter object
     class Parameter

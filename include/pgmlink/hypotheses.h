@@ -414,6 +414,7 @@ class HypothesesGraph
 {
 public:
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map;
+    typedef PropertyGraph<lemon::ListDigraph>::base_graph base_graph;
 
     PGMLINK_EXPORT HypothesesGraph()
     {

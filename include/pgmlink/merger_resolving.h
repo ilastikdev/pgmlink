@@ -521,7 +521,7 @@ class MergerResolver
                    FeatureHandlerBase& handler);
 
  public:
-  PGMLINK_EXPORT MergerResolver(HypothesesGraph* g, size_t num_dimensions, const std::vector<int>& max_traxel_id_at={}) 
+  PGMLINK_EXPORT MergerResolver(HypothesesGraph* g, size_t num_dimensions, const std::vector<int>& max_traxel_id_at=std::vector<int>()) 
   : g_(g), n_dimensions_(num_dimensions), max_traxel_id_at_(max_traxel_id_at)
   {
     if (!g_)

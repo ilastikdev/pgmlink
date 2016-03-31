@@ -295,7 +295,7 @@ size_t StructuredLearningTrackingInferenceModel::add_detection_factors(const Hyp
         else
             funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,features);
 
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
+        GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
 
         // sorting only works because appearance nodes have lower variable indices than disappearance nodes
         // and the matrix is constructed such that appearances are along coords[0], ...
@@ -385,7 +385,7 @@ size_t StructuredLearningTrackingInferenceModel::add_transition_factors(const Hy
         else
             funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,featuresNorm);
 
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
+        GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
     }
 
@@ -477,7 +477,7 @@ size_t StructuredLearningTrackingInferenceModel::add_division_factors(const Hypo
         else
             funEnergies = opengm::functions::learnable::LWeightedSumOfFunctions<double,size_t,size_t>(varShape,learningWeights_,weightIDs,featuresNorm);
 
-        typename GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
+        GraphicalModelType::FunctionIdentifier funcId = model_.addFunction(funEnergies);
         model_.addFactor(funcId, vi, vi + 1);
 
     }
