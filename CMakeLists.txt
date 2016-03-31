@@ -10,7 +10,7 @@
     #                           input parameter
     #
     #   DEFINE          STRING  output parameter
-    # 
+    #
     MACRO(LOGGING_LEVEL_TO_DEFINE LOGGING_LEVEL DEFINE)
         IF(${LOGGING_LEVEL} STREQUAL "NO_LOGGING")
             SET(${DEFINE} "pgmlink::logNO_LOGGING")
@@ -164,17 +164,19 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 # check for C++ 11 support:
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
+if(NOT MSVC)
+    CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+    CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+    if(COMPILER_SUPPORTS_CXX11)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    elseif(COMPILER_SUPPORTS_CXX0X)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    else()
         message(SEND_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    endif()
 endif()
 
-if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   set(WITH_CHECKED_STL "False" CACHE BOOL "Build with checked stl for debuggable code (may degrade performance; gcc only).")
   if(WITH_CHECKED_STL)
     add_definitions(-D_GLIBCXX_DEBUG)
@@ -184,7 +186,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS_RELEASE}")
 endif()
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   add_definitions("-stdlib=libstdc++")
   set(CMAKE_CXX_FLAGS "-ftemplate-depth=512 ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fno-inline ${CMAKE_CXX_FLAGS_DEBUG}")
