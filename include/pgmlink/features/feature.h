@@ -194,7 +194,7 @@ public:
         : weights_(Weights)
     {}
 
-    PGMLINK_EXPORT double operator()( const Traxel& tr1, const Traxel& tr2, std::vector<double> Weights ) const;
+//    PGMLINK_EXPORT double operator()( const Traxel& tr1, const Traxel& tr2, std::vector<double> Weights ) const;
 private:
     std::vector<double> * weights_;
 };
