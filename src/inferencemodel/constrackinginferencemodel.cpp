@@ -323,7 +323,7 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
                 ++i)
         {
             LOG(logINFO) << *i;
-            if (*i > 0)
+            if (*i)
             {
                 c++;
             }
@@ -340,7 +340,7 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
                 ++i)
         {
             LOG(logDEBUG4) << *i << " ";
-            if (*i > 0)
+            if (*i)
             {
                 c++;
             }

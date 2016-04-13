@@ -253,22 +253,23 @@ double NegLnTransitionNoWeight::getw()
     return w_;
 }
 
-
+/*
 ////
 //// class MoveEnergy
 ////
 double MoveEnergy::operator ()(const Traxel& tr1, const Traxel& tr2, std::vector<double> inWeights) const
 {
-/* FIXME: the commented code is wrong and hopefully gets never called
-    std::vector<double> features;
-    //compute feature vector
+// FIXME: the commented code is wrong and hopefully gets never called
+//    std::vector<double> features;
+//    //compute feature vector
 
 
-    return std::inner_product(inWeights.begin(), inWeights.end(), features.begin(), 0.);
-*/
+//    return std::inner_product(inWeights.begin(), inWeights.end(), features.begin(), 0.);
+
     assert(false);
     return 0.0;
 }
+*/
 
 ////
 //// class NegLnConstant
