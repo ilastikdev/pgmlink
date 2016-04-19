@@ -300,8 +300,21 @@ BOOST_AUTO_TEST_CASE(ConstraintPool_Serialization_Test)
 
     ConstraintPool cp(200.0);
     cp.add_constraint(ConstraintPool::DetectionConstraint(2, 3));
-    cp.add_constraint(ConstraintPool::OutgoingConstraint(3, 4, {5, 6}));
-    cp.add_constraint(ConstraintPool::IncomingConstraint({0, 1}, 2));
+// use with MS VS 2015 and later
+//    cp.add_constraint(ConstraintPool::OutgoingConstraint(3, 4, {5, 6}));
+    std::vector<size_t> vec_1;
+    vec_1.push_back(5);
+    vec_1.push_back(6);
+    cp.add_constraint(ConstraintPool::OutgoingConstraint(3, 4, vec_1));
+// end MS VS 2012 fix
+
+// use with MS VS 2015 and later
+//    cp.add_constraint(ConstraintPool::IncomingConstraint({0, 1}, 2));
+    std::vector<size_t> vec_2;
+    vec_2.push_back(0);
+    vec_2.push_back(1);
+    cp.add_constraint(ConstraintPool::IncomingConstraint(vec_2, 2));
+// end MS VS 2012 fix
 
     // save constraint pool to temp file
     std::string cp_filename(tmpnam(NULL));

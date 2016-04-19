@@ -72,7 +72,13 @@ void FeatureStore::dump(std::ostream& stream)
 
 void FeatureStore::dump(int timestep, unsigned int id, std::ostream &stream)
 {
-    TraxelFeatureMap::iterator it = traxel_feature_map_.find({std::make_pair(timestep, id)});
+// use with MS VS 2015 and later
+//    TraxelFeatureMap::iterator it = traxel_feature_map_.find({std::make_pair(timestep, id)});
+    std::vector<std::pair<int, unsigned int>> keyVec;
+    keyVec.push_back(std::make_pair(timestep, id));
+    TraxelFeatureMap::iterator it = traxel_feature_map_.find(keyVec);
+// end MS VS 2012 fix
+
     if(it == traxel_feature_map_.end())
     {
         LOG(logWARNING) << "Tried to access features of traxel " << id << " at timestep " << timestep

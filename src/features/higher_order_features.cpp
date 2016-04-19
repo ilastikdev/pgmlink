@@ -214,14 +214,32 @@ void set_injected_solution(HypothesesGraph& graph)
         node_active_map[n_it] = is_active;
         node_active2_map.set(n_it, std::max(gt_appearance[n_it], gt_disappearance[n_it]));
         div_active_map[n_it] = gt_division[n_it];
-        div_active_count_map.set(n_it, { gt_division[n_it] });
-        node_active_count_map.set(n_it, { std::max(gt_appearance[n_it], gt_disappearance[n_it]) });
+
+// use with MS VS 2015 and later
+//        div_active_count_map.set(n_it, { gt_division[n_it] });
+        std::vector<bool> gt_division_n_vec;
+        gt_division_n_vec.push_back(gt_division[n_it]);
+        div_active_count_map.set(n_it, gt_division_n_vec);
+// end MS VS 2012 fix
+
+// use with MS VS 2015 and later
+//        node_active_count_map.set(n_it, { std::max(gt_appearance[n_it], gt_disappearance[n_it]) });
+        std::vector<size_t> max_app_disapp;
+        max_app_disapp.push_back(std::max(gt_appearance[n_it], gt_disappearance[n_it]));
+        node_active_count_map.set(n_it, max_app_disapp);
+// end MS VS 2012 fix
     }
 
     for (ArcIt a_it(graph); a_it != lemon::INVALID; ++a_it)
     {
         arc_active_map[a_it] = gt_arc[a_it];
-        arc_active_count_map.set(a_it, { gt_arc[a_it] });
+
+// use with MS VS 2015 and later
+//        arc_active_count_map.set(a_it, { gt_arc[a_it] });
+        std::vector<bool> gt_arc_a;
+        gt_arc_a.push_back(gt_arc[a_it]);
+        arc_active_count_map.set(a_it, gt_arc_a);
+// end MS VS 2012 fix
     }
 }
 

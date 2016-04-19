@@ -218,11 +218,21 @@ BOOST_AUTO_TEST_CASE( MergerResolver_resolve_mergers_3 )
     for (HypothesesGraph::ArcIt a(g); a != lemon::INVALID; ++a)
     {
         std::cout << "Setting arc " << g.id(a) << " to {false}" << std::endl;
-        active_arcs_count.set(a, {false});
+// use with MS VS 2015 and later
+//        active_arcs_count.set(a, {false});
+        std::vector<bool> vec;
+        vec.push_back(false);
+        active_arcs_count.set(a, vec);
+// end MS VS 2012 fix
     }
     for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
     {
-        active_nodes_count.set(n, {0});
+// use with MS VS 2015 and later
+//        active_nodes_count.set(n, {0});
+        std::vector<size_t> vec;
+        vec.push_back(0);
+        active_nodes_count.set(n, vec);
+// end MS VS 2012 fix
     }
 
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
