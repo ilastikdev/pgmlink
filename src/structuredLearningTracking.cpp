@@ -56,6 +56,7 @@ namespace pgmlink
 ////
 //// class StructuredLearningTracking
 ////
+	/*
 EventVectorVectorVector StructuredLearningTracking::operator()(
     TraxelStore& ts,
     double forbidden_cost,
@@ -75,7 +76,7 @@ EventVectorVectorVector StructuredLearningTracking::operator()(
     TimestepIdCoordinateMapPtr coordinates,
     boost::python::object transition_classifier)
 {}
-
+*/
 namespace
 {
 std::vector<double> computeDetProb(double vol, std::vector<double> means, std::vector<double> s2)
