@@ -20,8 +20,6 @@
 #include "pgmlink/nearest_neighbors.h"
 #include "pgmlink/traxels.h"
 
-using namespace std;
-
 namespace pgmlink
 {
 ////
@@ -132,7 +130,7 @@ void HypothesesGraph::write_hypotheses_graph_state(const std::string out_fn)
     for (HypothesesGraph::NodeIt n(*this); n != lemon::INVALID; ++n)
     {
         std::stringstream ss;
-        size_t label = max(appearance_labels[n], disappearance_labels[n]);
+        size_t label = std::max(appearance_labels[n], disappearance_labels[n]);
         ss << label << " ";
         for(auto it = active_nodes_count[n].begin(); it != active_nodes_count[n].end(); ++it)
         {
@@ -274,7 +272,7 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g)
     // procedure)
 
     // collect inactive arcs
-    vector<HypothesesGraph::Arc> arcs_to_prune;
+    std::vector<HypothesesGraph::Arc> arcs_to_prune;
 
     for(inactive_arc_it it(active_arcs); it != lemon::INVALID; ++it)
     {
@@ -287,7 +285,7 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g)
     std::reverse(arcs_to_prune.begin(), arcs_to_prune.end());
 
     // prune inactive arcs
-    for(vector<HypothesesGraph::Arc>::const_iterator it = arcs_to_prune.begin(); it != arcs_to_prune.end(); ++it)
+    for(std::vector<HypothesesGraph::Arc>::const_iterator it = arcs_to_prune.begin(); it != arcs_to_prune.end(); ++it)
     {
         if (g.valid(*it))
         {
@@ -300,7 +298,7 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g)
     // prune inactive nodes
     LOG(logDEBUG) << "prune_inactive: prune inactive nodes";
     // collect inactive nodes
-    vector<HypothesesGraph::Node> nodes_to_prune;
+    std::vector<HypothesesGraph::Node> nodes_to_prune;
 
     if (active2_used)
     {
@@ -325,7 +323,7 @@ HypothesesGraph& prune_inactive(HypothesesGraph& g)
 
     property_map<node_traxel, HypothesesGraph::base_graph>::type& traxel_map = g.get(node_traxel());
     // prune inactive nodes
-    for(vector<HypothesesGraph::Node>::const_iterator it = nodes_to_prune.begin(); it != nodes_to_prune.end(); ++it)
+    for(std::vector<HypothesesGraph::Node>::const_iterator it = nodes_to_prune.begin(); it != nodes_to_prune.end(); ++it)
     {
         LOG(logDEBUG3) << "prune_inactive: prune node: " << g.id(*it) << ", Traxel = " << traxel_map[*it];
         for(HypothesesGraph::OutArcIt arcit(g, *it); arcit != lemon::INVALID; ++arcit)
@@ -513,7 +511,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
 {
 
     LOG(logDEBUG) << "events(): entered";
-    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new std::vector< std::vector<Event> >);
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     node_timestep_map_t& node_timestep_map = g.get(node_timestep());
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
@@ -587,14 +585,14 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
     LOG(logDEBUG1) << "events(): latest_timestep: " << g.latest_timestep();
 
     // add an empty first timestep
-    ret->push_back(vector<Event>());
+    ret->push_back(std::vector<Event>());
 
     for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
     {
         LOG(logDEBUG2) << "events(): processing timestep: " << t;
-        ret->push_back(vector<Event>());
+        ret->push_back(std::vector<Event>());
 
-        map<unsigned int, vector<unsigned int> > resolver_map;
+        std::map<unsigned int, std::vector<unsigned int> > resolver_map;
 
         // for every node: destiny
         LOG(logDEBUG2) << "events(): for every node: destiny";
@@ -713,7 +711,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
                     {
                         if (count != 2)
                         {
-                            throw runtime_error("events(): encountered node dividing in three or more nodes in graph");
+                            throw std::runtime_error("events(): encountered node dividing in three or more nodes in graph");
                         }
                         e.type = Event::Division;
                         e.traxel_ids.push_back(node_traxel_map[node_at].Id);
@@ -734,7 +732,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
             }
         }
         // resolved to
-        for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it)
+        for (std::map<unsigned int, std::vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it)
         {
             Event e;
             e.type = Event::ResolvedTo;
@@ -795,7 +793,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
     } // end for t
 
     LOG(logDEBUG2) << "events(): last timestep: " << g.latest_timestep();
-    map<unsigned int, vector<unsigned int> > resolver_map;
+    std::map<unsigned int, std::vector<unsigned int> > resolver_map;
     int t = g.latest_timestep();
     for(node_timestep_map_t::ItemIt node_at(node_timestep_map, g.latest_timestep()); node_at!=lemon::INVALID; ++node_at) 
     {
@@ -817,7 +815,7 @@ boost::shared_ptr<std::vector< std::vector<Event> > > events(const HypothesesGra
         }
     }
 
-    for (map<unsigned int, vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it) {
+    for (std::map<unsigned int,std::vector<unsigned int> >::iterator map_it = resolver_map.begin(); map_it != resolver_map.end(); ++map_it) {
         Event e;
         e.type = Event::ResolvedTo;
         e.traxel_ids.push_back(map_it->first);
@@ -852,7 +850,7 @@ std::ostream& operator<<(std::ostream& stream, const std::vector<T>& values)
 boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(const HypothesesGraph& g)
 {
 
-    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new std::vector<std::vector<Event> >);
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     node_timestep_map_t& node_timestep_map = g.get(node_timestep());
     typedef property_map<node_traxel, HypothesesGraph::base_graph>::type node_traxel_map_t;
@@ -863,12 +861,12 @@ boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(co
     std::map<int, std::vector<Event> > multi_frame_move_map;
 
     // add an empty first timestep
-    ret->push_back(vector<Event>());
+    ret->push_back(std::vector<Event>());
 
     for(int t = g.earliest_timestep(); t < g.latest_timestep(); ++t)
     {
         LOG(logDEBUG2) << "events(): processing timestep: " << t;
-        ret->push_back(vector<Event>());
+        ret->push_back(std::vector<Event>());
         for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
         {
             assert(node_traxel_map[node_at].Timestep == t);
@@ -924,12 +922,12 @@ boost::shared_ptr<std::vector< std::vector<Event> > > multi_frame_move_events(co
 
 std::vector< std::vector<Event> > merge_event_vectors(const std::vector<std::vector<Event> >& ev1, const std::vector<std::vector<Event> >& ev2) {
     assert(ev1.size() == ev2.size());
-    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new std::vector<std::vector<Event> >);
     std::vector<std::vector<Event> >::const_iterator it1 = ev1.begin();
     std::vector<std::vector<Event> >::const_iterator it2 = ev2.begin();
     for (; it1 != ev1.end(); ++it1, ++it2) {
-        ret->push_back(vector<Event>());
-        std::back_insert_iterator<vector<Event> > push_back_inserter(*(ret->rbegin()));
+        ret->push_back(std::vector<Event>());
+        std::back_insert_iterator<std::vector<Event> > push_back_inserter(*(ret->rbegin()));
         std::copy(it1->begin(), it1->end(), push_back_inserter);
         std::copy(it2->begin(), it2->end(), push_back_inserter);
     }
@@ -938,7 +936,7 @@ std::vector< std::vector<Event> > merge_event_vectors(const std::vector<std::vec
 
 boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph& g)
 {
-    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new vector< vector<Event> >);
+    boost::shared_ptr<std::vector< std::vector<Event> > > ret(new std::vector<std::vector<Event> >);
 
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
     node_timestep_map_t& node_timestep_map = g.get(node_timestep());
@@ -950,7 +948,7 @@ boost::shared_ptr< EventVectorVector > resolved_to_events(const HypothesesGraph&
     for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
     {
         LOG(logDEBUG2) << "events(): processing timestep: " << t;
-        ret->push_back(vector<Event>());
+        ret->push_back(std::vector<Event>());
         for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
         {
             if(merger_resolved_map[node_at].size() > 0)
@@ -1303,7 +1301,7 @@ std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTra
         for(node_timestep_map_t::ItemIt traxel_node(node_timestep_map, t); traxel_node != lemon::INVALID; ++traxel_node)
         {
             LOG(logDEBUG4) << "traxel_node = " << traxel_graph.id(traxel_node);
-            vector<HypothesesGraph::Arc> incoming_arcs = getIncomingArcs(traxel_graph, traxel_node);
+           std::vector<HypothesesGraph::Arc> incoming_arcs = getIncomingArcs(traxel_graph, traxel_node);
             if(incoming_arcs.size() != 1)
             {
                 addNodeToGraph(traxel_graph, tracklet_graph, traxel_node, traxel_node_to_tracklet_node, tracklet_node_to_traxel_nodes,
@@ -1344,7 +1342,7 @@ std::map<HypothesesGraph::Node, std::vector<HypothesesGraph::Node> > generateTra
 boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(const HypothesesGraph& g)
 {
     LOG(logDEBUG) << "detections(): entered";
-    boost::shared_ptr<vector< map<unsigned int, bool> > > ret(new vector< map<unsigned int, bool> >);
+    boost::shared_ptr<std::vector<std::map<unsigned int, bool> > > ret(new std::vector<std::map<unsigned int, bool> >);
 
     // required node properties: timestep, traxel, active
     typedef property_map<node_timestep, HypothesesGraph::base_graph>::type node_timestep_map_t;
@@ -1367,7 +1365,7 @@ boost::shared_ptr<std::vector< std::map<unsigned int, bool> > > state_of_nodes(c
     // for every timestep
     for(int t = g.earliest_timestep(); t <= g.latest_timestep(); ++t)
     {
-        ret->push_back(map<unsigned int, bool>());
+        ret->push_back(std::map<unsigned int, bool>());
         for(node_timestep_map_t::ItemIt node_at(node_timestep_map, t); node_at != lemon::INVALID; ++node_at)
         {
             assert(node_traxel_map[node_at].Timestep == t);
@@ -1428,7 +1426,7 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
 
     if(config["node_active_count"])
     {
-        writer.nodeMap("node_active_count", g.get(node_active_count()), TypeToStrConverter<vector<long unsigned int> >());
+        writer.nodeMap("node_active_count", g.get(node_active_count()), TypeToStrConverter<std::vector<long unsigned int> >());
     }
 
     if(config["node_offered"])
@@ -1448,17 +1446,17 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
 
     if(config["division_active_count"])
     {
-        writer.nodeMap("division_active_count", g.get(division_active_count()), TypeToStrConverter<vector<bool> >());
+        writer.nodeMap("division_active_count", g.get(division_active_count()), TypeToStrConverter<std::vector<bool> >());
     }
 
     if(config["merger_resolved_to"])
     {
-        writer.nodeMap("merger_resolved_to", g.get(merger_resolved_to()), TypeToStrConverter<vector<unsigned int> >());
+        writer.nodeMap("merger_resolved_to", g.get(merger_resolved_to()), TypeToStrConverter<std::vector<unsigned int> >());
     }
 
     if(config["node_originated_from"])
     {
-        writer.nodeMap("node_originated_from", g.get(node_originated_from()), TypeToStrConverter<vector<unsigned int> >());
+        writer.nodeMap("node_originated_from", g.get(node_originated_from()), TypeToStrConverter<std::vector<unsigned int> >());
     }
 
     if(config["node_resolution_candidate"])
@@ -1503,22 +1501,22 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
 
     if(config["tracklet_intern_dist"])
     {
-        writer.nodeMap("tracklet_intern_dist", g.get(tracklet_intern_dist()), TypeToStrConverter<vector<double> >());
+        writer.nodeMap("tracklet_intern_dist", g.get(tracklet_intern_dist()), TypeToStrConverter<std::vector<double> >());
     }
 
     if(config["tracklet_intern_arc_ids"])
     {
-        writer.nodeMap("tracklet_intern_arc_ids", g.get(tracklet_intern_arc_ids()), TypeToStrConverter<vector<int> >());
+        writer.nodeMap("tracklet_intern_arc_ids", g.get(tracklet_intern_arc_ids()), TypeToStrConverter<std::vector<int> >());
     }
 
     if(config["arc_active_count"])
     {
-        writer.arcMap("arc_active_count", g.get(arc_active_count()), TypeToStrConverter<vector<bool> >());
+        writer.arcMap("arc_active_count", g.get(arc_active_count()), TypeToStrConverter<std::vector<bool> >());
     }
 
     if(config["arc_value_count"])
     {
-        writer.arcMap("arc_value_count", g.get(arc_value_count()), TypeToStrConverter<vector<size_t> >());
+        writer.arcMap("arc_value_count", g.get(arc_value_count()), TypeToStrConverter<std::vector<size_t> >());
     }
 
     if(config["node_traxel"])
@@ -1528,7 +1526,7 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
 
     if(config["node_tracklet"])
     {
-        writer.nodeMap("node_tracklet", g.get(node_tracklet()), TypeToStrConverter<vector<Traxel>>());
+        writer.nodeMap("node_tracklet", g.get(node_tracklet()), TypeToStrConverter<std::vector<Traxel>>());
     }
 
     writer.run();
@@ -1541,9 +1539,9 @@ namespace
 template <typename T>
 struct StrToTypeConverter
 {
-    T operator()(const string& s)
+    T operator()(const std::string& s)
     {
-        stringstream ss(s);
+        std::stringstream ss(s);
         boost::archive::text_iarchive ia(ss);
         T t;
         ia & t;
@@ -1577,7 +1575,7 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     if(config["node_active_count"])
     {
         g.add(node_active_count());
-        reader.nodeMap("node_active_count", g.get(node_active_count()), StrToTypeConverter<vector<long unsigned int> >());
+        reader.nodeMap("node_active_count", g.get(node_active_count()), StrToTypeConverter<std::vector<long unsigned int> >());
     }
 
     if(config["node_offered"])
@@ -1601,19 +1599,19 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     if(config["division_active_count"])
     {
         g.add(division_active_count());
-        reader.nodeMap("division_active_count", g.get(division_active_count()), StrToTypeConverter<vector<bool> >());
+        reader.nodeMap("division_active_count", g.get(division_active_count()), StrToTypeConverter<std::vector<bool> >());
     }
 
     if(config["merger_resolved_to"])
     {
         g.add(merger_resolved_to());
-        reader.nodeMap("merger_resolved_to", g.get(merger_resolved_to()), StrToTypeConverter<vector<unsigned int> >());
+        reader.nodeMap("merger_resolved_to", g.get(merger_resolved_to()), StrToTypeConverter<std::vector<unsigned int> >());
     }
 
     if(config["node_originated_from"])
     {
         g.add(node_originated_from());
-        reader.nodeMap("node_originated_from", g.get(node_originated_from()), StrToTypeConverter<vector<unsigned int> >());
+        reader.nodeMap("node_originated_from", g.get(node_originated_from()), StrToTypeConverter<std::vector<unsigned int> >());
     }
 
     if(config["node_resolution_candidate"])
@@ -1667,25 +1665,25 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     if(config["tracklet_intern_dist"])
     {
         g.add(tracklet_intern_dist());
-        reader.nodeMap("tracklet_intern_dist", g.get(tracklet_intern_dist()), StrToTypeConverter<vector<double> >());
+        reader.nodeMap("tracklet_intern_dist", g.get(tracklet_intern_dist()), StrToTypeConverter<std::vector<double> >());
     }
 
     if(config["tracklet_intern_arc_ids"])
     {
         g.add(tracklet_intern_arc_ids());
-        reader.nodeMap("tracklet_intern_arc_ids", g.get(tracklet_intern_arc_ids()), StrToTypeConverter<vector<int> >());
+        reader.nodeMap("tracklet_intern_arc_ids", g.get(tracklet_intern_arc_ids()), StrToTypeConverter<std::vector<int> >());
     }
 
     if(config["arc_active_count"])
     {
         g.add(arc_active_count());
-        reader.arcMap("arc_active_count", g.get(arc_active_count()), StrToTypeConverter<vector<bool> >());
+        reader.arcMap("arc_active_count", g.get(arc_active_count()), StrToTypeConverter<std::vector<bool> >());
     }
 
     if(config["arc_value_count"])
     {
         g.add(arc_value_count());
-        reader.arcMap("arc_value_count", g.get(arc_value_count()), StrToTypeConverter<vector<size_t> >());
+        reader.arcMap("arc_value_count", g.get(arc_value_count()), StrToTypeConverter<std::vector<size_t> >());
     }
 
     if(config["node_traxel"])
@@ -1697,7 +1695,7 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     if(config["node_tracklet"])
     {
         g.add(node_tracklet());
-        reader.nodeMap("node_tracklet", g.get(node_tracklet()), StrToTypeConverter<vector<Traxel>>());
+        reader.nodeMap("node_tracklet", g.get(node_tracklet()), StrToTypeConverter<std::vector<Traxel>>());
     }
 
     reader.run();
@@ -1729,7 +1727,7 @@ double getDivisionProbability(const Traxel& tr)
     FeatureMap::const_iterator it = tr.features.find("divProb");
     if (it == tr.features.end())
     {
-        throw runtime_error("getDivisionProbability(): divProb feature not in traxel");
+        throw std::runtime_error("getDivisionProbability(): divProb feature not in traxel");
     }
     return it->second[0];
 }
@@ -1765,9 +1763,9 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges(
 {
     LOG(logDEBUG) << "SingleTimestepTraxel_HypothesesBuilder::add_edges(): entered";
     typedef HypothesesGraph::node_timestep_map::Value timestep_t;
-    const set<timestep_t>& timesteps = graph->timesteps();
+    const std::set<timestep_t>& timesteps = graph->timesteps();
     // iterate over all timesteps except the last
-    for (set<timestep_t>::const_iterator t = timesteps.begin();
+    for (std::set<timestep_t>::const_iterator t = timesteps.begin();
             t != (--timesteps.end()); ++t)
     {
         add_edges_at(graph, *t);
@@ -1778,7 +1776,7 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges(
     if (options_.forward_backward)
     {
         // reversely iterate over all timesteps except the first
-        for (set<timestep_t>::const_reverse_iterator t = timesteps.rbegin();
+        for (std::set<timestep_t>::const_reverse_iterator t = timesteps.rbegin();
                 t != (--timesteps.rend()); ++t)
         {
             add_edges_at(graph, *t, true);
@@ -1807,7 +1805,7 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
 
     //// find k nearest neighbors in next timestep
     // init nearest neighbor search
-    pair<TraxelStoreByTimestep::const_iterator,
+    std::pair<TraxelStoreByTimestep::const_iterator,
          TraxelStoreByTimestep::const_iterator> traxels_at =
              traxels_by_timestep.equal_range(to_timestep);
 
@@ -1842,12 +1840,12 @@ HypothesesGraph* SingleTimestepTraxel_HypothesesBuilder::add_edges_at(Hypotheses
         }
 
         // search
-        map<unsigned int, double> nearest_neighbors = nns.knn_in_range(
+        std::map<unsigned int, double> nearest_neighbors = nns.knn_in_range(
                     traxelmap[curr_node], options_.distance_threshold,
                     max_nn, reverse);
 
         //// connect current node with k nearest neighbor nodes
-        for (map<unsigned int, double>::const_iterator neighbor =
+        for (std::map<unsigned int, double>::const_iterator neighbor =
                     nearest_neighbors.begin(); neighbor != nearest_neighbors.end();
                 ++neighbor)
         {
