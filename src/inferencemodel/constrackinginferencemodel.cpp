@@ -986,7 +986,7 @@ void ConsTrackingInferenceModel::conclude( HypothesesGraph& g,
         }
         for (HypothesesGraph::NodeIt n(g); n != lemon::INVALID; ++n)
         {
-            active_nodes_count.set(n, std::vector<long unsigned int>());
+            active_nodes_count.set(n, std::vector<size_t>());
             active_divisions_count.set(n, std::vector<bool>());
         }
     }
