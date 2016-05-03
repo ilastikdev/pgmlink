@@ -123,7 +123,7 @@ struct node_active_count {};
 template <typename Graph>
 struct property_map<node_active_count, Graph>
 {
-    typedef IterableEditableValueMap< Graph, typename Graph::Node, std::vector<long unsigned int> > type;
+    typedef IterableEditableValueMap< Graph, typename Graph::Node, std::vector<size_t> > type;
     //typedef lemon::IterableIntMap< Graph, typename Graph::Node> type;
     static const std::string name;
 };

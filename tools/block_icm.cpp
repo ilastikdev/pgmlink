@@ -201,7 +201,12 @@ int main(int argc, char** argv)
     // iterate over time steps, create submodel (view?) just for pairwise time frames, CPLEX inference on submodels only
     for(auto timestep_it = nodes_per_timestep.begin(); timestep_it != nodes_per_timestep.end(); ++timestep_it)
     {
-        blocks_to_compute.insert({timestep_it->first});
+// use with MS VS 2015 and later
+//        blocks_to_compute.insert({timestep_it->first});
+        std::set<size_t> first_set;
+        first_set.insert(timestep_it->first);
+        blocks_to_compute.insert(first_set);
+// end MS VS 2012 fix
     }
 
     while(!blocks_to_compute.empty())
