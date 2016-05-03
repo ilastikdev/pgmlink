@@ -72,7 +72,7 @@ public:
     {
         hypotheses_graph_ = hypotheses_graph;
     }
-
+		/*
     PGMLINK_EXPORT EventVectorVectorVector operator()(
         TraxelStore& ts,
         double forbidden_cost = 0,
@@ -91,7 +91,7 @@ public:
         double cplex_timeout = 1e+75,
         TimestepIdCoordinateMapPtr coordinates = TimestepIdCoordinateMapPtr(),
         boost::python::object transition_classifier = boost::python::object());
-
+	*/
     PGMLINK_EXPORT bool exportCrop(FieldOfView);
 
     PGMLINK_EXPORT void hypothesesGraphTest( const HypothesesGraph& );
