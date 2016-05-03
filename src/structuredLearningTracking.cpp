@@ -567,13 +567,13 @@ void StructuredLearningTracking::structuredLearning(
         {
             for(node_timestep_map_t::ItemIt node(timestep_map, t); node != lemon::INVALID; ++node){
 
-                if(ndim_==2 and
-                   crops_[m].lower_bound()[1] <= traxel_map[node].X() and traxel_map[node].X() <= crops_[m].upper_bound()[1] and
-                   crops_[m].lower_bound()[2] <= traxel_map[node].Y() and traxel_map[node].Y() <= crops_[m].upper_bound()[2] or
-                   ndim_==3 and
-                   crops_[m].lower_bound()[1] <= traxel_map[node].X() and traxel_map[node].X() <= crops_[m].upper_bound()[1] and
-                   crops_[m].lower_bound()[2] <= traxel_map[node].Y() and traxel_map[node].Y() <= crops_[m].upper_bound()[2] and
-                   crops_[m].lower_bound()[3] <= traxel_map[node].Z() and traxel_map[node].Z() <= crops_[m].upper_bound()[3] ){
+                if(ndim_==2 &&
+                   crops_[m].lower_bound()[1] <= traxel_map[node].X() && traxel_map[node].X() <= crops_[m].upper_bound()[1] &&
+                   crops_[m].lower_bound()[2] <= traxel_map[node].Y() && traxel_map[node].Y() <= crops_[m].upper_bound()[2] ||
+                   ndim_==3 &&
+                   crops_[m].lower_bound()[1] <= traxel_map[node].X() && traxel_map[node].X() <= crops_[m].upper_bound()[1] &&
+                   crops_[m].lower_bound()[2] <= traxel_map[node].Y() && traxel_map[node].Y() <= crops_[m].upper_bound()[2] &&
+                   crops_[m].lower_bound()[3] <= traxel_map[node].Z() && traxel_map[node].Z() <= crops_[m].upper_bound()[3] ){
 
                     selected_nodes[node] = true;
                     //LOG(logINFO) << "app. node: " << traxel_map[node].Id << "    t " << timestep_map[node] << "    node num " << count;
@@ -590,7 +590,7 @@ void StructuredLearningTracking::structuredLearning(
             HypothesesGraph::Node from = hypotheses_graph_->source(a);
             HypothesesGraph::Node to = hypotheses_graph_->target(a);
 
-            if(selected_nodes[from] and selected_nodes[to]){
+            if(selected_nodes[from] && selected_nodes[to]){
                 selected_arcs[a] = true;
             }
             else{
