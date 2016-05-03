@@ -390,12 +390,12 @@ Parameter StructuredLearningTracking::get_structured_learning_tracking_parameter
     );
     use_classifier_prior_ = withClassifierPrior;
 
-    std::vector<double> model_weights = {
-        detection_weight,
-        division_weight,
-        transition_weight,
-        disappearance_cost,
-        appearance_cost};
+    std::vector<double> model_weights;
+	model_weights.push_back(detection_weight);
+	model_weights.push_back(division_weight);
+	model_weights.push_back(transition_weight);
+	model_weights.push_back(disappearance_cost);
+	model_weights.push_back(appearance_cost);
 
     StructuredLearningTracking::setParameterWeights(
         param,
