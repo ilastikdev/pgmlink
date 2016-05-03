@@ -318,7 +318,7 @@ void ConsTrackingInferenceModel::printResults(const HypothesesGraph& g)
             it != app_node_map_.end(); ++it)
     {
         c = 0;
-        for( std::vector<long unsigned int>::const_iterator i = active_nodes_count[it->first].begin();
+        for( std::vector<size_t>::const_iterator i = active_nodes_count[it->first].begin();
                 i != active_nodes_count[it->first].end();
                 ++i)
         {
