@@ -272,19 +272,19 @@ void ConsTrackingInferenceModel::add_division_nodes(const HypothesesGraph& g)
     number_of_division_nodes_ = count;
 }
 
-unsigned int ConsTrackingInferenceModel::get_number_of_division_nodes(){
+size_t ConsTrackingInferenceModel::get_number_of_division_nodes(){
     return number_of_division_nodes_;
 }
 
-unsigned int ConsTrackingInferenceModel::get_number_of_transition_nodes(){
+size_t ConsTrackingInferenceModel::get_number_of_transition_nodes(){
     return number_of_transition_nodes_;
 }
 
-unsigned int ConsTrackingInferenceModel::get_number_of_appearance_nodes(){
+size_t ConsTrackingInferenceModel::get_number_of_appearance_nodes(){
     return number_of_appearance_nodes_;
 }
 
-unsigned int ConsTrackingInferenceModel::get_number_of_disappearance_nodes(){
+size_t ConsTrackingInferenceModel::get_number_of_disappearance_nodes(){
     return number_of_disappearance_nodes_;
 }
 

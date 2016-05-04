@@ -78,10 +78,10 @@ public: // API
     opengm::learning::Weights<double> weights_;
     void setWeight ( size_t, double);
     GraphicalModelType model();
-    unsigned int get_number_of_division_nodes();
-    unsigned int get_number_of_transition_nodes();
-    unsigned int get_number_of_appearance_nodes();
-    unsigned int get_number_of_disappearance_nodes();
+    size_t get_number_of_division_nodes();
+    size_t get_number_of_transition_nodes();
+    size_t get_number_of_appearance_nodes();
+    size_t get_number_of_disappearance_nodes();
 
 protected:
     void add_appearance_nodes( const HypothesesGraph& );
