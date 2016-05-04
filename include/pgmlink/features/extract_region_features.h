@@ -7,6 +7,7 @@
 #include "pgmlink/log.h"
 #include <iostream>
 #include <numeric>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 namespace pgmlink
 {
@@ -17,7 +18,7 @@ template<typename T>
 void set_feature(FeatureMap& feature_map, const std::string& name, T value)
 {
     feature_map[name].clear();
-    if(std::isnan(value))
+    if(boost::math::isnan(value))
     {
 	   LOG(logWARNING) << "Found NAN feature value for " << name << " replacing with 0!";
         feature_map[name].push_back(feature_type(0));
