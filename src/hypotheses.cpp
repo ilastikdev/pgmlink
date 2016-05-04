@@ -1398,7 +1398,7 @@ struct TypeToStrConverter
 {
     std::string operator()(const T& t)
     {
-        stringstream ss;
+        std::stringstream ss;
         boost::archive::text_oarchive oa(ss);
         oa & t;
         return ss.str();
@@ -1426,7 +1426,7 @@ void write_lgf(const HypothesesGraph& g, std::ostream& os, std::map<std::string,
 
     if(config["node_active_count"])
     {
-        writer.nodeMap("node_active_count", g.get(node_active_count()), TypeToStrConverter<std::vector<long unsigned int> >());
+        writer.nodeMap("node_active_count", g.get(node_active_count()), TypeToStrConverter<std::vector<size_t> >());
     }
 
     if(config["node_offered"])
@@ -1575,7 +1575,7 @@ void read_lgf( HypothesesGraph& g, std::istream& is, std::map<std::string, bool>
     if(config["node_active_count"])
     {
         g.add(node_active_count());
-        reader.nodeMap("node_active_count", g.get(node_active_count()), StrToTypeConverter<std::vector<long unsigned int> >());
+        reader.nodeMap("node_active_count", g.get(node_active_count()), StrToTypeConverter<std::vector<size_t> >());
     }
 
     if(config["node_offered"])
