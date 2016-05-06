@@ -189,14 +189,14 @@ class IncomingConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT IncomingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end,
                                const std::vector<I>& variable_indices,
                                const std::vector<I>& index_reordering):
         ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering)
     {}
 
-    IncomingConstraintFunction() {}
+    PGMLINK_EXPORT IncomingConstraintFunction() {}
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -241,12 +241,12 @@ class IncomingLinearConstraintFunction: public LinearConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    IncomingLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT IncomingLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
         LinearConstraintFunction<T, I, L>(shape_begin, shape_end)
     {}
 
-    IncomingLinearConstraintFunction() {}
+    PGMLINK_EXPORT IncomingLinearConstraintFunction() {}
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
     {
@@ -286,7 +286,7 @@ class OutgoingConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT OutgoingConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end,
                                const std::vector<I>& variable_indices,
                                const std::vector<I>& index_reordering):
@@ -294,7 +294,7 @@ public:
         with_divisions_(true)
     {}
 
-    OutgoingConstraintFunction() {}
+    PGMLINK_EXPORT OutgoingConstraintFunction() {}
 
     void set_with_divisions(bool enable)
     {
@@ -351,13 +351,13 @@ class OutgoingLinearConstraintFunction: public LinearConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    OutgoingLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT OutgoingLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
                                SHAPE_ITERATOR shape_end):
         LinearConstraintFunction<T, I, L>(shape_begin, shape_end),
         with_divisions_(true)
     {}
 
-    OutgoingLinearConstraintFunction() {}
+    PGMLINK_EXPORT OutgoingLinearConstraintFunction() {}
 
     void set_with_divisions(bool enable)
     {
@@ -408,14 +408,14 @@ class OutgoingNoDivConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    OutgoingNoDivConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT OutgoingNoDivConstraintFunction(SHAPE_ITERATOR shape_begin,
                                     SHAPE_ITERATOR shape_end,
                                     const std::vector<I>& variable_indices,
                                     const std::vector<I>& index_reordering):
         ConstraintFunction<T, I, L>(shape_begin, shape_end, variable_indices, index_reordering)
     {}
 
-    OutgoingNoDivConstraintFunction() {}
+    PGMLINK_EXPORT OutgoingNoDivConstraintFunction() {}
 
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
@@ -460,12 +460,12 @@ class OutgoingNoDivLinearConstraintFunction: public LinearConstraintFunction<T, 
 {
 public:
     template<class SHAPE_ITERATOR>
-    OutgoingNoDivLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT OutgoingNoDivLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
                                     SHAPE_ITERATOR shape_end):
         LinearConstraintFunction<T, I, L>(shape_begin, shape_end)
     {}
 
-    OutgoingNoDivLinearConstraintFunction() {}
+    PGMLINK_EXPORT OutgoingNoDivLinearConstraintFunction() {}
 
 protected:
     virtual T get_energy_of_configuration(const std::vector<L>& configuration) const
@@ -502,7 +502,7 @@ class DetectionConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT DetectionConstraintFunction(SHAPE_ITERATOR shape_begin,
                                 SHAPE_ITERATOR shape_end,
                                 const std::vector<I>& variable_indices,
                                 const std::vector<I>& index_reordering):
@@ -512,7 +512,7 @@ public:
         with_misdetections_(true)
     {}
 
-    DetectionConstraintFunction() {}
+    PGMLINK_EXPORT DetectionConstraintFunction() {}
 
     void set_with_misdetections(bool enable)
     {
@@ -571,7 +571,7 @@ class DetectionLinearConstraintFunction: public LinearConstraintFunction<T, I, L
 {
 public:
     template<class SHAPE_ITERATOR>
-    DetectionLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT DetectionLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
                                 SHAPE_ITERATOR shape_end):
         LinearConstraintFunction<T, I, L>(shape_begin, shape_end),
         with_appearance_(true),
@@ -579,7 +579,7 @@ public:
         with_misdetections_(true)
     {}
 
-    DetectionLinearConstraintFunction() {}
+    PGMLINK_EXPORT DetectionLinearConstraintFunction() {}
 
     void set_with_misdetections(bool enable)
     {
@@ -633,7 +633,7 @@ class FixNodeValueConstraintFunction: public ConstraintFunction<T, I, L>
 {
 public:
     template<class SHAPE_ITERATOR>
-    FixNodeValueConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT FixNodeValueConstraintFunction(SHAPE_ITERATOR shape_begin,
                                 SHAPE_ITERATOR shape_end,
                                 const std::vector<I>& variable_indices,
                                 const std::vector<I>& index_reordering):
@@ -641,7 +641,7 @@ public:
         value(0)
     {}
 
-    FixNodeValueConstraintFunction() {}
+    PGMLINK_EXPORT FixNodeValueConstraintFunction() {}
 
     void set_desired_value(size_t val){ value = val; }
 
@@ -681,13 +681,13 @@ class FixNodeValueLinearConstraintFunction: public LinearConstraintFunction<T, I
 {
 public:
     template<class SHAPE_ITERATOR>
-    FixNodeValueLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
+    PGMLINK_EXPORT FixNodeValueLinearConstraintFunction(SHAPE_ITERATOR shape_begin,
                                 SHAPE_ITERATOR shape_end):
         LinearConstraintFunction<T, I, L>(shape_begin, shape_end),
         value(0)
     {}
 
-    FixNodeValueLinearConstraintFunction() {}
+    PGMLINK_EXPORT FixNodeValueLinearConstraintFunction() {}
 
     void set_desired_value(size_t val){ value = val; }
 
