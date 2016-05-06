@@ -36,7 +36,7 @@ public:
     typedef ConstraintPoolOpengmModel::IndexType IndexType;
 
 public:
-    ConstraintPool(ValueType big_m = 200.0,
+    PGMLINK_EXPORT ConstraintPool(ValueType big_m = 200.0,
                    bool with_divisions = true,
                    bool with_appearance = true,
                    bool with_disappearance = true,
@@ -261,9 +261,10 @@ public:
         FixNodeValueLinearConstraint() {}
     };
 
-protected:
+//protected:
+public:
     template<class CONSTRAINT_TYPE>
-    void constraint_indices(std::vector<IndexType>& indices, const CONSTRAINT_TYPE& constraint);
+    PGMLINK_EXPORT void constraint_indices(std::vector<IndexType>& indices, const CONSTRAINT_TYPE& constraint);
 
     template<class GM, class INF, class FUNCTION_TYPE, class CONSTRAINT_TYPE>
     void add_constraint_type_to_problem(GM& model, INF&, const std::vector<CONSTRAINT_TYPE>& constraints);
@@ -276,8 +277,9 @@ protected:
 
     template<class CONSTRAINT_TYPE>
     bool check_all_constraint_vars_in_mapping(std::map<size_t, size_t>& index_mapping, const CONSTRAINT_TYPE& constraint);
-protected:
-    std::vector<IncomingConstraint> incoming_constraints_;
+//protected:
+public:
+    PGMLINK_EXPORT std::vector<IncomingConstraint> incoming_constraints_;
     std::vector<OutgoingConstraint> outgoing_constraints_;
     std::vector<OutgoingConstraint> outgoing_no_div_constraints_;
     std::vector<DetectionConstraint> detection_constraints_;
@@ -735,13 +737,13 @@ void ConstraintPool::add_constraint_type_to_model<ConstraintPoolOpengmModel,
 
 //------------------------------------------------------------------------
 template<class CONSTRAINT_TYPE>
-void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
+PGMLINK_EXPORT void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>&, const CONSTRAINT_TYPE&)
 {
     throw std::logic_error("only template specializations of this method (constraint_indices) should be called");
 }
 
 template<>
-void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint);
+PGMLINK_EXPORT void ConstraintPool::constraint_indices<ConstraintPool::IncomingConstraint>(std::vector<ConstraintPool::IndexType>& indices, const IncomingConstraint& constraint);
 
 template<>
 void ConstraintPool::constraint_indices(std::vector<ConstraintPool::IndexType>& indices, const OutgoingConstraint& constraint);
